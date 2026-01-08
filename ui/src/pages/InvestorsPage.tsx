@@ -104,40 +104,6 @@ export const InvestorsPage = () => {
         </Button>
       </div>
 
-      {/* Botones de ordenamiento */}
-      <div className="flex flex-wrap gap-2">
-        <button
-          onClick={() => handleSort('name')}
-          className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-            sortBy === 'name'
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-          }`}
-        >
-          Nombre {getSortIcon('name')}
-        </button>
-        <button
-          onClick={() => handleSort('balance')}
-          className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-            sortBy === 'balance'
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-          }`}
-        >
-          Balance {getSortIcon('balance')}
-        </button>
-        <button
-          onClick={() => handleSort('status')}
-          className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-            sortBy === 'status'
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-          }`}
-        >
-          Estado {getSortIcon('status')}
-        </button>
-      </div>
-
       {showForm && (
         <div className="rounded-lg bg-white p-6 shadow">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Nuevo Inversor</h2>

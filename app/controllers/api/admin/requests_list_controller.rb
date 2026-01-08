@@ -22,7 +22,6 @@ module Api
             investor: {
               name: r.investor.name,
               email: r.investor.email,
-              code: r.investor.code,
             },
           }
         end

@@ -72,7 +72,7 @@ describe('InvestorsPage', () => {
       });
     });
 
-    it('calls API with sort parameters when sorting buttons are clicked', async () => {
+    it('calls API with sort parameters when sorting column headers are clicked', async () => {
       vi.mocked(api.getAdminInvestors).mockResolvedValue(mockInvestors);
 
       render(<InvestorsPage />);
@@ -81,10 +81,11 @@ describe('InvestorsPage', () => {
         expect(api.getAdminInvestors).toHaveBeenCalled();
       });
 
-      // Click on "Nombre" sort button (find by text including sort icon)
+      // Find the "Nombre" column header button in the table
       const nameButtons = screen.getAllByText(/Nombre/i);
-      // The first one should be the standalone sort button (not inside table)
-      const nameButton = nameButtons[0].closest('button');
+      const nameButton = nameButtons.find(el => el.closest('button'))?.closest('button');
+      
+      expect(nameButton).toBeDefined();
       fireEvent.click(nameButton!);
 
       await waitFor(() => {

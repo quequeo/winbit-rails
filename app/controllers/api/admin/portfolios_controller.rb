@@ -10,7 +10,6 @@ module Api
               id: inv.id,
               email: inv.email,
               name: inv.name,
-              code: inv.code,
               portfolio: inv.portfolio,
             }
           },
