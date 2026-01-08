@@ -43,6 +43,16 @@ module Backend
 
     # Enable cookie/session middleware (required for Devise + OmniAuth in API-only apps)
     config.middleware.use ActionDispatch::Cookies
-    config.middleware.use ActionDispatch::Session::CookieStore, key: '_winbit_backend_session'
+    session_key = ENV.fetch('SESSION_KEY', '_winbit_backend_session')
+    same_site_default = Rails.env.production? ? 'none' : 'lax'
+    same_site = ENV.fetch('SESSION_SAME_SITE', same_site_default).to_s.downcase
+    secure_default = Rails.env.production? ? 'true' : 'false'
+    secure = ENV.fetch('SESSION_SECURE', secure_default).to_s.downcase == 'true'
+
+    # For a separate frontend domain in production, cookies must be SameSite=None; Secure
+    config.middleware.use ActionDispatch::Session::CookieStore,
+                          key: session_key,
+                          same_site: same_site.to_sym,
+                          secure: secure
   end
 end
