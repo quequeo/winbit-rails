@@ -96,7 +96,72 @@ export const RequestsPage = () => {
         </div>
       </div>
 
-      <div className="rounded-lg bg-white p-6 shadow">
+      {/* Mobile: cards */}
+      <div className="grid gap-3 px-1 md:hidden">
+        {requests.map((r: any) => (
+          <div key={r.id} className="w-full overflow-hidden rounded-lg bg-white p-4 shadow">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-gray-900">{r.investor.name}</p>
+                <p className="mt-1 text-xs text-gray-500">
+                  {new Date(r.requestedAt).toLocaleDateString('es-AR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </p>
+              </div>
+              <span
+                className={`shrink-0 inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
+                  r.status === 'PENDING'
+                    ? 'bg-yellow-100 text-yellow-800'
+                    : r.status === 'APPROVED'
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-red-100 text-red-800'
+                }`}
+              >
+                {r.status === 'PENDING' ? 'Pendiente' : r.status === 'APPROVED' ? 'Aprobado' : 'Rechazado'}
+              </span>
+            </div>
+
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <span
+                className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
+                  r.type === 'DEPOSIT' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'
+                }`}
+              >
+                {r.type === 'DEPOSIT' ? 'Depósito' : 'Retiro'}
+              </span>
+              <span className="text-xs text-gray-600">{r.method}</span>
+              <span className="ml-auto font-mono text-sm font-semibold text-gray-900">
+                ${Number(r.amount).toLocaleString('en-US')}
+              </span>
+            </div>
+
+            {r.status === 'PENDING' ? (
+              <div className="mt-4 flex gap-2">
+                <Button size="sm" onClick={() => approve(r.id)} disabled={busyId === r.id} className="flex-1">
+                  Aprobar
+                </Button>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={() => reject(r.id)}
+                  disabled={busyId === r.id}
+                  className="flex-1"
+                >
+                  Rechazar
+                </Button>
+              </div>
+            ) : null}
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop/tablet: table */}
+      <div className="hidden md:block rounded-lg bg-white p-6 shadow">
         <div className="overflow-x-auto">
           <table className="min-w-full">
             <thead>
@@ -123,17 +188,12 @@ export const RequestsPage = () => {
                     })}
                   </td>
                   <td className="py-2">
-                    <div>
-                      <p className="font-medium">{r.investor.name}</p>
-                      <p className="text-sm text-gray-500">{r.investor.code}</p>
-                    </div>
+                    <p className="font-medium">{r.investor.name}</p>
                   </td>
                   <td className="py-2">
                     <span
                       className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
-                        r.type === 'DEPOSIT'
-                          ? 'bg-blue-100 text-blue-800'
-                          : 'bg-purple-100 text-purple-800'
+                        r.type === 'DEPOSIT' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'
                       }`}
                     >
                       {r.type === 'DEPOSIT' ? 'Depósito' : 'Retiro'}
@@ -161,11 +221,7 @@ export const RequestsPage = () => {
                   <td className="py-2 text-right">
                     {r.status === 'PENDING' ? (
                       <div className="flex justify-end gap-2">
-                        <Button
-                          size="sm"
-                          onClick={() => approve(r.id)}
-                          disabled={busyId === r.id}
-                        >
+                        <Button size="sm" onClick={() => approve(r.id)} disabled={busyId === r.id}>
                           Aprobar
                         </Button>
                         <Button

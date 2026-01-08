@@ -39,7 +39,6 @@ export const PortfoliosPage = () => {
           <table className="min-w-full">
             <thead>
               <tr className="text-left text-sm text-gray-500">
-                <th className="py-2">Código</th>
                 <th className="py-2">Nombre</th>
                 <th className="py-2">Email</th>
                 <th className="py-2 text-right">Capital Actual</th>
@@ -50,7 +49,6 @@ export const PortfoliosPage = () => {
             <tbody className="divide-y divide-gray-200">
               {data.data.map((inv: any) => (
                 <tr key={inv.id} className="text-sm">
-                  <td className="py-2 font-mono">{inv.code}</td>
                   <td className="py-2 font-medium">{inv.name}</td>
                   <td className="py-2 text-gray-600">{inv.email}</td>
                   <td className="py-2 text-right">

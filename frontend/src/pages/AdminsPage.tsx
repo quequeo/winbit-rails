@@ -33,9 +33,9 @@ export const AdminsPage = () => {
       </div>
 
       {/* Mobile: cards */}
-      <div className="grid gap-3 md:hidden">
+      <div className="grid gap-3 px-1 md:hidden">
         {admins.map((a: any) => (
-          <div key={a.id} className="rounded-lg bg-white p-4 shadow">
+          <div key={a.id} className="w-full overflow-hidden rounded-lg bg-white p-4 shadow">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold text-gray-900">{a.email}</p>
@@ -48,9 +48,6 @@ export const AdminsPage = () => {
               >
                 {a.role === 'SUPERADMIN' ? 'Super Admin' : 'Admin'}
               </span>
-            </div>
-            <div className="mt-3 text-xs text-gray-500">
-              Creado: {new Date(a.created_at || a.createdAt).toLocaleDateString('es-AR')}
             </div>
           </div>
         ))}
@@ -65,7 +62,6 @@ export const AdminsPage = () => {
                 <th className="py-2">Email</th>
                 <th className="py-2">Nombre</th>
                 <th className="py-2">Rol</th>
-                <th className="py-2">Fecha</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -83,9 +79,6 @@ export const AdminsPage = () => {
                     >
                       {a.role === 'SUPERADMIN' ? 'Super Admin' : 'Admin'}
                     </span>
-                  </td>
-                  <td className="py-2 text-gray-600">
-                    {new Date(a.created_at || a.createdAt).toLocaleDateString('es-AR')}
                   </td>
                 </tr>
               ))}
