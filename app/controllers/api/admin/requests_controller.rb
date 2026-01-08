@@ -10,7 +10,7 @@ module Api
           request_type: params.require(:request_type),
           method: params.require(:method),
           amount: params.require(:amount),
-          network: params[:network],
+          network: params[:network].presence,
           status: params[:status] || 'PENDING',
           requested_at: Time.current,
         )
@@ -35,7 +35,7 @@ module Api
           request_type: params.require(:request_type),
           method: params.require(:method),
           amount: params.require(:amount),
-          network: params[:network],
+          network: params[:network].presence,
           status: params[:status] || req.status,
         )
 

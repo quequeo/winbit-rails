@@ -11,7 +11,7 @@ export const InvestorsPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ email: '', name: '' });
-  const [sortBy, setSortBy] = useState<string>('created_at');
+  const [sortBy, setSortBy] = useState<string>('balance');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   const fetchInvestors = () => {
@@ -95,11 +95,11 @@ export const InvestorsPage = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex items-start justify-between gap-2 md:gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Inversores</h1>
         </div>
-        <Button onClick={() => setShowForm(!showForm)} className="shrink-0">
+        <Button onClick={() => setShowForm(!showForm)} className="shrink-0 text-xs md:text-sm px-2 py-1.5 md:px-4 md:py-2">
           {showForm ? 'Cancelar' : '+ Agregar Inversor'}
         </Button>
       </div>

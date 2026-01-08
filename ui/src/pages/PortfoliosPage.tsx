@@ -31,9 +31,6 @@ export const PortfoliosPage = () => {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Portfolios</h1>
-        <p className="text-gray-600 mt-1">
-          Haz clic en "Editar Portfolio" para modificar los datos de inversión de cada inversor
-        </p>
       </div>
 
       {/* Mobile: cards */}
