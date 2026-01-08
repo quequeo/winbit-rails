@@ -25,12 +25,12 @@ class Investor < ApplicationRecord
   def generate_code
     return if code.present?
 
-    last_investor = Investor.order(code: :desc).first
-    if last_investor&.code&.match?(/\AINV(\d+)\z/)
-      last_number = ::Regexp.last_match(1).to_i
-      self.code = format('INV%03d', last_number + 1)
-    else
-      self.code = 'INV001'
-    end
+    # Extract all numeric codes and find the maximum
+    max_number = Investor.pluck(:code)
+                         .map { |c| c.match(/\AINV(\d+)\z/)&.captures&.first&.to_i }
+                         .compact
+                         .max || 0
+
+    self.code = format('INV%03d', max_number + 1)
   end
 end
