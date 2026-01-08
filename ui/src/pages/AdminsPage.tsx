@@ -120,8 +120,9 @@ export const AdminsPage = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Rol *</label>
+              <label htmlFor="admin-role" className="block text-sm font-medium text-gray-700 mb-1">Rol *</label>
               <select
+                id="admin-role"
                 required
                 value={formData.role}
                 onChange={(e) => setFormData({ ...formData, role: e.target.value as 'ADMIN' | 'SUPERADMIN' })}

@@ -140,8 +140,9 @@ export const RequestsPage = () => {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Inversor *</label>
+                <label htmlFor="request-investor" className="block text-sm font-medium text-gray-700 mb-1">Inversor *</label>
                 <select
+                  id="request-investor"
                   required
                   value={formData.investor_id}
                   onChange={(e) => setFormData({ ...formData, investor_id: e.target.value })}
@@ -156,8 +157,9 @@ export const RequestsPage = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Tipo *</label>
+                <label htmlFor="request-type" className="block text-sm font-medium text-gray-700 mb-1">Tipo *</label>
                 <select
+                  id="request-type"
                   required
                   value={formData.request_type}
                   onChange={(e) => setFormData({ ...formData, request_type: e.target.value })}
@@ -237,8 +239,9 @@ export const RequestsPage = () => {
       <div className="rounded-lg bg-white p-6 shadow">
         <div className="flex gap-4">
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700">Tipo</label>
+            <label htmlFor="filter-type" className="mb-2 block text-sm font-medium text-gray-700">Tipo</label>
             <select
+              id="filter-type"
               className="rounded-md border border-gray-300 px-3 py-2"
               value={type}
               onChange={(e) => setType(e.target.value)}
@@ -249,8 +252,9 @@ export const RequestsPage = () => {
             </select>
           </div>
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700">Estado</label>
+            <label htmlFor="filter-status" className="mb-2 block text-sm font-medium text-gray-700">Estado</label>
             <select
+              id="filter-status"
               className="rounded-md border border-gray-300 px-3 py-2"
               value={status}
               onChange={(e) => setStatus(e.target.value)}

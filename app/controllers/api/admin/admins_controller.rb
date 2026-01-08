@@ -43,6 +43,10 @@ module Api
         admin = User.find_by(id: params[:id])
         return render_error('Admin no encontrado', status: :not_found) unless admin
 
+        if admin.id == current_user.id
+          return render_error('No puedes eliminar tu propia cuenta', status: :forbidden)
+        end
+
         if User.count <= 1
           return render_error('No se puede eliminar el último admin', status: :bad_request)
         end

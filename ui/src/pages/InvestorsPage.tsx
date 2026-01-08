@@ -264,10 +264,34 @@ export const InvestorsPage = () => {
           <table className="min-w-full">
             <thead>
               <tr className="text-left text-sm text-gray-500">
-                <th className="py-2">Nombre</th>
+                <th className="py-2">
+                  <button
+                    onClick={() => handleSort('name')}
+                    className="flex items-center gap-1 hover:text-gray-700"
+                  >
+                    Nombre
+                    <span className="text-xs">{getSortIcon('name')}</span>
+                  </button>
+                </th>
                 <th className="py-2">Email</th>
-                <th className="py-2">Balance</th>
-                <th className="py-2">Estado</th>
+                <th className="py-2">
+                  <button
+                    onClick={() => handleSort('balance')}
+                    className="flex items-center gap-1 hover:text-gray-700"
+                  >
+                    Balance
+                    <span className="text-xs">{getSortIcon('balance')}</span>
+                  </button>
+                </th>
+                <th className="py-2">
+                  <button
+                    onClick={() => handleSort('status')}
+                    className="flex items-center gap-1 hover:text-gray-700"
+                  >
+                    Estado
+                    <span className="text-xs">{getSortIcon('status')}</span>
+                  </button>
+                </th>
                 <th className="py-2 text-right">Acciones</th>
               </tr>
             </thead>
