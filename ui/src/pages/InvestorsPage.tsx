@@ -1,24 +1,44 @@
 import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
+import { Button } from '../components/ui/Button';
+import { Input } from '../components/ui/Input';
 
 export const InvestorsPage = () => {
   const [data, setData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showForm, setShowForm] = useState(false);
+  const [formData, setFormData] = useState({ email: '', name: '', code: '' });
+  const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    let isMounted = true;
+  const fetchInvestors = () => {
     api
       .getAdminInvestors()
       .then((res) => {
-        if (isMounted) setData(res);
+        setData(res);
       })
       .catch((e) => {
-        if (isMounted) setError(e.message);
+        setError(e.message);
       });
-    return () => {
-      isMounted = false;
-    };
+  };
+
+  useEffect(() => {
+    fetchInvestors();
   }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      await api.createInvestor(formData);
+      setFormData({ email: '', name: '', code: '' });
+      setShowForm(false);
+      fetchInvestors();
+    } catch (err: any) {
+      alert(err.message || 'Error al crear inversor');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   if (error) return <div className="text-red-600">{error}</div>;
   if (!data) return <div className="text-gray-600">Cargando...</div>;
@@ -27,9 +47,60 @@ export const InvestorsPage = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">Inversores</h1>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Inversores</h1>
+        </div>
+        <Button onClick={() => setShowForm(!showForm)} className="shrink-0">
+          {showForm ? 'Cancelar' : '+ Agregar Inversor'}
+        </Button>
       </div>
+
+      {showForm && (
+        <div className="rounded-lg bg-white p-6 shadow">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Nuevo Inversor</h2>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+              <Input
+                type="email"
+                required
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                placeholder="inversor@ejemplo.com"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
+              <Input
+                type="text"
+                required
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="María González"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Código *</label>
+              <Input
+                type="text"
+                required
+                value={formData.code}
+                onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                placeholder="INV001"
+              />
+            </div>
+            <div className="flex gap-3">
+              <Button type="submit" disabled={submitting}>
+                {submitting ? 'Creando...' : 'Crear Inversor'}
+              </Button>
+              <Button type="button" onClick={() => setShowForm(false)} className="bg-gray-500 hover:bg-gray-600">
+                Cancelar
+              </Button>
+            </div>
+          </form>
+        </div>
+      )}
 
       {/* Mobile: cards */}
       <div className="grid gap-3 px-1 md:hidden">

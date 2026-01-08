@@ -55,4 +55,8 @@ export const api = {
   getAdminPortfolios: () => request('/api/admin/portfolios'),
   updatePortfolio: (investorId: string, body: any) => request(`/api/admin/portfolios/${investorId}`, { method: 'PATCH', body: JSON.stringify(body) }),
   getAdminAdmins: () => request('/api/admin/admins'),
+  createAdmin: (body: { email: string; name?: string; role: 'ADMIN' | 'SUPERADMIN' }) =>
+    request('/api/admin/admins', { method: 'POST', body: JSON.stringify(body) }),
+  createInvestor: (body: { email: string; name: string; code: string }) =>
+    request('/api/admin/investors', { method: 'POST', body: JSON.stringify(body) }),
 };
