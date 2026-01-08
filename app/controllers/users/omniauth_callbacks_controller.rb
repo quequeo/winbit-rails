@@ -1,19 +1,26 @@
 class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
-  FRONTEND_URL = ENV.fetch('FRONTEND_URL', 'http://localhost:5173')
+  private
+
+  # Where to redirect after login failure/success.
+  # If not configured, default to the same host that handled the callback (works for local 3000
+  # when serving the UI from Rails, and avoids hardcoding 5173).
+  def frontend_url
+    ENV['FRONTEND_URL'].presence || request.base_url
+  end
 
   def google_oauth2
     user = User.from_google_omniauth(request.env['omniauth.auth'])
 
     unless user
-      redirect_to("#{FRONTEND_URL}/login?error=unauthorized")
+      redirect_to("#{frontend_url}/login?error=unauthorized")
       return
     end
 
     sign_in(user)
-    redirect_to("#{FRONTEND_URL}/dashboard")
+    redirect_to("#{frontend_url}/dashboard")
   end
 
   def failure
-    redirect_to("#{FRONTEND_URL}/login?error=auth_failed")
+    redirect_to("#{frontend_url}/login?error=auth_failed")
   end
 end
