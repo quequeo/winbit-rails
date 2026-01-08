@@ -35,6 +35,7 @@ gem "thruster", require: false
 # gem "rack-cors"
 
 group :development, :test do
+  gem 'dotenv-rails', '~> 2.8'
   gem 'minitest', '~> 5.25'
   gem 'rack-cors', '~> 2.0'
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem

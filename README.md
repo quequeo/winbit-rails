@@ -19,6 +19,10 @@ Este folder contiene:
 cd winbit-rails/backend
 bundle check || bundle install
 
+# Recomendado: copiar `backend/env.example` a `backend/.env` (NO se commitea)
+# y completar las variables ahí (se cargan con dotenv-rails).
+#
+# Alternativa: exportarlas en tu shell, por ejemplo:
 export POSTGRES_HOST=localhost
 export POSTGRES_PORT=5432
 export POSTGRES_USER=postgres
