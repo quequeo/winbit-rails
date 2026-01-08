@@ -35,9 +35,9 @@ namespace :investors do
 
     data.each do |row|
       code_formatted = "INV#{row[:code]}"
-      
+
       investor = Investor.find_or_initialize_by(code: code_formatted)
-      
+
       if investor.new_record?
         investor.email = "investor#{row[:code]}@winbit.com"
         investor.name = "Inversor #{row[:code]}"
@@ -49,10 +49,10 @@ namespace :investors do
       end
 
       portfolio = investor.portfolio || investor.build_portfolio
-      
+
       # Calcular total_invested a partir de: capital actual - rendimiento total
       total_invested = row[:capital] - row[:return_total]
-      
+
       portfolio.update!(
         current_balance: row[:capital],
         total_invested: total_invested > 0 ? total_invested : 0,
@@ -61,7 +61,7 @@ namespace :investors do
         annual_return_usd: row[:return_annual],
         annual_return_percent: row[:return_annual_pct],
       )
-      
+
       puts "  💰 Actualizado portfolio: Capital $#{row[:capital]} | Retorno $#{row[:return_total]} (#{row[:return_pct]}%)"
     end
 
