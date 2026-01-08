@@ -60,33 +60,35 @@ export const AdminLayout = () => {
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow">
         <div className="flex items-center justify-between px-4 py-4 md:px-6">
-          <div className="flex items-center gap-3">
+          <div>
+            <h1 className="text-2xl font-bold text-[#58b098]">Winbit Admin</h1>
+            <p className="text-sm text-gray-600">{sessionEmail || '—'}</p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {/* Desktop logout (right) */}
             <button
               type="button"
               onClick={onLogout}
-              className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              className="hidden md:inline-flex rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
               aria-label="Cerrar sesión"
               title="Cerrar sesión"
             >
               Cerrar sesión
             </button>
-            <div>
-              <h1 className="text-2xl font-bold text-[#58b098]">Winbit Admin</h1>
-              <p className="text-sm text-gray-600">{sessionEmail || '—'}</p>
-            </div>
-          </div>
 
-          {/* Mobile hamburger */}
-          <button
-            type="button"
-            className="md:hidden inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white p-2 text-gray-700 hover:bg-gray-50"
-            aria-label="Abrir menú"
-            onClick={() => setMobileMenuOpen((v) => !v)}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-          </button>
+            {/* Mobile hamburger (right) */}
+            <button
+              type="button"
+              className="md:hidden inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white p-2 text-gray-700 hover:bg-gray-50"
+              aria-label="Abrir menú"
+              onClick={() => setMobileMenuOpen((v) => !v)}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         {/* Desktop nav */}
@@ -194,6 +196,16 @@ export const AdminLayout = () => {
               >
                 Admins
               </NavLink>
+
+              <div className="my-1 h-px bg-gray-200" />
+
+              <button
+                type="button"
+                onClick={onLogout}
+                className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-left text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Cerrar sesión
+              </button>
             </div>
           </nav>
         ) : null}

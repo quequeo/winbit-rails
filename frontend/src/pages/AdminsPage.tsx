@@ -23,6 +23,8 @@ export const AdminsPage = () => {
   if (error) return <div className="text-red-600">{error}</div>;
   if (!data) return <div className="text-gray-600">Cargando...</div>;
 
+  const admins = (data?.data || []) as any[];
+
   return (
     <div className="space-y-6">
       <div>
@@ -30,7 +32,32 @@ export const AdminsPage = () => {
         <p className="text-gray-600 mt-1">Gestiona los usuarios que pueden acceder al panel.</p>
       </div>
 
-      <div className="rounded-lg bg-white p-6 shadow">
+      {/* Mobile: cards */}
+      <div className="grid gap-3 md:hidden">
+        {admins.map((a: any) => (
+          <div key={a.id} className="rounded-lg bg-white p-4 shadow">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-gray-900">{a.email}</p>
+                <p className="mt-1 text-sm text-gray-600">{a.name || '-'}</p>
+              </div>
+              <span
+                className={`shrink-0 inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
+                  a.role === 'SUPERADMIN' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'
+                }`}
+              >
+                {a.role === 'SUPERADMIN' ? 'Super Admin' : 'Admin'}
+              </span>
+            </div>
+            <div className="mt-3 text-xs text-gray-500">
+              Creado: {new Date(a.created_at || a.createdAt).toLocaleDateString('es-AR')}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop/tablet: table */}
+      <div className="hidden md:block rounded-lg bg-white p-6 shadow">
         <div className="overflow-x-auto">
           <table className="min-w-full">
             <thead>
@@ -42,7 +69,7 @@ export const AdminsPage = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {data.data.map((a: any) => (
+              {admins.map((a: any) => (
                 <tr key={a.id} className="text-sm">
                   <td className="py-2 font-medium">{a.email}</td>
                   <td className="py-2">{a.name || '-'}</td>
