@@ -5,15 +5,28 @@ import { api } from '../../lib/api';
 const linkBase =
   'border-b-2 border-transparent px-1 py-4 text-sm font-medium text-gray-700 hover:border-[#58b098] hover:text-[#58b098]';
 
+type AdminSession = {
+  data: {
+    email: string;
+    superadmin: boolean;
+  };
+};
+
 export const AdminLayout = () => {
   const navigate = useNavigate();
   const [isCheckingSession, setIsCheckingSession] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [sessionEmail, setSessionEmail] = useState<string | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
     api
       .getAdminSession()
+      .then((res) => {
+        const r = res as AdminSession;
+        if (isMounted) setSessionEmail(r?.data?.email || null);
+      })
       .catch((e) => {
         if (!isMounted) return;
         if (e?.message === 'Unauthorized') {
@@ -31,19 +44,53 @@ export const AdminLayout = () => {
     };
   }, [navigate]);
 
+  const onLogout = async () => {
+    try {
+      await api.signOut();
+    } finally {
+      setMobileMenuOpen(false);
+      navigate('/login', { replace: true });
+    }
+  };
+
   if (isCheckingSession) return <div className="p-6 text-gray-600">Cargando...</div>;
   if (error) return <div className="p-6 text-red-600">{error}</div>;
 
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow">
-        <div className="flex items-center justify-between px-6 py-4">
-          <div>
-            <h1 className="text-2xl font-bold text-[#58b098]">Winbit Admin</h1>
-            <p className="text-sm text-gray-600">Admin</p>
+        <div className="flex items-center justify-between px-4 py-4 md:px-6">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={onLogout}
+              className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              aria-label="Cerrar sesión"
+              title="Cerrar sesión"
+            >
+              Cerrar sesión
+            </button>
+            <div>
+              <h1 className="text-2xl font-bold text-[#58b098]">Winbit Admin</h1>
+              <p className="text-sm text-gray-600">{sessionEmail || '—'}</p>
+            </div>
           </div>
+
+          {/* Mobile hamburger */}
+          <button
+            type="button"
+            className="md:hidden inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white p-2 text-gray-700 hover:bg-gray-50"
+            aria-label="Abrir menú"
+            onClick={() => setMobileMenuOpen((v) => !v)}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+          </button>
         </div>
-        <nav className="border-t border-gray-200 bg-white px-6">
+
+        {/* Desktop nav */}
+        <nav className="hidden md:block border-t border-gray-200 bg-white px-6">
           <div className="flex space-x-8">
             <NavLink
               to="/dashboard"
@@ -87,6 +134,69 @@ export const AdminLayout = () => {
             </NavLink>
           </div>
         </nav>
+
+        {/* Mobile menu */}
+        {mobileMenuOpen ? (
+          <nav className="md:hidden border-t border-gray-200 bg-white px-4 py-3">
+            <div className="flex flex-col gap-2">
+              <NavLink
+                to="/dashboard"
+                onClick={() => setMobileMenuOpen(false)}
+                className={({ isActive }) =>
+                  isActive
+                    ? 'rounded-lg bg-[#58b098]/10 px-3 py-2 text-sm font-medium text-[#58b098]'
+                    : 'rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50'
+                }
+              >
+                Dashboard
+              </NavLink>
+              <NavLink
+                to="/investors"
+                onClick={() => setMobileMenuOpen(false)}
+                className={({ isActive }) =>
+                  isActive
+                    ? 'rounded-lg bg-[#58b098]/10 px-3 py-2 text-sm font-medium text-[#58b098]'
+                    : 'rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50'
+                }
+              >
+                Inversores
+              </NavLink>
+              <NavLink
+                to="/portfolios"
+                onClick={() => setMobileMenuOpen(false)}
+                className={({ isActive }) =>
+                  isActive
+                    ? 'rounded-lg bg-[#58b098]/10 px-3 py-2 text-sm font-medium text-[#58b098]'
+                    : 'rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50'
+                }
+              >
+                Portfolios
+              </NavLink>
+              <NavLink
+                to="/requests"
+                onClick={() => setMobileMenuOpen(false)}
+                className={({ isActive }) =>
+                  isActive
+                    ? 'rounded-lg bg-[#58b098]/10 px-3 py-2 text-sm font-medium text-[#58b098]'
+                    : 'rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50'
+                }
+              >
+                Solicitudes
+              </NavLink>
+              <NavLink
+                to="/admins"
+                onClick={() => setMobileMenuOpen(false)}
+                className={({ isActive }) =>
+                  isActive
+                    ? 'rounded-lg bg-[#58b098]/10 px-3 py-2 text-sm font-medium text-[#58b098]'
+                    : 'rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50'
+                }
+              >
+                Admins
+              </NavLink>
+            </div>
+          </nav>
+        ) : null}
       </header>
 
       <main className="container mx-auto px-6 py-8">

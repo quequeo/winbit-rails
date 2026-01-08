@@ -42,6 +42,7 @@ export const api = {
   getAdminSession: () => request('/api/admin/session'),
   getAdminDashboard: () => request('/api/admin/dashboard'),
   getAdminInvestors: () => request('/api/admin/investors'),
+  signOut: () => request('/users/sign_out', { method: 'DELETE' }),
   getAdminRequests: (params?: { status?: string; type?: string }) => {
     const qs = new URLSearchParams();
     if (params?.status) qs.set('status', params.status);
