@@ -40,10 +40,10 @@ if Rails.env.development?
   end
 
   demo_investors = [
-    { email: 'demo.investor1@example.com', name: 'Demo Investor 1', code: 'INV-DEMO-001' },
-    { email: 'demo.investor2@example.com', name: 'Demo Investor 2', code: 'INV-DEMO-002' },
-    { email: 'demo.investor3@example.com', name: 'Demo Investor 3', code: 'INV-DEMO-003' },
-    { email: 'demo.investor4@example.com', name: 'Demo Investor 4', code: 'INV-DEMO-004' }
+    { email: 'demo.investor1@example.com', name: 'Demo Investor 1' },
+    { email: 'demo.investor2@example.com', name: 'Demo Investor 2' },
+    { email: 'demo.investor3@example.com', name: 'Demo Investor 3' },
+    { email: 'demo.investor4@example.com', name: 'Demo Investor 4' }
   ]
 
   created_investors = 0
@@ -54,7 +54,6 @@ if Rails.env.development?
     demo_investors.each do |attrs|
       investor = Investor.find_or_initialize_by(email: attrs[:email])
       investor.name = attrs[:name]
-      investor.code = attrs[:code]
       investor.status = 'ACTIVE'
       created_investors += 1 if investor.new_record?
       investor.save!
