@@ -15,12 +15,14 @@ storage/
 vendor/bundle/
 config/master.key
 config/credentials/*.key
+coverage/
 
 # Node (UI)
 ui/node_modules/
 ui/dist/
 ui/dist-ssr/
 ui/.eslintcache
+ui/coverage/
 
 # UI build output copied into Rails /public (generated)
 public/index.html

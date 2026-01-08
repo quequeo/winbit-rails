@@ -48,3 +48,5 @@ group :development, :test do
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
   gem "rubocop-rails-omakase", require: false
 end
+
+gem "simplecov", "~> 0.22.0", :groups => [:development, :test]
