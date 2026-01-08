@@ -264,7 +264,6 @@ export const InvestorsPage = () => {
           <table className="min-w-full">
             <thead>
               <tr className="text-left text-sm text-gray-500">
-                <th className="py-2">ID</th>
                 <th className="py-2">Nombre</th>
                 <th className="py-2">Email</th>
                 <th className="py-2">Balance</th>
@@ -277,7 +276,6 @@ export const InvestorsPage = () => {
                 <tr key={inv.id} className="text-sm">
                   {editingId === inv.id ? (
                     <>
-                      <td className="py-2 text-xs text-gray-400">{inv.id.slice(0, 8)}...</td>
                       <td className="py-2">
                         <Input
                           type="text"
@@ -317,7 +315,6 @@ export const InvestorsPage = () => {
                     </>
                   ) : (
                     <>
-                      <td className="py-2 text-xs text-gray-400 font-mono">{inv.id.slice(0, 8)}...</td>
                       <td className="py-2 font-medium">{inv.name}</td>
                       <td className="py-2 text-gray-600">{inv.email}</td>
                       <td className="py-2">${(inv.portfolio?.currentBalance ?? 0).toLocaleString('en-US')}</td>
