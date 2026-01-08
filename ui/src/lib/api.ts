@@ -41,7 +41,13 @@ async function request(path: string, options?: RequestInit) {
 export const api = {
   getAdminSession: () => request('/api/admin/session'),
   getAdminDashboard: () => request('/api/admin/dashboard'),
-  getAdminInvestors: () => request('/api/admin/investors'),
+  getAdminInvestors: (params?: { sort_by?: string; sort_order?: string }) => {
+    const qs = new URLSearchParams();
+    if (params?.sort_by) qs.set('sort_by', params.sort_by);
+    if (params?.sort_order) qs.set('sort_order', params.sort_order);
+    const suffix = qs.toString() ? `?${qs.toString()}` : '';
+    return request(`/api/admin/investors${suffix}`);
+  },
   signOut: () => request('/users/sign_out', { method: 'DELETE' }),
   getAdminRequests: (params?: { status?: string; type?: string }) => {
     const qs = new URLSearchParams();

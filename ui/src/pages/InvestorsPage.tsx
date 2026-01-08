@@ -11,10 +11,12 @@ export const InvestorsPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ email: '', name: '' });
+  const [sortBy, setSortBy] = useState<string>('created_at');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   const fetchInvestors = () => {
     api
-      .getAdminInvestors()
+      .getAdminInvestors({ sort_by: sortBy, sort_order: sortOrder })
       .then((res) => {
         setData(res);
       })
@@ -25,7 +27,8 @@ export const InvestorsPage = () => {
 
   useEffect(() => {
     fetchInvestors();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sortBy, sortOrder]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,6 +79,20 @@ export const InvestorsPage = () => {
 
   const investors = (data?.data || []) as any[];
 
+  const handleSort = (field: string) => {
+    if (sortBy === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(field);
+      setSortOrder('desc');
+    }
+  };
+
+  const getSortIcon = (field: string) => {
+    if (sortBy !== field) return '↕️';
+    return sortOrder === 'asc' ? '↑' : '↓';
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
@@ -85,6 +102,40 @@ export const InvestorsPage = () => {
         <Button onClick={() => setShowForm(!showForm)} className="shrink-0">
           {showForm ? 'Cancelar' : '+ Agregar Inversor'}
         </Button>
+      </div>
+
+      {/* Botones de ordenamiento */}
+      <div className="flex flex-wrap gap-2">
+        <button
+          onClick={() => handleSort('name')}
+          className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+            sortBy === 'name'
+              ? 'bg-blue-600 text-white'
+              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+          }`}
+        >
+          Nombre {getSortIcon('name')}
+        </button>
+        <button
+          onClick={() => handleSort('balance')}
+          className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+            sortBy === 'balance'
+              ? 'bg-blue-600 text-white'
+              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+          }`}
+        >
+          Balance {getSortIcon('balance')}
+        </button>
+        <button
+          onClick={() => handleSort('status')}
+          className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+            sortBy === 'status'
+              ? 'bg-blue-600 text-white'
+              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+          }`}
+        >
+          Estado {getSortIcon('status')}
+        </button>
       </div>
 
       {showForm && (

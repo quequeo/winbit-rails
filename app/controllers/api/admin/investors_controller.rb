@@ -2,7 +2,26 @@ module Api
   module Admin
     class InvestorsController < BaseController
       def index
-        investors = Investor.includes(:portfolio).order(created_at: :desc)
+        sort_by = params[:sort_by] || 'created_at'
+        sort_order = params[:sort_order] || 'desc'
+
+        # Validar sort_order
+        sort_order = %w[asc desc].include?(sort_order) ? sort_order : 'desc'
+
+        investors = Investor.includes(:portfolio)
+
+        # Aplicar ordenamiento
+        case sort_by
+        when 'balance'
+          investors = investors.left_joins(:portfolio)
+                               .order(Arel.sql("COALESCE(portfolios.current_balance, 0) #{sort_order}"))
+        when 'status'
+          investors = investors.order(status: sort_order, created_at: :desc)
+        when 'name'
+          investors = investors.order(name: sort_order)
+        else
+          investors = investors.order(created_at: :desc)
+        end
 
         render json: {
           data: investors.map { |inv|
