@@ -27,10 +27,10 @@ RSpec.describe Requests::Reject, type: :service do
 
       it 'sets the processed_at timestamp' do
         service = described_class.new(request_id: request.id)
-        
+
         freeze_time = Time.current
         allow(Time).to receive(:current).and_return(freeze_time)
-        
+
         service.call
 
         request.reload
