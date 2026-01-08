@@ -7,20 +7,20 @@
 **/.env
 **/.env.*
 
-# Rails (backend)
-backend/log/*.log
-backend/tmp/
-backend/storage/
-backend/.bundle/
-backend/vendor/bundle/
-backend/config/master.key
-backend/config/credentials/*.key
+# Rails
+log/*.log
+tmp/
+storage/
+.bundle/
+vendor/bundle/
+config/master.key
+config/credentials/*.key
 
-# Node (frontend)
-frontend/node_modules/
-frontend/dist/
-frontend/dist-ssr/
-frontend/.eslintcache
+# Node (UI)
+ui/node_modules/
+ui/dist/
+ui/dist-ssr/
+ui/.eslintcache
 
 # Editors
 .idea/

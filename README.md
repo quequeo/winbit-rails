@@ -1,13 +1,13 @@
-# Winbit Rails (API) + React (Admin)
+# Winbit Rails + React (Vite UI)
 
-Este folder contiene:
+Este repo contiene:
 
-- **`backend/`**: API en **Rails (API-only)** con Postgres + Devise + Google OAuth.
-- **`frontend/`**: SPA en **React + Vite** (Admin).
+- **Rails** en la **raíz** (API) con Postgres + Devise + Google OAuth.
+- **`ui/`**: SPA en **React + Vite** (Admin).
 
 ## Requisitos
 
-- Ruby **3.2.4** (ver `backend/.ruby-version`)
+- Ruby **3.2.4** (ver `.ruby-version`)
 - Node **>= 20**
 - Postgres corriendo en `localhost:5432`
 
@@ -16,10 +16,10 @@ Este folder contiene:
 1) Preparar gems y base de datos:
 
 ```bash
-cd winbit-rails/backend
+cd winbit-rails
 bundle check || bundle install
 
-# Recomendado: copiar `backend/env.example` a `backend/.env` (NO se commitea)
+# Recomendado: copiar `env.example` a `.env` (NO se commitea)
 # y completar las variables ahí (se cargan con dotenv-rails).
 #
 # Alternativa: exportarlas en tu shell, por ejemplo:
@@ -48,7 +48,7 @@ bin/rails server -p 3000
 ## Levantar Frontend (React + Vite)
 
 ```bash
-cd winbit-rails/frontend
+cd winbit-rails/ui
 npm run dev
 ```
 

@@ -6,11 +6,8 @@ on:
     branches: [ main ]
 
 jobs:
-  backend_scan_ruby:
+  scan_ruby:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: backend
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -18,18 +15,14 @@ jobs:
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: backend/.ruby-version
+          ruby-version: .ruby-version
           bundler-cache: true
-          working-directory: backend
 
       - name: Scan for common Rails security vulnerabilities using static analysis
         run: bin/brakeman --no-pager
 
-  backend_lint:
+  lint:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: backend
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -37,18 +30,14 @@ jobs:
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: backend/.ruby-version
+          ruby-version: .ruby-version
           bundler-cache: true
-          working-directory: backend
 
       - name: Lint code for consistent style
         run: bin/rubocop -f github
 
-  backend_test:
+  test:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: backend
 
     services:
       postgres:
@@ -70,9 +59,8 @@ jobs:
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: backend/.ruby-version
+          ruby-version: .ruby-version
           bundler-cache: true
-          working-directory: backend
 
       - name: Run tests
         env:
