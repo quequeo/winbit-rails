@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Run local CI checks before pushing.
+# Skip with: SKIP_PRE_PUSH=1 git push
+
+if [[ "${SKIP_PRE_PUSH:-}" == "1" ]]; then
+  echo "SKIP_PRE_PUSH=1 set; skipping pre-push checks."
+  exit 0
+fi
+
+echo "== pre-push: bundle check =="
+bundle check >/dev/null || {
+  echo "Bundler deps missing. Run: bundle install"
+  exit 1
+}
+
+echo "== pre-push: tests (bin/rails test) =="
+bin/rails test
+
+echo "== pre-push: lint (rubocop) =="
+bin/rubocop
+
+echo "== pre-push: scan_ruby (brakeman) =="
+bin/brakeman --no-pager
+
+echo "✅ pre-push checks passed."
+
