@@ -73,6 +73,9 @@ RSpec.configure do |config|
   # Devise helpers for request specs (sign_in/sign_out)
   config.include Devise::Test::IntegrationHelpers, type: :request
 
+  # Include TimeHelpers for time manipulation in tests (travel_to, etc.)
+  config.include ActiveSupport::Testing::TimeHelpers
+
   # Filter lines from Rails gems in backtraces.
   config.filter_rails_from_backtrace!
   # arbitrary gems may also be filtered via:
