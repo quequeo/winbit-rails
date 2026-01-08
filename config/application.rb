@@ -12,7 +12,7 @@ require "action_mailer/railtie"
 # require "action_text/engine"
 require "action_view/railtie"
 require "action_cable/engine"
-require "rails/test_unit/railtie"
+# Test framework: RSpec (no Rails test unit)
 
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
@@ -43,11 +43,11 @@ module Backend
 
     # Enable cookie/session middleware (required for Devise + OmniAuth in API-only apps)
     config.middleware.use ActionDispatch::Cookies
-    session_key = ENV.fetch('SESSION_KEY', '_winbit_backend_session')
-    same_site_default = Rails.env.production? ? 'none' : 'lax'
-    same_site = ENV.fetch('SESSION_SAME_SITE', same_site_default).to_s.downcase
-    secure_default = Rails.env.production? ? 'true' : 'false'
-    secure = ENV.fetch('SESSION_SECURE', secure_default).to_s.downcase == 'true'
+    session_key = ENV.fetch("SESSION_KEY", "_winbit_backend_session")
+    same_site_default = Rails.env.production? ? "none" : "lax"
+    same_site = ENV.fetch("SESSION_SAME_SITE", same_site_default).to_s.downcase
+    secure_default = Rails.env.production? ? "true" : "false"
+    secure = ENV.fetch("SESSION_SECURE", secure_default).to_s.downcase == "true"
 
     # For a separate frontend domain in production, cookies must be SameSite=None; Secure
     config.middleware.use ActionDispatch::Session::CookieStore,

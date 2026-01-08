@@ -66,5 +66,22 @@ jobs:
         env:
           RAILS_ENV: test
           DATABASE_URL: postgres://postgres:postgres@localhost:5432
-        run: bin/rails db:test:prepare test
+        run: bin/rails db:test:prepare && bundle exec rspec
+
+  ui_test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install UI deps
+        run: npm --prefix ui ci
+
+      - name: Run UI tests
+        run: npm --prefix ui run test:run
 

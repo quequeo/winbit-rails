@@ -4,8 +4,8 @@ source "https://rubygems.org"
 gem "rails", "~> 8.0.4"
 # Use postgresql as the database for Active Record
 gem "pg", "~> 1.1"
-gem 'devise'
-gem 'omniauth-google-oauth2'
+gem "devise"
+gem "omniauth-google-oauth2"
 # Use the Puma web server [https://github.com/puma/puma]
 gem "puma", ">= 5.0"
 # Build JSON APIs with ease [https://github.com/rails/jbuilder]
@@ -35,9 +35,9 @@ gem "thruster", require: false
 # gem "rack-cors"
 
 group :development, :test do
-  gem 'dotenv-rails', '~> 2.8'
-  gem 'minitest', '~> 5.25'
-  gem 'rack-cors', '~> 2.0'
+  gem "dotenv-rails", "~> 2.8"
+  gem "rspec-rails", "~> 7.0"
+  gem "rack-cors", "~> 2.0"
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
 

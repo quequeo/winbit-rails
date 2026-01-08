@@ -15,14 +15,19 @@ bundle check >/dev/null || {
   exit 1
 }
 
-echo "== pre-push: tests (bin/rails test) =="
-bin/rails test
+echo "== pre-push: tests (rspec) =="
+bundle exec rspec
 
 echo "== pre-push: lint (rubocop) =="
 bin/rubocop
 
 echo "== pre-push: scan_ruby (brakeman) =="
 bin/brakeman --no-pager
+
+if [ -f "ui/package.json" ]; then
+  echo "== pre-push: UI tests (vitest) =="
+  npm --prefix ui run test:run
+fi
 
 echo "✅ pre-push checks passed."
 

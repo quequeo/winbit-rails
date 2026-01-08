@@ -9,4 +9,3 @@ class SpaController < ActionController::Base
     render file: path, layout: false, content_type: 'text/html'
   end
 end
-
