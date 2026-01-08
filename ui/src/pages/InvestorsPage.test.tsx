@@ -81,9 +81,11 @@ describe('InvestorsPage', () => {
         expect(api.getAdminInvestors).toHaveBeenCalled();
       });
 
-      // Click on "Nombre" sort button
-      const nameButton = screen.getByRole('button', { name: /Nombre/i });
-      fireEvent.click(nameButton);
+      // Click on "Nombre" sort button (find by text including sort icon)
+      const nameButtons = screen.getAllByText(/Nombre/i);
+      // The first one should be the standalone sort button (not inside table)
+      const nameButton = nameButtons[0].closest('button');
+      fireEvent.click(nameButton!);
 
       await waitFor(() => {
         expect(api.getAdminInvestors).toHaveBeenCalledWith({
@@ -93,7 +95,7 @@ describe('InvestorsPage', () => {
       });
 
       // Click again to reverse order
-      fireEvent.click(nameButton);
+      fireEvent.click(nameButton!);
 
       await waitFor(() => {
         expect(api.getAdminInvestors).toHaveBeenCalledWith({
