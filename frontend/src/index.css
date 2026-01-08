@@ -1,0 +1,14 @@
+@import 'tailwindcss';
+
+:root {
+  --winbit-primary: #58b098;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  font-family: 'Montserrat', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, 'Noto Sans', 'Liberation Sans', sans-serif;
+}

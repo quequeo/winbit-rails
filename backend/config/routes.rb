@@ -1,0 +1,29 @@
+Rails.application.routes.draw do
+  devise_for :users, controllers: { omniauth_callbacks: 'users/omniauth_callbacks' }
+
+  namespace :api do
+    namespace :public do
+      get 'investor/*email/history', to: 'investors#history', format: false
+      get 'investor/*email', to: 'investors#show', format: false
+      get 'wallets', to: 'wallets#index', format: false
+      post 'requests', to: 'requests#create', format: false
+    end
+
+    namespace :admin do
+      get 'dashboard', to: 'dashboard#show', format: false
+
+      resources :investors, only: [:index, :show, :create, :update], format: false do
+        post 'toggle_status', on: :member
+      end
+
+      get 'portfolios', to: 'portfolios#index', format: false
+      patch 'portfolios/:id', to: 'portfolios#update', format: false
+
+      get 'requests', to: 'requests_list#index', format: false
+      post 'requests/:id/approve', to: 'requests#approve', format: false
+      post 'requests/:id/reject', to: 'requests#reject', format: false
+
+      resources :admins, only: [:index, :create, :update, :destroy], format: false
+    end
+  end
+end

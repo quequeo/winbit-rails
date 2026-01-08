@@ -1,0 +1,27 @@
+.DS_Store
+**/.DS_Store
+
+# Env / secrets
+.env
+.env.*
+**/.env
+**/.env.*
+
+# Rails (backend)
+backend/log/*.log
+backend/tmp/
+backend/storage/
+backend/.bundle/
+backend/vendor/bundle/
+backend/config/master.key
+backend/config/credentials/*.key
+
+# Node (frontend)
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+frontend/.eslintcache
+
+# Editors
+.idea/
+.vscode/
