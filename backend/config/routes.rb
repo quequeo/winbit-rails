@@ -10,6 +10,7 @@ Rails.application.routes.draw do
     end
 
     namespace :admin do
+      get 'session', to: 'session#show', format: false
       get 'dashboard', to: 'dashboard#show', format: false
 
       resources :investors, only: [:index, :show, :create, :update], format: false do

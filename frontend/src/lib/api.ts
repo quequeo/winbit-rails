@@ -39,6 +39,7 @@ async function request(path: string, options?: RequestInit) {
 }
 
 export const api = {
+  getAdminSession: () => request('/api/admin/session'),
   getAdminDashboard: () => request('/api/admin/dashboard'),
   getAdminInvestors: () => request('/api/admin/investors'),
   getAdminRequests: (params?: { status?: string; type?: string }) => {

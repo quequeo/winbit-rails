@@ -1,9 +1,39 @@
-import { NavLink, Outlet } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { api } from '../../lib/api';
 
 const linkBase =
   'border-b-2 border-transparent px-1 py-4 text-sm font-medium text-gray-700 hover:border-[#58b098] hover:text-[#58b098]';
 
 export const AdminLayout = () => {
+  const navigate = useNavigate();
+  const [isCheckingSession, setIsCheckingSession] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    api
+      .getAdminSession()
+      .catch((e) => {
+        if (!isMounted) return;
+        if (e?.message === 'Unauthorized') {
+          navigate('/login', { replace: true });
+          return;
+        }
+        setError(e?.message || 'Error');
+      })
+      .finally(() => {
+        if (isMounted) setIsCheckingSession(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [navigate]);
+
+  if (isCheckingSession) return <div className="p-6 text-gray-600">Cargando...</div>;
+  if (error) return <div className="p-6 text-red-600">{error}</div>;
+
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow">
