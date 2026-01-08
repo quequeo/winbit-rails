@@ -34,18 +34,17 @@ namespace :investors do
     puts "🚀 Importando #{data.size} inversores..."
 
     data.each do |row|
-      code_formatted = "INV#{row[:code]}"
+      email = "investor#{row[:code]}@winbit.com"
 
-      investor = Investor.find_or_initialize_by(code: code_formatted)
+      investor = Investor.find_or_initialize_by(email: email)
 
       if investor.new_record?
-        investor.email = "investor#{row[:code]}@winbit.com"
         investor.name = "Inversor #{row[:code]}"
         investor.status = 'ACTIVE'
         investor.save!
-        puts "  ✅ Creado inversor #{code_formatted}"
+        puts "  ✅ Creado inversor #{email}"
       else
-        puts "  ℹ️  Inversor #{code_formatted} ya existe"
+        puts "  ℹ️  Inversor #{email} ya existe"
       end
 
       portfolio = investor.portfolio || investor.build_portfolio

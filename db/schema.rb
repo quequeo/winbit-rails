@@ -10,18 +10,16 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_07_222550) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_08_210412) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
   create_table "investors", id: :string, force: :cascade do |t|
     t.string "email", null: false
     t.string "name", null: false
-    t.string "code", null: false
     t.string "status", default: "ACTIVE", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["code"], name: "index_investors_on_code", unique: true
     t.index ["email"], name: "index_investors_on_email", unique: true
     t.check_constraint "status::text = ANY (ARRAY['ACTIVE'::character varying, 'INACTIVE'::character varying]::text[])", name: "investors_status_check"
   end
