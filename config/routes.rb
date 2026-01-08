@@ -13,7 +13,7 @@ Rails.application.routes.draw do
       get 'session', to: 'session#show', format: false
       get 'dashboard', to: 'dashboard#show', format: false
 
-      resources :investors, only: [:index, :show, :create, :update], format: false do
+      resources :investors, only: [:index, :show, :create, :update, :destroy], format: false do
         post 'toggle_status', on: :member
       end
 

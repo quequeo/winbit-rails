@@ -94,6 +94,14 @@ module Api
 
         head :no_content
       end
+
+      def destroy
+        inv = Investor.find_by(id: params[:id])
+        return render_error('Inversor no encontrado', status: :not_found) unless inv
+
+        inv.destroy!
+        head :no_content
+      end
     end
   end
 end

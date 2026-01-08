@@ -57,6 +57,12 @@ export const api = {
   getAdminAdmins: () => request('/api/admin/admins'),
   createAdmin: (body: { email: string; name?: string; role: 'ADMIN' | 'SUPERADMIN' }) =>
     request('/api/admin/admins', { method: 'POST', body: JSON.stringify(body) }),
+  updateAdmin: (id: string, body: { email: string; name?: string; role: 'ADMIN' | 'SUPERADMIN' }) =>
+    request(`/api/admin/admins/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
+  deleteAdmin: (id: string) => request(`/api/admin/admins/${id}`, { method: 'DELETE' }),
   createInvestor: (body: { email: string; name: string; code: string }) =>
     request('/api/admin/investors', { method: 'POST', body: JSON.stringify(body) }),
+  updateInvestor: (id: string, body: { email: string; name: string; code: string }) =>
+    request(`/api/admin/investors/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
+  deleteInvestor: (id: string) => request(`/api/admin/investors/${id}`, { method: 'DELETE' }),
 };
