@@ -50,6 +50,11 @@ export const api = {
     const suffix = qs.toString() ? `?${qs.toString()}` : '';
     return request(`/api/admin/requests${suffix}`);
   },
+  createRequest: (body: { investor_id: string; request_type: string; method: string; amount: number; network?: string; status?: string }) =>
+    request('/api/admin/requests', { method: 'POST', body: JSON.stringify(body) }),
+  updateRequest: (id: string, body: { investor_id: string; request_type: string; method: string; amount: number; network?: string; status?: string }) =>
+    request(`/api/admin/requests/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
+  deleteRequest: (id: string) => request(`/api/admin/requests/${id}`, { method: 'DELETE' }),
   approveRequest: (id: string) => request(`/api/admin/requests/${id}/approve`, { method: 'POST' }),
   rejectRequest: (id: string) => request(`/api/admin/requests/${id}/reject`, { method: 'POST' }),
   getAdminPortfolios: () => request('/api/admin/portfolios'),

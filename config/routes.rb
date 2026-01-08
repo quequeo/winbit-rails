@@ -21,6 +21,9 @@ Rails.application.routes.draw do
       patch 'portfolios/:id', to: 'portfolios#update', format: false
 
       get 'requests', to: 'requests_list#index', format: false
+      post 'requests', to: 'requests#create', format: false
+      patch 'requests/:id', to: 'requests#update', format: false
+      delete 'requests/:id', to: 'requests#destroy', format: false
       post 'requests/:id/approve', to: 'requests#approve', format: false
       post 'requests/:id/reject', to: 'requests#reject', format: false
 

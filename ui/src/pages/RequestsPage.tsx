@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../lib/api';
 import { Button } from '../components/ui/Button';
+import { Input } from '../components/ui/Input';
 
 export const RequestsPage = () => {
   const [status, setStatus] = useState('');
@@ -8,6 +9,18 @@ export const RequestsPage = () => {
   const [data, setData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [formData, setFormData] = useState({
+    investor_id: '',
+    request_type: 'DEPOSIT',
+    method: 'USDT',
+    amount: '',
+    network: '',
+    status: 'PENDING',
+  });
+  const [submitting, setSubmitting] = useState(false);
+  const [investors, setInvestors] = useState<any[]>([]);
 
   const params = useMemo(() => ({ status: status || undefined, type: type || undefined }), [status, type]);
 
@@ -21,6 +34,7 @@ export const RequestsPage = () => {
 
   useEffect(() => {
     load();
+    api.getAdminInvestors().then((res) => setInvestors(res?.data || [])).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, type]);
 
@@ -48,6 +62,55 @@ export const RequestsPage = () => {
     }
   };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      if (editingId) {
+        await api.updateRequest(editingId, { ...formData, amount: Number(formData.amount) });
+      } else {
+        await api.createRequest({ ...formData, amount: Number(formData.amount) });
+      }
+      setFormData({ investor_id: '', request_type: 'DEPOSIT', method: 'USDT', amount: '', network: '', status: 'PENDING' });
+      setShowForm(false);
+      setEditingId(null);
+      load();
+    } catch (err: any) {
+      alert(err.message || 'Error al guardar solicitud');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const startEdit = (req: any) => {
+    setEditingId(req.id);
+    setFormData({
+      investor_id: req.investor.id,
+      request_type: req.type,
+      method: req.method,
+      amount: req.amount.toString(),
+      network: req.network || '',
+      status: req.status,
+    });
+    setShowForm(true);
+  };
+
+  const handleDelete = async (req: any) => {
+    if (!confirm(`¿Estás seguro de eliminar esta solicitud de ${req.investor.name}?`)) return;
+    try {
+      await api.deleteRequest(req.id);
+      load();
+    } catch (err: any) {
+      alert(err.message || 'Error al eliminar solicitud');
+    }
+  };
+
+  const cancelForm = () => {
+    setShowForm(false);
+    setEditingId(null);
+    setFormData({ investor_id: '', request_type: 'DEPOSIT', method: 'USDT', amount: '', network: '', status: 'PENDING' });
+  };
+
   if (error) return <div className="text-red-600">{error}</div>;
   if (!data) return <div className="text-gray-600">Cargando...</div>;
 
@@ -56,7 +119,7 @@ export const RequestsPage = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Solicitudes</h1>
           <p className="mt-1 text-sm text-gray-600">
@@ -64,7 +127,112 @@ export const RequestsPage = () => {
             {pendingCount !== 1 ? 's' : ''}
           </p>
         </div>
+        <Button onClick={() => { setShowForm(!showForm); setEditingId(null); }} className="shrink-0">
+          {showForm ? 'Cancelar' : '+ Agregar Solicitud'}
+        </Button>
       </div>
+
+      {showForm && (
+        <div className="rounded-lg bg-white p-6 shadow">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            {editingId ? 'Editar Solicitud' : 'Nueva Solicitud'}
+          </h2>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Inversor *</label>
+                <select
+                  required
+                  value={formData.investor_id}
+                  onChange={(e) => setFormData({ ...formData, investor_id: e.target.value })}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
+                >
+                  <option value="">Seleccionar inversor</option>
+                  {investors.map((inv: any) => (
+                    <option key={inv.id} value={inv.id}>
+                      {inv.name} ({inv.email})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Tipo *</label>
+                <select
+                  required
+                  value={formData.request_type}
+                  onChange={(e) => setFormData({ ...formData, request_type: e.target.value })}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
+                >
+                  <option value="DEPOSIT">Depósito</option>
+                  <option value="WITHDRAWAL">Retiro</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Método *</label>
+                <select
+                  required
+                  value={formData.method}
+                  onChange={(e) => setFormData({ ...formData, method: e.target.value })}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
+                >
+                  <option value="USDT">USDT</option>
+                  <option value="USDC">USDC</option>
+                  <option value="LEMON_CASH">Lemon Cash</option>
+                  <option value="CASH">Efectivo</option>
+                  <option value="SWIFT">SWIFT</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Monto *</label>
+                <Input
+                  type="number"
+                  required
+                  min="0"
+                  step="0.01"
+                  value={formData.amount}
+                  onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                  placeholder="1000"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Red (opcional)</label>
+                <select
+                  value={formData.network}
+                  onChange={(e) => setFormData({ ...formData, network: e.target.value })}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
+                >
+                  <option value="">Sin red</option>
+                  <option value="TRC20">TRC20</option>
+                  <option value="BEP20">BEP20</option>
+                  <option value="ERC20">ERC20</option>
+                  <option value="POLYGON">POLYGON</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Estado *</label>
+                <select
+                  required
+                  value={formData.status}
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
+                >
+                  <option value="PENDING">Pendiente</option>
+                  <option value="APPROVED">Aprobado</option>
+                  <option value="REJECTED">Rechazado</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <Button type="submit" disabled={submitting}>
+                {submitting ? 'Guardando...' : editingId ? 'Actualizar' : 'Crear Solicitud'}
+              </Button>
+              <Button type="button" onClick={cancelForm} className="bg-gray-500 hover:bg-gray-600">
+                Cancelar
+              </Button>
+            </div>
+          </form>
+        </div>
+      )}
 
       <div className="rounded-lg bg-white p-6 shadow">
         <div className="flex gap-4">
@@ -140,22 +308,42 @@ export const RequestsPage = () => {
               </span>
             </div>
 
-            {r.status === 'PENDING' ? (
-              <div className="mt-4 flex gap-2">
-                <Button size="sm" onClick={() => approve(r.id)} disabled={busyId === r.id} className="flex-1">
-                  Aprobar
-                </Button>
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  onClick={() => reject(r.id)}
-                  disabled={busyId === r.id}
-                  className="flex-1"
-                >
-                  Rechazar
-                </Button>
-              </div>
-            ) : null}
+            <div className="mt-4 flex gap-2">
+              {r.status === 'PENDING' ? (
+                <>
+                  <Button size="sm" onClick={() => approve(r.id)} disabled={busyId === r.id} className="flex-1">
+                    Aprobar
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => reject(r.id)}
+                    disabled={busyId === r.id}
+                    className="flex-1"
+                  >
+                    Rechazar
+                  </Button>
+                </>
+              ) : null}
+              <button
+                onClick={() => startEdit(r)}
+                className="p-2 text-blue-600 hover:bg-blue-50 rounded"
+                title="Editar"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+              </button>
+              <button
+                onClick={() => handleDelete(r)}
+                className="p-2 text-red-600 hover:bg-red-50 rounded"
+                title="Eliminar"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            </div>
           </div>
         ))}
       </div>
@@ -219,25 +407,41 @@ export const RequestsPage = () => {
                     </span>
                   </td>
                   <td className="py-2 text-right">
-                    {r.status === 'PENDING' ? (
-                      <div className="flex justify-end gap-2">
-                        <Button size="sm" onClick={() => approve(r.id)} disabled={busyId === r.id}>
-                          Aprobar
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => reject(r.id)}
-                          disabled={busyId === r.id}
-                        >
-                          Rechazar
-                        </Button>
-                      </div>
-                    ) : (
-                      <span className="text-sm text-gray-500">
-                        {r.processedAt ? new Date(r.processedAt).toLocaleDateString('es-AR') : '-'}
-                      </span>
-                    )}
+                    <div className="flex justify-end gap-2">
+                      {r.status === 'PENDING' ? (
+                        <>
+                          <Button size="sm" onClick={() => approve(r.id)} disabled={busyId === r.id}>
+                            Aprobar
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => reject(r.id)}
+                            disabled={busyId === r.id}
+                          >
+                            Rechazar
+                          </Button>
+                        </>
+                      ) : null}
+                      <button
+                        onClick={() => startEdit(r)}
+                        className="p-2 text-blue-600 hover:bg-blue-50 rounded"
+                        title="Editar"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={() => handleDelete(r)}
+                        className="p-2 text-red-600 hover:bg-red-50 rounded"
+                        title="Eliminar"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
