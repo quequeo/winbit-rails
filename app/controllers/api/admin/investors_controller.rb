@@ -44,6 +44,7 @@ module Api
         inv = Investor.new(
           email: params.require(:email),
           name: params.require(:name),
+          code: params.require(:code),
           status: 'ACTIVE',
         )
 
@@ -74,6 +75,7 @@ module Api
         inv.update!(
           email: params.require(:email),
           name: params.require(:name),
+          code: params.require(:code),
         )
 
         head :no_content

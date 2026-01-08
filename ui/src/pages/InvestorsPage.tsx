@@ -7,10 +7,10 @@ export const InvestorsPage = () => {
   const [data, setData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({ email: '', name: '' });
+  const [formData, setFormData] = useState({ email: '', name: '', code: '' });
   const [submitting, setSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({ email: '', name: '' });
+  const [editForm, setEditForm] = useState({ email: '', name: '', code: '' });
 
   const fetchInvestors = () => {
     api
@@ -32,7 +32,7 @@ export const InvestorsPage = () => {
     setSubmitting(true);
     try {
       await api.createInvestor(formData);
-      setFormData({ email: '', name: '' });
+      setFormData({ email: '', name: '', code: '' });
       setShowForm(false);
       fetchInvestors();
     } catch (err: any) {
@@ -68,7 +68,7 @@ export const InvestorsPage = () => {
 
   const startEdit = (investor: any) => {
     setEditingId(investor.id);
-    setEditForm({ email: investor.email, name: investor.name });
+    setEditForm({ email: investor.email, name: investor.name, code: investor.code });
   };
 
   if (error) return <div className="text-red-600">{error}</div>;
@@ -92,6 +92,16 @@ export const InvestorsPage = () => {
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Nuevo Inversor</h2>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Código *</label>
+              <Input
+                type="text"
+                required
+                value={formData.code}
+                onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                placeholder="INV028"
+              />
+            </div>
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
               <Input
                 type="email"
@@ -111,7 +121,6 @@ export const InvestorsPage = () => {
                 placeholder="María González"
               />
             </div>
-            <p className="text-sm text-gray-500">El código del inversor se generará automáticamente.</p>
             <div className="flex gap-3">
               <Button type="submit" disabled={submitting}>
                 {submitting ? 'Creando...' : 'Crear Inversor'}
@@ -130,6 +139,14 @@ export const InvestorsPage = () => {
           <div key={inv.id} className="w-full overflow-hidden rounded-lg bg-white p-4 shadow">
             {editingId === inv.id ? (
               <form onSubmit={(e) => handleEditSubmit(e, inv.id)} className="space-y-3">
+                <Input
+                  type="text"
+                  required
+                  value={editForm.code}
+                  onChange={(e) => setEditForm({ ...editForm, code: e.target.value })}
+                  placeholder="Código"
+                  className="text-sm"
+                />
                 <Input
                   type="email"
                   required
@@ -214,6 +231,7 @@ export const InvestorsPage = () => {
           <table className="min-w-full">
             <thead>
               <tr className="text-left text-sm text-gray-500">
+                <th className="py-2">Código</th>
                 <th className="py-2">Nombre</th>
                 <th className="py-2">Email</th>
                 <th className="py-2">Balance</th>
@@ -226,6 +244,15 @@ export const InvestorsPage = () => {
                 <tr key={inv.id} className="text-sm">
                   {editingId === inv.id ? (
                     <>
+                      <td className="py-2">
+                        <Input
+                          type="text"
+                          required
+                          value={editForm.code}
+                          onChange={(e) => setEditForm({ ...editForm, code: e.target.value })}
+                          className="text-sm"
+                        />
+                      </td>
                       <td className="py-2">
                         <Input
                           type="text"
@@ -265,6 +292,7 @@ export const InvestorsPage = () => {
                     </>
                   ) : (
                     <>
+                      <td className="py-2 text-gray-600">{inv.code}</td>
                       <td className="py-2 font-medium">{inv.name}</td>
                       <td className="py-2 text-gray-600">{inv.email}</td>
                       <td className="py-2">${(inv.portfolio?.currentBalance ?? 0).toLocaleString('en-US')}</td>

@@ -10,8 +10,6 @@ class Investor < ApplicationRecord
   validates :name, presence: true
   validates :status, presence: true, inclusion: { in: STATUSES }
 
-  before_validation :generate_code, on: :create
-
   def status_active?
     status == 'ACTIVE'
   end
