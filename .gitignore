@@ -22,6 +22,11 @@ ui/dist/
 ui/dist-ssr/
 ui/.eslintcache
 
+# UI build output copied into Rails /public (generated)
+public/index.html
+public/assets/
+public/vite.svg
+
 # Editors
 .idea/
 .vscode/

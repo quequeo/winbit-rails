@@ -1,0 +1,12 @@
+{
+  "name": "winbit-rails",
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "npm --prefix ui ci && npm --prefix ui run build && rm -rf public/assets public/vite.svg public/index.html && cp -R ui/dist/* public/",
+    "heroku-postbuild": "npm run build"
+  }
+}
+

@@ -27,4 +27,12 @@ Rails.application.routes.draw do
       resources :admins, only: [:index, :create, :update, :destroy], format: false
     end
   end
+
+  # Serve the Vite SPA (built into /public) from Rails in production.
+  root to: 'spa#index'
+  get '*path', to: 'spa#index', constraints: lambda { |req|
+    !req.path.start_with?('/api') &&
+      !req.path.start_with?('/users') &&
+      !req.path.start_with?('/rails')
+  }
 end
