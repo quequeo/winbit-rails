@@ -7,10 +7,10 @@ export const InvestorsPage = () => {
   const [data, setData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({ email: '', name: '', code: '' });
+  const [formData, setFormData] = useState({ email: '', name: '' });
   const [submitting, setSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({ email: '', name: '', code: '' });
+  const [editForm, setEditForm] = useState({ email: '', name: '' });
 
   const fetchInvestors = () => {
     api
@@ -32,7 +32,7 @@ export const InvestorsPage = () => {
     setSubmitting(true);
     try {
       await api.createInvestor(formData);
-      setFormData({ email: '', name: '', code: '' });
+      setFormData({ email: '', name: '' });
       setShowForm(false);
       fetchInvestors();
     } catch (err: any) {
@@ -68,7 +68,7 @@ export const InvestorsPage = () => {
 
   const startEdit = (investor: any) => {
     setEditingId(investor.id);
-    setEditForm({ email: investor.email, name: investor.name, code: investor.code });
+    setEditForm({ email: investor.email, name: investor.name });
   };
 
   if (error) return <div className="text-red-600">{error}</div>;
@@ -111,16 +111,7 @@ export const InvestorsPage = () => {
                 placeholder="María González"
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Código *</label>
-              <Input
-                type="text"
-                required
-                value={formData.code}
-                onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                placeholder="INV001"
-              />
-            </div>
+            <p className="text-sm text-gray-500">El código del inversor se generará automáticamente.</p>
             <div className="flex gap-3">
               <Button type="submit" disabled={submitting}>
                 {submitting ? 'Creando...' : 'Crear Inversor'}
@@ -153,14 +144,6 @@ export const InvestorsPage = () => {
                   value={editForm.name}
                   onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
                   placeholder="Nombre"
-                  className="text-sm"
-                />
-                <Input
-                  type="text"
-                  required
-                  value={editForm.code}
-                  onChange={(e) => setEditForm({ ...editForm, code: e.target.value })}
-                  placeholder="Código"
                   className="text-sm"
                 />
                 <div className="flex gap-2">
@@ -261,17 +244,7 @@ export const InvestorsPage = () => {
                           className="text-sm"
                         />
                       </td>
-                      <td className="py-2">
-                        <Input
-                          type="text"
-                          required
-                          value={editForm.code}
-                          onChange={(e) => setEditForm({ ...editForm, code: e.target.value })}
-                          placeholder="Código"
-                          className="text-sm"
-                        />
-                      </td>
-                      <td className="py-2"></td>
+                      <td className="py-2" colSpan={2}></td>
                       <td className="py-2 text-right">
                         <div className="flex gap-2 justify-end">
                           <Button

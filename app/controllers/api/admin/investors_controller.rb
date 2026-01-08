@@ -44,7 +44,6 @@ module Api
         inv = Investor.new(
           email: params.require(:email),
           name: params.require(:name),
-          code: params.require(:code),
           status: 'ACTIVE',
         )
 
@@ -61,7 +60,7 @@ module Api
           )
         end
 
-        render json: { data: { id: inv.id } }, status: :created
+        render json: { data: { id: inv.id, code: inv.code } }, status: :created
       rescue ActiveRecord::RecordInvalid => e
         render_error(e.record.errors.full_messages.join(', '), status: :bad_request)
       rescue ActionController::ParameterMissing => e
@@ -75,7 +74,6 @@ module Api
         inv.update!(
           email: params.require(:email),
           name: params.require(:name),
-          code: params.require(:code),
         )
 
         head :no_content
