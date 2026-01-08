@@ -149,6 +149,33 @@ RSpec.describe 'Admin Investors API', type: :request do
     end
   end
 
+  describe 'POST /api/admin/investors/:id/toggle_status' do
+    let(:investor) { Investor.create!(email: 'toggle@test.com', name: 'Toggle Test', status: 'ACTIVE') }
+
+    it 'toggles status from ACTIVE to INACTIVE' do
+      post "/api/admin/investors/#{investor.id}/toggle_status"
+
+      expect(response).to have_http_status(:no_content)
+      investor.reload
+      expect(investor.status).to eq('INACTIVE')
+    end
+
+    it 'toggles status from INACTIVE to ACTIVE' do
+      investor.update!(status: 'INACTIVE')
+
+      post "/api/admin/investors/#{investor.id}/toggle_status"
+
+      expect(response).to have_http_status(:no_content)
+      investor.reload
+      expect(investor.status).to eq('ACTIVE')
+    end
+
+    it 'returns error when investor not found' do
+      post '/api/admin/investors/nonexistent/toggle_status'
+      expect(response).to have_http_status(:not_found)
+    end
+  end
+
   describe 'DELETE /api/admin/investors/:id' do
     let(:investor) { Investor.create!(email: 'delete@test.com', name: 'To Delete', status: 'ACTIVE') }
 
