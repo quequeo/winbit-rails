@@ -2,7 +2,7 @@ require 'rails_helper'
 
 RSpec.describe 'Public requests', type: :request do
   it 'POST /api/public/requests creates deposit request' do
-    investor = Investor.create!(email: 'r@example.com', name: 'r', code: 'R-1', status: 'ACTIVE')
+    investor = Investor.create!(email: 'r@example.com', name: 'r', status: 'ACTIVE')
     Portfolio.create!(investor_id: investor.id, current_balance: 100, total_invested: 100)
 
     post '/api/public/requests',
@@ -24,7 +24,7 @@ RSpec.describe 'Public requests', type: :request do
   end
 
   it 'POST /api/public/requests validates withdrawal balance' do
-    investor = Investor.create!(email: 'w@example.com', name: 'w', code: 'W-1', status: 'ACTIVE')
+    investor = Investor.create!(email: 'w@example.com', name: 'w', status: 'ACTIVE')
     Portfolio.create!(investor_id: investor.id, current_balance: 10, total_invested: 10)
 
     post '/api/public/requests',

@@ -7,7 +7,7 @@ RSpec.describe 'Admin requests', type: :request do
   end
 
   it 'POST /api/admin/requests/:id/approve approves deposit and creates history' do
-    investor = Investor.create!(email: 'a@example.com', name: 'a', code: 'A-1', status: 'ACTIVE')
+    investor = Investor.create!(email: 'a@example.com', name: 'a', status: 'ACTIVE')
     portfolio = Portfolio.create!(investor_id: investor.id, current_balance: 100, total_invested: 100)
 
     req = InvestorRequest.create!(
@@ -33,7 +33,7 @@ RSpec.describe 'Admin requests', type: :request do
   end
 
   it 'POST /api/admin/requests/:id/reject rejects pending request' do
-    investor = Investor.create!(email: 'b@example.com', name: 'b', code: 'B-1', status: 'ACTIVE')
+    investor = Investor.create!(email: 'b@example.com', name: 'b', status: 'ACTIVE')
     Portfolio.create!(investor_id: investor.id, current_balance: 100, total_invested: 100)
 
     req = InvestorRequest.create!(

@@ -2,7 +2,7 @@ require 'rails_helper'
 
 RSpec.describe 'Public investors', type: :request do
   it 'GET /api/public/investor/:email returns investor + portfolio' do
-    investor = Investor.create!(email: 'test@example.com', name: 'juan perez', code: 'JP-1', status: 'ACTIVE')
+    investor = Investor.create!(email: 'test@example.com', name: 'juan perez', status: 'ACTIVE')
     Portfolio.create!(
       investor_id: investor.id,
       current_balance: 100,
@@ -19,7 +19,6 @@ RSpec.describe 'Public investors', type: :request do
     json = JSON.parse(response.body)
     expect(json.dig('data', 'investor', 'email')).to eq('test@example.com')
     expect(json.dig('data', 'investor', 'name')).to eq('Juan Perez')
-    expect(json.dig('data', 'investor', 'code')).to eq('JP-1')
     expect(json.dig('data', 'portfolio', 'currentBalance')).to eq(100.0)
   end
 
@@ -29,14 +28,14 @@ RSpec.describe 'Public investors', type: :request do
   end
 
   it 'GET /api/public/investor/:email returns 403 when inactive' do
-    Investor.create!(email: 'inactive@example.com', name: 'x', code: 'X-1', status: 'INACTIVE')
+    Investor.create!(email: 'inactive@example.com', name: 'x', status: 'INACTIVE')
 
     get "/api/public/investor/#{CGI.escape('inactive@example.com')}"
     expect(response).to have_http_status(:forbidden)
   end
 
   it 'GET /api/public/investor/:email/history returns history desc' do
-    investor = Investor.create!(email: 'h@example.com', name: 'h', code: 'H-1', status: 'ACTIVE')
+    investor = Investor.create!(email: 'h@example.com', name: 'h', status: 'ACTIVE')
 
     PortfolioHistory.create!(
       investor_id: investor.id,

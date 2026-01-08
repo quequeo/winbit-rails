@@ -12,7 +12,6 @@ module Api
           investor: {
             email: investor.email,
             name: format_name(investor.name),
-            code: investor.code,
           },
           portfolio: investor.portfolio ? {
             currentBalance: investor.portfolio.current_balance.to_f,
