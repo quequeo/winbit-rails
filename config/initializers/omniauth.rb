@@ -7,3 +7,6 @@
 # If you want stricter CSRF protection, switch the frontend to POST instead.
 OmniAuth.config.allowed_request_methods = %i[get post]
 
+# We intentionally allow GET for local/dev convenience; silence the warning spam.
+OmniAuth.config.silence_get_warning = true
+
