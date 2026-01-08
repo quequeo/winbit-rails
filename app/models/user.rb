@@ -22,13 +22,26 @@ class User < ApplicationRecord
   end
 
   def self.from_google_omniauth(auth)
-    email = auth.info.email.to_s
+    return nil unless auth.present?
+
+    email =
+      if auth.respond_to?(:dig)
+        auth.dig('info', 'email').to_s
+      elsif auth.respond_to?(:info)
+        auth.info&.email.to_s
+      else
+        ''
+      end
+
+    return nil if email.blank?
 
     # Only allow emails already whitelisted as admins
     user = find_by(email: email)
     return nil unless user
 
-    user.update!(provider: auth.provider, uid: auth.uid)
+    provider = auth.respond_to?(:provider) ? auth.provider : (auth['provider'] rescue nil)
+    uid = auth.respond_to?(:uid) ? auth.uid : (auth['uid'] rescue nil)
+    user.update!(provider: provider, uid: uid)
     user
   end
 end

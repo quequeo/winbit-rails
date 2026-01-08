@@ -1,6 +1,12 @@
 class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
   def google_oauth2
-    user = User.from_google_omniauth(request.env['omniauth.auth'])
+    auth = request.env['omniauth.auth']
+    unless auth.present?
+      redirect_to("#{frontend_url}/login?error=auth_failed")
+      return
+    end
+
+    user = User.from_google_omniauth(auth)
 
     unless user
       redirect_to("#{frontend_url}/login?error=unauthorized")
