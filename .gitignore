@@ -26,9 +26,6 @@ frontend/.eslintcache
 .idea/
 .vscode/
 
-# Local notes / env lists (never commit secrets)
+# Local notes (never commit secrets)
 variables.md
 variables.local.md
-
-# Allow example template to be committed
-!variables.example.md
