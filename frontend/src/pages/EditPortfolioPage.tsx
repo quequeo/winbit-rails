@@ -10,6 +10,14 @@ export const EditPortfolioPage = () => {
   const [inv, setInv] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState(() => ({
+    currentBalance: 0,
+    totalInvested: 0,
+    accumulatedReturnUSD: 0,
+    accumulatedReturnPercent: 0,
+    annualReturnUSD: 0,
+    annualReturnPercent: 0,
+  }));
 
   useEffect(() => {
     // reuse portfolios list endpoint for now (simple)
@@ -17,31 +25,38 @@ export const EditPortfolioPage = () => {
       .getAdminPortfolios()
       .then((res: any) => {
         const found = res.data.find((x: any) => x.id === id);
+        if (!found) {
+          setError('No se encontró el inversor/portfolio');
+          return;
+        }
         setInv(found);
       })
       .catch((e) => setError(e.message));
   }, [id]);
 
+  useEffect(() => {
+    if (!inv) return;
+    const p = inv.portfolio || {
+      current_balance: 0,
+      total_invested: 0,
+      accumulated_return_usd: 0,
+      accumulated_return_percent: 0,
+      annual_return_usd: 0,
+      annual_return_percent: 0,
+    };
+
+    setForm({
+      currentBalance: p.current_balance,
+      totalInvested: p.total_invested,
+      accumulatedReturnUSD: p.accumulated_return_usd,
+      accumulatedReturnPercent: p.accumulated_return_percent,
+      annualReturnUSD: p.annual_return_usd,
+      annualReturnPercent: p.annual_return_percent,
+    });
+  }, [inv]);
+
   if (error) return <div className="text-red-600">{error}</div>;
   if (!inv) return <div className="text-gray-600">Cargando...</div>;
-
-  const p = inv.portfolio || {
-    current_balance: 0,
-    total_invested: 0,
-    accumulated_return_usd: 0,
-    accumulated_return_percent: 0,
-    annual_return_usd: 0,
-    annual_return_percent: 0,
-  };
-
-  const [form, setForm] = useState(() => ({
-    currentBalance: p.current_balance,
-    totalInvested: p.total_invested,
-    accumulatedReturnUSD: p.accumulated_return_usd,
-    accumulatedReturnPercent: p.accumulated_return_percent,
-    annualReturnUSD: p.annual_return_usd,
-    annualReturnPercent: p.annual_return_percent,
-  }));
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,7 +78,7 @@ export const EditPortfolioPage = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Editar Portfolio</h1>
-          <p className="text-gray-600 mt-1">{inv.name} ({inv.code})</p>
+          <p className="text-gray-600 mt-1">{inv.name}</p>
         </div>
         <Button variant="outline" onClick={() => navigate('/portfolios')}>Volver</Button>
       </div>
