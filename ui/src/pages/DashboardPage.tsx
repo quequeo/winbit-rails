@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
+import { formatCurrencyAR } from '../lib/formatters';
 
 type DashboardData = {
   data: {
@@ -43,7 +44,7 @@ export const DashboardPage = () => {
         <div className="rounded-lg bg-white p-6 shadow">
           <p className="text-sm font-medium text-gray-600">AUM Total</p>
           <p className="mt-2 text-3xl font-bold text-gray-900">
-            ${data.data.totalAum.toLocaleString('en-US')}
+            {formatCurrencyAR(data.data.totalAum)}
           </p>
         </div>
         <div className="rounded-lg bg-white p-6 shadow">

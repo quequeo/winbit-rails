@@ -41,7 +41,8 @@ describe('DashboardPage', () => {
     expect(screen.getByText('25')).toBeInTheDocument();
 
     expect(screen.getByText('AUM Total')).toBeInTheDocument();
-    expect(screen.getByText('$150,000')).toBeInTheDocument();
+    // Argentine format: $150.000,00
+    expect(screen.getByText(/\$150\.000,00/)).toBeInTheDocument();
 
     expect(screen.getByText('Solicitudes Pendientes')).toBeInTheDocument();
     expect(screen.getByText('3')).toBeInTheDocument();
@@ -71,7 +72,8 @@ describe('DashboardPage', () => {
     render(<DashboardPage />);
 
     await waitFor(() => {
-      expect(screen.getByText(/\$1,234,567.89/)).toBeInTheDocument();
+      // Argentine format: $1.234.567,89
+      expect(screen.getByText(/\$1\.234\.567,89/)).toBeInTheDocument();
     });
   });
 
@@ -92,7 +94,8 @@ describe('DashboardPage', () => {
       expect(screen.getByText('Dashboard')).toBeInTheDocument();
     });
 
-    expect(screen.getByText('$0')).toBeInTheDocument();
+    // Argentine format: $0,00
+    expect(screen.getByText(/\$0,00/)).toBeInTheDocument();
     const zeroElements = screen.getAllByText('0');
     expect(zeroElements.length).toBeGreaterThanOrEqual(2);
   });

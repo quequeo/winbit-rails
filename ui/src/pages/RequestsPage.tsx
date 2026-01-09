@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../lib/api';
+import { formatCurrencyAR } from '../lib/formatters';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 
@@ -308,7 +309,7 @@ export const RequestsPage = () => {
               </span>
               <span className="text-xs text-gray-600">{r.method}</span>
               <span className="ml-auto font-mono text-sm font-semibold text-gray-900">
-                ${Number(r.amount).toLocaleString('en-US')}
+                {formatCurrencyAR(Number(r.amount))}
               </span>
             </div>
 
@@ -392,7 +393,7 @@ export const RequestsPage = () => {
                     </span>
                   </td>
                   <td className="py-2">{r.method}</td>
-                  <td className="py-2 font-mono font-semibold">${Number(r.amount).toLocaleString('en-US')}</td>
+                  <td className="py-2 font-mono font-semibold">{formatCurrencyAR(Number(r.amount))}</td>
                   <td className="py-2">
                     <span
                       className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
