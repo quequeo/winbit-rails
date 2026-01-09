@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
 import { Button } from '../components/ui/Button';
+import { formatCurrencyAR } from '../lib/formatters';
 
 export const PortfoliosPage = () => {
   const [data, setData] = useState<any>(null);
@@ -46,19 +47,13 @@ export const PortfoliosPage = () => {
               <div>
                 <p className="text-xs text-gray-500">Capital Actual</p>
                 <p className="mt-1 font-mono font-semibold text-gray-900">
-                  ${(inv.portfolio?.current_balance ?? 0).toLocaleString('en-US', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
+                  {formatCurrencyAR(inv.portfolio?.current_balance ?? 0)}
                 </p>
               </div>
               <div>
                 <p className="text-xs text-gray-500">Total Invertido</p>
                 <p className="mt-1 font-mono font-semibold text-gray-900">
-                  ${(inv.portfolio?.total_invested ?? 0).toLocaleString('en-US', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
+                  {formatCurrencyAR(inv.portfolio?.total_invested ?? 0)}
                 </p>
               </div>
             </div>
@@ -93,16 +88,10 @@ export const PortfoliosPage = () => {
                   <td className="py-2 font-medium">{inv.name}</td>
                   <td className="py-2 text-gray-600">{inv.email}</td>
                   <td className="py-2 text-right">
-                    ${(inv.portfolio?.current_balance ?? 0).toLocaleString('en-US', {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
+                    {formatCurrencyAR(inv.portfolio?.current_balance ?? 0)}
                   </td>
                   <td className="py-2 text-right">
-                    ${(inv.portfolio?.total_invested ?? 0).toLocaleString('en-US', {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
+                    {formatCurrencyAR(inv.portfolio?.total_invested ?? 0)}
                   </td>
                   <td className="py-2 text-center">
                     <Link to={`/portfolios/${inv.id}`}>

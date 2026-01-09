@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
+import { formatCurrencyAR } from '../lib/formatters';
 
 export const InvestorsPage = () => {
   const [data, setData] = useState<any>(null);
@@ -194,7 +195,7 @@ export const InvestorsPage = () => {
                 <div className="mt-4">
                   <p className="text-xs text-gray-500">Balance</p>
                   <p className="mt-1 font-mono font-semibold text-gray-900">
-                    ${(inv.portfolio?.currentBalance ?? 0).toLocaleString('en-US')}
+                    {formatCurrencyAR(inv.portfolio?.currentBalance ?? 0)}
                   </p>
                 </div>
 
@@ -307,7 +308,7 @@ export const InvestorsPage = () => {
                     <>
                       <td className="py-2 font-medium">{inv.name}</td>
                       <td className="py-2 text-gray-600">{inv.email}</td>
-                      <td className="py-2">${(inv.portfolio?.currentBalance ?? 0).toLocaleString('en-US')}</td>
+                      <td className="py-2">{formatCurrencyAR(inv.portfolio?.currentBalance ?? 0)}</td>
                       <td className="py-2">
                         <span
                           className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${

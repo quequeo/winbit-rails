@@ -99,7 +99,7 @@ export const EditPortfolioPage = () => {
               <Input type="number" step="0.01" value={form.accumulatedReturnUSD} onChange={(e) => set('accumulatedReturnUSD', e.target.value)} />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">R.A. (%)</label>
+              <label className="text-sm font-medium text-gray-700">Rend. Acum. (%)</label>
               <Input type="number" step="0.01" value={form.accumulatedReturnPercent} onChange={(e) => set('accumulatedReturnPercent', e.target.value)} />
             </div>
             <div className="space-y-2">
@@ -107,7 +107,7 @@ export const EditPortfolioPage = () => {
               <Input type="number" step="0.01" value={form.annualReturnUSD} onChange={(e) => set('annualReturnUSD', e.target.value)} />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">R.A.A. (%)</label>
+              <label className="text-sm font-medium text-gray-700">Rend. Acum. Anual (%)</label>
               <Input type="number" step="0.01" value={form.annualReturnPercent} onChange={(e) => set('annualReturnPercent', e.target.value)} />
             </div>
           </div>
