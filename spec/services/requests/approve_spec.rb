@@ -44,7 +44,7 @@ RSpec.describe Requests::Approve, type: :service do
         history = PortfolioHistory.last
         expect(history.investor_id).to eq(investor.id)
         expect(history.amount).to eq(1000.0)
-        expect(history.event).to eq('Depósito')
+        expect(history.event).to eq('DEPOSIT')
         expect(history.previous_balance).to eq(5000.0)
         expect(history.new_balance).to eq(6000.0)
       end
@@ -88,7 +88,7 @@ RSpec.describe Requests::Approve, type: :service do
         history = PortfolioHistory.last
         expect(history.investor_id).to eq(investor.id)
         expect(history.amount).to eq(1000.0)
-        expect(history.event).to eq('Retiro')
+        expect(history.event).to eq('WITHDRAWAL')
         expect(history.previous_balance).to eq(5000.0)
         expect(history.new_balance).to eq(4000.0)
       end

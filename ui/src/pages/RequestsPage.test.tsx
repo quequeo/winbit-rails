@@ -75,12 +75,13 @@ describe('RequestsPage', () => {
 
       render(<RequestsPage />);
 
+      // Wait for data to be rendered
       await waitFor(() => {
-        expect(api.getAdminRequests).toHaveBeenCalled();
+        expect(screen.getAllByText('Investor One').length).toBeGreaterThan(0);
       });
 
-      expect(screen.getAllByText('Investor One').length).toBeGreaterThan(0);
       expect(screen.getAllByText('Investor Two').length).toBeGreaterThan(0);
+      expect(api.getAdminRequests).toHaveBeenCalled();
     });
 
     it('renders error message when fetch fails', async () => {

@@ -29,7 +29,7 @@ RSpec.describe 'Admin requests', type: :request do
     expect(portfolio.current_balance.to_f).to be > 100.0
 
     history = PortfolioHistory.where(investor_id: investor.id).order(date: :desc).first
-    expect(history.event).to eq('Depósito')
+    expect(history.event).to eq('DEPOSIT')
   end
 
   it 'POST /api/admin/requests/:id/reject rejects pending request' do

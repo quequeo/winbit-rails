@@ -3,11 +3,21 @@ require 'rails_helper'
 RSpec.describe PortfolioHistory, type: :model do
   let(:investor) { Investor.create!(email: 'test@example.com', name: 'Test Investor', status: 'ACTIVE') }
 
+  describe 'constants' do
+    it 'defines valid EVENTS' do
+      expect(PortfolioHistory::EVENTS).to eq(%w[DEPOSIT WITHDRAWAL PROFIT])
+    end
+
+    it 'defines valid STATUSES' do
+      expect(PortfolioHistory::STATUSES).to eq(%w[PENDING COMPLETED REJECTED])
+    end
+  end
+
   describe 'validations' do
     it 'is valid with valid attributes' do
       history = PortfolioHistory.new(
         investor: investor,
-        event: 'Depósito',
+        event: 'DEPOSIT',
         amount: 1000,
         previous_balance: 5000,
         new_balance: 6000,
@@ -17,9 +27,31 @@ RSpec.describe PortfolioHistory, type: :model do
       expect(history).to be_valid
     end
 
+    it 'validates event inclusion' do
+      history = PortfolioHistory.new(
+        investor: investor,
+        event: 'INVALID_EVENT',
+        amount: 1000,
+        status: 'COMPLETED'
+      )
+      expect(history).not_to be_valid
+      expect(history.errors[:event]).to include('is not included in the list')
+    end
+
+    it 'validates status inclusion' do
+      history = PortfolioHistory.new(
+        investor: investor,
+        event: 'DEPOSIT',
+        amount: 1000,
+        status: 'INVALID_STATUS'
+      )
+      expect(history).not_to be_valid
+      expect(history.errors[:status]).to include('is not included in the list')
+    end
+
     it 'requires investor' do
       history = PortfolioHistory.new(
-        event: 'Depósito',
+        event: 'DEPOSIT',
         amount: 1000,
         previous_balance: 5000,
         new_balance: 6000
@@ -40,7 +72,7 @@ RSpec.describe PortfolioHistory, type: :model do
     it 'defaults status to COMPLETED' do
       history = PortfolioHistory.create!(
         investor: investor,
-        event: 'Depósito',
+        event: 'DEPOSIT',
         amount: 1000,
         previous_balance: 5000,
         new_balance: 6000
@@ -51,7 +83,7 @@ RSpec.describe PortfolioHistory, type: :model do
     it 'defaults date to current timestamp' do
       history = PortfolioHistory.create!(
         investor: investor,
-        event: 'Depósito',
+        event: 'DEPOSIT',
         amount: 1000,
         previous_balance: 5000,
         new_balance: 6000
@@ -62,7 +94,7 @@ RSpec.describe PortfolioHistory, type: :model do
     it 'defaults monetary values to 0' do
       history = PortfolioHistory.create!(
         investor: investor,
-        event: 'Depósito'
+        event: 'DEPOSIT'
       )
       expect(history.amount).to eq(0)
       expect(history.previous_balance).to eq(0)
@@ -74,7 +106,7 @@ RSpec.describe PortfolioHistory, type: :model do
     it 'belongs to investor' do
       history = PortfolioHistory.create!(
         investor: investor,
-        event: 'Depósito',
+        event: 'DEPOSIT',
         amount: 1000,
         previous_balance: 5000,
         new_balance: 6000
@@ -84,37 +116,46 @@ RSpec.describe PortfolioHistory, type: :model do
   end
 
   describe 'event types' do
-    it 'records deposits' do
+    it 'accepts DEPOSIT event' do
       history = PortfolioHistory.create!(
         investor: investor,
-        event: 'Depósito',
+        event: 'DEPOSIT',
         amount: 1000,
         previous_balance: 5000,
         new_balance: 6000
       )
-      expect(history.event).to eq('Depósito')
+      expect(history.event).to eq('DEPOSIT')
     end
 
-    it 'records withdrawals' do
+    it 'accepts WITHDRAWAL event' do
       history = PortfolioHistory.create!(
         investor: investor,
-        event: 'Retiro',
+        event: 'WITHDRAWAL',
         amount: 500,
         previous_balance: 5000,
         new_balance: 4500
       )
-      expect(history.event).to eq('Retiro')
+      expect(history.event).to eq('WITHDRAWAL')
     end
 
-    it 'records returns' do
+    it 'accepts PROFIT event' do
       history = PortfolioHistory.create!(
         investor: investor,
-        event: 'Rendimiento',
+        event: 'PROFIT',
         amount: 200,
         previous_balance: 5000,
         new_balance: 5200
       )
-      expect(history.event).to eq('Rendimiento')
+      expect(history.event).to eq('PROFIT')
+    end
+
+    it 'rejects invalid events' do
+      history = PortfolioHistory.new(
+        investor: investor,
+        event: 'DEPOSITO',
+        amount: 1000
+      )
+      expect(history).not_to be_valid
     end
   end
 
@@ -126,7 +167,7 @@ RSpec.describe PortfolioHistory, type: :model do
 
       history = PortfolioHistory.create!(
         investor: investor,
-        event: 'Depósito',
+        event: 'DEPOSIT',
         amount: deposit_amount,
         previous_balance: initial_balance,
         new_balance: final_balance
@@ -142,7 +183,7 @@ RSpec.describe PortfolioHistory, type: :model do
 
       history = PortfolioHistory.create!(
         investor: investor,
-        event: 'Retiro',
+        event: 'WITHDRAWAL',
         amount: withdrawal_amount,
         previous_balance: initial_balance,
         new_balance: final_balance
@@ -156,7 +197,7 @@ RSpec.describe PortfolioHistory, type: :model do
     it 'supports COMPLETED status' do
       history = PortfolioHistory.create!(
         investor: investor,
-        event: 'Depósito',
+        event: 'DEPOSIT',
         amount: 1000,
         previous_balance: 5000,
         new_balance: 6000,
@@ -168,7 +209,7 @@ RSpec.describe PortfolioHistory, type: :model do
     it 'supports PENDING status' do
       history = PortfolioHistory.create!(
         investor: investor,
-        event: 'Depósito',
+        event: 'DEPOSIT',
         amount: 1000,
         previous_balance: 5000,
         new_balance: 6000,
@@ -180,7 +221,7 @@ RSpec.describe PortfolioHistory, type: :model do
     it 'supports REJECTED status' do
       history = PortfolioHistory.create!(
         investor: investor,
-        event: 'Depósito',
+        event: 'DEPOSIT',
         amount: 1000,
         previous_balance: 5000,
         new_balance: 6000,
@@ -194,7 +235,7 @@ RSpec.describe PortfolioHistory, type: :model do
     it 'can be ordered by date' do
       history1 = PortfolioHistory.create!(
         investor: investor,
-        event: 'Depósito',
+        event: 'DEPOSIT',
         amount: 1000,
         previous_balance: 5000,
         new_balance: 6000,
@@ -202,7 +243,7 @@ RSpec.describe PortfolioHistory, type: :model do
       )
       history2 = PortfolioHistory.create!(
         investor: investor,
-        event: 'Retiro',
+        event: 'WITHDRAWAL',
         amount: 500,
         previous_balance: 6000,
         new_balance: 5500,
@@ -212,6 +253,64 @@ RSpec.describe PortfolioHistory, type: :model do
       histories = PortfolioHistory.where(investor: investor).order(date: :desc)
       expect(histories.first).to eq(history2)
       expect(histories.last).to eq(history1)
+    end
+  end
+
+  describe 'total invested calculation' do
+    it 'calculates deposits minus withdrawals' do
+      PortfolioHistory.create!(
+        investor: investor,
+        event: 'DEPOSIT',
+        amount: 10_000,
+        previous_balance: 0,
+        new_balance: 10_000
+      )
+      PortfolioHistory.create!(
+        investor: investor,
+        event: 'DEPOSIT',
+        amount: 5_000,
+        previous_balance: 10_000,
+        new_balance: 15_000
+      )
+      PortfolioHistory.create!(
+        investor: investor,
+        event: 'WITHDRAWAL',
+        amount: 1_000,
+        previous_balance: 15_000,
+        new_balance: 14_000
+      )
+
+      deposits = investor.portfolio_histories.where(event: 'DEPOSIT').sum(:amount)
+      withdrawals = investor.portfolio_histories.where(event: 'WITHDRAWAL').sum(:amount)
+      total_invested = deposits - withdrawals
+
+      expect(deposits).to eq(15_000)
+      expect(withdrawals).to eq(1_000)
+      expect(total_invested).to eq(14_000)
+    end
+
+    it 'does not count PROFIT events in total invested' do
+      PortfolioHistory.create!(
+        investor: investor,
+        event: 'DEPOSIT',
+        amount: 10_000,
+        previous_balance: 0,
+        new_balance: 10_000
+      )
+      PortfolioHistory.create!(
+        investor: investor,
+        event: 'PROFIT',
+        amount: 500,
+        previous_balance: 10_000,
+        new_balance: 10_500
+      )
+
+      deposits = investor.portfolio_histories.where(event: 'DEPOSIT').sum(:amount)
+      profits = investor.portfolio_histories.where(event: 'PROFIT').sum(:amount)
+
+      expect(deposits).to eq(10_000)
+      expect(profits).to eq(500)
+      expect(deposits).not_to eq(deposits + profits)
     end
   end
 end

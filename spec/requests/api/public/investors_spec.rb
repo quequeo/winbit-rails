@@ -40,7 +40,7 @@ RSpec.describe 'Public investors', type: :request do
     PortfolioHistory.create!(
       investor_id: investor.id,
       date: Time.utc(2024, 2, 1),
-      event: 'Depósito',
+      event: 'DEPOSIT',
       amount: 100,
       previous_balance: 0,
       new_balance: 100,
@@ -49,7 +49,7 @@ RSpec.describe 'Public investors', type: :request do
     PortfolioHistory.create!(
       investor_id: investor.id,
       date: Time.utc(2024, 3, 1),
-      event: 'Retiro',
+      event: 'WITHDRAWAL',
       amount: 10,
       previous_balance: 100,
       new_balance: 90,
@@ -61,7 +61,7 @@ RSpec.describe 'Public investors', type: :request do
     expect(response).to have_http_status(:ok)
     json = JSON.parse(response.body)
     expect(json['data'].length).to eq(2)
-    expect(json['data'][0]['event']).to eq('Retiro')
-    expect(json['data'][1]['event']).to eq('Depósito')
+    expect(json['data'][0]['event']).to eq('WITHDRAWAL')
+    expect(json['data'][1]['event']).to eq('DEPOSIT')
   end
 end

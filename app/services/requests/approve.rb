@@ -23,16 +23,23 @@ module Requests
       end
 
       ActiveRecord::Base.transaction do
+        # Update total_invested: add deposits, subtract withdrawals
+        new_total_invested = if req.request_type == 'DEPOSIT'
+          BigDecimal(portfolio.total_invested.to_s) + amount
+        else
+          BigDecimal(portfolio.total_invested.to_s) - amount
+        end
+
         portfolio.update!(
           current_balance: new_balance,
-          total_invested: req.request_type == 'DEPOSIT' ? BigDecimal(portfolio.total_invested.to_s) + amount : portfolio.total_invested,
+          total_invested: new_total_invested,
         )
 
         req.update!(status: 'APPROVED', processed_at: Time.current)
 
         PortfolioHistory.create!(
           investor_id: req.investor_id,
-          event: req.request_type == 'DEPOSIT' ? 'Depósito' : 'Retiro',
+          event: req.request_type, # Use request_type directly (DEPOSIT or WITHDRAWAL)
           amount: amount,
           previous_balance: previous_balance,
           new_balance: new_balance,

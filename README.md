@@ -110,7 +110,7 @@ bundle exec rspec spec/requests/api/admin/investors_spec.rb
 COVERAGE=true bundle exec rspec
 ```
 
-**Cobertura actual**: 50 tests (Admin CRUD, Investors CRUD, Requests CRUD, Public API)
+**Cobertura actual**: 79.36% (173 tests, 323/407 lines)
 
 ### Frontend (Vitest)
 
@@ -120,14 +120,37 @@ cd ui
 # Ejecutar todos los tests
 npm run test
 
+# Con cobertura
+npm run test -- --coverage
+
 # Modo watch
-npm run test:watch
+npm run test -- --watch
 
 # Solo un archivo
 npm run test src/pages/InvestorsPage.test.tsx
 ```
 
-**Cobertura actual**: 42 tests (AdminsPage, InvestorsPage, RequestsPage, Components)
+**Cobertura actual**: 85.68% (124 tests)
+
+| Métrica | Backend (Rails) | Frontend (React) |
+|---------|----------------|------------------|
+| **Lines** | 79.36% | 85.68% |
+| **Branches** | N/A | 85.03% |
+| **Functions** | N/A | 65.28% |
+| **Total Tests** | 173 | 124 |
+
+### Coverage por Componente (Frontend)
+
+- ✅ API Service (`api.ts`): 100%
+- ✅ Formatters (`formatters.ts`): 100%
+- ✅ Pages: 84.53% promedio
+  - DashboardPage: 100%
+  - EditPortfolioPage: 100%
+  - LoginPage: 100%
+  - InvestorsPage: 100%
+  - PortfoliosPage: 100%
+  - RequestsPage: 97.34%
+  - AdminsPage: 98.41%
 
 ## 🛠️ Scripts Útiles
 

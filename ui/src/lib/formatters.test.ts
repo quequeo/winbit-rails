@@ -147,5 +147,21 @@ describe('formatters', () => {
       expect(currency).toMatch(/10[.,]000/);
       expect(number).toMatch(/10[.,]000/);
     });
+
+    it('should format exact examples as expected', () => {
+      // Exact format: $XX.XXX,XX
+      expect(formatCurrencyAR(15314.0)).toBe('$15.314,00');
+      expect(formatCurrencyAR(15000.0)).toBe('$15.000,00');
+      expect(formatCurrencyAR(1234567.89)).toBe('$1.234.567,89');
+      expect(formatCurrencyAR(0.99)).toBe('$0,99');
+      
+      // Number format: XX.XXX,XX
+      expect(formatNumberAR(15314.0)).toBe('15.314,00');
+      expect(formatNumberAR(1000000)).toBe('1.000.000,00');
+      
+      // Percent format: XX.XXX,XX%
+      expect(formatPercentAR(12.5)).toBe('12,50%');
+      expect(formatPercentAR(100)).toBe('100,00%');
+    });
   });
 });

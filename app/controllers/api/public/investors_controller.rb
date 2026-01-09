@@ -34,23 +34,42 @@ module Api
         return render_error('Investor not found', status: :not_found) unless investor
         return render_error('Investor is not active', status: :forbidden) unless investor.status_active?
 
-        history = investor.portfolio_histories.order(date: :desc)
-
-        render json: {
-          data: history.map { |h|
-            {
-              id: h.id,
-              investorId: h.investor_id,
-              date: h.date,
-              event: h.event,
-              amount: h.amount.to_f,
-              previousBalance: h.previous_balance.to_f,
-              newBalance: h.new_balance.to_f,
-              status: h.status,
-              createdAt: h.created_at,
-            }
-          },
+        # Portfolio histories (completed movements)
+        histories = investor.portfolio_histories.order(date: :desc).map { |h|
+          {
+            id: h.id,
+            investorId: h.investor_id,
+            date: h.date,
+            event: h.event,
+            amount: h.amount.to_f,
+            previousBalance: h.previous_balance.to_f,
+            newBalance: h.new_balance.to_f,
+            status: h.status,
+            createdAt: h.created_at,
+          }
         }
+
+        # Pending requests (not yet processed)
+        pending_requests = investor.investor_requests.where(status: 'PENDING').order(requested_at: :desc).map { |r|
+          {
+            id: "request_#{r.id}",
+            investorId: r.investor_id,
+            date: r.requested_at,
+            event: r.request_type,
+            amount: r.amount.to_f,
+            previousBalance: nil,
+            newBalance: nil,
+            status: 'PENDING',
+            createdAt: r.requested_at,
+            method: r.method,
+            network: r.network,
+          }
+        }
+
+        # Combine and sort by date
+        combined = (histories + pending_requests).sort_by { |item| item[:date] }.reverse
+
+        render json: { data: combined }
       end
 
       private
