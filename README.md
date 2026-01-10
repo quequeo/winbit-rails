@@ -220,17 +220,18 @@ Si algún check falla, el push es rechazado. Configuración en `.githooks/pre-pu
 
 ## 🚢 Deploy (Heroku)
 
-### Configuración
+> **⚠️ IMPORTANTE**: Heroku está configurado para hacer **deploy automático** desde el branch `main` de GitHub.
+> 
+> **NO es necesario hacer** `git push heroku main` - solo hacer `git push origin main` y Heroku se encarga del resto.
+
+### Configuración inicial (ya realizada)
 
 ```bash
 # Login
 heroku login
 
-# Agregar remote
+# Agregar remote (solo para comandos heroku, no para deploy)
 git remote add heroku https://git.heroku.com/winbit-rails.git
-
-# Deploy
-git push heroku main
 ```
 
 ### Buildpacks (en orden)
