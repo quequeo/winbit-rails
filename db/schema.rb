@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_08_210412) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_10_031444) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -21,7 +21,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_08_210412) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["email"], name: "index_investors_on_email", unique: true
-    t.check_constraint "status::text = ANY (ARRAY['ACTIVE'::character varying, 'INACTIVE'::character varying]::text[])", name: "investors_status_check"
+    t.check_constraint "status::text = ANY (ARRAY['ACTIVE'::character varying::text, 'INACTIVE'::character varying::text])", name: "investors_status_check"
   end
 
   create_table "portfolio_histories", id: :string, force: :cascade do |t|
@@ -34,7 +34,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_08_210412) do
     t.string "status", default: "COMPLETED", null: false
     t.datetime "created_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
     t.index ["investor_id", "date"], name: "index_portfolio_histories_on_investor_id_and_date"
-    t.check_constraint "status::text = ANY (ARRAY['PENDING'::character varying, 'COMPLETED'::character varying, 'REJECTED'::character varying]::text[])", name: "portfolio_histories_status_check"
+    t.check_constraint "status::text = ANY (ARRAY['PENDING'::character varying::text, 'COMPLETED'::character varying::text, 'REJECTED'::character varying::text])", name: "portfolio_histories_status_check"
   end
 
   create_table "portfolios", id: :string, force: :cascade do |t|
@@ -62,12 +62,13 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_08_210412) do
     t.text "notes"
     t.datetime "requested_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
     t.datetime "processed_at"
+    t.string "attachment_url"
     t.index ["investor_id", "status"], name: "index_requests_on_investor_id_and_status"
     t.index ["status", "requested_at"], name: "index_requests_on_status_and_requested_at"
-    t.check_constraint "method::text = ANY (ARRAY['USDT'::character varying, 'USDC'::character varying, 'LEMON_CASH'::character varying, 'CASH'::character varying, 'SWIFT'::character varying]::text[])", name: "requests_method_check"
-    t.check_constraint "network IS NULL OR (network::text = ANY (ARRAY['TRC20'::character varying, 'BEP20'::character varying, 'ERC20'::character varying, 'POLYGON'::character varying]::text[]))", name: "requests_network_check"
-    t.check_constraint "request_type::text = ANY (ARRAY['DEPOSIT'::character varying, 'WITHDRAWAL'::character varying]::text[])", name: "requests_type_check"
-    t.check_constraint "status::text = ANY (ARRAY['PENDING'::character varying, 'APPROVED'::character varying, 'REJECTED'::character varying]::text[])", name: "requests_status_check"
+    t.check_constraint "method::text = ANY (ARRAY['USDT'::character varying::text, 'USDC'::character varying::text, 'LEMON_CASH'::character varying::text, 'CASH'::character varying::text, 'SWIFT'::character varying::text])", name: "requests_method_check"
+    t.check_constraint "network IS NULL OR (network::text = ANY (ARRAY['TRC20'::character varying::text, 'BEP20'::character varying::text, 'ERC20'::character varying::text, 'POLYGON'::character varying::text]))", name: "requests_network_check"
+    t.check_constraint "request_type::text = ANY (ARRAY['DEPOSIT'::character varying::text, 'WITHDRAWAL'::character varying::text])", name: "requests_type_check"
+    t.check_constraint "status::text = ANY (ARRAY['PENDING'::character varying::text, 'APPROVED'::character varying::text, 'REJECTED'::character varying::text])", name: "requests_status_check"
   end
 
   create_table "users", id: :string, force: :cascade do |t|
@@ -85,7 +86,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_08_210412) do
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["provider", "uid"], name: "index_users_on_provider_and_uid", unique: true
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
-    t.check_constraint "role::text = ANY (ARRAY['ADMIN'::character varying, 'SUPERADMIN'::character varying]::text[])", name: "users_role_check"
+    t.check_constraint "role::text = ANY (ARRAY['ADMIN'::character varying::text, 'SUPERADMIN'::character varying::text])", name: "users_role_check"
   end
 
   create_table "wallets", id: :string, force: :cascade do |t|
@@ -96,8 +97,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_08_210412) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["asset", "network"], name: "index_wallets_on_asset_and_network", unique: true
-    t.check_constraint "asset::text = ANY (ARRAY['USDT'::character varying, 'USDC'::character varying]::text[])", name: "wallets_asset_check"
-    t.check_constraint "network::text = ANY (ARRAY['TRC20'::character varying, 'BEP20'::character varying, 'ERC20'::character varying, 'POLYGON'::character varying]::text[])", name: "wallets_network_check"
+    t.check_constraint "asset::text = ANY (ARRAY['USDT'::character varying::text, 'USDC'::character varying::text])", name: "wallets_asset_check"
+    t.check_constraint "network::text = ANY (ARRAY['TRC20'::character varying::text, 'BEP20'::character varying::text, 'ERC20'::character varying::text, 'POLYGON'::character varying::text])", name: "wallets_network_check"
   end
 
   add_foreign_key "portfolio_histories", "investors"

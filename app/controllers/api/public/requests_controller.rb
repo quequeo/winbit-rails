@@ -11,6 +11,7 @@ module Api
         network = payload['network']
         lemontag = payload['lemontag']
         transaction_hash = payload['transactionHash']
+        attachment_url = payload['attachmentUrl']
 
         unless email.match?(/\A[^@\s]+@[^@\s]+\z/)
           return render_error('Invalid request data', status: :bad_request)
@@ -48,6 +49,7 @@ module Api
           network: network,
           lemontag: lemontag,
           transaction_hash: transaction_hash,
+          attachment_url: attachment_url,
           status: 'PENDING',
           requested_at: Time.current,
         )
@@ -68,6 +70,7 @@ module Api
             transactionHash: req.transaction_hash,
             network: req.network,
             notes: req.notes,
+            attachmentUrl: req.attachment_url,
             requestedAt: req.requested_at,
             processedAt: req.processed_at,
           },

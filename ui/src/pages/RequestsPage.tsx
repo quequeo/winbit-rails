@@ -322,6 +322,22 @@ export const RequestsPage = () => {
               </span>
             </div>
 
+            {r.attachmentUrl && (
+              <div className="mt-3">
+                <a
+                  href={r.attachmentUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                  </svg>
+                  Ver comprobante
+                </a>
+              </div>
+            )}
+
             <div className="mt-4 flex gap-2">
               {r.status === 'PENDING' ? (
                 <>
@@ -373,6 +389,7 @@ export const RequestsPage = () => {
                 <th className="py-2">Tipo</th>
                 <th className="py-2">Método</th>
                 <th className="py-2">Monto</th>
+                <th className="py-2">Adjunto</th>
                 <th className="py-2">Estado</th>
                 <th className="py-2 text-right">Acciones</th>
               </tr>
@@ -403,6 +420,23 @@ export const RequestsPage = () => {
                   </td>
                   <td className="py-2">{r.method}</td>
                   <td className="py-2 font-mono font-semibold">{formatCurrencyAR(Number(r.amount))}</td>
+                  <td className="py-2">
+                    {r.attachmentUrl ? (
+                      <a
+                        href={r.attachmentUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800"
+                        title="Ver comprobante"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      </a>
+                    ) : (
+                      <span className="text-gray-400 text-sm">-</span>
+                    )}
+                  </td>
                   <td className="py-2">
                     <span
                       className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${

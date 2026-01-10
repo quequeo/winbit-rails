@@ -17,6 +17,7 @@ module Api
             amount: r.amount.to_f,
             method: r.method,
             status: r.status,
+            attachmentUrl: r.attachment_url,
             requestedAt: r.requested_at,
             processedAt: r.processed_at,
             investor: {
