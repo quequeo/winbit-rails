@@ -50,3 +50,5 @@ group :development, :test do
 end
 
 gem "simplecov", "~> 0.22.0", groups: [:development, :test]
+
+gem "resend", "~> 1.0"

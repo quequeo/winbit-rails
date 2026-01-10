@@ -48,6 +48,18 @@ module Requests
         )
       end
 
+      # Send approval email notification
+      begin
+        if req.request_type == 'DEPOSIT'
+          InvestorMailer.deposit_approved(req.investor, req).deliver_later
+        elsif req.request_type == 'WITHDRAWAL'
+          InvestorMailer.withdrawal_approved(req.investor, req).deliver_later
+        end
+      rescue => e
+        Rails.logger.error("Failed to send approval email: #{e.message}")
+        # Continue even if email fails
+      end
+
       true
     end
   end

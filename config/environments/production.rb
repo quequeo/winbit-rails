@@ -46,13 +46,27 @@ Rails.application.configure do
   # Replace the default in-process and non-durable queuing backend for Active Job.
   # config.active_job.queue_adapter = :resque
 
-  # Ignore bad email addresses and do not raise email delivery errors.
-  # Set this to true and configure the email server for immediate delivery to raise delivery errors.
-  # config.action_mailer.raise_delivery_errors = false
+  # Configure Action Mailer for production
+  config.action_mailer.delivery_method = :smtp
+  config.action_mailer.perform_deliveries = true
+  config.action_mailer.raise_delivery_errors = true
+  config.action_mailer.default_options = { from: ENV.fetch('RESEND_FROM_EMAIL', 'onboarding@resend.dev') }
 
   # Set host to be used by links generated in mailer templates.
-  app_host = ENV["APP_HOST"].presence
-  config.action_mailer.default_url_options = { host: app_host || "example.com" }
+  app_host = ENV["APP_HOST"].presence || 'winbit-rails-55a941b2fe50.herokuapp.com'
+  config.action_mailer.default_url_options = { host: app_host, protocol: 'https' }
+
+  # Resend SMTP settings
+  config.action_mailer.smtp_settings = {
+    address: 'smtp.resend.com',
+    port: 465,
+    domain: 'resend.com',
+    user_name: 'resend',
+    password: ENV.fetch('RESEND_API_KEY', ''),
+    authentication: :plain,
+    enable_starttls_auto: true,
+    tls: true
+  }
 
   # Allow Heroku hostnames (and optionally a custom host via APP_HOST).
   config.hosts << /.*\.herokuapp\.com/

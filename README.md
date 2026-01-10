@@ -47,6 +47,16 @@ GOOGLE_CLIENT_SECRET=tu_client_secret
 
 # Rails
 RAILS_MASTER_KEY=tu_master_key
+
+# Resend (notificaciones por email)
+RESEND_API_KEY=re_xxxxxxxxxxxxx
+RESEND_FROM_EMAIL=Winbit <noreply@yourdomain.com>
+
+# CORS (frontend permitido)
+CORS_ORIGINS=http://localhost:5173,https://winbit-6579c.web.app
+
+# App Host (para links en emails)
+APP_HOST=localhost:3000
 ```
 
 ### 3. Backend (Rails)
@@ -151,6 +161,35 @@ npm run test src/pages/InvestorsPage.test.tsx
   - PortfoliosPage: 100%
   - RequestsPage: 97.34%
   - AdminsPage: 98.41%
+
+## 📧 Sistema de Notificaciones por Email
+
+Winbit utiliza **Resend** para enviar notificaciones automáticas:
+
+### Emails para Inversores:
+- ✅ Depósito creado, aprobado, rechazado
+- ✅ Retiro creado, aprobado, rechazado
+
+### Emails para Admins:
+- 💰 Nuevo depósito pendiente
+- 💸 Nuevo retiro pendiente
+
+### Configuración:
+
+```bash
+# Obtener API key en https://resend.com/api-keys
+heroku config:set RESEND_API_KEY=re_xxxxxxxxxxxxx -a winbit-rails
+heroku config:set RESEND_FROM_EMAIL="Winbit <noreply@yourdomain.com>" -a winbit-rails
+```
+
+### Costos:
+- **Free tier**: 3,000 emails/mes
+- **Estimado Winbit**: ~150-200 emails/mes
+- **Costo real**: $0/mes (dentro del free tier)
+
+📖 **Documentación completa:** Ver [EMAILS.md](./EMAILS.md)
+
+---
 
 ## 🛠️ Scripts Útiles
 
