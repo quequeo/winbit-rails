@@ -1,9 +1,16 @@
 class Users::SessionsController < Devise::SessionsController
   # DELETE /users/sign_out
   def destroy
-    signed_out = (Devise.sign_out_all_scopes ? sign_out : sign_out(resource_name))
+    if user_signed_in?
+      sign_out(current_user)
+    end
 
-    # Return JSON response for API
-    render json: { message: 'Signed out successfully' }, status: :ok
+    head :no_content
+  end
+
+  protected
+
+  def respond_to_on_destroy
+    head :no_content
   end
 end
