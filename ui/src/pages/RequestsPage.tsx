@@ -3,6 +3,7 @@ import { api } from '../lib/api';
 import { formatCurrencyAR } from '../lib/formatters';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
+import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 
 export const RequestsPage = () => {
   const [status, setStatus] = useState('');
@@ -22,6 +23,10 @@ export const RequestsPage = () => {
   });
   const [submitting, setSubmitting] = useState(false);
   const [investors, setInvestors] = useState<any[]>([]);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; request: any | null }>({
+    isOpen: false,
+    request: null,
+  });
 
   const params = useMemo(() => ({ status: status || undefined, type: type || undefined }), [status, type]);
 
@@ -96,10 +101,14 @@ export const RequestsPage = () => {
     setShowForm(true);
   };
 
-  const handleDelete = async (req: any) => {
-    if (!confirm(`¿Estás seguro de eliminar esta solicitud de ${req.investor.name}?`)) return;
+  const handleDelete = (req: any) => {
+    setDeleteConfirm({ isOpen: true, request: req });
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteConfirm.request) return;
     try {
-      await api.deleteRequest(req.id);
+      await api.deleteRequest(deleteConfirm.request.id);
       load();
     } catch (err: any) {
       alert(err.message || 'Error al eliminar solicitud');
@@ -454,6 +463,28 @@ export const RequestsPage = () => {
           </table>
         </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={deleteConfirm.isOpen}
+        onClose={() => setDeleteConfirm({ isOpen: false, request: null })}
+        onConfirm={confirmDelete}
+        title="Eliminar Solicitud"
+        message={
+          deleteConfirm.request ? (
+            <>
+              ¿Estás seguro de eliminar esta solicitud de{' '}
+              <span className="font-semibold">{deleteConfirm.request.investor.name}</span>?
+              <br />
+              <span className="text-red-600">Esta acción no se puede deshacer.</span>
+            </>
+          ) : (
+            ''
+          )
+        }
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        confirmVariant="danger"
+      />
     </div>
   );
 };

@@ -283,7 +283,6 @@ describe('AdminsPage', () => {
     it('deletes admin after confirmation', async () => {
       vi.mocked(api.getAdminAdmins).mockResolvedValue(mockAdmins);
       vi.mocked(api.deleteAdmin).mockResolvedValue({});
-      const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
 
       const user = userEvent.setup();
       render(<AdminsPage />);
@@ -295,20 +294,25 @@ describe('AdminsPage', () => {
       const deleteButtons = screen.getAllByTitle('Eliminar');
       await user.click(deleteButtons[0]);
 
+      // Modal should appear - click confirm button
       await waitFor(() => {
-        expect(confirmSpy).toHaveBeenCalledWith('¿Estás seguro de eliminar a admin1@test.com?');
+        expect(screen.getByText('Eliminar Administrador')).toBeInTheDocument();
+      });
+
+      // Get all "Eliminar" buttons - the modal's will be the last one
+      const confirmButtons = screen.getAllByRole('button', { name: 'Eliminar' });
+      await user.click(confirmButtons[confirmButtons.length - 1]);
+
+      await waitFor(() => {
         expect(api.deleteAdmin).toHaveBeenCalledWith('1');
       });
 
       // Should reload admins
       expect(api.getAdminAdmins).toHaveBeenCalledTimes(2);
-
-      confirmSpy.mockRestore();
     });
 
     it('does not delete when confirmation is cancelled', async () => {
       vi.mocked(api.getAdminAdmins).mockResolvedValue(mockAdmins);
-      const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
 
       const user = userEvent.setup();
       render(<AdminsPage />);
@@ -320,10 +324,15 @@ describe('AdminsPage', () => {
       const deleteButtons = screen.getAllByTitle('Eliminar');
       await user.click(deleteButtons[0]);
 
-      expect(confirmSpy).toHaveBeenCalled();
-      expect(api.deleteAdmin).not.toHaveBeenCalled();
+      // Modal should appear - click cancel button
+      await waitFor(() => {
+        expect(screen.getByText('Eliminar Administrador')).toBeInTheDocument();
+      });
 
-      confirmSpy.mockRestore();
+      const cancelButton = screen.getByRole('button', { name: 'Cancelar' });
+      await user.click(cancelButton);
+
+      expect(api.deleteAdmin).not.toHaveBeenCalled();
     });
 
     it('shows alert on delete error', async () => {
@@ -331,7 +340,6 @@ describe('AdminsPage', () => {
       vi.mocked(api.deleteAdmin).mockRejectedValue(new Error('Cannot delete yourself'));
 
       const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
-      const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
       const user = userEvent.setup();
 
       render(<AdminsPage />);
@@ -343,12 +351,20 @@ describe('AdminsPage', () => {
       const deleteButtons = screen.getAllByTitle('Eliminar');
       await user.click(deleteButtons[0]);
 
+      // Modal should appear - click confirm button
+      await waitFor(() => {
+        expect(screen.getByText('Eliminar Administrador')).toBeInTheDocument();
+      });
+
+      // Get all "Eliminar" buttons - the modal's will be the last one
+      const confirmButtons = screen.getAllByRole('button', { name: 'Eliminar' });
+      await user.click(confirmButtons[confirmButtons.length - 1]);
+
       await waitFor(() => {
         expect(alertSpy).toHaveBeenCalledWith('Cannot delete yourself');
       });
 
       alertSpy.mockRestore();
-      confirmSpy.mockRestore();
     });
   });
 });

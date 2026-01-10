@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
+import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { formatCurrencyAR } from '../lib/formatters';
 
 export const InvestorsPage = () => {
@@ -14,6 +15,10 @@ export const InvestorsPage = () => {
   const [editForm, setEditForm] = useState({ email: '', name: '' });
   const [sortBy, setSortBy] = useState<string>('balance');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; investor: any | null }>({
+    isOpen: false,
+    investor: null,
+  });
 
   const fetchInvestors = () => {
     api
@@ -60,10 +65,14 @@ export const InvestorsPage = () => {
     }
   };
 
-  const handleDelete = async (investor: any) => {
-    if (!confirm(`¿Estás seguro de eliminar a ${investor.name}?`)) return;
+  const handleDelete = (investor: any) => {
+    setDeleteConfirm({ isOpen: true, investor });
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteConfirm.investor) return;
     try {
-      await api.deleteInvestor(investor.id);
+      await api.deleteInvestor(deleteConfirm.investor.id);
       fetchInvestors();
     } catch (err: any) {
       alert(err.message || 'Error al eliminar inversor');
@@ -350,6 +359,28 @@ export const InvestorsPage = () => {
           </table>
         </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={deleteConfirm.isOpen}
+        onClose={() => setDeleteConfirm({ isOpen: false, investor: null })}
+        onConfirm={confirmDelete}
+        title="Eliminar Inversor"
+        message={
+          deleteConfirm.investor ? (
+            <>
+              ¿Estás seguro de eliminar a{' '}
+              <span className="font-semibold">{deleteConfirm.investor.name}</span>?
+              <br />
+              <span className="text-red-600">Esta acción no se puede deshacer.</span>
+            </>
+          ) : (
+            ''
+          )
+        }
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        confirmVariant="danger"
+      />
     </div>
   );
 };

@@ -283,7 +283,6 @@ describe('InvestorsPage', () => {
     it('deletes investor after confirmation', async () => {
       vi.mocked(api.getAdminInvestors).mockResolvedValue(mockInvestors);
       vi.mocked(api.deleteInvestor).mockResolvedValue({});
-      const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
 
       const user = userEvent.setup();
       render(<InvestorsPage />);
@@ -296,20 +295,25 @@ describe('InvestorsPage', () => {
       const deleteButtons = screen.getAllByTitle('Eliminar');
       await user.click(deleteButtons[0]);
 
+      // Modal should appear - click confirm button
       await waitFor(() => {
-        expect(confirmSpy).toHaveBeenCalledWith('¿Estás seguro de eliminar a Investor One?');
+        expect(screen.getByText('Eliminar Inversor')).toBeInTheDocument();
+      });
+
+      // Get all "Eliminar" buttons - the modal's will be the last one
+      const confirmButtons = screen.getAllByRole('button', { name: 'Eliminar' });
+      await user.click(confirmButtons[confirmButtons.length - 1]);
+
+      await waitFor(() => {
         expect(api.deleteInvestor).toHaveBeenCalledWith('1');
       });
 
       // Should reload investors
       expect(api.getAdminInvestors).toHaveBeenCalledTimes(2);
-
-      confirmSpy.mockRestore();
     });
 
     it('does not delete when confirmation is cancelled', async () => {
       vi.mocked(api.getAdminInvestors).mockResolvedValue(mockInvestors);
-      const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
 
       const user = userEvent.setup();
       render(<InvestorsPage />);
@@ -321,10 +325,15 @@ describe('InvestorsPage', () => {
       const deleteButtons = screen.getAllByTitle('Eliminar');
       await user.click(deleteButtons[0]);
 
-      expect(confirmSpy).toHaveBeenCalled();
-      expect(api.deleteInvestor).not.toHaveBeenCalled();
+      // Modal should appear - click cancel button
+      await waitFor(() => {
+        expect(screen.getByText('Eliminar Inversor')).toBeInTheDocument();
+      });
 
-      confirmSpy.mockRestore();
+      const cancelButton = screen.getByRole('button', { name: 'Cancelar' });
+      await user.click(cancelButton);
+
+      expect(api.deleteInvestor).not.toHaveBeenCalled();
     });
 
     it('shows alert on delete error', async () => {
@@ -332,7 +341,6 @@ describe('InvestorsPage', () => {
       vi.mocked(api.deleteInvestor).mockRejectedValue(new Error('Delete failed'));
 
       const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
-      const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
       const user = userEvent.setup();
 
       render(<InvestorsPage />);
@@ -344,12 +352,20 @@ describe('InvestorsPage', () => {
       const deleteButtons = screen.getAllByTitle('Eliminar');
       await user.click(deleteButtons[0]);
 
+      // Modal should appear - click confirm button
+      await waitFor(() => {
+        expect(screen.getByText('Eliminar Inversor')).toBeInTheDocument();
+      });
+
+      // Get all "Eliminar" buttons - the modal's will be the last one
+      const confirmButtons = screen.getAllByRole('button', { name: 'Eliminar' });
+      await user.click(confirmButtons[confirmButtons.length - 1]);
+
       await waitFor(() => {
         expect(alertSpy).toHaveBeenCalledWith('Delete failed');
       });
 
       alertSpy.mockRestore();
-      confirmSpy.mockRestore();
     });
   });
 });

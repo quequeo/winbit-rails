@@ -282,7 +282,6 @@ describe('RequestsPage', () => {
     it('deletes request after confirmation', async () => {
       vi.mocked(api.getAdminRequests).mockResolvedValue(mockRequests);
       vi.mocked(api.deleteRequest).mockResolvedValue({});
-      const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
 
       const user = userEvent.setup();
       render(<RequestsPage />);
@@ -294,17 +293,22 @@ describe('RequestsPage', () => {
       const deleteButtons = screen.getAllByTitle('Eliminar');
       await user.click(deleteButtons[0]);
 
+      // Modal should appear - click confirm button
       await waitFor(() => {
-        expect(confirmSpy).toHaveBeenCalled();
-        expect(api.deleteRequest).toHaveBeenCalledWith('1');
+        expect(screen.getByText('Eliminar Solicitud')).toBeInTheDocument();
       });
 
-      confirmSpy.mockRestore();
+      // Get all "Eliminar" buttons - the modal's will be the last one
+      const confirmButtons = screen.getAllByRole('button', { name: 'Eliminar' });
+      await user.click(confirmButtons[confirmButtons.length - 1]);
+
+      await waitFor(() => {
+        expect(api.deleteRequest).toHaveBeenCalledWith('1');
+      });
     });
 
     it('does not delete when confirmation is cancelled', async () => {
       vi.mocked(api.getAdminRequests).mockResolvedValue(mockRequests);
-      const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
 
       const user = userEvent.setup();
       render(<RequestsPage />);
@@ -316,10 +320,15 @@ describe('RequestsPage', () => {
       const deleteButtons = screen.getAllByTitle('Eliminar');
       await user.click(deleteButtons[0]);
 
-      expect(confirmSpy).toHaveBeenCalled();
-      expect(api.deleteRequest).not.toHaveBeenCalled();
+      // Modal should appear - click cancel button
+      await waitFor(() => {
+        expect(screen.getByText('Eliminar Solicitud')).toBeInTheDocument();
+      });
 
-      confirmSpy.mockRestore();
+      const cancelButton = screen.getByRole('button', { name: 'Cancelar' });
+      await user.click(cancelButton);
+
+      expect(api.deleteRequest).not.toHaveBeenCalled();
     });
   });
 

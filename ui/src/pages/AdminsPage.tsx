@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
+import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 
 export const AdminsPage = () => {
   const [data, setData] = useState<any>(null);
@@ -12,6 +13,10 @@ export const AdminsPage = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ email: '', name: '', role: 'ADMIN' as 'ADMIN' | 'SUPERADMIN' });
   const [loggedInEmail, setLoggedInEmail] = useState<string>('');
+  const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; admin: any | null }>({
+    isOpen: false,
+    admin: null,
+  });
 
   const fetchAdmins = () => {
     api
@@ -60,14 +65,18 @@ export const AdminsPage = () => {
     }
   };
 
-  const handleDelete = async (admin: any) => {
+  const handleDelete = (admin: any) => {
     if (admin.email === loggedInEmail) {
       alert('No puedes eliminar tu propia cuenta.');
       return;
     }
-    if (!confirm(`¿Estás seguro de eliminar a ${admin.email}?`)) return;
+    setDeleteConfirm({ isOpen: true, admin });
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteConfirm.admin) return;
     try {
-      await api.deleteAdmin(admin.id);
+      await api.deleteAdmin(deleteConfirm.admin.id);
       fetchAdmins();
     } catch (err: any) {
       alert(err.message || 'Error al eliminar admin');
@@ -346,6 +355,28 @@ export const AdminsPage = () => {
           </table>
         </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={deleteConfirm.isOpen}
+        onClose={() => setDeleteConfirm({ isOpen: false, admin: null })}
+        onConfirm={confirmDelete}
+        title="Eliminar Administrador"
+        message={
+          deleteConfirm.admin ? (
+            <>
+              ¿Estás seguro de eliminar a{' '}
+              <span className="font-semibold">{deleteConfirm.admin.email}</span>?
+              <br />
+              <span className="text-red-600">Esta acción no se puede deshacer.</span>
+            </>
+          ) : (
+            ''
+          )
+        }
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        confirmVariant="danger"
+      />
     </div>
   );
 };
