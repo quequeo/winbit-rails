@@ -35,7 +35,6 @@ RSpec.describe AdminMailer, type: :mailer do
     it 'renders the headers' do
       expect(mail.subject).to match('Nuevo depósito de John Doe')
       expect(mail.to).to include('jaimegarciamendez@gmail.com')
-      expect(mail.to).to include('winbit.cfds@gmail.com')
     end
 
     it 'renders the body' do
@@ -58,7 +57,6 @@ RSpec.describe AdminMailer, type: :mailer do
     it 'renders the headers' do
       expect(mail.subject).to match('Nueva solicitud de retiro de John Doe')
       expect(mail.to).to include('jaimegarciamendez@gmail.com')
-      expect(mail.to).to include('winbit.cfds@gmail.com')
     end
 
     it 'renders the body' do

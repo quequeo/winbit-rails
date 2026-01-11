@@ -2,10 +2,8 @@
 
 # Mailer para notificaciones a administradores
 class AdminMailer < ApplicationMailer
-  ADMIN_EMAILS = [
-    'jaimegarciamendez@gmail.com',
-    'winbit.cfds@gmail.com'
-  ].freeze
+  # Leer emails de admins desde variable de entorno
+  ADMIN_EMAILS = ENV.fetch('ADMIN_EMAILS', 'jaimegarciamendez@gmail.com').split(',').map(&:strip).freeze
 
   # Email cuando se crea una nueva solicitud de depósito
   def new_deposit_notification(request)
@@ -17,7 +15,7 @@ class AdminMailer < ApplicationMailer
 
     mail(
       to: ADMIN_EMAILS,
-      subject: "💰 Nuevo depósito de #{@investor.name} - #{@amount}"
+      subject: "Nuevo depósito de #{@investor.name} - #{@amount}"
     )
   end
 
@@ -33,7 +31,7 @@ class AdminMailer < ApplicationMailer
 
     mail(
       to: ADMIN_EMAILS,
-      subject: "💸 Nueva solicitud de retiro de #{@investor.name} - #{@amount}"
+      subject: "Nueva solicitud de retiro de #{@investor.name} - #{@amount}"
     )
   end
 
