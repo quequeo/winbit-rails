@@ -40,13 +40,14 @@ class AdminMailer < ApplicationMailer
   private
 
   def format_currency(amount)
-    "$#{number_with_delimiter(amount.to_f.round(2), delimiter: '.', separator: ',')}"
-  end
-
-  def number_with_delimiter(number, options = {})
-    parts = number.to_s.split('.')
-    parts[0].gsub!(/(\d)(?=(\d{3})+(?!\d))/, "\\1#{options[:delimiter]}")
-    parts.join(options[:separator] || '.')
+    num = amount.to_f.round(2)
+    # Asegurar siempre 2 decimales con sprintf
+    formatted = sprintf('%.2f', num)
+    parts = formatted.split('.')
+    # Formatear miles con punto
+    parts[0].gsub!(/(\d)(?=(\d{3})+(?!\d))/, "\\1.")
+    # Unir con coma para decimales
+    "$#{parts[0]},#{parts[1]}"
   end
 
   def method_label(request)
