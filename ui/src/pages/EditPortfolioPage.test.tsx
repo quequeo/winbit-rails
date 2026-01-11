@@ -326,4 +326,112 @@ describe('EditPortfolioPage', () => {
     expect(screen.getByText('Rend. Acum. Anual (USD)')).toBeInTheDocument();
     expect(screen.getByText('Rend. Acum. Anual (%)')).toBeInTheDocument();
   });
+
+  describe('Form field updates', () => {
+    const mockData = {
+      data: [
+        {
+          id: '1',
+          name: 'Test Investor',
+          portfolio: {
+            current_balance: 10000,
+            total_invested: 8000,
+            accumulated_return_usd: 2000,
+            accumulated_return_percent: 25,
+            annual_return_usd: 1500,
+            annual_return_percent: 18.75,
+          },
+        },
+      ],
+    };
+
+    it('updates currentBalance field', async () => {
+      vi.mocked(api.getAdminPortfolios).mockResolvedValueOnce(mockData);
+      renderWithRouter('1');
+
+      await waitFor(() => {
+        expect(screen.getByText('Editar Portfolio')).toBeInTheDocument();
+      });
+
+      const input = screen.getByDisplayValue('10000');
+      fireEvent.change(input, { target: { value: '15000' } });
+
+      expect(input).toHaveValue(15000);
+    });
+
+    it('updates totalInvested field', async () => {
+      vi.mocked(api.getAdminPortfolios).mockResolvedValueOnce(mockData);
+      renderWithRouter('1');
+
+      let input;
+      await waitFor(() => {
+        input = screen.getByDisplayValue('8000');
+        expect(input).toBeInTheDocument();
+      });
+
+      fireEvent.change(input!, { target: { value: '9000' } });
+
+      expect(input).toHaveValue(9000);
+    });
+
+    it('updates accumulatedReturnUSD field', async () => {
+      vi.mocked(api.getAdminPortfolios).mockResolvedValueOnce(mockData);
+      renderWithRouter('1');
+
+      let input;
+      await waitFor(() => {
+        input = screen.getByDisplayValue('2000');
+        expect(input).toBeInTheDocument();
+      });
+
+      fireEvent.change(input!, { target: { value: '3000' } });
+
+      expect(input).toHaveValue(3000);
+    });
+
+    it('updates accumulatedReturnPercent field', async () => {
+      vi.mocked(api.getAdminPortfolios).mockResolvedValueOnce(mockData);
+      renderWithRouter('1');
+
+      let input;
+      await waitFor(() => {
+        input = screen.getByDisplayValue('25');
+        expect(input).toBeInTheDocument();
+      });
+
+      fireEvent.change(input!, { target: { value: '30' } });
+
+      expect(input).toHaveValue(30);
+    });
+
+    it('updates annualReturnUSD field', async () => {
+      vi.mocked(api.getAdminPortfolios).mockResolvedValueOnce(mockData);
+      renderWithRouter('1');
+
+      let input;
+      await waitFor(() => {
+        input = screen.getByDisplayValue('1500');
+        expect(input).toBeInTheDocument();
+      });
+
+      fireEvent.change(input!, { target: { value: '2500' } });
+
+      expect(input).toHaveValue(2500);
+    });
+
+    it('updates annualReturnPercent field', async () => {
+      vi.mocked(api.getAdminPortfolios).mockResolvedValueOnce(mockData);
+      renderWithRouter('1');
+
+      let input;
+      await waitFor(() => {
+        input = screen.getByDisplayValue('18.75');
+        expect(input).toBeInTheDocument();
+      });
+
+      fireEvent.change(input!, { target: { value: '20' } });
+
+      expect(input).toHaveValue(20);
+    });
+  });
 });

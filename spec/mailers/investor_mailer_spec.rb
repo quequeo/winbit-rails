@@ -27,6 +27,19 @@ RSpec.describe InvestorMailer, type: :mailer do
     )
   end
 
+  before do
+    # Enable notifications for these tests
+    AppSetting.set(AppSetting::INVESTOR_NOTIFICATIONS_ENABLED, 'true')
+  end
+
+  after do
+    # Clean up settings
+    AppSetting.where(key: [
+      AppSetting::INVESTOR_NOTIFICATIONS_ENABLED,
+      AppSetting::INVESTOR_EMAIL_WHITELIST
+    ]).destroy_all
+  end
+
   describe '#deposit_created' do
     let(:mail) { described_class.deposit_created(investor, deposit_request) }
 

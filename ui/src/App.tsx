@@ -6,6 +6,7 @@ import { PortfoliosPage } from './pages/PortfoliosPage';
 import { EditPortfolioPage } from './pages/EditPortfolioPage';
 import { RequestsPage } from './pages/RequestsPage';
 import { AdminsPage } from './pages/AdminsPage';
+import { SettingsPage } from './pages/SettingsPage';
 import { LoginPage } from './pages/LoginPage';
 
 function App() {
@@ -22,6 +23,7 @@ function App() {
           <Route path="/portfolios/:id" element={<EditPortfolioPage />} />
           <Route path="/requests" element={<RequestsPage />} />
           <Route path="/admins" element={<AdminsPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

@@ -371,4 +371,5 @@ describe('RequestsPage', () => {
       });
     });
   });
+
 });

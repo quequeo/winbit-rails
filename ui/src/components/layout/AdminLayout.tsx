@@ -61,7 +61,7 @@ export const AdminLayout = () => {
       <header className="bg-white shadow">
         <div className="flex items-center justify-between px-4 py-4 md:px-6">
           <div>
-            <h1 className="text-2xl font-bold text-[#58b098]">Winbit Admin</h1>
+            <h1 className="text-2xl font-bold text-[#58b098]">Winbit Admin v1.0.0</h1>
             <p className="text-sm text-gray-600">{sessionEmail || '—'}</p>
           </div>
 
@@ -134,6 +134,14 @@ export const AdminLayout = () => {
             >
               Admins
             </NavLink>
+            <NavLink
+              to="/settings"
+              className={({ isActive }) =>
+                isActive ? `${linkBase} border-[#58b098] text-[#58b098]` : linkBase
+              }
+            >
+              Configuración
+            </NavLink>
           </div>
         </nav>
 
@@ -195,6 +203,17 @@ export const AdminLayout = () => {
                 }
               >
                 Admins
+              </NavLink>
+              <NavLink
+                to="/settings"
+                onClick={() => setMobileMenuOpen(false)}
+                className={({ isActive }) =>
+                  isActive
+                    ? 'rounded-lg bg-[#58b098]/10 px-3 py-2 text-sm font-medium text-[#58b098]'
+                    : 'rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50'
+                }
+              >
+                Configuración
               </NavLink>
 
               <div className="my-1 h-px bg-gray-200" />

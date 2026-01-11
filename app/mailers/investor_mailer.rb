@@ -12,6 +12,8 @@ class InvestorMailer < ApplicationMailer
     @request_method = request.respond_to?(:method) ? request.send(:method) : request[:method]
     @request_network = request.respond_to?(:network) ? request.network : request[:network]
 
+    return unless NotificationGate.should_send_to_investor?(investor.email)
+
     mail(
       to: investor.email,
       subject: 'Depósito recibido - Pendiente de revisión'
@@ -25,6 +27,8 @@ class InvestorMailer < ApplicationMailer
     @amount = format_currency(request.amount)
     @new_balance = format_currency(investor.portfolio&.current_balance || 0)
 
+    return unless NotificationGate.should_send_to_investor?(investor.email)
+
     mail(
       to: investor.email,
       subject: 'Depósito aprobado - Fondos acreditados'
@@ -37,6 +41,8 @@ class InvestorMailer < ApplicationMailer
     @request = request
     @amount = format_currency(request.amount)
     @reason = reason || 'No se proporcionó una razón específica'
+
+    return unless NotificationGate.should_send_to_investor?(investor.email)
 
     mail(
       to: investor.email,
@@ -54,6 +60,8 @@ class InvestorMailer < ApplicationMailer
     @is_full = request.amount >= (investor.portfolio&.current_balance || 0) * 0.99
     @request_method = request.respond_to?(:method) ? request.send(:method) : request[:method]
 
+    return unless NotificationGate.should_send_to_investor?(investor.email)
+
     mail(
       to: investor.email,
       subject: 'Retiro solicitado - Pendiente de procesamiento'
@@ -67,6 +75,8 @@ class InvestorMailer < ApplicationMailer
     @amount = format_currency(request.amount)
     @new_balance = format_currency(investor.portfolio&.current_balance || 0)
 
+    return unless NotificationGate.should_send_to_investor?(investor.email)
+
     mail(
       to: investor.email,
       subject: 'Retiro aprobado - Fondos enviados'
@@ -79,6 +89,8 @@ class InvestorMailer < ApplicationMailer
     @request = request
     @amount = format_currency(request.amount)
     @reason = reason || 'No se proporcionó una razón específica'
+
+    return unless NotificationGate.should_send_to_investor?(investor.email)
 
     mail(
       to: investor.email,

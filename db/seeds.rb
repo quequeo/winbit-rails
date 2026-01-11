@@ -14,6 +14,21 @@ end
 
 puts "✅ Seeded #{initial_admins.length} admin(s)"
 
+# Seed app settings
+AppSetting.set(
+  AppSetting::INVESTOR_NOTIFICATIONS_ENABLED,
+  'false',
+  description: 'Habilitar/deshabilitar notificaciones por email a inversores'
+)
+
+AppSetting.set(
+  AppSetting::INVESTOR_EMAIL_WHITELIST,
+  ['jaimegarciamendez@gmail.com'],
+  description: 'Lista de emails de inversores que siempre reciben notificaciones (para testing)'
+)
+
+puts "✅ Seeded app settings"
+
 # Seed demo data for local development (fake investors, portfolios, histories, requests, wallets)
 if Rails.env.development?
   require 'securerandom'

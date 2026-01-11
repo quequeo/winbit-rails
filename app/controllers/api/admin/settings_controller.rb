@@ -1,0 +1,46 @@
+module Api
+  module Admin
+    class SettingsController < BaseController
+      # GET /api/admin/settings
+      def index
+        settings = {
+          investor_notifications_enabled: AppSetting.investor_notifications_enabled?,
+          investor_email_whitelist: AppSetting.investor_email_whitelist,
+        }
+
+        render json: { data: settings }
+      end
+
+      # PATCH /api/admin/settings
+      def update
+        if params[:investor_notifications_enabled].present?
+          AppSetting.set(
+            AppSetting::INVESTOR_NOTIFICATIONS_ENABLED,
+            params[:investor_notifications_enabled].to_s,
+            description: 'Habilitar/deshabilitar notificaciones por email a inversores'
+          )
+        end
+
+      if params[:investor_email_whitelist].present?
+        whitelist = params[:investor_email_whitelist]
+        whitelist = whitelist.split(',').map(&:strip).reject(&:empty?) if whitelist.is_a?(String)
+        whitelist = whitelist.reject(&:empty?) if whitelist.is_a?(Array)
+
+        AppSetting.set(
+          AppSetting::INVESTOR_EMAIL_WHITELIST,
+          whitelist,
+          description: 'Lista de emails de inversores que siempre reciben notificaciones (para testing)'
+        )
+      end
+
+        # Return updated settings
+        settings = {
+          investor_notifications_enabled: AppSetting.investor_notifications_enabled?,
+          investor_email_whitelist: AppSetting.investor_email_whitelist,
+        }
+
+        render json: { data: settings }
+      end
+    end
+  end
+end

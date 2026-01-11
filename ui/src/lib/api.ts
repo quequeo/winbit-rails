@@ -76,4 +76,7 @@ export const api = {
   updateInvestor: (id: string, body: { email: string; name: string }) =>
     request(`/api/admin/investors/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
   deleteInvestor: (id: string) => request(`/api/admin/investors/${id}`, { method: 'DELETE' }),
+  getAdminSettings: () => request('/api/admin/settings'),
+  updateAdminSettings: (body: { investor_notifications_enabled?: boolean; investor_email_whitelist?: string[] | string }) =>
+    request('/api/admin/settings', { method: 'PATCH', body: JSON.stringify(body) }),
 };

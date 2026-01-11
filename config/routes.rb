@@ -31,6 +31,9 @@ Rails.application.routes.draw do
       post 'requests/:id/reject', to: 'requests#reject', format: false
 
       resources :admins, only: [:index, :create, :update, :destroy], format: false
+
+      get 'settings', to: 'settings#index', format: false
+      patch 'settings', to: 'settings#update', format: false
     end
   end
 
