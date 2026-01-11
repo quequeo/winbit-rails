@@ -14,7 +14,7 @@ class InvestorMailer < ApplicationMailer
 
     mail(
       to: investor.email,
-      subject: '✅ Depósito recibido - Pendiente de revisión'
+      subject: 'Depósito recibido - Pendiente de revisión'
     )
   end
 
@@ -27,7 +27,7 @@ class InvestorMailer < ApplicationMailer
 
     mail(
       to: investor.email,
-      subject: '🎉 Depósito aprobado - Fondos acreditados'
+      subject: 'Depósito aprobado - Fondos acreditados'
     )
   end
 
@@ -40,7 +40,7 @@ class InvestorMailer < ApplicationMailer
 
     mail(
       to: investor.email,
-      subject: '❌ Depósito rechazado'
+      subject: 'Depósito rechazado'
     )
   end
 
@@ -56,7 +56,7 @@ class InvestorMailer < ApplicationMailer
 
     mail(
       to: investor.email,
-      subject: '✅ Retiro solicitado - Pendiente de procesamiento'
+      subject: 'Retiro solicitado - Pendiente de procesamiento'
     )
   end
 
@@ -69,7 +69,7 @@ class InvestorMailer < ApplicationMailer
 
     mail(
       to: investor.email,
-      subject: '🎉 Retiro aprobado - Fondos enviados'
+      subject: 'Retiro aprobado - Fondos enviados'
     )
   end
 
@@ -82,7 +82,7 @@ class InvestorMailer < ApplicationMailer
 
     mail(
       to: investor.email,
-      subject: '❌ Retiro rechazado'
+      subject: 'Retiro rechazado'
     )
   end
 

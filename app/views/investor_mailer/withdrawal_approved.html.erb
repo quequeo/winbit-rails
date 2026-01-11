@@ -11,9 +11,10 @@
       max-width: 600px;
       margin: 0 auto;
       padding: 20px;
+      background: #f3f4f6;
     }
     .header {
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      background: linear-gradient(135deg, #059669 0%, #10b981 100%);
       color: white;
       padding: 30px;
       border-radius: 10px 10px 0 0;
@@ -28,7 +29,7 @@
     .amount {
       font-size: 32px;
       font-weight: bold;
-      color: #10b981;
+      color: #059669;
       margin: 20px 0;
       text-align: center;
     }
@@ -54,14 +55,14 @@
       display: inline-block;
       background: #10b981;
       color: white;
-      padding: 8px 16px;
-      border-radius: 20px;
+      padding: 6px 14px;
+      border-radius: 4px;
       font-weight: 600;
-      font-size: 14px;
+      font-size: 13px;
     }
     .cta-button {
       display: inline-block;
-      background: #667eea;
+      background: #1e40af;
       color: white;
       padding: 12px 24px;
       border-radius: 6px;
@@ -69,11 +70,18 @@
       font-weight: 600;
       margin: 20px 0;
     }
+    .cta-button:hover {
+      background: #1e3a8a;
+    }
+    a {
+      color: #1e40af;
+      text-decoration: none;
+    }
   </style>
 </head>
 <body>
   <div class="header">
-    <h1 style="margin: 0;">🎉 ¡Retiro Aprobado!</h1>
+    <h1 style="margin: 0; font-size: 24px;">Retiro Aprobado</h1>
   </div>
 
   <div class="content">
@@ -83,14 +91,14 @@
 
     <div class="amount"><%= @amount %></div>
 
-    <p style="text-align: center;"><span class="status">✓ FONDOS ENVIADOS</span></p>
+    <p style="text-align: center;"><span class="status">FONDOS ENVIADOS</span></p>
 
     <div class="balance-box">
       <h3 style="margin-top: 0; color: #059669;">Balance Actualizado</h3>
       <div style="font-size: 28px; font-weight: bold; color: #059669;"><%= @new_balance %></div>
     </div>
 
-    <p><strong>⏱ Tiempo estimado de llegada:</strong></p>
+    <p><strong>Tiempo estimado de llegada:</strong></p>
     <ul>
       <li><strong>Lemon Cash:</strong> Inmediato</li>
       <li><strong>Crypto (USDT/USDC):</strong> 5-30 minutos según la red</li>

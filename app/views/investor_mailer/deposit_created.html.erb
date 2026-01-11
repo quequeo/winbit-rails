@@ -11,9 +11,10 @@
       max-width: 600px;
       margin: 0 auto;
       padding: 20px;
+      background: #f3f4f6;
     }
     .header {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
       color: white;
       padding: 30px;
       border-radius: 10px 10px 0 0;
@@ -28,15 +29,19 @@
     .amount {
       font-size: 32px;
       font-weight: bold;
-      color: #10b981;
+      color: #1e40af;
       margin: 20px 0;
       text-align: center;
     }
     .info-box {
-      background: #f3f4f6;
+      background: #f9fafb;
       padding: 20px;
       border-radius: 8px;
       margin: 20px 0;
+      border: 1px solid #e5e7eb;
+    }
+    .info-box p {
+      margin: 8px 0;
     }
     .footer {
       background: #f9fafb;
@@ -50,18 +55,23 @@
     }
     .status {
       display: inline-block;
-      background: #fbbf24;
-      color: #78350f;
-      padding: 8px 16px;
-      border-radius: 20px;
+      color: #92400e;
+      padding: 4px 12px;
+      border: 2px solid #fbbf24;
+      border-radius: 4px;
       font-weight: 600;
-      font-size: 14px;
+      font-size: 13px;
+      background: #fef3c7;
+    }
+    a {
+      color: #1e40af;
+      text-decoration: none;
     }
   </style>
 </head>
 <body>
   <div class="header">
-    <h1 style="margin: 0;">✅ Depósito Recibido</h1>
+    <h1 style="margin: 0; font-size: 24px;">Depósito Recibido</h1>
   </div>
 
   <div class="content">
@@ -80,7 +90,7 @@
       <% end %>
     </div>
 
-    <h3>📋 Próximos pasos:</h3>
+    <h3 style="color: #1e40af;">Próximos pasos:</h3>
     <ul>
       <li>Nuestro equipo revisará tu depósito en las próximas horas</li>
       <li>Verificaremos el comprobante de pago</li>
