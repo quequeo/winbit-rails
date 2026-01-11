@@ -47,7 +47,6 @@ Rails.application.configure do
     user_name: 'resend',
     password: ENV.fetch('RESEND_API_KEY', ''),
     authentication: :plain,
-    enable_starttls_auto: true,
     tls: true
   }
 
