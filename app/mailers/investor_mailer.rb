@@ -9,6 +9,8 @@ class InvestorMailer < ApplicationMailer
     @investor = investor
     @request = request
     @amount = format_currency(request.amount)
+    @request_method = request.respond_to?(:method) ? request.send(:method) : request[:method]
+    @request_network = request.respond_to?(:network) ? request.network : request[:network]
 
     mail(
       to: investor.email,
@@ -50,6 +52,7 @@ class InvestorMailer < ApplicationMailer
     @request = request
     @amount = format_currency(request.amount)
     @is_full = request.amount >= (investor.portfolio&.current_balance || 0) * 0.99
+    @request_method = request.respond_to?(:method) ? request.send(:method) : request[:method]
 
     mail(
       to: investor.email,

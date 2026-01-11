@@ -73,7 +73,7 @@
 
     <div class="info-box">
       <p><strong>Estado:</strong> <span class="status">PENDIENTE DE REVISIÓN</span></p>
-      <p><strong>Método:</strong> <%= @request.method %> <%= @request.network ? "(#{@request.network})" : '' %></p>
+      <p><strong>Método:</strong> <%= @request_method %> <%= @request_network ? "(#{@request_network})" : '' %></p>
       <p><strong>Fecha:</strong> <%= @request.requested_at.strftime('%d/%m/%Y %H:%M') %></p>
       <% if @request.transaction_hash.present? %>
         <p><strong>Hash:</strong> <%= @request.transaction_hash %></p>

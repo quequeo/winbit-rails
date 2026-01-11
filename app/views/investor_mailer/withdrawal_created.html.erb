@@ -81,7 +81,7 @@
     <div class="info-box">
       <p><strong>Estado:</strong> <span class="status">PENDIENTE DE PROCESAMIENTO</span></p>
       <p><strong>Tipo:</strong> <%= @is_full ? 'Retiro Total' : 'Retiro Parcial' %></p>
-      <p><strong>Método:</strong> <%= @request.method %></p>
+      <p><strong>Método:</strong> <%= @request_method %></p>
       <% if @request.lemontag.present? %>
         <p><strong>Lemontag:</strong> <%= @request.lemontag %></p>
       <% end %>
