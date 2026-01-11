@@ -48,7 +48,7 @@ RSpec.describe AppSetting, type: :model do
 
     it 'updates an existing setting' do
       AppSetting.create!(key: 'existing', value: 'old')
-      
+
       expect {
         AppSetting.set('existing', 'new')
       }.not_to change(AppSetting, :count)
