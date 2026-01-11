@@ -11,7 +11,13 @@ export const AdminsPage = () => {
   const [formData, setFormData] = useState({ email: '', name: '', role: 'ADMIN' as 'ADMIN' | 'SUPERADMIN' });
   const [submitting, setSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({ email: '', name: '', role: 'ADMIN' as 'ADMIN' | 'SUPERADMIN' });
+  const [editForm, setEditForm] = useState({ 
+    email: '', 
+    name: '', 
+    role: 'ADMIN' as 'ADMIN' | 'SUPERADMIN',
+    notify_deposit_created: true,
+    notify_withdrawal_created: true,
+  });
   const [loggedInEmail, setLoggedInEmail] = useState<string>('');
   const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; admin: any | null }>({
     isOpen: false,
@@ -85,7 +91,30 @@ export const AdminsPage = () => {
 
   const startEdit = (admin: any) => {
     setEditingId(admin.id);
-    setEditForm({ email: admin.email, name: admin.name || '', role: admin.role });
+    setEditForm({ 
+      email: admin.email, 
+      name: admin.name || '', 
+      role: admin.role,
+      notify_deposit_created: admin.notify_deposit_created ?? true,
+      notify_withdrawal_created: admin.notify_withdrawal_created ?? true,
+    });
+  };
+
+  const handleNotificationToggle = async (adminId: string, field: 'notify_deposit_created' | 'notify_withdrawal_created', currentValue: boolean) => {
+    try {
+      const admin = admins.find((a: any) => a.id === adminId);
+      if (!admin) return;
+
+      await api.updateAdmin(adminId, {
+        email: admin.email,
+        name: admin.name,
+        role: admin.role,
+        [field]: !currentValue,
+      });
+      fetchAdmins();
+    } catch (err: any) {
+      alert(err.message || 'Error al actualizar notificaciones');
+    }
   };
 
   if (error) return <div className="text-red-600">{error}</div>;
@@ -183,6 +212,27 @@ export const AdminsPage = () => {
                   <option value="ADMIN">Admin</option>
                   <option value="SUPERADMIN">Super Admin</option>
                 </select>
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-gray-700">Notificaciones:</p>
+                  <label className="flex items-center gap-2 text-xs cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={editForm.notify_deposit_created}
+                      onChange={(e) => setEditForm({ ...editForm, notify_deposit_created: e.target.checked })}
+                      className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 cursor-pointer"
+                    />
+                    <span className="text-gray-700">Depósito recibido</span>
+                  </label>
+                  <label className="flex items-center gap-2 text-xs cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={editForm.notify_withdrawal_created}
+                      onChange={(e) => setEditForm({ ...editForm, notify_withdrawal_created: e.target.checked })}
+                      className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 cursor-pointer"
+                    />
+                    <span className="text-gray-700">Retiro solicitado</span>
+                  </label>
+                </div>
                 <div className="flex gap-2">
                   <Button type="submit" disabled={submitting} className="text-sm py-1 px-3">
                     Guardar
@@ -210,6 +260,29 @@ export const AdminsPage = () => {
                   >
                     {a.role === 'SUPERADMIN' ? 'Super Admin' : 'Admin'}
                   </span>
+                </div>
+                <div className="mt-3 border-t pt-3">
+                  <p className="text-xs font-semibold text-gray-700 mb-2">Notificaciones:</p>
+                  <div className="flex flex-col gap-2">
+                    <label className="flex items-center gap-2 text-xs cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={a.notify_deposit_created ?? true}
+                        onChange={() => handleNotificationToggle(a.id, 'notify_deposit_created', a.notify_deposit_created ?? true)}
+                        className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 cursor-pointer"
+                      />
+                      <span className="text-gray-700">Depósito recibido</span>
+                    </label>
+                    <label className="flex items-center gap-2 text-xs cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={a.notify_withdrawal_created ?? true}
+                        onChange={() => handleNotificationToggle(a.id, 'notify_withdrawal_created', a.notify_withdrawal_created ?? true)}
+                        className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 cursor-pointer"
+                      />
+                      <span className="text-gray-700">Retiro solicitado</span>
+                    </label>
+                  </div>
                 </div>
                 <div className="mt-3 flex gap-2">
                   <button
@@ -251,6 +324,7 @@ export const AdminsPage = () => {
                 <th className="py-2">Email</th>
                 <th className="py-2">Nombre</th>
                 <th className="py-2">Rol</th>
+                <th className="py-2">Notificaciones</th>
                 <th className="py-2 text-right">Acciones</th>
               </tr>
             </thead>
@@ -287,6 +361,28 @@ export const AdminsPage = () => {
                           <option value="SUPERADMIN">Super Admin</option>
                         </select>
                       </td>
+                      <td className="py-2">
+                        <div className="flex flex-col gap-2">
+                          <label className="flex items-center gap-2 text-xs cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={editForm.notify_deposit_created}
+                              onChange={(e) => setEditForm({ ...editForm, notify_deposit_created: e.target.checked })}
+                              className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 cursor-pointer"
+                            />
+                            <span className="text-gray-700">Depósito recibido</span>
+                          </label>
+                          <label className="flex items-center gap-2 text-xs cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={editForm.notify_withdrawal_created}
+                              onChange={(e) => setEditForm({ ...editForm, notify_withdrawal_created: e.target.checked })}
+                              className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 cursor-pointer"
+                            />
+                            <span className="text-gray-700">Retiro solicitado</span>
+                          </label>
+                        </div>
+                      </td>
                       <td className="py-2 text-right">
                         <div className="flex gap-2 justify-end">
                           <Button
@@ -319,6 +415,28 @@ export const AdminsPage = () => {
                         >
                           {a.role === 'SUPERADMIN' ? 'Super Admin' : 'Admin'}
                         </span>
+                      </td>
+                      <td className="py-2">
+                        <div className="flex flex-col gap-2">
+                          <label className="flex items-center gap-2 text-xs cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={a.notify_deposit_created ?? true}
+                              onChange={() => handleNotificationToggle(a.id, 'notify_deposit_created', a.notify_deposit_created ?? true)}
+                              className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 cursor-pointer"
+                            />
+                            <span className="text-gray-700">Depósito recibido</span>
+                          </label>
+                          <label className="flex items-center gap-2 text-xs cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={a.notify_withdrawal_created ?? true}
+                              onChange={() => handleNotificationToggle(a.id, 'notify_withdrawal_created', a.notify_withdrawal_created ?? true)}
+                              className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 cursor-pointer"
+                            />
+                            <span className="text-gray-700">Retiro solicitado</span>
+                          </label>
+                        </div>
                       </td>
                       <td className="py-2 text-right">
                         <div className="flex gap-2 justify-end">

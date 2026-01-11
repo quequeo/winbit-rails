@@ -3,6 +3,17 @@
 require 'rails_helper'
 
 RSpec.describe AdminMailer, type: :mailer do
+  # Create admin users for notifications
+  let!(:admin_user) do
+    User.create!(
+      email: 'admin@example.com',
+      name: 'Admin',
+      role: 'ADMIN',
+      notify_deposit_created: true,
+      notify_withdrawal_created: true
+    )
+  end
+
   let(:investor) { Investor.create!(name: 'John Doe', email: 'john@example.com', status: 'ACTIVE') }
   let(:portfolio) { Portfolio.create!(investor: investor, current_balance: 10000, total_invested: 10000) }
   let(:deposit_request) do
@@ -34,7 +45,7 @@ RSpec.describe AdminMailer, type: :mailer do
 
     it 'renders the headers' do
       expect(mail.subject).to match('Nuevo depósito de John Doe')
-      expect(mail.to).to include('jaimegarciamendez@gmail.com')
+      expect(mail.to).to include('admin@example.com')
     end
 
     it 'renders the body' do
@@ -56,7 +67,7 @@ RSpec.describe AdminMailer, type: :mailer do
 
     it 'renders the headers' do
       expect(mail.subject).to match('Nueva solicitud de retiro de John Doe')
-      expect(mail.to).to include('jaimegarciamendez@gmail.com')
+      expect(mail.to).to include('admin@example.com')
     end
 
     it 'renders the body' do

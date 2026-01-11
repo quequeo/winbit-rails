@@ -2,7 +2,17 @@ module Api
   module Admin
     class AdminsController < BaseController
       def index
-        admins = User.order(created_at: :desc)
+        admins = User.order(created_at: :desc).map do |admin|
+          {
+            id: admin.id,
+            name: admin.name,
+            email: admin.email,
+            role: admin.role,
+            notify_deposit_created: admin.notify_deposit_created,
+            notify_withdrawal_created: admin.notify_withdrawal_created,
+            created_at: admin.created_at,
+          }
+        end
         render json: { data: admins }
       end
 
@@ -24,11 +34,17 @@ module Api
         admin = User.find_by(id: params[:id])
         return render_error('Admin no encontrado', status: :not_found) unless admin
 
-        admin.update!(
+        update_params = {
           email: params.require(:email),
           name: params[:name],
           role: params[:role] || admin.role,
-        )
+        }
+
+        # Incluir preferencias de notificaciones si están presentes
+        update_params[:notify_deposit_created] = params[:notify_deposit_created] if params.key?(:notify_deposit_created)
+        update_params[:notify_withdrawal_created] = params[:notify_withdrawal_created] if params.key?(:notify_withdrawal_created)
+
+        admin.update!(update_params)
 
         head :no_content
       rescue ActiveRecord::RecordInvalid => e

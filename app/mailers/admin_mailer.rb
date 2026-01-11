@@ -2,9 +2,6 @@
 
 # Mailer para notificaciones a administradores
 class AdminMailer < ApplicationMailer
-  # Leer emails de admins desde variable de entorno
-  ADMIN_EMAILS = ENV.fetch('ADMIN_EMAILS', 'jaimegarciamendez@gmail.com').split(',').map(&:strip).freeze
-
   # Email cuando se crea una nueva solicitud de depósito
   def new_deposit_notification(request)
     @request = request
@@ -13,8 +10,12 @@ class AdminMailer < ApplicationMailer
     @review_url = backoffice_url("/requests")
     @method_label = method_label(request)
 
+    # Solo enviar a admins que tengan esta notificación activa
+    admin_emails = User.notify_deposits.pluck(:email)
+    return if admin_emails.empty?
+
     mail(
-      to: ADMIN_EMAILS,
+      to: admin_emails,
       subject: "Nuevo depósito de #{@investor.name} - #{@amount}"
     )
   end
@@ -29,8 +30,12 @@ class AdminMailer < ApplicationMailer
     @method_label = method_label(request)
     @is_full = request.amount >= (@investor.portfolio&.current_balance || 0) * 0.99
 
+    # Solo enviar a admins que tengan esta notificación activa
+    admin_emails = User.notify_withdrawals.pluck(:email)
+    return if admin_emails.empty?
+
     mail(
-      to: ADMIN_EMAILS,
+      to: admin_emails,
       subject: "Nueva solicitud de retiro de #{@investor.name} - #{@amount}"
     )
   end

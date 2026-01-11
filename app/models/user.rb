@@ -8,6 +8,10 @@ class User < ApplicationRecord
   validates :email, presence: true, uniqueness: true
   validates :role, presence: true, inclusion: { in: ROLES }
 
+  # Scopes for notification preferences
+  scope :notify_deposits, -> { where(notify_deposit_created: true) }
+  scope :notify_withdrawals, -> { where(notify_withdrawal_created: true) }
+
   # OmniAuth-only: we don't require passwords.
   def password_required?
     false
