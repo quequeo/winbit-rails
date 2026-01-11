@@ -19,6 +19,9 @@ RESEND_FROM_EMAIL=Winbit <noreply@yourdomain.com>
 
 # Host de la aplicación (para links en emails)
 APP_HOST=winbit-rails-55a941b2fe50.herokuapp.com
+
+# Emails de administradores (separados por coma)
+ADMIN_EMAILS=jaimegarciamendez@gmail.com,winbit.cfds@gmail.com
 ```
 
 ### Setup en Heroku:
@@ -27,6 +30,26 @@ APP_HOST=winbit-rails-55a941b2fe50.herokuapp.com
 heroku config:set RESEND_API_KEY=re_xxxxxxxxxxxxx -a winbit-rails
 heroku config:set RESEND_FROM_EMAIL="Winbit <noreply@yourdomain.com>" -a winbit-rails
 heroku config:set APP_HOST=winbit-rails-55a941b2fe50.herokuapp.com -a winbit-rails
+heroku config:set ADMIN_EMAILS="jaimegarciamendez@gmail.com,winbit.cfds@gmail.com" -a winbit-rails
+```
+
+### ⚠️ Limitación del Email de Prueba:
+
+**IMPORTANTE:** Con `onboarding@resend.dev` (email de prueba), Resend solo permite enviar a tu propio email (el registrado en Resend).
+
+**Solución temporal:**
+```bash
+# Enviar solo a tu email hasta verificar un dominio
+heroku config:set ADMIN_EMAILS="jaimegarciamendez@gmail.com" -a winbit-rails
+```
+
+**Solución definitiva:**
+1. Registrar un dominio (ej: `winbit.com`)
+2. Verificar el dominio en Resend: https://resend.com/domains
+3. Cambiar el email "From":
+```bash
+heroku config:set RESEND_FROM_EMAIL="Winbit <noreply@winbit.com>" -a winbit-rails
+heroku config:set ADMIN_EMAILS="jaimegarciamendez@gmail.com,winbit.cfds@gmail.com" -a winbit-rails
 ```
 
 ---
