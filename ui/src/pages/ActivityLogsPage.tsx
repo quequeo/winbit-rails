@@ -131,8 +131,83 @@ export const ActivityLogsPage = () => {
         <div className="mb-4 rounded-lg bg-red-50 p-4 text-sm text-red-800">{error}</div>
       )}
 
-      {/* Table */}
-      <div className="overflow-x-auto">
+      {/* Mobile Cards (visible on small screens) */}
+      <div className="md:hidden space-y-4">
+        {logs.length === 0 ? (
+          <div className="text-center py-8 text-sm text-gray-500">
+            No hay actividad registrada
+          </div>
+        ) : (
+          logs.map((log) => (
+            <div key={log.id} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+              {/* Header: Fecha y Admin */}
+              <div className="flex justify-between items-start mb-3 pb-3 border-b border-gray-100">
+                <div className="flex-1">
+                  <div className="text-xs text-gray-500 mb-1">
+                    {formatDate(log.created_at)}
+                  </div>
+                  <div className="font-medium text-sm text-gray-900">{log.user.name}</div>
+                  <div className="text-xs text-gray-500">{log.user.email}</div>
+                </div>
+                <span
+                  className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${getActionBadgeColor(log.action)}`}
+                >
+                  {log.action_description}
+                </span>
+              </div>
+
+              {/* Objetivo */}
+              <div className="mb-3">
+                <div className="text-xs font-medium text-gray-500 mb-1">Objetivo</div>
+                <div className="text-sm font-medium text-gray-900">{log.target.display}</div>
+                <div className="text-xs text-gray-500">
+                  {log.target.type} #{log.target.id}
+                </div>
+              </div>
+
+              {/* Detalles */}
+              {log.metadata && Object.keys(log.metadata).length > 0 && (
+                <div>
+                  <div className="text-xs font-medium text-gray-500 mb-1">Detalles</div>
+                  <div className="space-y-1">
+                    {Object.entries(log.metadata).map(([key, value]) => {
+                      const labelMap: Record<string, string> = {
+                        nuevo_valor: 'Nuevo valor',
+                        emails: 'Emails',
+                        cantidad: 'Cantidad',
+                        amount: 'Monto',
+                        status: 'Estado',
+                        from: 'Desde',
+                        to: 'Hacia',
+                        reason: 'Razón',
+                        request_type: 'Tipo',
+                        method: 'Método',
+                        network: 'Red',
+                      };
+
+                      const label = labelMap[key] || key;
+
+                      return (
+                        <div key={key} className="text-xs">
+                          <span className="font-medium text-gray-700">{label}:</span>{' '}
+                          <span className="text-gray-600">
+                            {typeof value === 'number' && key === 'amount'
+                              ? `$${value.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                              : String(value)}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Desktop Table (hidden on small screens) */}
+      <div className="hidden md:block overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
@@ -201,9 +276,9 @@ export const ActivityLogsPage = () => {
                             method: 'Método',
                             network: 'Red',
                           };
-                          
+
                           const label = labelMap[key] || key;
-                          
+
                           return (
                             <div key={key} className="text-xs mb-1">
                               <span className="font-medium text-gray-700">{label}:</span>{' '}
