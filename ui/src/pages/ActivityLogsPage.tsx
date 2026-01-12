@@ -140,20 +140,25 @@ export const ActivityLogsPage = () => {
         ) : (
           logs.map((log) => (
             <div key={log.id} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-              {/* Header: Fecha y Admin */}
-              <div className="flex justify-between items-start mb-3 pb-3 border-b border-gray-100">
-                <div className="flex-1">
-                  <div className="text-xs text-gray-500 mb-1">
-                    {formatDate(log.created_at)}
-                  </div>
-                  <div className="font-medium text-sm text-gray-900">{log.user.name}</div>
-                  <div className="text-xs text-gray-500">{log.user.email}</div>
-                </div>
+              {/* Fecha */}
+              <div className="text-xs text-gray-500 mb-2">
+                {formatDate(log.created_at)}
+              </div>
+
+              {/* Badge de acción */}
+              <div className="mb-3">
                 <span
-                  className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${getActionBadgeColor(log.action)}`}
+                  className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getActionBadgeColor(log.action)}`}
                 >
                   {log.action_description}
                 </span>
+              </div>
+
+              {/* Admin */}
+              <div className="mb-3 pb-3 border-b border-gray-100">
+                <div className="text-xs font-medium text-gray-500 mb-1">Administrador</div>
+                <div className="font-medium text-sm text-gray-900">{log.user.name}</div>
+                <div className="text-xs text-gray-500">{log.user.email}</div>
               </div>
 
               {/* Objetivo */}
