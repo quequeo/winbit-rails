@@ -15,22 +15,22 @@ module Api
       def update
         settings_updated = []
 
-        if params[:investor_notifications_enabled].present?
+        if params.key?(:investor_notifications_enabled)
           setting = AppSetting.set(
-            AppSetting::INVESTOR_NOTIFICATIONS_ENABLED,
+            'investor_notifications_enabled',
             params[:investor_notifications_enabled].to_s,
             description: 'Habilitar/deshabilitar notificaciones por email a inversores'
           )
           settings_updated << setting
         end
 
-        if params[:investor_email_whitelist].present?
+        if params.key?(:investor_email_whitelist)
           whitelist = params[:investor_email_whitelist]
           whitelist = whitelist.split(',').map(&:strip).reject(&:empty?) if whitelist.is_a?(String)
           whitelist = whitelist.reject(&:empty?) if whitelist.is_a?(Array)
 
           setting = AppSetting.set(
-            AppSetting::INVESTOR_EMAIL_WHITELIST,
+            'investor_email_whitelist',
             whitelist,
             description: 'Lista de emails de inversores que siempre reciben notificaciones (para testing)'
           )
@@ -41,9 +41,9 @@ module Api
         settings_updated.each do |setting|
           metadata = {}
 
-          if setting.key == AppSetting::INVESTOR_NOTIFICATIONS_ENABLED
+          if setting.key == 'investor_notifications_enabled'
             metadata[:nuevo_valor] = setting.value == 'true' ? 'Habilitado' : 'Deshabilitado'
-          elsif setting.key == AppSetting::INVESTOR_EMAIL_WHITELIST
+          elsif setting.key == 'investor_email_whitelist'
             emails = JSON.parse(setting.value) rescue []
             metadata[:emails] = emails.join(', ')
             metadata[:cantidad] = emails.length
