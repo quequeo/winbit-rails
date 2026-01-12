@@ -68,8 +68,8 @@ describe('EditPortfolioPage', () => {
     });
 
     expect(screen.getByText('Test Investor')).toBeInTheDocument();
-    expect(screen.getByText('Capital Actual (USD)')).toBeInTheDocument();
-    expect(screen.getByText('Total Invertido (USD)')).toBeInTheDocument();
+    expect(screen.getByText('Capital Actual')).toBeInTheDocument();
+    expect(screen.getByText('Total Invertido')).toBeInTheDocument();
   });
 
   it('renders error when investor not found', async () => {
@@ -287,9 +287,13 @@ describe('EditPortfolioPage', () => {
       expect(screen.getByText('Editar Portfolio')).toBeInTheDocument();
     });
 
-    // Should use default values of 0
-    const inputs = screen.getAllByDisplayValue('0');
-    expect(inputs.length).toBeGreaterThan(0);
+    // Should use default formatted values
+    const usdInputs = screen.getAllByDisplayValue('USD 0,00'); // currentBalance, totalInvested, annualReturnUSD
+    expect(usdInputs.length).toBe(3);
+    const percentInputs = screen.getAllByDisplayValue('0,00%'); // annualReturnPercent
+    expect(percentInputs.length).toBe(1);
+    expect(screen.getByText('USD 0,00')).toBeInTheDocument(); // accumulatedReturnUSD in div
+    expect(screen.getByText('0,00%')).toBeInTheDocument(); // accumulatedReturnPercent in div
   });
 
   it('renders all form labels correctly', async () => {
@@ -319,11 +323,11 @@ describe('EditPortfolioPage', () => {
     });
 
     // Check all form labels are present
-    expect(screen.getByText('Capital Actual (USD)')).toBeInTheDocument();
-    expect(screen.getByText('Total Invertido (USD)')).toBeInTheDocument();
-    expect(screen.getByText('Rend. Acum. desde el Inicio (USD)')).toBeInTheDocument();
+    expect(screen.getByText('Capital Actual')).toBeInTheDocument();
+    expect(screen.getByText('Total Invertido')).toBeInTheDocument();
+    expect(screen.getByText('Rend. Acum. desde el Inicio')).toBeInTheDocument();
     expect(screen.getByText('Rend. Acum. (%)')).toBeInTheDocument();
-    expect(screen.getByText('Rend. Acum. Anual (USD)')).toBeInTheDocument();
+    expect(screen.getByText('Rend. Acum. Anual')).toBeInTheDocument();
     expect(screen.getByText('Rend. Acum. Anual (%)')).toBeInTheDocument();
   });
 
@@ -352,14 +356,13 @@ describe('EditPortfolioPage', () => {
       // Wait for the form to load with the currentBalance value
       let input;
       await waitFor(() => {
-        const inputs = screen.getAllByDisplayValue('10000');
-        input = inputs[0]; // currentBalance should be the first one
+        input = screen.getByDisplayValue('USD 10.000,00');
         expect(input).toBeInTheDocument();
       });
 
-      fireEvent.change(input!, { target: { value: '15000' } });
+      fireEvent.change(input!, { target: { value: 'USD 15.000,00' } });
 
-      expect(input).toHaveValue(15000);
+      expect(input).toHaveValue('USD 15.000,00');
     });
 
     it('updates totalInvested field', async () => {
@@ -368,13 +371,13 @@ describe('EditPortfolioPage', () => {
 
       let input;
       await waitFor(() => {
-        input = screen.getByDisplayValue('8000');
+        input = screen.getByDisplayValue('USD 8.000,00');
         expect(input).toBeInTheDocument();
       });
 
-      fireEvent.change(input!, { target: { value: '9000' } });
+      fireEvent.change(input!, { target: { value: 'USD 9.000,00' } });
 
-      expect(input).toHaveValue(9000);
+      expect(input).toHaveValue('USD 9.000,00');
     });
 
     it('auto-calculates accumulatedReturnUSD field', async () => {
@@ -384,9 +387,8 @@ describe('EditPortfolioPage', () => {
       // Wait for the accumulated return USD field to be auto-calculated
       // Current balance = 10000, Total invested = 8000, so return = 2000
       await waitFor(() => {
-        const accReturnInput = screen.getByDisplayValue('2000');
-        expect(accReturnInput).toBeInTheDocument();
-        expect(accReturnInput).toBeDisabled(); // Should be read-only
+        const accReturnText = screen.getByText('USD 2.000,00');
+        expect(accReturnText).toBeInTheDocument();
       });
     });
 
@@ -397,9 +399,8 @@ describe('EditPortfolioPage', () => {
       // Wait for the accumulated return % field to be auto-calculated
       // (10000 - 8000) / 8000 * 100 = 25%
       await waitFor(() => {
-        const accReturnPercentInput = screen.getByDisplayValue('25');
-        expect(accReturnPercentInput).toBeInTheDocument();
-        expect(accReturnPercentInput).toBeDisabled(); // Should be read-only
+        const accReturnPercentText = screen.getByText('25,00%');
+        expect(accReturnPercentText).toBeInTheDocument();
       });
     });
 
@@ -409,13 +410,13 @@ describe('EditPortfolioPage', () => {
 
       let input;
       await waitFor(() => {
-        input = screen.getByDisplayValue('1500');
+        input = screen.getByDisplayValue('USD 1.500,00');
         expect(input).toBeInTheDocument();
       });
 
-      fireEvent.change(input!, { target: { value: '2500' } });
+      fireEvent.change(input!, { target: { value: 'USD 2.500,00' } });
 
-      expect(input).toHaveValue(2500);
+      expect(input).toHaveValue('USD 2.500,00');
     });
 
     it('updates annualReturnPercent field', async () => {
@@ -424,13 +425,13 @@ describe('EditPortfolioPage', () => {
 
       let input;
       await waitFor(() => {
-        input = screen.getByDisplayValue('18.75');
+        input = screen.getByDisplayValue('18,75%');
         expect(input).toBeInTheDocument();
       });
 
-      fireEvent.change(input!, { target: { value: '20' } });
+      fireEvent.change(input!, { target: { value: '20,00%' } });
 
-      expect(input).toHaveValue(20);
+      expect(input).toHaveValue('20,00%');
     });
   });
 });

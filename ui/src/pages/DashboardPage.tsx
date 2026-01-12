@@ -42,7 +42,7 @@ export const DashboardPage = () => {
           <p className="mt-2 text-3xl font-bold text-gray-900">{data.data.investorCount}</p>
         </div>
         <div className="rounded-lg bg-white p-6 shadow">
-          <p className="text-sm font-medium text-gray-600">AUM Total</p>
+          <p className="text-sm font-medium text-gray-600">Capital Total Administrado</p>
           <p className="mt-2 text-3xl font-bold text-gray-900">
             {formatCurrencyAR(data.data.totalAum)}
           </p>

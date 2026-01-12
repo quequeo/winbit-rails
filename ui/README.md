@@ -4,7 +4,7 @@ React + TypeScript admin interface for managing Winbit investments.
 
 ## Features
 
-- 📊 **Dashboard** - Overview of investors, AUM, and pending requests
+- 📊 **Dashboard** - Overview of investors, Capital Total Administrado, and pending requests
 - 👥 **Investors** - Manage investor accounts and portfolios
 - 💼 **Portfolios** - Update portfolio balances and performance metrics
 - 📝 **Requests** - Process deposit and withdrawal requests

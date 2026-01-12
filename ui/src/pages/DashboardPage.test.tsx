@@ -40,7 +40,7 @@ describe('DashboardPage', () => {
     expect(screen.getByText('Total Inversores')).toBeInTheDocument();
     expect(screen.getByText('25')).toBeInTheDocument();
 
-    expect(screen.getByText('AUM Total')).toBeInTheDocument();
+    expect(screen.getByText('Capital Total Administrado')).toBeInTheDocument();
     // Argentine format: $150.000,00
     expect(screen.getByText(/\$150\.000,00/)).toBeInTheDocument();
 
