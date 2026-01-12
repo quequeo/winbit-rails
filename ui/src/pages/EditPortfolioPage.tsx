@@ -55,6 +55,20 @@ export const EditPortfolioPage = () => {
     });
   }, [inv]);
 
+  // Auto-calculate accumulated returns when balance or invested changes
+  useEffect(() => {
+    const currentBalance = Number(form.currentBalance) || 0;
+    const totalInvested = Number(form.totalInvested) || 0;
+    const accumulatedReturnUSD = currentBalance - totalInvested;
+    const accumulatedReturnPercent = totalInvested > 0 ? (accumulatedReturnUSD / totalInvested) * 100 : 0;
+
+    setForm((prev) => ({
+      ...prev,
+      accumulatedReturnUSD: Number(accumulatedReturnUSD.toFixed(2)),
+      accumulatedReturnPercent: Number(accumulatedReturnPercent.toFixed(2)),
+    }));
+  }, [form.currentBalance, form.totalInvested]);
+
   if (error) return <div className="text-red-600">{error}</div>;
   if (!inv) return <div className="text-gray-600">Cargando...</div>;
 
@@ -95,12 +109,30 @@ export const EditPortfolioPage = () => {
               <Input type="number" step="0.01" value={form.totalInvested} onChange={(e) => set('totalInvested', e.target.value)} />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Rend. Acum. desde el Inicio (USD)</label>
-              <Input type="number" step="0.01" value={form.accumulatedReturnUSD} onChange={(e) => set('accumulatedReturnUSD', e.target.value)} />
+              <label className="text-sm font-medium text-gray-700">
+                Rend. Acum. desde el Inicio (USD)
+                <span className="ml-1 text-xs text-gray-500">(Auto-calculado)</span>
+              </label>
+              <Input
+                type="number"
+                step="0.01"
+                value={form.accumulatedReturnUSD}
+                disabled
+                className="bg-gray-50"
+              />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Rend. Acum. (%)</label>
-              <Input type="number" step="0.01" value={form.accumulatedReturnPercent} onChange={(e) => set('accumulatedReturnPercent', e.target.value)} />
+              <label className="text-sm font-medium text-gray-700">
+                Rend. Acum. (%)
+                <span className="ml-1 text-xs text-gray-500">(Auto-calculado)</span>
+              </label>
+              <Input
+                type="number"
+                step="0.01"
+                value={form.accumulatedReturnPercent}
+                disabled
+                className="bg-gray-50"
+              />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Rend. Acum. Anual (USD)</label>

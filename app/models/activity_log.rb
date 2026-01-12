@@ -30,19 +30,19 @@ class ActivityLog < ApplicationRecord
   # Método helper para descripción en español
   def action_description
     case action
-    when 'approve_request' then 'Aprobó solicitud'
-    when 'reject_request' then 'Rechazó solicitud'
-    when 'update_portfolio' then 'Actualizó portfolio'
-    when 'create_investor' then 'Creó inversor'
-    when 'update_investor' then 'Actualizó inversor'
-    when 'deactivate_investor' then 'Desactivó inversor'
-    when 'activate_investor' then 'Activó inversor'
-    when 'delete_investor' then 'Eliminó inversor'
-    when 'create_admin' then 'Creó admin'
-    when 'update_admin' then 'Actualizó admin'
-    when 'delete_admin' then 'Eliminó admin'
-    when 'distribute_profit' then 'Distribuyó ganancias'
-    when 'update_settings' then 'Actualizó configuración'
+    when 'approve_request' then 'Solicitud aprobada'
+    when 'reject_request' then 'Solicitud rechazada'
+    when 'update_portfolio' then 'Portfolio actualizado'
+    when 'create_investor' then 'Inversor creado'
+    when 'update_investor' then 'Inversor actualizado'
+    when 'deactivate_investor' then 'Inversor desactivado'
+    when 'activate_investor' then 'Inversor activado'
+    when 'delete_investor' then 'Inversor eliminado'
+    when 'create_admin' then 'Administrador creado'
+    when 'update_admin' then 'Administrador actualizado'
+    when 'delete_admin' then 'Administrador eliminado'
+    when 'distribute_profit' then 'Ganancias distribuidas'
+    when 'update_settings' then 'Configuración actualizada'
     else action
     end
   end

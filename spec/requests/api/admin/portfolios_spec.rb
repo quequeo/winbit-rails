@@ -74,12 +74,10 @@ RSpec.describe 'Admin Portfolios API', type: :request do
   end
 
   describe 'PATCH /api/admin/portfolios/:id' do
-    it 'updates portfolio with all fields' do
+    it 'updates portfolio with all fields and auto-calculates accumulated returns' do
       patch "/api/admin/portfolios/#{investor1.id}", params: {
         currentBalance: 12000,
         totalInvested: 9000,
-        accumulatedReturnUSD: 3000,
-        accumulatedReturnPercent: 33.33,
         annualReturnUSD: 1500,
         annualReturnPercent: 16.67
       }
@@ -89,8 +87,9 @@ RSpec.describe 'Admin Portfolios API', type: :request do
       portfolio1.reload
       expect(portfolio1.current_balance).to eq(12000)
       expect(portfolio1.total_invested).to eq(9000)
+      # Accumulated returns are auto-calculated: 12000 - 9000 = 3000 USD, 33.33%
       expect(portfolio1.accumulated_return_usd).to eq(3000)
-      expect(portfolio1.accumulated_return_percent).to eq(33.33)
+      expect(portfolio1.accumulated_return_percent).to be_within(0.01).of(33.33)
       expect(portfolio1.annual_return_usd).to eq(1500)
       expect(portfolio1.annual_return_percent).to eq(16.67)
     end
@@ -107,8 +106,6 @@ RSpec.describe 'Admin Portfolios API', type: :request do
       patch "/api/admin/portfolios/#{investor_without_portfolio.id}", params: {
         currentBalance: 5000,
         totalInvested: 5000,
-        accumulatedReturnUSD: 0,
-        accumulatedReturnPercent: 0,
         annualReturnUSD: 0,
         annualReturnPercent: 0
       }
@@ -118,14 +115,15 @@ RSpec.describe 'Admin Portfolios API', type: :request do
       investor_without_portfolio.reload
       expect(investor_without_portfolio.portfolio).to be_present
       expect(investor_without_portfolio.portfolio.current_balance).to eq(5000)
+      # Accumulated returns should be auto-calculated to 0 (5000 - 5000)
+      expect(investor_without_portfolio.portfolio.accumulated_return_usd).to eq(0)
+      expect(investor_without_portfolio.portfolio.accumulated_return_percent).to eq(0)
     end
 
     it 'returns error when investor not found' do
       patch '/api/admin/portfolios/nonexistent', params: {
         currentBalance: 5000,
         totalInvested: 5000,
-        accumulatedReturnUSD: 0,
-        accumulatedReturnPercent: 0,
         annualReturnUSD: 0,
         annualReturnPercent: 0
       }
@@ -148,8 +146,6 @@ RSpec.describe 'Admin Portfolios API', type: :request do
       patch "/api/admin/portfolios/#{investor1.id}", params: {
         currentBalance: -1000, # Negative value
         totalInvested: 5000,
-        accumulatedReturnUSD: 0,
-        accumulatedReturnPercent: 0,
         annualReturnUSD: 0,
         annualReturnPercent: 0
       }

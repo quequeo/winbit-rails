@@ -21,13 +21,26 @@ module Api
         return render_error('Inversor no encontrado', status: :not_found) unless investor
 
         portfolio = Portfolio.find_by(investor_id: investor.id)
+
+        # Get required params
+        current_balance = params.require(:currentBalance).to_f
+        total_invested = params.require(:totalInvested).to_f
+
+        # Auto-calculate accumulated returns
+        accumulated_return_usd = current_balance - total_invested
+        accumulated_return_percent = total_invested > 0 ? (accumulated_return_usd / total_invested) * 100 : 0
+
+        # Annual returns can still be provided manually or calculated
+        annual_return_usd = params[:annualReturnUSD]&.to_f || 0
+        annual_return_percent = params[:annualReturnPercent]&.to_f || 0
+
         attrs = {
-          current_balance: params.require(:currentBalance),
-          total_invested: params.require(:totalInvested),
-          accumulated_return_usd: params.require(:accumulatedReturnUSD),
-          accumulated_return_percent: params.require(:accumulatedReturnPercent),
-          annual_return_usd: params.require(:annualReturnUSD),
-          annual_return_percent: params.require(:annualReturnPercent),
+          current_balance: current_balance,
+          total_invested: total_invested,
+          accumulated_return_usd: accumulated_return_usd,
+          accumulated_return_percent: accumulated_return_percent,
+          annual_return_usd: annual_return_usd,
+          annual_return_percent: annual_return_percent,
         }
 
         if portfolio
@@ -41,7 +54,10 @@ module Api
           user: current_user,
           action: 'update_portfolio',
           target: portfolio,
-          metadata: { amount: attrs[:current_balance].to_f }
+          metadata: {
+            current_balance: current_balance,
+            accumulated_return_usd: accumulated_return_usd,
+          }
         )
 
         head :no_content
