@@ -399,7 +399,7 @@ describe('AdminsPage', () => {
 
       // Wait for the data to render before checking buttons
       await waitFor(() => {
-        expect(screen.getByText('Logged Admin')).toBeInTheDocument();
+        expect(screen.getAllByText('Logged Admin').length).toBeGreaterThan(0);
       });
 
       // Find all delete buttons with title
