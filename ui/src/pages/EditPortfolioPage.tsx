@@ -63,6 +63,17 @@ export const EditPortfolioPage = () => {
     const accumulatedReturnUSD = currentBalance - totalInvested;
     const accumulatedReturnPercent = totalInvested > 0 ? (accumulatedReturnUSD / totalInvested) * 100 : 0;
 
+    console.log('🔢 Portfolio Form Values:', {
+      currentBalance,
+      totalInvested,
+      accumulatedReturnUSD,
+      accumulatedReturnPercent,
+      formatted_balance: formatNumberAR(currentBalance),
+      formatted_invested: formatNumberAR(totalInvested),
+      formatted_return_usd: formatNumberAR(accumulatedReturnUSD),
+      formatted_return_percent: formatPercentAR(accumulatedReturnPercent),
+    });
+
     setForm((prev) => ({
       ...prev,
       accumulatedReturnUSD: Number(accumulatedReturnUSD.toFixed(2)),
