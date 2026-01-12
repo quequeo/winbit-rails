@@ -45,12 +45,14 @@ describe('AdminsPage', () => {
   });
 
   describe('Listar admins', () => {
-    it('renders loading state initially', () => {
+    it('renders loading state initially', async () => {
       vi.mocked(api.getAdminAdmins).mockImplementation(() => new Promise(() => {}));
 
       render(<AdminsPage />);
 
-      expect(screen.getByText('Cargando...')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByText('Cargando...')).toBeInTheDocument();
+      });
     });
 
     it('renders admins list after loading', async () => {

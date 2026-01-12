@@ -62,12 +62,14 @@ describe('RequestsPage', () => {
   });
 
   describe('Listar solicitudes', () => {
-    it('renders loading state initially', () => {
+    it('renders loading state initially', async () => {
       vi.mocked(api.getAdminRequests).mockImplementation(() => new Promise(() => {}));
 
       render(<RequestsPage />);
 
-      expect(screen.getByText('Cargando...')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByText('Cargando...')).toBeInTheDocument();
+      });
     });
 
     it('renders requests list after loading', async () => {

@@ -119,7 +119,7 @@ RSpec.describe InvestorRequest, type: :model do
         amount: 1000,
         status: 'PENDING'
       )
-      expect { request.save! }.to raise_error
+      expect { request.save! }.to raise_error(ActiveRecord::RecordInvalid)
     end
 
     it 'validates method is valid (database constraint)' do
@@ -130,7 +130,7 @@ RSpec.describe InvestorRequest, type: :model do
         amount: 1000,
         status: 'PENDING'
       )
-      expect { request.save! }.to raise_error
+      expect { request.save! }.to raise_error(ActiveRecord::RecordInvalid)
     end
 
     it 'validates status is valid (database constraint)' do
@@ -141,7 +141,7 @@ RSpec.describe InvestorRequest, type: :model do
         amount: 1000,
         status: 'INVALID'
       )
-      expect { request.save! }.to raise_error
+      expect { request.save! }.to raise_error(ActiveRecord::RecordInvalid)
     end
   end
 
