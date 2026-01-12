@@ -40,7 +40,7 @@ export const ActivityLogsPage = () => {
       setError(null);
 
       const params: any = { page, per_page: 50 };
-      if (filterAction) params.action = filterAction;
+      if (filterAction) params.filter_action = filterAction;
 
       console.log('🔍 Fetching activity logs with params:', params);
       const res = await api.getActivityLogs(params);
