@@ -353,7 +353,9 @@ describe('EditPortfolioPage', () => {
         expect(screen.getByText('Editar Portfolio')).toBeInTheDocument();
       });
 
-      const input = screen.getByDisplayValue('10000');
+      const inputs = screen.getAllByDisplayValue('10000');
+      // currentBalance should be the first one
+      const input = inputs[0];
       fireEvent.change(input, { target: { value: '15000' } });
 
       expect(input).toHaveValue(15000);
@@ -374,34 +376,30 @@ describe('EditPortfolioPage', () => {
       expect(input).toHaveValue(9000);
     });
 
-    it('updates accumulatedReturnUSD field', async () => {
+    it('auto-calculates accumulatedReturnUSD field', async () => {
       vi.mocked(api.getAdminPortfolios).mockResolvedValueOnce(mockData);
       renderWithRouter('1');
 
-      let input;
+      // Wait for the accumulated return USD field to be auto-calculated
+      // Current balance = 10000, Total invested = 8000, so return = 2000
       await waitFor(() => {
-        input = screen.getByDisplayValue('2000');
-        expect(input).toBeInTheDocument();
+        const accReturnInput = screen.getByDisplayValue('2000');
+        expect(accReturnInput).toBeInTheDocument();
+        expect(accReturnInput).toBeDisabled(); // Should be read-only
       });
-
-      fireEvent.change(input!, { target: { value: '3000' } });
-
-      expect(input).toHaveValue(3000);
     });
 
-    it('updates accumulatedReturnPercent field', async () => {
+    it('auto-calculates accumulatedReturnPercent field', async () => {
       vi.mocked(api.getAdminPortfolios).mockResolvedValueOnce(mockData);
       renderWithRouter('1');
 
-      let input;
+      // Wait for the accumulated return % field to be auto-calculated
+      // (10000 - 8000) / 8000 * 100 = 25%
       await waitFor(() => {
-        input = screen.getByDisplayValue('25');
-        expect(input).toBeInTheDocument();
+        const accReturnPercentInput = screen.getByDisplayValue('25');
+        expect(accReturnPercentInput).toBeInTheDocument();
+        expect(accReturnPercentInput).toBeDisabled(); // Should be read-only
       });
-
-      fireEvent.change(input!, { target: { value: '30' } });
-
-      expect(input).toHaveValue(30);
     });
 
     it('updates annualReturnUSD field', async () => {
