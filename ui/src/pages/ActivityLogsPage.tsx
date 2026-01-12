@@ -33,7 +33,6 @@ export const ActivityLogsPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [filterAction, setFilterAction] = useState('');
-  const [filterUser, setFilterUser] = useState('');
 
   const fetchLogs = async (page: number = 1) => {
     try {
@@ -42,7 +41,6 @@ export const ActivityLogsPage = () => {
 
       const params: any = { page, per_page: 50 };
       if (filterAction) params.action = filterAction;
-      if (filterUser) params.user_id = filterUser;
 
       const res = await api.getActivityLogs(params);
       setLogs(res?.data?.logs || []);
@@ -57,7 +55,7 @@ export const ActivityLogsPage = () => {
 
   useEffect(() => {
     fetchLogs(1);
-  }, [filterAction, filterUser]);
+  }, [filterAction]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
