@@ -117,7 +117,7 @@ describe('InvestorsPage', () => {
         expect(api.getAdminInvestors).toHaveBeenCalled();
       });
 
-      const addButton = screen.getByRole('button', { name: /Agregar Inversor/i });
+      const addButton = screen.getByRole('button', { name: /\+ Agregar Inversor/i });
       fireEvent.click(addButton);
 
       expect(screen.getByText('Nuevo Inversor')).toBeInTheDocument();
@@ -137,7 +137,7 @@ describe('InvestorsPage', () => {
       });
 
       // Open form
-      const addButton = screen.getByRole('button', { name: /Agregar Inversor/i });
+      const addButton = screen.getByRole('button', { name: /\+ Agregar Inversor/i });
       await user.click(addButton);
 
       // Fill form
@@ -176,7 +176,7 @@ describe('InvestorsPage', () => {
       });
 
       // Open form and submit
-      const addButton = screen.getByRole('button', { name: /Agregar Inversor/i });
+      const addButton = screen.getByRole('button', { name: /\+ Agregar Inversor/i });
       await user.click(addButton);
 
       const emailInput = screen.getByPlaceholderText('inversor@ejemplo.com');
