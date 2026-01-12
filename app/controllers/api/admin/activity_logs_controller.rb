@@ -90,7 +90,19 @@ module Api
         when 'User'
           log.target&.name || "Admin ##{log.target_id}"
         when 'AppSetting'
-          log.target&.key || "Setting ##{log.target_id}"
+          setting = log.target
+          if setting
+            case setting.key
+            when 'investor_notifications_enabled'
+              'Notificaciones a Inversores (Habilitado/Deshabilitado)'
+            when 'investor_email_whitelist'
+              'Lista Blanca de Emails de Inversores'
+            else
+              setting.description || setting.key
+            end
+          else
+            "Configuración ##{log.target_id}"
+          end
         else
           "#{log.target_type} ##{log.target_id}"
         end

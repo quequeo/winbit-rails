@@ -194,14 +194,35 @@ export const ActivityLogsPage = () => {
                   <td className="px-4 py-3 text-sm text-gray-500">
                     {log.metadata && Object.keys(log.metadata).length > 0 ? (
                       <div className="max-w-xs">
-                        {Object.entries(log.metadata).map(([key, value]) => (
-                          <div key={key} className="text-xs">
-                            <span className="font-medium">{key}:</span>{' '}
-                            {typeof value === 'number' && key === 'amount'
-                              ? `$${value.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                              : String(value)}
-                          </div>
-                        ))}
+                        {Object.entries(log.metadata).map(([key, value]) => {
+                          // Traducir claves al español
+                          const labelMap: Record<string, string> = {
+                            nuevo_valor: 'Nuevo valor',
+                            emails: 'Emails',
+                            cantidad: 'Cantidad',
+                            amount: 'Monto',
+                            status: 'Estado',
+                            from: 'Desde',
+                            to: 'Hacia',
+                            reason: 'Razón',
+                            request_type: 'Tipo',
+                            method: 'Método',
+                            network: 'Red',
+                          };
+                          
+                          const label = labelMap[key] || key;
+                          
+                          return (
+                            <div key={key} className="text-xs mb-1">
+                              <span className="font-medium text-gray-700">{label}:</span>{' '}
+                              <span className="text-gray-600">
+                                {typeof value === 'number' && key === 'amount'
+                                  ? `$${value.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                                  : String(value)}
+                              </span>
+                            </div>
+                          );
+                        })}
                       </div>
                     ) : (
                       <span className="text-gray-400">—</span>

@@ -39,10 +39,21 @@ module Api
 
         # Log activity for each setting updated
         settings_updated.each do |setting|
+          metadata = {}
+          
+          if setting.key == AppSetting::INVESTOR_NOTIFICATIONS_ENABLED
+            metadata[:nuevo_valor] = setting.value == 'true' ? 'Habilitado' : 'Deshabilitado'
+          elsif setting.key == AppSetting::INVESTOR_EMAIL_WHITELIST
+            emails = JSON.parse(setting.value) rescue []
+            metadata[:emails] = emails.join(', ')
+            metadata[:cantidad] = emails.length
+          end
+          
           ActivityLogger.log(
             user: current_user,
             action: 'update_settings',
-            target: setting
+            target: setting,
+            metadata: metadata
           )
         end
 
