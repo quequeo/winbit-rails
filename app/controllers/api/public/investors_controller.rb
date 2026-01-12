@@ -49,8 +49,8 @@ module Api
           }
         }
 
-        # Pending requests (not yet processed)
-        pending_requests = investor.investor_requests.where(status: 'PENDING').order(requested_at: :desc).map { |r|
+        # Pending and rejected requests
+        requests = investor.investor_requests.where(status: ['PENDING', 'REJECTED']).order(requested_at: :desc).map { |r|
           {
             id: "request_#{r.id}",
             investorId: r.investor_id,
@@ -59,15 +59,16 @@ module Api
             amount: r.amount.to_f,
             previousBalance: nil,
             newBalance: nil,
-            status: 'PENDING',
+            status: r.status,
             createdAt: r.requested_at,
             method: r.method,
             network: r.network,
+            rejectionReason: r.rejection_reason,
           }
         }
 
         # Combine and sort by date
-        combined = (histories + pending_requests).sort_by { |item| item[:date] }.reverse
+        combined = (histories + requests).sort_by { |item| item[:date] }.reverse
 
         render json: { data: combined }
       end
