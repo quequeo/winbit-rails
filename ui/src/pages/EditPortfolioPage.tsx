@@ -99,6 +99,22 @@ export const EditPortfolioPage = () => {
 
   const set = (key: string, value: any) => setForm((prev: any) => ({ ...prev, [key]: value }));
 
+  // Parse argentinian format to number: "15.314,00" -> 15314.00
+  const parseArgentinianNumber = (value: string): number => {
+    if (!value) return 0;
+    // Remove "USD" prefix and trim
+    const cleaned = value.replace(/USD/g, '').trim();
+    // Remove dots (thousand separators) and replace comma with dot
+    const normalized = cleaned.replace(/\./g, '').replace(/,/g, '.');
+    return parseFloat(normalized) || 0;
+  };
+
+  // Handle formatted input changes
+  const handleFormattedChange = (key: string, value: string) => {
+    const numericValue = parseArgentinianNumber(value);
+    set(key, numericValue);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -114,21 +130,21 @@ export const EditPortfolioPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Capital Actual</label>
-              <div className="relative">
-                <Input type="number" step="0.01" value={form.currentBalance} onChange={(e) => set('currentBalance', e.target.value)} className="pr-32" />
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-[#58b098] bg-white px-2">
-                  USD {formatNumberAR(Number(form.currentBalance) || 0)}
-                </div>
-              </div>
+              <Input 
+                type="text" 
+                value={`USD ${formatNumberAR(Number(form.currentBalance) || 0)}`}
+                onChange={(e) => handleFormattedChange('currentBalance', e.target.value)}
+                placeholder="USD 0,00"
+              />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Total Invertido</label>
-              <div className="relative">
-                <Input type="number" step="0.01" value={form.totalInvested} onChange={(e) => set('totalInvested', e.target.value)} className="pr-32" />
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-[#58b098] bg-white px-2">
-                  USD {formatNumberAR(Number(form.totalInvested) || 0)}
-                </div>
-              </div>
+              <Input 
+                type="text" 
+                value={`USD ${formatNumberAR(Number(form.totalInvested) || 0)}`}
+                onChange={(e) => handleFormattedChange('totalInvested', e.target.value)}
+                placeholder="USD 0,00"
+              />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">
@@ -150,21 +166,25 @@ export const EditPortfolioPage = () => {
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Rend. Acum. Anual</label>
-              <div className="relative">
-                <Input type="number" step="0.01" value={form.annualReturnUSD} onChange={(e) => set('annualReturnUSD', e.target.value)} className="pr-32" />
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-[#58b098] bg-white px-2">
-                  USD {formatNumberAR(Number(form.annualReturnUSD) || 0)}
-                </div>
-              </div>
+              <Input 
+                type="text" 
+                value={`USD ${formatNumberAR(Number(form.annualReturnUSD) || 0)}`}
+                onChange={(e) => handleFormattedChange('annualReturnUSD', e.target.value)}
+                placeholder="USD 0,00"
+              />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Rend. Acum. Anual (%)</label>
-              <div className="relative">
-                <Input type="number" step="0.01" value={form.annualReturnPercent} onChange={(e) => set('annualReturnPercent', e.target.value)} className="pr-24" />
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-[#58b098] bg-white px-2">
-                  {formatPercentAR(Number(form.annualReturnPercent) || 0)}
-                </div>
-              </div>
+              <Input 
+                type="text" 
+                value={formatPercentAR(Number(form.annualReturnPercent) || 0)}
+                onChange={(e) => {
+                  const cleaned = e.target.value.replace(/%/g, '').trim();
+                  const numericValue = parseArgentinianNumber(cleaned);
+                  set('annualReturnPercent', numericValue);
+                }}
+                placeholder="0,00%"
+              />
             </div>
           </div>
 
