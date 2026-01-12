@@ -9,6 +9,9 @@ module Api
         # Base query with eager loading
         logs = ActivityLog.includes(:user, :target).recent
 
+        Rails.logger.info "🔍 Total logs in DB: #{ActivityLog.count}"
+        Rails.logger.info "🔍 Logs after includes: #{logs.count}"
+
         # Filters
         logs = logs.by_user(params[:user_id]) if params[:user_id].present?
         logs = logs.by_action(params[:action]) if params[:action].present?
@@ -17,27 +20,40 @@ module Api
         total = logs.count
         logs = logs.offset((page - 1) * per_page).limit(per_page)
 
+        Rails.logger.info "🔍 Total after filters: #{total}"
+        Rails.logger.info "🔍 Logs to return: #{logs.count}"
+
+        logs_data = []
+        logs.each do |log|
+          begin
+            logs_data << {
+              id: log.id,
+              action: log.action,
+              action_description: log.action_description,
+              user: {
+                id: log.user.id,
+                name: log.user.name,
+                email: log.user.email
+              },
+              target: {
+                type: log.target_type,
+                id: log.target_id,
+                display: target_display(log)
+              },
+              metadata: log.metadata,
+              created_at: log.created_at
+            }
+          rescue StandardError => e
+            Rails.logger.error "❌ Error mapping log ##{log.id}: #{e.message}"
+            Rails.logger.error e.backtrace.first(5).join("\n")
+          end
+        end
+
+        Rails.logger.info "✅ Mapped #{logs_data.count} logs successfully"
+
         render json: {
           data: {
-            logs: logs.map do |log|
-              {
-                id: log.id,
-                action: log.action,
-                action_description: log.action_description,
-                user: {
-                  id: log.user.id,
-                  name: log.user.name,
-                  email: log.user.email
-                },
-                target: {
-                  type: log.target_type,
-                  id: log.target_id,
-                  display: target_display(log)
-                },
-                metadata: log.metadata,
-                created_at: log.created_at
-              }
-            end,
+            logs: logs_data,
             pagination: {
               page: page,
               per_page: per_page,
