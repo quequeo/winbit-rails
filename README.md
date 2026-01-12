@@ -52,6 +52,9 @@ RAILS_MASTER_KEY=tu_master_key
 RESEND_API_KEY=re_xxxxxxxxxxxxx
 RESEND_FROM_EMAIL=Winbit <noreply@yourdomain.com>
 
+# Frontend URL (para links en emails y redirects OAuth)
+FRONTEND_URL=http://localhost:5173
+
 # CORS (frontend permitido)
 CORS_ORIGINS=http://localhost:5173,https://winbit-6579c.web.app
 

@@ -2,6 +2,7 @@
 
 # Mailer para notificaciones a inversores
 class InvestorMailer < ApplicationMailer
+  helper_method :frontend_url
   # === DEPÓSITOS ===
 
   # Email cuando el cliente crea una solicitud de depósito
@@ -109,5 +110,9 @@ class InvestorMailer < ApplicationMailer
     parts[0].gsub!(/(\d)(?=(\d{3})+(?!\d))/, "\\1.")
     # Unir con coma para decimales
     "$#{parts[0]},#{parts[1]}"
+  end
+
+  def frontend_url
+    ENV.fetch('FRONTEND_URL', 'https://winbit-6579c.web.app')
   end
 end
