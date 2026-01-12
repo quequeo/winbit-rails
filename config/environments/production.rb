@@ -70,6 +70,7 @@ Rails.application.configure do
   # Allow Heroku hostnames (and optionally a custom host via APP_HOST).
   config.hosts << /.*\.herokuapp\.com/
   config.hosts << app_host if app_host
+  config.hosts << 'admin.winbit.com.ar'
 
   # Specify outgoing SMTP server. Remember to add smtp/* credentials via rails credentials:edit.
   # config.action_mailer.smtp_settings = {
