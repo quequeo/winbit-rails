@@ -349,14 +349,15 @@ describe('EditPortfolioPage', () => {
       vi.mocked(api.getAdminPortfolios).mockResolvedValueOnce(mockData);
       renderWithRouter('1');
 
+      // Wait for the form to load with the currentBalance value
+      let input;
       await waitFor(() => {
-        expect(screen.getByText('Editar Portfolio')).toBeInTheDocument();
+        const inputs = screen.getAllByDisplayValue('10000');
+        input = inputs[0]; // currentBalance should be the first one
+        expect(input).toBeInTheDocument();
       });
 
-      const inputs = screen.getAllByDisplayValue('10000');
-      // currentBalance should be the first one
-      const input = inputs[0];
-      fireEvent.change(input, { target: { value: '15000' } });
+      fireEvent.change(input!, { target: { value: '15000' } });
 
       expect(input).toHaveValue(15000);
     });
