@@ -63,7 +63,7 @@ module Api
             createdAt: r.requested_at,
             method: r.method,
             network: r.network,
-            rejectionReason: r.rejection_reason,
+            notes: r.notes,
           }
         }
 
