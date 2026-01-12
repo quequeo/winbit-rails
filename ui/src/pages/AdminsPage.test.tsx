@@ -397,6 +397,11 @@ describe('AdminsPage', () => {
         expect(api.getAdminAdmins).toHaveBeenCalled();
       });
 
+      // Wait for the data to render before checking buttons
+      await waitFor(() => {
+        expect(screen.getByText('Logged Admin')).toBeInTheDocument();
+      });
+
       // Find all delete buttons with title
       const allButtons = screen.getAllByRole('button');
       const deleteButtons = allButtons.filter(
