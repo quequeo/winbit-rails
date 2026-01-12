@@ -13,18 +13,25 @@ module Api
         Rails.logger.info "🔍 Logs after includes: #{logs.count}"
 
         # Filters
+        Rails.logger.info "🔍 Filter user_id: #{params[:user_id].inspect}"
+        Rails.logger.info "🔍 Filter action: #{params[:action].inspect}"
+        
         logs = logs.by_user(params[:user_id]) if params[:user_id].present?
         logs = logs.by_action(params[:action]) if params[:action].present?
 
+        Rails.logger.info "🔍 SQL Query: #{logs.to_sql}"
+
         # Pagination
         total = logs.count
-        logs = logs.offset((page - 1) * per_page).limit(per_page)
-
         Rails.logger.info "🔍 Total after filters: #{total}"
-        Rails.logger.info "🔍 Logs to return: #{logs.count}"
+        
+        logs = logs.offset((page - 1) * per_page).limit(per_page)
+        logs_array = logs.to_a
+        
+        Rails.logger.info "🔍 Logs to return: #{logs_array.count}"
 
         logs_data = []
-        logs.each do |log|
+        logs_array.each do |log|
           begin
             logs_data << {
               id: log.id,
