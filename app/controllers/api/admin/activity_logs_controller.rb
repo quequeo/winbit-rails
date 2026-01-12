@@ -9,54 +9,33 @@ module Api
         # Base query with eager loading
         logs = ActivityLog.includes(:user, :target).recent
 
-        Rails.logger.info "🔍 Total logs in DB: #{ActivityLog.count}"
-        Rails.logger.info "🔍 Logs after includes: #{logs.count}"
-
         # Filters
-        Rails.logger.info "🔍 Filter user_id: #{params[:user_id].inspect}"
-        Rails.logger.info "🔍 Filter filter_action: #{params[:filter_action].inspect}"
-
         logs = logs.by_user(params[:user_id]) if params[:user_id].present?
         logs = logs.by_action(params[:filter_action]) if params[:filter_action].present?
 
-        Rails.logger.info "🔍 SQL Query: #{logs.to_sql}"
-
         # Pagination
         total = logs.count
-        Rails.logger.info "🔍 Total after filters: #{total}"
-
         logs = logs.offset((page - 1) * per_page).limit(per_page)
-        logs_array = logs.to_a
 
-        Rails.logger.info "🔍 Logs to return: #{logs_array.count}"
-
-        logs_data = []
-        logs_array.each do |log|
-          begin
-            logs_data << {
-              id: log.id,
-              action: log.action,
-              action_description: log.action_description,
-              user: {
-                id: log.user.id,
-                name: log.user.name,
-                email: log.user.email
-              },
-              target: {
-                type: log.target_type,
-                id: log.target_id,
-                display: target_display(log)
-              },
-              metadata: log.metadata,
-              created_at: log.created_at
-            }
-          rescue StandardError => e
-            Rails.logger.error "❌ Error mapping log ##{log.id}: #{e.message}"
-            Rails.logger.error e.backtrace.first(5).join("\n")
-          end
+        logs_data = logs.map do |log|
+          {
+            id: log.id,
+            action: log.action,
+            action_description: log.action_description,
+            user: {
+              id: log.user.id,
+              name: log.user.name,
+              email: log.user.email
+            },
+            target: {
+              type: log.target_type,
+              id: log.target_id,
+              display: target_display(log)
+            },
+            metadata: log.metadata,
+            created_at: log.created_at
+          }
         end
-
-        Rails.logger.info "✅ Mapped #{logs_data.count} logs successfully"
 
         render json: {
           data: {

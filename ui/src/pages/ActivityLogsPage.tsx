@@ -42,18 +42,10 @@ export const ActivityLogsPage = () => {
       const params: any = { page, per_page: 50 };
       if (filterAction) params.filter_action = filterAction;
 
-      console.log('🔍 Fetching activity logs with params:', params);
       const res = await api.getActivityLogs(params);
-      console.log('✅ API Response:', res);
-      console.log('📊 Logs data:', res?.data);
-      console.log('📋 Logs array:', res?.data?.logs);
-      console.log('📄 Pagination:', res?.data?.pagination);
-      
       setLogs(res?.data?.logs || []);
       setPagination(res?.data?.pagination || null);
       setCurrentPage(page);
-      
-      console.log('✨ State updated - logs count:', res?.data?.logs?.length || 0);
     } catch (err: any) {
       console.error('❌ Error fetching activity logs:', err);
       setError(err?.message || 'Error al cargar actividad');
