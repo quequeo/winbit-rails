@@ -114,13 +114,21 @@ export const EditPortfolioPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Capital Actual</label>
-              <Input type="number" step="0.01" value={form.currentBalance} onChange={(e) => set('currentBalance', e.target.value)} />
-              <p className="text-sm font-medium text-[#58b098]">USD {formatNumberAR(Number(form.currentBalance) || 0)}</p>
+              <div className="relative">
+                <Input type="number" step="0.01" value={form.currentBalance} onChange={(e) => set('currentBalance', e.target.value)} className="pr-32" />
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-[#58b098] bg-white px-2">
+                  USD {formatNumberAR(Number(form.currentBalance) || 0)}
+                </div>
+              </div>
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Total Invertido</label>
-              <Input type="number" step="0.01" value={form.totalInvested} onChange={(e) => set('totalInvested', e.target.value)} />
-              <p className="text-sm font-medium text-[#58b098]">USD {formatNumberAR(Number(form.totalInvested) || 0)}</p>
+              <div className="relative">
+                <Input type="number" step="0.01" value={form.totalInvested} onChange={(e) => set('totalInvested', e.target.value)} className="pr-32" />
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-[#58b098] bg-white px-2">
+                  USD {formatNumberAR(Number(form.totalInvested) || 0)}
+                </div>
+              </div>
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">
@@ -142,13 +150,21 @@ export const EditPortfolioPage = () => {
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Rend. Acum. Anual</label>
-              <Input type="number" step="0.01" value={form.annualReturnUSD} onChange={(e) => set('annualReturnUSD', e.target.value)} />
-              <p className="text-sm font-medium text-[#58b098]">USD {formatNumberAR(Number(form.annualReturnUSD) || 0)}</p>
+              <div className="relative">
+                <Input type="number" step="0.01" value={form.annualReturnUSD} onChange={(e) => set('annualReturnUSD', e.target.value)} className="pr-32" />
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-[#58b098] bg-white px-2">
+                  USD {formatNumberAR(Number(form.annualReturnUSD) || 0)}
+                </div>
+              </div>
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Rend. Acum. Anual (%)</label>
-              <Input type="number" step="0.01" value={form.annualReturnPercent} onChange={(e) => set('annualReturnPercent', e.target.value)} />
-              <p className="text-sm font-medium text-[#58b098]">{formatPercentAR(Number(form.annualReturnPercent) || 0)}</p>
+              <div className="relative">
+                <Input type="number" step="0.01" value={form.annualReturnPercent} onChange={(e) => set('annualReturnPercent', e.target.value)} className="pr-24" />
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-[#58b098] bg-white px-2">
+                  {formatPercentAR(Number(form.annualReturnPercent) || 0)}
+                </div>
+              </div>
             </div>
           </div>
 
