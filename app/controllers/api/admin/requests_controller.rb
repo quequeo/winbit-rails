@@ -55,14 +55,41 @@ module Api
       end
 
       def approve
+        req = InvestorRequest.find(params[:id])
         Requests::Approve.new(request_id: params[:id]).call
+
+        # Log activity
+        ActivityLogger.log(
+          user: current_user,
+          action: 'approve_request',
+          target: req,
+          metadata: {
+            request_type: req.request_type,
+            amount: req.amount.to_f,
+            method: req.method
+          }
+        )
+
         head :no_content
       rescue StandardError => e
         render_error(e.message, status: :bad_request)
       end
 
       def reject
+        req = InvestorRequest.find(params[:id])
         Requests::Reject.new(request_id: params[:id]).call
+
+        # Log activity
+        ActivityLogger.log(
+          user: current_user,
+          action: 'reject_request',
+          target: req,
+          metadata: {
+            request_type: req.request_type,
+            amount: req.amount.to_f
+          }
+        )
+
         head :no_content
       rescue StandardError => e
         render_error(e.message, status: :bad_request)

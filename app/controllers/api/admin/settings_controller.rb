@@ -13,25 +13,38 @@ module Api
 
       # PATCH /api/admin/settings
       def update
+        settings_updated = []
+
         if params[:investor_notifications_enabled].present?
-          AppSetting.set(
+          setting = AppSetting.set(
             AppSetting::INVESTOR_NOTIFICATIONS_ENABLED,
             params[:investor_notifications_enabled].to_s,
             description: 'Habilitar/deshabilitar notificaciones por email a inversores'
           )
+          settings_updated << setting
         end
 
-      if params[:investor_email_whitelist].present?
-        whitelist = params[:investor_email_whitelist]
-        whitelist = whitelist.split(',').map(&:strip).reject(&:empty?) if whitelist.is_a?(String)
-        whitelist = whitelist.reject(&:empty?) if whitelist.is_a?(Array)
+        if params[:investor_email_whitelist].present?
+          whitelist = params[:investor_email_whitelist]
+          whitelist = whitelist.split(',').map(&:strip).reject(&:empty?) if whitelist.is_a?(String)
+          whitelist = whitelist.reject(&:empty?) if whitelist.is_a?(Array)
 
-        AppSetting.set(
-          AppSetting::INVESTOR_EMAIL_WHITELIST,
-          whitelist,
-          description: 'Lista de emails de inversores que siempre reciben notificaciones (para testing)'
-        )
-      end
+          setting = AppSetting.set(
+            AppSetting::INVESTOR_EMAIL_WHITELIST,
+            whitelist,
+            description: 'Lista de emails de inversores que siempre reciben notificaciones (para testing)'
+          )
+          settings_updated << setting
+        end
+
+        # Log activity for each setting updated
+        settings_updated.each do |setting|
+          ActivityLogger.log(
+            user: current_user,
+            action: 'update_settings',
+            target: setting
+          )
+        end
 
         # Return updated settings
         settings = {

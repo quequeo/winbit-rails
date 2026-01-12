@@ -34,6 +34,8 @@ Rails.application.routes.draw do
 
       get 'settings', to: 'settings#index', format: false
       patch 'settings', to: 'settings#update', format: false
+
+      get 'activity_logs', to: 'activity_logs#index', format: false
     end
   end
 

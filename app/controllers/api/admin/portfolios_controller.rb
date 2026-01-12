@@ -33,8 +33,16 @@ module Api
         if portfolio
           portfolio.update!(attrs)
         else
-          Portfolio.create!(attrs.merge(investor_id: investor.id))
+          portfolio = Portfolio.create!(attrs.merge(investor_id: investor.id))
         end
+
+        # Log activity
+        ActivityLogger.log(
+          user: current_user,
+          action: 'update_portfolio',
+          target: portfolio,
+          metadata: { amount: attrs[:current_balance].to_f }
+        )
 
         head :no_content
       rescue ActiveRecord::RecordInvalid => e

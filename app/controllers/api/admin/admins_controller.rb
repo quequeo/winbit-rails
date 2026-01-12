@@ -23,6 +23,14 @@ module Api
           role: params[:role] || 'ADMIN',
         )
         admin.save!
+
+        # Log activity
+        ActivityLogger.log(
+          user: current_user,
+          action: 'create_admin',
+          target: admin
+        )
+
         render json: { data: { id: admin.id } }, status: :created
       rescue ActiveRecord::RecordInvalid => e
         render_error(e.record.errors.full_messages.join(', '), status: :bad_request)
@@ -46,6 +54,13 @@ module Api
 
         admin.update!(update_params)
 
+        # Log activity
+        ActivityLogger.log(
+          user: current_user,
+          action: 'update_admin',
+          target: admin
+        )
+
         head :no_content
       rescue ActiveRecord::RecordInvalid => e
         render_error(e.record.errors.full_messages.join(', '), status: :bad_request)
@@ -66,6 +81,13 @@ module Api
         if User.count <= 1
           return render_error('No se puede eliminar el último admin', status: :bad_request)
         end
+
+        # Log activity before destroying
+        ActivityLogger.log(
+          user: current_user,
+          action: 'delete_admin',
+          target: admin
+        )
 
         admin.destroy!
         head :no_content

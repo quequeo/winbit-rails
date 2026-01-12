@@ -79,4 +79,13 @@ export const api = {
   getAdminSettings: () => request('/api/admin/settings'),
   updateAdminSettings: (body: { investor_notifications_enabled?: boolean; investor_email_whitelist?: string[] | string }) =>
     request('/api/admin/settings', { method: 'PATCH', body: JSON.stringify(body) }),
+  getActivityLogs: (params?: { page?: number; per_page?: number; user_id?: string; action?: string }) => {
+    const qs = new URLSearchParams();
+    if (params?.page) qs.set('page', params.page.toString());
+    if (params?.per_page) qs.set('per_page', params.per_page.toString());
+    if (params?.user_id) qs.set('user_id', params.user_id);
+    if (params?.action) qs.set('action', params.action);
+    const suffix = qs.toString() ? `?${qs.toString()}` : '';
+    return request(`/api/admin/activity_logs${suffix}`);
+  },
 };

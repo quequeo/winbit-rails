@@ -75,6 +75,13 @@ module Api
             annual_return_usd: 0,
             annual_return_percent: 0,
           )
+
+          # Log activity
+          ActivityLogger.log(
+            user: current_user,
+            action: 'create_investor',
+            target: inv
+          )
         end
 
         render json: { data: { id: inv.id } }, status: :created
@@ -93,6 +100,13 @@ module Api
           name: params.require(:name),
         )
 
+        # Log activity
+        ActivityLogger.log(
+          user: current_user,
+          action: 'update_investor',
+          target: inv
+        )
+
         head :no_content
       rescue ActiveRecord::RecordInvalid => e
         render_error(e.record.errors.full_messages.join(', '), status: :bad_request)
@@ -104,8 +118,18 @@ module Api
         inv = Investor.find_by(id: params[:id])
         return render_error('Inversor no encontrado', status: :not_found) unless inv
 
+        old_status = inv.status
         new_status = inv.status == 'ACTIVE' ? 'INACTIVE' : 'ACTIVE'
         inv.update!(status: new_status)
+
+        # Log activity
+        action = new_status == 'ACTIVE' ? 'activate_investor' : 'deactivate_investor'
+        ActivityLogger.log(
+          user: current_user,
+          action: action,
+          target: inv,
+          metadata: { from: old_status, to: new_status }
+        )
 
         head :no_content
       end
@@ -113,6 +137,13 @@ module Api
       def destroy
         inv = Investor.find_by(id: params[:id])
         return render_error('Inversor no encontrado', status: :not_found) unless inv
+
+        # Log activity before destroying
+        ActivityLogger.log(
+          user: current_user,
+          action: 'delete_investor',
+          target: inv
+        )
 
         inv.destroy!
         head :no_content

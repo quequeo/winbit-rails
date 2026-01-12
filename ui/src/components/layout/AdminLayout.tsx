@@ -142,6 +142,14 @@ export const AdminLayout = () => {
             >
               Configuración
             </NavLink>
+            <NavLink
+              to="/activity"
+              className={({ isActive }) =>
+                isActive ? `${linkBase} border-[#58b098] text-[#58b098]` : linkBase
+              }
+            >
+              Actividad
+            </NavLink>
           </div>
         </nav>
 
@@ -214,6 +222,17 @@ export const AdminLayout = () => {
                 }
               >
                 Configuración
+              </NavLink>
+              <NavLink
+                to="/activity"
+                onClick={() => setMobileMenuOpen(false)}
+                className={({ isActive }) =>
+                  isActive
+                    ? 'rounded-lg bg-[#58b098]/10 px-3 py-2 text-sm font-medium text-[#58b098]'
+                    : 'rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50'
+                }
+              >
+                Actividad
               </NavLink>
 
               <div className="my-1 h-px bg-gray-200" />

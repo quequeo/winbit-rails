@@ -10,9 +10,22 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_11_180225) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_12_000946) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "activity_logs", force: :cascade do |t|
+    t.string "user_id", null: false
+    t.string "target_type", null: false
+    t.bigint "target_id", null: false
+    t.string "action", limit: 30, null: false
+    t.jsonb "metadata", default: {}
+    t.datetime "created_at", precision: nil, null: false
+    t.index ["created_at"], name: "index_activity_logs_on_created_at"
+    t.index ["target_type", "target_id"], name: "index_activity_logs_on_target"
+    t.index ["target_type", "target_id"], name: "index_activity_logs_on_target_type_and_target_id"
+    t.index ["user_id", "created_at"], name: "index_activity_logs_on_user_id_and_created_at"
+  end
 
   create_table "app_settings", force: :cascade do |t|
     t.string "key", null: false
@@ -112,6 +125,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_11_180225) do
     t.check_constraint "network::text = ANY (ARRAY['TRC20'::character varying::text, 'BEP20'::character varying::text, 'ERC20'::character varying::text, 'POLYGON'::character varying::text])", name: "wallets_network_check"
   end
 
+  add_foreign_key "activity_logs", "users"
   add_foreign_key "portfolio_histories", "investors"
   add_foreign_key "portfolios", "investors"
   add_foreign_key "requests", "investors"
