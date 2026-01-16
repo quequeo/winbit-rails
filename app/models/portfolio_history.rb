@@ -1,5 +1,5 @@
 class PortfolioHistory < ApplicationRecord
-  EVENTS = %w[DEPOSIT WITHDRAWAL PROFIT].freeze
+  EVENTS = %w[DEPOSIT WITHDRAWAL PROFIT TRADING_FEE REFERRAL_COMMISSION].freeze
   STATUSES = %w[PENDING COMPLETED REJECTED].freeze
 
   belongs_to :investor

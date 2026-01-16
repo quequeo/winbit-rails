@@ -5,7 +5,7 @@ RSpec.describe PortfolioHistory, type: :model do
 
   describe 'constants' do
     it 'defines valid EVENTS' do
-      expect(PortfolioHistory::EVENTS).to eq(%w[DEPOSIT WITHDRAWAL PROFIT])
+      expect(PortfolioHistory::EVENTS).to eq(%w[DEPOSIT WITHDRAWAL PROFIT TRADING_FEE REFERRAL_COMMISSION])
     end
 
     it 'defines valid STATUSES' do
@@ -147,6 +147,28 @@ RSpec.describe PortfolioHistory, type: :model do
         new_balance: 5200
       )
       expect(history.event).to eq('PROFIT')
+    end
+
+    it 'accepts TRADING_FEE event' do
+      history = PortfolioHistory.create!(
+        investor: investor,
+        event: 'TRADING_FEE',
+        amount: 50,
+        previous_balance: 5000,
+        new_balance: 4950
+      )
+      expect(history.event).to eq('TRADING_FEE')
+    end
+
+    it 'accepts REFERRAL_COMMISSION event' do
+      history = PortfolioHistory.create!(
+        investor: investor,
+        event: 'REFERRAL_COMMISSION',
+        amount: 100,
+        previous_balance: 5000,
+        new_balance: 5100
+      )
+      expect(history.event).to eq('REFERRAL_COMMISSION')
     end
 
     it 'rejects invalid events' do

@@ -10,8 +10,6 @@ vi.mock('../lib/api', () => ({
     getAdminRequests: vi.fn(),
     getAdminInvestors: vi.fn(),
     createRequest: vi.fn(),
-    updateRequest: vi.fn(),
-    deleteRequest: vi.fn(),
     approveRequest: vi.fn(),
     rejectRequest: vi.fn(),
   },
@@ -230,107 +228,6 @@ describe('RequestsPage', () => {
       });
 
       alertSpy.mockRestore();
-    });
-  });
-
-  describe('Editar solicitud', () => {
-    it('shows edit form when edit button is clicked', async () => {
-      vi.mocked(api.getAdminRequests).mockResolvedValue(mockRequests);
-
-      render(<RequestsPage />);
-
-      await waitFor(() => {
-        expect(api.getAdminRequests).toHaveBeenCalled();
-      });
-
-      const editButtons = screen.getAllByTitle('Editar');
-      fireEvent.click(editButtons[0]);
-
-      expect(screen.getByText('Editar Solicitud')).toBeInTheDocument();
-    });
-
-    it('updates request successfully', async () => {
-      vi.mocked(api.getAdminRequests).mockResolvedValue(mockRequests);
-      vi.mocked(api.updateRequest).mockResolvedValue({});
-
-      const user = userEvent.setup();
-      render(<RequestsPage />);
-
-      await waitFor(() => {
-        expect(api.getAdminRequests).toHaveBeenCalled();
-      });
-
-      const editButtons = screen.getAllByTitle('Editar');
-      await user.click(editButtons[0]);
-
-      // Change amount
-      const amountInput = screen.getByDisplayValue('1000');
-      await user.clear(amountInput);
-      await user.type(amountInput, '1500');
-
-      // Submit
-      const updateButton = screen.getByRole('button', { name: /Actualizar/i });
-      await user.click(updateButton);
-
-      await waitFor(() => {
-        expect(api.updateRequest).toHaveBeenCalledWith('1', expect.objectContaining({
-          amount: 1500,
-        }));
-      });
-    });
-  });
-
-  describe('Eliminar solicitud', () => {
-    it('deletes request after confirmation', async () => {
-      vi.mocked(api.getAdminRequests).mockResolvedValue(mockRequests);
-      vi.mocked(api.deleteRequest).mockResolvedValue({});
-
-      const user = userEvent.setup();
-      render(<RequestsPage />);
-
-      await waitFor(() => {
-        expect(api.getAdminRequests).toHaveBeenCalled();
-      });
-
-      const deleteButtons = screen.getAllByTitle('Eliminar');
-      await user.click(deleteButtons[0]);
-
-      // Modal should appear - click confirm button
-      await waitFor(() => {
-        expect(screen.getByText('Eliminar Solicitud')).toBeInTheDocument();
-      });
-
-      // Get all "Eliminar" buttons - the modal's will be the last one
-      const confirmButtons = screen.getAllByRole('button', { name: 'Eliminar' });
-      await user.click(confirmButtons[confirmButtons.length - 1]);
-
-      await waitFor(() => {
-        expect(api.deleteRequest).toHaveBeenCalledWith('1');
-      });
-    });
-
-    it('does not delete when confirmation is cancelled', async () => {
-      vi.mocked(api.getAdminRequests).mockResolvedValue(mockRequests);
-
-      const user = userEvent.setup();
-      render(<RequestsPage />);
-
-      await waitFor(() => {
-        expect(api.getAdminRequests).toHaveBeenCalled();
-      });
-
-      const deleteButtons = screen.getAllByTitle('Eliminar');
-      await user.click(deleteButtons[0]);
-
-      // Modal should appear - click cancel button
-      await waitFor(() => {
-        expect(screen.getByText('Eliminar Solicitud')).toBeInTheDocument();
-      });
-
-      const cancelButton = screen.getByRole('button', { name: 'Cancelar' });
-      await user.click(cancelButton);
-
-      expect(api.deleteRequest).not.toHaveBeenCalled();
     });
   });
 

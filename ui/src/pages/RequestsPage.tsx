@@ -3,7 +3,6 @@ import { api } from '../lib/api';
 import { formatCurrencyAR } from '../lib/formatters';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
-import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 
 export const RequestsPage = () => {
   const [status, setStatus] = useState('');
@@ -12,7 +11,6 @@ export const RequestsPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     investor_id: '',
     request_type: 'DEPOSIT',
@@ -23,10 +21,6 @@ export const RequestsPage = () => {
   });
   const [submitting, setSubmitting] = useState(false);
   const [investors, setInvestors] = useState<any[]>([]);
-  const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; request: any | null }>({
-    isOpen: false,
-    request: null,
-  });
 
   const params = useMemo(() => ({ status: status || undefined, type: type || undefined }), [status, type]);
 
@@ -72,14 +66,9 @@ export const RequestsPage = () => {
     e.preventDefault();
     setSubmitting(true);
     try {
-      if (editingId) {
-        await api.updateRequest(editingId, { ...formData, amount: Number(formData.amount) });
-      } else {
-        await api.createRequest({ ...formData, amount: Number(formData.amount) });
-      }
+      await api.createRequest({ ...formData, amount: Number(formData.amount) });
       setFormData({ investor_id: '', request_type: 'DEPOSIT', method: 'USDT', amount: '', network: '', status: 'PENDING' });
       setShowForm(false);
-      setEditingId(null);
       load();
     } catch (err: any) {
       alert(err.message || 'Error al guardar solicitud');
@@ -88,36 +77,8 @@ export const RequestsPage = () => {
     }
   };
 
-  const startEdit = (req: any) => {
-    setEditingId(req.id);
-    setFormData({
-      investor_id: req.investor.id,
-      request_type: req.type,
-      method: req.method,
-      amount: req.amount.toString(),
-      network: req.network || '',
-      status: req.status,
-    });
-    setShowForm(true);
-  };
-
-  const handleDelete = (req: any) => {
-    setDeleteConfirm({ isOpen: true, request: req });
-  };
-
-  const confirmDelete = async () => {
-    if (!deleteConfirm.request) return;
-    try {
-      await api.deleteRequest(deleteConfirm.request.id);
-      load();
-    } catch (err: any) {
-      alert(err.message || 'Error al eliminar solicitud');
-    }
-  };
-
   const cancelForm = () => {
     setShowForm(false);
-    setEditingId(null);
     setFormData({ investor_id: '', request_type: 'DEPOSIT', method: 'USDT', amount: '', network: '', status: 'PENDING' });
   };
 
@@ -137,7 +98,7 @@ export const RequestsPage = () => {
             {pendingCount !== 1 ? 's' : ''}
           </p>
         </div>
-        <Button onClick={() => { setShowForm(!showForm); setEditingId(null); }} className="shrink-0 text-xs md:text-sm px-2 py-1.5 md:px-4 md:py-2">
+        <Button onClick={() => setShowForm(!showForm)} className="shrink-0 text-xs md:text-sm px-2 py-1.5 md:px-4 md:py-2">
           {showForm ? 'Cancelar' : '+ Agregar Solicitud'}
         </Button>
       </div>
@@ -145,7 +106,7 @@ export const RequestsPage = () => {
       {showForm && (
         <div className="rounded-lg bg-white p-6 shadow">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">
-            {editingId ? 'Editar Solicitud' : 'Nueva Solicitud'}
+            Nueva Solicitud
           </h2>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -236,7 +197,7 @@ export const RequestsPage = () => {
             </div>
             <div className="flex gap-3">
               <Button type="submit" disabled={submitting}>
-                {submitting ? 'Guardando...' : editingId ? 'Actualizar' : 'Crear Solicitud'}
+                {submitting ? 'Guardando...' : 'Crear Solicitud'}
               </Button>
               <Button type="button" onClick={cancelForm} className="bg-gray-500 hover:bg-gray-600">
                 Cancelar
@@ -338,42 +299,22 @@ export const RequestsPage = () => {
               </div>
             )}
 
-            <div className="mt-4 flex gap-2">
-              {r.status === 'PENDING' ? (
-                <>
-                  <Button size="sm" onClick={() => approve(r.id)} disabled={busyId === r.id} className="flex-1">
-                    Aprobar
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={() => reject(r.id)}
-                    disabled={busyId === r.id}
-                    className="flex-1"
-                  >
-                    Rechazar
-                  </Button>
-                </>
-              ) : null}
-              <button
-                onClick={() => startEdit(r)}
-                className="p-2 text-blue-600 hover:bg-blue-50 rounded"
-                title="Editar"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                </svg>
-              </button>
-              <button
-                onClick={() => handleDelete(r)}
-                className="p-2 text-red-600 hover:bg-red-50 rounded"
-                title="Eliminar"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-              </button>
-            </div>
+            {r.status === 'PENDING' && (
+              <div className="mt-4 flex gap-2">
+                <Button size="sm" onClick={() => approve(r.id)} disabled={busyId === r.id} className="flex-1">
+                  Aprobar
+                </Button>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={() => reject(r.id)}
+                  disabled={busyId === r.id}
+                  className="flex-1"
+                >
+                  Rechazar
+                </Button>
+              </div>
+            )}
           </div>
         ))}
       </div>
@@ -455,41 +396,21 @@ export const RequestsPage = () => {
                     </span>
                   </td>
                   <td className="py-2 text-right">
-                    <div className="flex justify-end gap-2">
-                      {r.status === 'PENDING' ? (
-                        <>
-                          <Button size="sm" onClick={() => approve(r.id)} disabled={busyId === r.id}>
-                            Aprobar
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => reject(r.id)}
-                            disabled={busyId === r.id}
-                          >
-                            Rechazar
-                          </Button>
-                        </>
-                      ) : null}
-                      <button
-                        onClick={() => startEdit(r)}
-                        className="p-2 text-blue-600 hover:bg-blue-50 rounded"
-                        title="Editar"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                        </svg>
-                      </button>
-                      <button
-                        onClick={() => handleDelete(r)}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded"
-                        title="Eliminar"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
-                    </div>
+                    {r.status === 'PENDING' && (
+                      <div className="flex justify-end gap-2">
+                        <Button size="sm" onClick={() => approve(r.id)} disabled={busyId === r.id}>
+                          Aprobar
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => reject(r.id)}
+                          disabled={busyId === r.id}
+                        >
+                          Rechazar
+                        </Button>
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -497,28 +418,6 @@ export const RequestsPage = () => {
           </table>
         </div>
       </div>
-
-      <ConfirmDialog
-        isOpen={deleteConfirm.isOpen}
-        onClose={() => setDeleteConfirm({ isOpen: false, request: null })}
-        onConfirm={confirmDelete}
-        title="Eliminar Solicitud"
-        message={
-          deleteConfirm.request ? (
-            <>
-              ¿Estás seguro de eliminar esta solicitud de{' '}
-              <span className="font-semibold">{deleteConfirm.request.investor.name}</span>?
-              <br />
-              <span className="text-red-600">Esta acción no se puede deshacer.</span>
-            </>
-          ) : (
-            ''
-          )
-        }
-        confirmText="Eliminar"
-        cancelText="Cancelar"
-        confirmVariant="danger"
-      />
     </div>
   );
 };
