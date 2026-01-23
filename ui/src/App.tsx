@@ -8,6 +8,9 @@ import { RequestsPage } from './pages/RequestsPage';
 import { AdminsPage } from './pages/AdminsPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { ActivityLogsPage } from './pages/ActivityLogsPage';
+import { TradingFeesPage } from './pages/TradingFeesPage';
+import { DailyOperatingResultsPage } from './pages/DailyOperatingResultsPage';
+import { OperatingHistoryPage } from './pages/OperatingHistoryPage';
 import { LoginPage } from './pages/LoginPage';
 
 function App() {
@@ -23,6 +26,9 @@ function App() {
           <Route path="/portfolios" element={<PortfoliosPage />} />
           <Route path="/portfolios/:id" element={<EditPortfolioPage />} />
           <Route path="/requests" element={<RequestsPage />} />
+          <Route path="/daily-operating" element={<DailyOperatingResultsPage />} />
+          <Route path="/operating-history" element={<OperatingHistoryPage />} />
+          <Route path="/trading-fees" element={<TradingFeesPage />} />
           <Route path="/admins" element={<AdminsPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/activity" element={<ActivityLogsPage />} />

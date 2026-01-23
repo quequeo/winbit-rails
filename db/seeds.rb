@@ -113,13 +113,13 @@ if Rails.env.development?
         created_histories += 1
       end
 
-      profit = money(rand(50..1_500))
+      op_result = money(rand(50..1_500))
       prev = balance
-      balance = money(balance + profit)
+      balance = money(balance + op_result)
       investor.portfolio_histories.create!(
         date: today - 2.days,
-        event: 'PROFIT',
-        amount: profit,
+        event: 'OPERATING_RESULT',
+        amount: op_result,
         previous_balance: prev,
         new_balance: balance,
         status: 'COMPLETED'

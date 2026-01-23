@@ -20,8 +20,7 @@ export const EditPortfolioPage = () => {
     annualReturnPercent: 0,
   }));
 
-  useEffect(() => {
-    // reuse portfolios list endpoint for now (simple)
+  const fetchInvestor = () => {
     api
       .getAdminPortfolios()
       .then((res: any) => {
@@ -33,6 +32,10 @@ export const EditPortfolioPage = () => {
         setInv(found);
       })
       .catch((e) => setError(e.message));
+  };
+
+  useEffect(() => {
+    fetchInvestor();
   }, [id]);
 
   useEffect(() => {
@@ -91,14 +94,11 @@ export const EditPortfolioPage = () => {
   // Parse argentinian format to number: "15.314,00" -> 15314.00
   const parseArgentinianNumber = (value: string): number => {
     if (!value) return 0;
-    // Remove "USD" prefix and trim
     const cleaned = value.replace(/USD/g, '').trim();
-    // Remove dots (thousand separators) and replace comma with dot
     const normalized = cleaned.replace(/\./g, '').replace(/,/g, '.');
     return parseFloat(normalized) || 0;
   };
 
-  // Handle formatted input changes
   const handleFormattedChange = (key: string, value: string) => {
     const numericValue = parseArgentinianNumber(value);
     set(key, numericValue);
@@ -111,7 +111,11 @@ export const EditPortfolioPage = () => {
           <h1 className="text-3xl font-bold text-gray-900">Editar Portfolio</h1>
           <p className="text-gray-600 mt-1">{inv.name}</p>
         </div>
-        <Button variant="outline" onClick={() => navigate('/portfolios')}>Volver</Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => navigate('/portfolios')}>
+            Volver
+          </Button>
+        </div>
       </div>
 
       <div className="rounded-lg bg-white p-6 shadow">
@@ -119,8 +123,8 @@ export const EditPortfolioPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Capital Actual</label>
-              <Input 
-                type="text" 
+              <Input
+                type="text"
                 value={`USD ${formatNumberAR(Number(form.currentBalance) || 0)}`}
                 onChange={(e) => handleFormattedChange('currentBalance', e.target.value)}
                 placeholder="USD 0,00"
@@ -128,8 +132,8 @@ export const EditPortfolioPage = () => {
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Total Invertido</label>
-              <Input 
-                type="text" 
+              <Input
+                type="text"
                 value={`USD ${formatNumberAR(Number(form.totalInvested) || 0)}`}
                 onChange={(e) => handleFormattedChange('totalInvested', e.target.value)}
                 placeholder="USD 0,00"
@@ -152,28 +156,6 @@ export const EditPortfolioPage = () => {
               <div className="w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm font-medium text-gray-900">
                 {formatPercentAR(Number(form.accumulatedReturnPercent) || 0)}
               </div>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Rend. Acum. Anual</label>
-              <Input 
-                type="text" 
-                value={`USD ${formatNumberAR(Number(form.annualReturnUSD) || 0)}`}
-                onChange={(e) => handleFormattedChange('annualReturnUSD', e.target.value)}
-                placeholder="USD 0,00"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Rend. Acum. Anual (%)</label>
-              <Input 
-                type="text" 
-                value={formatPercentAR(Number(form.annualReturnPercent) || 0)}
-                onChange={(e) => {
-                  const cleaned = e.target.value.replace(/%/g, '').trim();
-                  const numericValue = parseArgentinianNumber(cleaned);
-                  set('annualReturnPercent', numericValue);
-                }}
-                placeholder="0,00%"
-              />
             </div>
           </div>
 

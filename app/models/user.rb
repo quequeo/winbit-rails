@@ -1,6 +1,8 @@
 class User < ApplicationRecord
   ROLES = %w[ADMIN SUPERADMIN].freeze
 
+  has_many :applied_trading_fees, class_name: 'TradingFee', foreign_key: 'applied_by_id', dependent: :restrict_with_error
+
   devise :database_authenticatable,
          :omniauthable,
          omniauth_providers: [:google_oauth2]

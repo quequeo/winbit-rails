@@ -52,8 +52,6 @@ describe('EditPortfolioPage', () => {
             total_invested: 8000,
             accumulated_return_usd: 2000,
             accumulated_return_percent: 25,
-            annual_return_usd: 1500,
-            annual_return_percent: 18.75,
           },
         },
       ],
@@ -113,8 +111,6 @@ describe('EditPortfolioPage', () => {
             total_invested: 8000,
             accumulated_return_usd: 2000,
             accumulated_return_percent: 25,
-            annual_return_usd: 1500,
-            annual_return_percent: 18.75,
           },
         },
       ],
@@ -143,8 +139,6 @@ describe('EditPortfolioPage', () => {
             total_invested: 8000,
             accumulated_return_usd: 2000,
             accumulated_return_percent: 25,
-            annual_return_usd: 1500,
-            annual_return_percent: 18.75,
           },
         },
       ],
@@ -180,8 +174,6 @@ describe('EditPortfolioPage', () => {
             total_invested: 8000,
             accumulated_return_usd: 2000,
             accumulated_return_percent: 25,
-            annual_return_usd: 1500,
-            annual_return_percent: 18.75,
           },
         },
       ],
@@ -215,8 +207,6 @@ describe('EditPortfolioPage', () => {
             total_invested: 8000,
             accumulated_return_usd: 2000,
             accumulated_return_percent: 25,
-            annual_return_usd: 1500,
-            annual_return_percent: 18.75,
           },
         },
       ],
@@ -247,8 +237,6 @@ describe('EditPortfolioPage', () => {
             total_invested: 8000,
             accumulated_return_usd: 2000,
             accumulated_return_percent: 25,
-            annual_return_usd: 1500,
-            annual_return_percent: 18.75,
           },
         },
       ],
@@ -288,10 +276,8 @@ describe('EditPortfolioPage', () => {
     });
 
     // Should use default formatted values
-    const usdInputs = screen.getAllByDisplayValue('USD 0,00'); // currentBalance, totalInvested, annualReturnUSD
-    expect(usdInputs.length).toBe(3);
-    const percentInputs = screen.getAllByDisplayValue('0,00%'); // annualReturnPercent
-    expect(percentInputs.length).toBe(1);
+    const usdInputs = screen.getAllByDisplayValue('USD 0,00'); // currentBalance, totalInvested
+    expect(usdInputs.length).toBe(2);
     expect(screen.getByText('USD 0,00')).toBeInTheDocument(); // accumulatedReturnUSD in div
     expect(screen.getByText('0,00%')).toBeInTheDocument(); // accumulatedReturnPercent in div
   });
@@ -307,8 +293,6 @@ describe('EditPortfolioPage', () => {
             total_invested: 8000,
             accumulated_return_usd: 2000,
             accumulated_return_percent: 25,
-            annual_return_usd: 1500,
-            annual_return_percent: 18.75,
           },
         },
       ],
@@ -327,8 +311,6 @@ describe('EditPortfolioPage', () => {
     expect(screen.getByText('Total Invertido')).toBeInTheDocument();
     expect(screen.getByText('Rend. Acum. desde el Inicio')).toBeInTheDocument();
     expect(screen.getByText('Rend. Acum. (%)')).toBeInTheDocument();
-    expect(screen.getByText('Rend. Acum. Anual')).toBeInTheDocument();
-    expect(screen.getByText('Rend. Acum. Anual (%)')).toBeInTheDocument();
   });
 
   describe('Form field updates', () => {
@@ -342,8 +324,6 @@ describe('EditPortfolioPage', () => {
             total_invested: 8000,
             accumulated_return_usd: 2000,
             accumulated_return_percent: 25,
-            annual_return_usd: 1500,
-            annual_return_percent: 18.75,
           },
         },
       ],
@@ -402,36 +382,6 @@ describe('EditPortfolioPage', () => {
         const accReturnPercentText = screen.getByText('25,00%');
         expect(accReturnPercentText).toBeInTheDocument();
       });
-    });
-
-    it('updates annualReturnUSD field', async () => {
-      vi.mocked(api.getAdminPortfolios).mockResolvedValueOnce(mockData);
-      renderWithRouter('1');
-
-      let input;
-      await waitFor(() => {
-        input = screen.getByDisplayValue('USD 1.500,00');
-        expect(input).toBeInTheDocument();
-      });
-
-      fireEvent.change(input!, { target: { value: 'USD 2.500,00' } });
-
-      expect(input).toHaveValue('USD 2.500,00');
-    });
-
-    it('updates annualReturnPercent field', async () => {
-      vi.mocked(api.getAdminPortfolios).mockResolvedValueOnce(mockData);
-      renderWithRouter('1');
-
-      let input;
-      await waitFor(() => {
-        input = screen.getByDisplayValue('18,75%');
-        expect(input).toBeInTheDocument();
-      });
-
-      fireEvent.change(input!, { target: { value: '20,00%' } });
-
-      expect(input).toHaveValue('20,00%');
     });
   });
 });

@@ -127,6 +127,30 @@ export const AdminLayout = () => {
               Solicitudes
             </NavLink>
             <NavLink
+              to="/daily-operating"
+              className={({ isActive }) =>
+                isActive ? `${linkBase} border-[#58b098] text-[#58b098]` : linkBase
+              }
+            >
+              Operativa diaria
+            </NavLink>
+            <NavLink
+              to="/operating-history"
+              className={({ isActive }) =>
+                isActive ? `${linkBase} border-[#58b098] text-[#58b098]` : linkBase
+              }
+            >
+              Historial de Operativas
+            </NavLink>
+            <NavLink
+              to="/trading-fees"
+              className={({ isActive }) =>
+                isActive ? `${linkBase} border-[#58b098] text-[#58b098]` : linkBase
+              }
+            >
+              Comisiones
+            </NavLink>
+            <NavLink
               to="/admins"
               className={({ isActive }) =>
                 isActive ? `${linkBase} border-[#58b098] text-[#58b098]` : linkBase
@@ -200,6 +224,17 @@ export const AdminLayout = () => {
                 }
               >
                 Solicitudes
+              </NavLink>
+              <NavLink
+                to="/trading-fees"
+                onClick={() => setMobileMenuOpen(false)}
+                className={({ isActive }) =>
+                  isActive
+                    ? 'rounded-lg bg-[#58b098]/10 px-3 py-2 text-sm font-medium text-[#58b098]'
+                    : 'rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50'
+                }
+              >
+                Comisiones
               </NavLink>
               <NavLink
                 to="/admins"

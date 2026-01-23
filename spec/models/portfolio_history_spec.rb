@@ -5,7 +5,7 @@ RSpec.describe PortfolioHistory, type: :model do
 
   describe 'constants' do
     it 'defines valid EVENTS' do
-      expect(PortfolioHistory::EVENTS).to eq(%w[DEPOSIT WITHDRAWAL PROFIT TRADING_FEE REFERRAL_COMMISSION])
+      expect(PortfolioHistory::EVENTS).to eq(%w[DEPOSIT WITHDRAWAL OPERATING_RESULT TRADING_FEE REFERRAL_COMMISSION])
     end
 
     it 'defines valid STATUSES' do
@@ -138,15 +138,15 @@ RSpec.describe PortfolioHistory, type: :model do
       expect(history.event).to eq('WITHDRAWAL')
     end
 
-    it 'accepts PROFIT event' do
+    it 'accepts OPERATING_RESULT event' do
       history = PortfolioHistory.create!(
         investor: investor,
-        event: 'PROFIT',
+        event: 'OPERATING_RESULT',
         amount: 200,
         previous_balance: 5000,
         new_balance: 5200
       )
-      expect(history.event).to eq('PROFIT')
+      expect(history.event).to eq('OPERATING_RESULT')
     end
 
     it 'accepts TRADING_FEE event' do
@@ -311,7 +311,7 @@ RSpec.describe PortfolioHistory, type: :model do
       expect(total_invested).to eq(14_000)
     end
 
-    it 'does not count PROFIT events in total invested' do
+    it 'does not count OPERATING_RESULT events in total invested' do
       PortfolioHistory.create!(
         investor: investor,
         event: 'DEPOSIT',
@@ -321,14 +321,14 @@ RSpec.describe PortfolioHistory, type: :model do
       )
       PortfolioHistory.create!(
         investor: investor,
-        event: 'PROFIT',
+        event: 'OPERATING_RESULT',
         amount: 500,
         previous_balance: 10_000,
         new_balance: 10_500
       )
 
       deposits = investor.portfolio_histories.where(event: 'DEPOSIT').sum(:amount)
-      profits = investor.portfolio_histories.where(event: 'PROFIT').sum(:amount)
+      profits = investor.portfolio_histories.where(event: 'OPERATING_RESULT').sum(:amount)
 
       expect(deposits).to eq(10_000)
       expect(profits).to eq(500)

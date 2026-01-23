@@ -99,6 +99,27 @@ class InvestorMailer < ApplicationMailer
     )
   end
 
+  # === COMISIONES DE TRADING ===
+
+  # Email cuando se aplica una comisión de trading
+  def trading_fee_applied(investor, trading_fee)
+    @investor = investor
+    @trading_fee = trading_fee
+    @fee_amount = format_currency(trading_fee.fee_amount)
+    @profit_amount = format_currency(trading_fee.profit_amount)
+    @fee_percentage = trading_fee.fee_percentage
+    @period_start = I18n.l(trading_fee.period_start, format: :long)
+    @period_end = I18n.l(trading_fee.period_end, format: :long)
+    @new_balance = format_currency(investor.portfolio&.current_balance || 0)
+
+    return unless NotificationGate.should_send_to_investor?(investor.email)
+
+    mail(
+      to: investor.email,
+      subject: 'Comisión por Servicios de Trading Aplicada'
+    )
+  end
+
   private
 
   def format_currency(amount)

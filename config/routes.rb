@@ -36,6 +36,17 @@ Rails.application.routes.draw do
       patch 'settings', to: 'settings#update', format: false
 
       get 'activity_logs', to: 'activity_logs#index', format: false
+
+      get 'daily_operating_results', to: 'daily_operating_results#index', format: false
+      get 'daily_operating_results/preview', to: 'daily_operating_results#preview', format: false
+      get 'daily_operating_results/monthly_summary', to: 'daily_operating_results#monthly_summary', format: false
+      get 'daily_operating_results/by_month', to: 'daily_operating_results#by_month', format: false
+      post 'daily_operating_results', to: 'daily_operating_results#create', format: false
+
+      get 'trading_fees', to: 'trading_fees#index', format: false
+      post 'trading_fees', to: 'trading_fees#create', format: false
+      get 'trading_fees/calculate', to: 'trading_fees#calculate', format: false
+      get 'trading_fees/investors_summary', to: 'trading_fees#investors_summary', format: false
     end
   end
 

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_12_000946) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_22_135320) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -34,6 +34,18 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_12_000946) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["key"], name: "index_app_settings_on_key", unique: true
+  end
+
+  create_table "daily_operating_results", id: :string, force: :cascade do |t|
+    t.date "date", null: false
+    t.decimal "percent", precision: 6, scale: 2, null: false
+    t.string "applied_by_id", null: false
+    t.datetime "applied_at", null: false
+    t.text "notes"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["applied_at"], name: "index_daily_operating_results_on_applied_at"
+    t.index ["date"], name: "index_daily_operating_results_on_date", unique: true
   end
 
   create_table "investors", id: :string, force: :cascade do |t|
@@ -93,6 +105,24 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_12_000946) do
     t.check_constraint "status::text = ANY (ARRAY['PENDING'::character varying::text, 'APPROVED'::character varying::text, 'REJECTED'::character varying::text])", name: "requests_status_check"
   end
 
+  create_table "trading_fees", id: :string, force: :cascade do |t|
+    t.string "investor_id", null: false
+    t.string "applied_by_id", null: false
+    t.date "period_start", null: false
+    t.date "period_end", null: false
+    t.decimal "profit_amount", precision: 15, scale: 2, null: false
+    t.decimal "fee_percentage", precision: 5, scale: 2, null: false
+    t.decimal "fee_amount", precision: 15, scale: 2, null: false
+    t.text "notes"
+    t.datetime "applied_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["applied_at"], name: "index_trading_fees_on_applied_at"
+    t.index ["applied_by_id"], name: "index_trading_fees_on_applied_by_id"
+    t.index ["investor_id", "period_start", "period_end"], name: "index_trading_fees_on_investor_and_period"
+    t.index ["investor_id"], name: "index_trading_fees_on_investor_id"
+  end
+
   create_table "users", id: :string, force: :cascade do |t|
     t.string "email", null: false
     t.string "name"
@@ -126,7 +156,10 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_12_000946) do
   end
 
   add_foreign_key "activity_logs", "users"
+  add_foreign_key "daily_operating_results", "users", column: "applied_by_id"
   add_foreign_key "portfolio_histories", "investors"
   add_foreign_key "portfolios", "investors"
   add_foreign_key "requests", "investors"
+  add_foreign_key "trading_fees", "investors"
+  add_foreign_key "trading_fees", "users", column: "applied_by_id"
 end

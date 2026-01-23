@@ -49,6 +49,9 @@ RSpec.describe 'Admin Dashboard API', type: :request do
       expect(json['data']['investorCount']).to eq(2) # Only ACTIVE investors
       expect(json['data']['pendingRequestCount']).to eq(1)
       expect(json['data']['totalAum']).to eq(15000.0) # Sum of all portfolios
+      expect(json['data']['aumSeries']).to be_an(Array)
+      expect(json['data']['aumSeries'].length).to be >= 7
+      expect(json['data']['aumSeries'].last['totalAum']).to eq(15000.0)
     end
 
     it 'returns zero counts when no data exists' do
@@ -64,6 +67,9 @@ RSpec.describe 'Admin Dashboard API', type: :request do
       expect(json['data']['investorCount']).to eq(0)
       expect(json['data']['pendingRequestCount']).to eq(0)
       expect(json['data']['totalAum']).to eq(0.0)
+      expect(json['data']['aumSeries']).to be_an(Array)
+      expect(json['data']['aumSeries'].length).to be >= 7
+      expect(json['data']['aumSeries'].last['totalAum']).to eq(0.0)
     end
 
     it 'only counts ACTIVE investors' do

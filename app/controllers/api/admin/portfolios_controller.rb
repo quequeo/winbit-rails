@@ -66,6 +66,37 @@ module Api
       rescue ActionController::ParameterMissing => e
         render_error(e.message, status: :bad_request)
       end
+
+      private
+
+      def recalculate_portfolio!(investor)
+        portfolio = investor.portfolio || Portfolio.create!(investor: investor)
+
+        histories = PortfolioHistory.where(investor_id: investor.id, status: 'COMPLETED')
+                                    .order(:date, :created_at)
+
+        running = 0.0
+        histories.each do |h|
+          prev = running
+          delta = h.event == 'WITHDRAWAL' ? -h.amount.to_f : h.amount.to_f
+          running = (running + delta).round(2)
+          h.update!(previous_balance: prev, new_balance: running)
+        end
+
+        deposits_sum = PortfolioHistory.where(investor_id: investor.id, status: 'COMPLETED', event: 'DEPOSIT').sum(:amount).to_f
+        withdrawals_sum = PortfolioHistory.where(investor_id: investor.id, status: 'COMPLETED', event: 'WITHDRAWAL').sum(:amount).to_f
+        total_invested = (deposits_sum - withdrawals_sum).round(2)
+
+        accumulated_return_usd = (running - total_invested).round(2)
+        accumulated_return_percent = total_invested > 0 ? ((accumulated_return_usd / total_invested) * 100).round(4) : 0
+
+        portfolio.update!(
+          current_balance: running,
+          total_invested: total_invested,
+          accumulated_return_usd: accumulated_return_usd,
+          accumulated_return_percent: accumulated_return_percent,
+        )
+      end
     end
   end
 end

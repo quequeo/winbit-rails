@@ -3,7 +3,6 @@ import { api } from '../lib/api';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
-import { formatCurrencyAR } from '../lib/formatters';
 
 export const InvestorsPage = () => {
   const [data, setData] = useState<any>(null);
@@ -13,7 +12,7 @@ export const InvestorsPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ email: '', name: '' });
-  const [sortBy, setSortBy] = useState<string>('balance');
+  const [sortBy, setSortBy] = useState<string>('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; investor: any | null }>({
     isOpen: false,
@@ -200,14 +199,6 @@ export const InvestorsPage = () => {
                     {inv.status === 'ACTIVE' ? 'Activo' : 'Inactivo'}
                   </span>
                 </div>
-
-                <div className="mt-4">
-                  <p className="text-xs text-gray-500">Balance</p>
-                  <p className="mt-1 font-mono font-semibold text-gray-900">
-                    {formatCurrencyAR(inv.portfolio?.currentBalance ?? 0)}
-                  </p>
-                </div>
-
                 <div className="mt-3 flex gap-2">
                   <button
                     onClick={() => startEdit(inv)}
@@ -252,15 +243,6 @@ export const InvestorsPage = () => {
                 <th className="py-2">Email</th>
                 <th className="py-2">
                   <button
-                    onClick={() => handleSort('balance')}
-                    className="flex items-center gap-1 hover:text-gray-700"
-                  >
-                    Balance
-                    <span className="text-xs">{getSortIcon('balance')}</span>
-                  </button>
-                </th>
-                <th className="py-2">
-                  <button
                     onClick={() => handleSort('status')}
                     className="flex items-center gap-1 hover:text-gray-700"
                   >
@@ -294,7 +276,7 @@ export const InvestorsPage = () => {
                           className="text-sm"
                         />
                       </td>
-                      <td className="py-2" colSpan={2}></td>
+                      <td className="py-2" colSpan={1}></td>
                       <td className="py-2 text-right">
                         <div className="flex gap-2 justify-end">
                           <Button
@@ -317,7 +299,6 @@ export const InvestorsPage = () => {
                     <>
                       <td className="py-2 font-medium">{inv.name}</td>
                       <td className="py-2 text-gray-600">{inv.email}</td>
-                      <td className="py-2">{formatCurrencyAR(inv.portfolio?.currentBalance ?? 0)}</td>
                       <td className="py-2">
                         <span
                           className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${

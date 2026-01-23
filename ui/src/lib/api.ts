@@ -40,7 +40,12 @@ async function request(path: string, options?: RequestInit) {
 
 export const api = {
   getAdminSession: () => request('/api/admin/session'),
-  getAdminDashboard: () => request('/api/admin/dashboard'),
+  getAdminDashboard: (params?: { days?: number }) => {
+    const qs = new URLSearchParams();
+    if (params?.days !== undefined) qs.set('days', params.days.toString());
+    const suffix = qs.toString() ? `?${qs.toString()}` : '';
+    return request(`/api/admin/dashboard${suffix}`);
+  },
   getAdminInvestors: (params?: { sort_by?: string; sort_order?: string }) => {
     const qs = new URLSearchParams();
     if (params?.sort_by) qs.set('sort_by', params.sort_by);
@@ -88,4 +93,56 @@ export const api = {
     const suffix = qs.toString() ? `?${qs.toString()}` : '';
     return request(`/api/admin/activity_logs${suffix}`);
   },
+  // Operativa diaria
+  getDailyOperatingResults: (params?: { page?: number; per_page?: number }) => {
+    const qs = new URLSearchParams();
+    if (params?.page) qs.set('page', params.page.toString());
+    if (params?.per_page) qs.set('per_page', params.per_page.toString());
+    const suffix = qs.toString() ? `?${qs.toString()}` : '';
+    return request(`/api/admin/daily_operating_results${suffix}`);
+  },
+  getDailyOperatingMonthlySummary: (params?: { months?: number }) => {
+    const qs = new URLSearchParams();
+    if (params?.months) qs.set('months', params.months.toString());
+    const suffix = qs.toString() ? `?${qs.toString()}` : '';
+    return request(`/api/admin/daily_operating_results/monthly_summary${suffix}`);
+  },
+  getDailyOperatingByMonth: (params: { month: string }) => {
+    const qs = new URLSearchParams();
+    qs.set('month', params.month);
+    return request(`/api/admin/daily_operating_results/by_month?${qs.toString()}`);
+  },
+  previewDailyOperatingResult: (params: { date: string; percent: number; notes?: string }) => {
+    const qs = new URLSearchParams();
+    qs.set('date', params.date);
+    qs.set('percent', params.percent.toString());
+    if (params.notes) qs.set('notes', params.notes);
+    return request(`/api/admin/daily_operating_results/preview?${qs.toString()}`);
+  },
+  createDailyOperatingResult: (body: { date: string; percent: number; notes?: string }) =>
+    request('/api/admin/daily_operating_results', { method: 'POST', body: JSON.stringify(body) }),
+  // Trading Fees
+  getTradingFees: (params?: { investor_id?: string }) => {
+    const qs = new URLSearchParams();
+    if (params?.investor_id) qs.set('investor_id', params.investor_id);
+    const suffix = qs.toString() ? `?${qs.toString()}` : '';
+    return request(`/api/admin/trading_fees${suffix}`);
+  },
+  getTradingFeesSummary: (params?: { period_start?: string; period_end?: string }) => {
+    const qs = new URLSearchParams();
+    if (params?.period_start) qs.set('period_start', params.period_start);
+    if (params?.period_end) qs.set('period_end', params.period_end);
+    const suffix = qs.toString() ? `?${qs.toString()}` : '';
+    return request(`/api/admin/trading_fees/investors_summary${suffix}`);
+  },
+  calculateTradingFee: (params: { investor_id: string; fee_percentage: number; period_start?: string; period_end?: string }) => {
+    const qs = new URLSearchParams();
+    qs.set('investor_id', params.investor_id);
+    qs.set('fee_percentage', params.fee_percentage.toString());
+    if (params.period_start) qs.set('period_start', params.period_start);
+    if (params.period_end) qs.set('period_end', params.period_end);
+    return request(`/api/admin/trading_fees/calculate?${qs.toString()}`);
+  },
+  applyTradingFee: (body: { investor_id: string; fee_percentage: number; notes?: string; period_start?: string; period_end?: string }) =>
+    request('/api/admin/trading_fees', { method: 'POST', body: JSON.stringify(body) }),
 };

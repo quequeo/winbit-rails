@@ -45,6 +45,14 @@ describe('DashboardPage', () => {
     expect(screen.getByText(/\$150\.000,00/)).toBeInTheDocument();
 
     expect(screen.getByText('Solicitudes Pendientes')).toBeInTheDocument();
+
+    expect(screen.getByRole('group', { name: 'Rango de tiempo del gráfico' })).toBeInTheDocument();
+    expect(screen.getByText('7 días')).toBeInTheDocument();
+    expect(screen.getByText('1 mes')).toBeInTheDocument();
+    expect(screen.getByText('3 meses')).toBeInTheDocument();
+    expect(screen.getByText('6 meses')).toBeInTheDocument();
+    expect(screen.getByText('1 año')).toBeInTheDocument();
+    expect(screen.getByText('Todo')).toBeInTheDocument();
     expect(screen.getByText('3')).toBeInTheDocument();
   });
 

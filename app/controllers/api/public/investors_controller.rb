@@ -35,8 +35,10 @@ module Api
         return render_error('Investor is not active', status: :forbidden) unless investor.status_active?
 
         # Portfolio histories (completed movements)
+        fees = investor.trading_fees.order(applied_at: :desc).to_a
+
         histories = investor.portfolio_histories.order(date: :desc).map { |h|
-          {
+          item = {
             id: h.id,
             investorId: h.investor_id,
             date: h.date,
@@ -47,6 +49,18 @@ module Api
             status: h.status,
             createdAt: h.created_at,
           }
+
+          if h.event == 'TRADING_FEE'
+            fee = find_trading_fee_for_history(fees, h)
+            if fee
+              item[:tradingFeePeriodLabel] = quarter_label(fee.period_end)
+              item[:tradingFeePeriodStart] = fee.period_start
+              item[:tradingFeePeriodEnd] = fee.period_end
+              item[:tradingFeePercentage] = fee.fee_percentage.to_f
+            end
+          end
+
+          item
         }
 
         # Pending and rejected requests
@@ -74,6 +88,21 @@ module Api
       end
 
       private
+
+      def quarter_label(date)
+        d = date.to_date
+        q = ((d.month - 1) / 3) + 1
+        "Q#{q} #{d.year}"
+      end
+
+      def find_trading_fee_for_history(fees, history)
+        amt = history.amount.to_f.abs
+        ts = history.date.to_time.to_i
+
+        fees.find do |f|
+          (f.fee_amount.to_f - amt).abs < 0.01 && (f.applied_at.to_i - ts).abs <= 600
+        end
+      end
 
       def format_name(name)
         name.to_s

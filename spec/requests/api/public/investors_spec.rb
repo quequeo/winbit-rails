@@ -64,4 +64,40 @@ RSpec.describe 'Public investors', type: :request do
     expect(json['data'][0]['event']).to eq('WITHDRAWAL')
     expect(json['data'][1]['event']).to eq('DEPOSIT')
   end
+
+  it 'GET /api/public/investor/:email/history includes tradingFeePercentage for TRADING_FEE' do
+    investor = Investor.create!(email: 'fee@example.com', name: 'fee', status: 'ACTIVE')
+    admin = User.create!(email: 'admin@example.com', name: 'Admin', role: 'ADMIN')
+
+    # Create a TradingFee and a matching PortfolioHistory (within 10 minutes) so controller can attach metadata
+    tf = TradingFee.create!(
+      investor: investor,
+      applied_by: admin,
+      period_start: Date.new(2025, 10, 1),
+      period_end: Date.new(2025, 12, 31),
+      profit_amount: 1000,
+      fee_percentage: 30,
+      fee_amount: 300,
+      applied_at: Time.utc(2026, 1, 22, 17, 0, 0)
+    )
+
+    PortfolioHistory.create!(
+      investor_id: investor.id,
+      date: tf.applied_at,
+      event: 'TRADING_FEE',
+      amount: -tf.fee_amount.to_f,
+      previous_balance: 1000,
+      new_balance: 700,
+      status: 'COMPLETED'
+    )
+
+    get "/api/public/investor/#{CGI.escape(investor.email)}/history"
+
+    expect(response).to have_http_status(:ok)
+    json = JSON.parse(response.body)
+    fee_item = json['data'].find { |it| it['event'] == 'TRADING_FEE' }
+    expect(fee_item).to be_present
+    expect(fee_item['tradingFeePeriodLabel']).to eq('Q4 2025')
+    expect(fee_item['tradingFeePercentage']).to eq(30.0)
+  end
 end
