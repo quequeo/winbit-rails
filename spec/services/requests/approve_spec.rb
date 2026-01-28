@@ -1,6 +1,10 @@
 require 'rails_helper'
 
 RSpec.describe Requests::Approve, type: :service do
+  def t(y, m, d, hh, mm = 0, ss = 0)
+    Time.zone.local(y, m, d, hh, mm, ss)
+  end
+
   let!(:investor) { Investor.create!(email: 'inv@test.com', name: 'Investor', status: 'ACTIVE') }
   let!(:portfolio) { Portfolio.create!(investor: investor, current_balance: 5000, total_invested: 5000) }
 
@@ -119,6 +123,37 @@ RSpec.describe Requests::Approve, type: :service do
         expect {
           service.call
         }.to raise_error(StandardError, /Solo se pueden aprobar solicitudes pendientes/)
+      end
+    end
+
+    context 'when backfilling (there are future histories after processed_at)' do
+      let!(:future_history) do
+        PortfolioHistory.create!(
+          investor: investor,
+          event: 'OPERATING_RESULT',
+          amount: 100,
+          previous_balance: 5000,
+          new_balance: 5100,
+          status: 'COMPLETED',
+          date: t(2026, 2, 1, 17, 0, 0)
+        )
+      end
+
+      it 'uses history replay to keep balances consistent' do
+        req = InvestorRequest.create!(
+          investor: investor,
+          request_type: 'DEPOSIT',
+          method: 'USDT',
+          amount: 1000,
+          status: 'PENDING',
+          requested_at: Time.current
+        )
+
+        service = described_class.new(request_id: req.id, processed_at: t(2026, 1, 15, 19, 0, 0))
+        service.call
+
+        expect(PortfolioHistory.where(investor_id: investor.id).count).to be >= 2
+        expect(investor.reload.portfolio.current_balance.to_f).to be > 0.0
       end
     end
 

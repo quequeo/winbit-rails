@@ -5,7 +5,7 @@
     "node": "20.x"
   },
   "scripts": {
-    "build": "npm --prefix ui ci --include=dev && npm --prefix ui run build && rm -rf public/assets public/vite.svg public/index.html && cp -R ui/dist/* public/",
+    "build": "npm --prefix ui ci --include=dev && npm --prefix ui run build && rsync -av --delete --exclude 'robots.txt' --exclude 'cache-bust.txt' ui/dist/ public/",
     "heroku-postbuild": "npm run build"
   }
 }

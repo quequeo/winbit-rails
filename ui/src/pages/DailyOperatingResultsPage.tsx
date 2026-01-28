@@ -4,6 +4,7 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { formatNumberAR } from '../lib/formatters';
+import { DatePicker } from '../components/ui/DatePicker';
 
 type PreviewRow = {
   investor_id: string;
@@ -146,7 +147,7 @@ export const DailyOperatingResultsPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">Fecha</label>
-            <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+            <DatePicker value={date} onChange={setDate} />
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">Resultado (%)</label>

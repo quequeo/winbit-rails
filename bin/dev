@@ -1,2 +1,42 @@
 #!/usr/bin/env ruby
+
+require "fileutils"
+
+root = File.expand_path("..", __dir__)
+ui_dir = File.join(root, "ui")
+public_dir = File.join(root, "public")
+public_index = File.join(public_dir, "index.html")
+
+skip_ui_build = ENV["SKIP_UI_BUILD"] == "1"
+force_ui_build = ENV["FORCE_UI_BUILD"] == "1"
+needs_ui_build = force_ui_build || !File.exist?(public_index)
+
+if skip_ui_build
+  puts "Skipping UI build (SKIP_UI_BUILD=1)."
+elsif needs_ui_build
+  unless Dir.exist?(File.join(ui_dir, "node_modules"))
+    puts "Installing UI dependencies (first run)..."
+    system("npm", "--prefix", ui_dir, "ci", "--include=dev") || abort("UI dependency install failed!")
+  end
+
+  puts "Building UI..."
+  system("npm", "--prefix", ui_dir, "run", "build") || abort("UI build failed!")
+
+  puts "Syncing UI build into public/..."
+  system(
+    "rsync",
+    "-av",
+    "--delete",
+    "--exclude",
+    "robots.txt",
+    "--exclude",
+    "cache-bust.txt",
+    "#{ui_dir}/dist/",
+    "#{public_dir}/"
+  ) || abort("UI sync failed!")
+else
+  puts "UI already built (public/index.html exists). Set FORCE_UI_BUILD=1 to rebuild."
+end
+
+puts "Starting Rails server..."
 exec "./bin/rails", "server", *ARGV

@@ -8,6 +8,12 @@ module Api
         return render_error('Investor not found', status: :not_found) unless investor
         return render_error('Investor is not active', status: :forbidden) unless investor.status_active?
 
+        now = Time.current
+        year_start = Time.zone.local(Date.current.year, 1, 1, 0, 0, 0)
+
+        ytd_return = TimeWeightedReturnCalculator.for_investor(investor_id: investor.id, from: year_start, to: now)
+        all_return = TimeWeightedReturnCalculator.for_investor(investor_id: investor.id, from: nil, to: now)
+
         response = {
           investor: {
             email: investor.email,
@@ -20,6 +26,13 @@ module Api
             accumulatedReturnPercent: investor.portfolio.accumulated_return_percent.to_f,
             annualReturnUSD: investor.portfolio.annual_return_usd.to_f,
             annualReturnPercent: investor.portfolio.annual_return_percent.to_f,
+            # Strategy return (TWR) - main metric for the portal
+            strategyReturnYtdUSD: ytd_return.pnl_usd,
+            strategyReturnYtdPercent: ytd_return.twr_percent,
+            strategyReturnYtdFrom: ytd_return.effective_start_at&.to_date&.strftime('%Y-%m-%d'),
+            strategyReturnAllUSD: all_return.pnl_usd,
+            strategyReturnAllPercent: all_return.twr_percent,
+            strategyReturnAllFrom: all_return.effective_start_at&.to_date&.strftime('%Y-%m-%d'),
             updatedAt: investor.portfolio.updated_at,
           } : nil,
         }

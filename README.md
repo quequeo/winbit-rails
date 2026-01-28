@@ -1,18 +1,10 @@
-# Winbit Rails + React
+# Winbit (Backoffice) — winbit-rails
 
-Plataforma de administración de inversiones con backend Rails API y frontend React.
+Backoffice administrativo (Rails 8) + UI (React/Vite/TS) servido desde Rails.
 
-## 🏗️ Arquitectura
-
-- **Backend**: Rails 8 API (raíz del proyecto)
-  - Postgres + Devise + Google OAuth
-  - RSpec para testing
-  - Rubocop para linting
-  - Brakeman para security scanning
-- **Frontend**: React + Vite + TypeScript (`ui/`)
-  - TailwindCSS para estilos
-  - Vitest + Testing Library para testing
-  - ESLint para linting
+## Arquitectura
+- **Backend**: Rails API + Postgres + Devise + Google OAuth
+- **UI**: `ui/` (React + Vite + TypeScript + Tailwind). Rails sirve el build desde `public/`.
 
 ## 📋 Requisitos
 
@@ -21,16 +13,9 @@ Plataforma de administración de inversiones con backend Rails API y frontend Re
 - Postgres **>= 14**
 - Git hooks configurados (se instalan automáticamente con `bin/setup`)
 
-## 🚀 Setup Local
+## Setup local
 
-### 1. Clonar y configurar
-
-```bash
-git clone https://github.com/quequeo/winbit-rails.git
-cd winbit-rails
-```
-
-### 2. Variables de entorno
+### Variables de entorno
 
 Crear archivo `.env` en la raíz (no se commitea):
 
@@ -62,7 +47,7 @@ CORS_ORIGINS=http://localhost:5173,https://winbit-6579c.web.app
 APP_HOST=localhost:3000
 ```
 
-### 3. Backend (Rails)
+### Backend (Rails)
 
 ```bash
 # Instalar dependencias
@@ -78,15 +63,20 @@ bin/rails server -p 3000
 
 **API disponible en**: `http://localhost:3000`
 
-### 4. Frontend (React)
+### UI (Backoffice)
+
+La UI vive en `ui/` pero en `http://localhost:3000` se ve lo que está en `public/`.
+
+Para ver cambios en `localhost:3000` después de editar `ui/`:
 
 ```bash
 cd ui
 npm install
-npm run dev
-```
+npm run build
 
-**UI disponible en**: `http://localhost:5173`
+cd ..
+rsync -av --delete ui/dist/ public/
+```
 
 ## 🔑 Autenticación (Google OAuth)
 
@@ -108,62 +98,9 @@ Solo estos emails pueden acceder (definidos en `db/seeds.rb`):
 
 Para agregar más admins, crear registro en tabla `users` con rol `ADMIN` o `SUPERADMIN`.
 
-## 🧪 Testing
-
-### Backend (RSpec)
-
-```bash
-# Ejecutar todos los tests
-bundle exec rspec
-
-# Ejecutar tests específicos
-bundle exec rspec spec/requests/api/admin/investors_spec.rb
-
-# Con cobertura
-COVERAGE=true bundle exec rspec
-```
-
-**Cobertura actual**: 79.36% (173 tests, 323/407 lines)
-
-### Frontend (Vitest)
-
-```bash
-cd ui
-
-# Ejecutar todos los tests
-npm run test
-
-# Con cobertura
-npm run test -- --coverage
-
-# Modo watch
-npm run test -- --watch
-
-# Solo un archivo
-npm run test src/pages/InvestorsPage.test.tsx
-```
-
-**Cobertura actual**: 85.68% (124 tests)
-
-| Métrica | Backend (Rails) | Frontend (React) |
-|---------|----------------|------------------|
-| **Lines** | 79.36% | 85.68% |
-| **Branches** | N/A | 85.03% |
-| **Functions** | N/A | 65.28% |
-| **Total Tests** | 173 | 124 |
-
-### Coverage por Componente (Frontend)
-
-- ✅ API Service (`api.ts`): 100%
-- ✅ Formatters (`formatters.ts`): 100%
-- ✅ Pages: 84.53% promedio
-  - DashboardPage: 100%
-  - EditPortfolioPage: 100%
-  - LoginPage: 100%
-  - InvestorsPage: 100%
-  - PortfoliosPage: 100%
-  - RequestsPage: 97.34%
-  - AdminsPage: 98.41%
+## Fórmulas / finanzas
+Ver el documento de fórmulas en el root del monorepo:
+- `../FORMULAS.md`
 
 ## 📧 Sistema de Notificaciones por Email
 
@@ -222,17 +159,9 @@ npm run lint                     # ESLint
 npm run lint:fix                 # Auto-fix
 ```
 
-## 🔄 Pre-Push Hooks
-
-El proyecto tiene hooks de pre-push configurados que ejecutan automáticamente:
-
-1. ✅ Bundle check
-2. ✅ RSpec tests
-3. ✅ Rubocop lint
-4. ✅ Brakeman security scan
-5. ✅ Vitest tests
-
-Si algún check falla, el push es rechazado. Configuración en `.githooks/pre-push`.
+## Backfill de depósitos/retiros (admin)
+En `Solicitudes` → `+ Agregar Solicitud` podés setear **Fecha (opcional)** y crear una solicitud ya **Aprobada**.
+Si la fecha es pasada, el sistema recalcula el historial y el portfolio para mantener consistencia.
 
 ## 📊 Modelos de Datos
 

@@ -3,6 +3,7 @@ import { api } from '../lib/api';
 import { formatCurrencyAR } from '../lib/formatters';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
+import { DatePicker } from '../components/ui/DatePicker';
 
 export const RequestsPage = () => {
   const [status, setStatus] = useState('');
@@ -18,6 +19,7 @@ export const RequestsPage = () => {
     amount: '',
     network: '',
     status: 'PENDING',
+    processed_at: '', // YYYY-MM-DD (optional, used when status=APPROVED/REJECTED)
   });
   const [submitting, setSubmitting] = useState(false);
   const [investors, setInvestors] = useState<any[]>([]);
@@ -66,8 +68,18 @@ export const RequestsPage = () => {
     e.preventDefault();
     setSubmitting(true);
     try {
-      await api.createRequest({ ...formData, amount: Number(formData.amount) });
-      setFormData({ investor_id: '', request_type: 'DEPOSIT', method: 'USDT', amount: '', network: '', status: 'PENDING' });
+      const payload: any = {
+        ...formData,
+        amount: Number(formData.amount),
+      };
+
+      if (!payload.network) delete payload.network;
+      if (!payload.processed_at) delete payload.processed_at;
+
+      // If admin selects APPROVED/REJECTED, backend will apply it immediately.
+      await api.createRequest(payload);
+
+      setFormData({ investor_id: '', request_type: 'DEPOSIT', method: 'USDT', amount: '', network: '', status: 'PENDING', processed_at: '' });
       setShowForm(false);
       load();
     } catch (err: any) {
@@ -79,7 +91,7 @@ export const RequestsPage = () => {
 
   const cancelForm = () => {
     setShowForm(false);
-    setFormData({ investor_id: '', request_type: 'DEPOSIT', method: 'USDT', amount: '', network: '', status: 'PENDING' });
+    setFormData({ investor_id: '', request_type: 'DEPOSIT', method: 'USDT', amount: '', network: '', status: 'PENDING', processed_at: '' });
   };
 
   if (error) return <div className="text-red-600">{error}</div>;
@@ -193,6 +205,16 @@ export const RequestsPage = () => {
                   <option value="APPROVED">Aprobado</option>
                   <option value="REJECTED">Rechazado</option>
                 </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Fecha (opcional)</label>
+                <DatePicker
+                  value={formData.processed_at}
+                  onChange={(iso) => setFormData({ ...formData, processed_at: iso })}
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  Si elegís estado <b>Aprobado</b> o <b>Rechazado</b>, esta fecha se usa para procesar el movimiento (y recalcular balances).
+                </p>
               </div>
             </div>
             <div className="flex gap-3">

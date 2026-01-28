@@ -61,12 +61,13 @@ export const api = {
     const suffix = qs.toString() ? `?${qs.toString()}` : '';
     return request(`/api/admin/requests${suffix}`);
   },
-  createRequest: (body: { investor_id: string; request_type: string; method: string; amount: number; network?: string; status?: string }) =>
+  createRequest: (body: { investor_id: string; request_type: string; method: string; amount: number; network?: string; status?: string; requested_at?: string; processed_at?: string }) =>
     request('/api/admin/requests', { method: 'POST', body: JSON.stringify(body) }),
   updateRequest: (id: string, body: { investor_id: string; request_type: string; method: string; amount: number; network?: string; status?: string }) =>
     request(`/api/admin/requests/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
   deleteRequest: (id: string) => request(`/api/admin/requests/${id}`, { method: 'DELETE' }),
-  approveRequest: (id: string) => request(`/api/admin/requests/${id}/approve`, { method: 'POST' }),
+  approveRequest: (id: string, body?: { processed_at?: string }) =>
+    request(`/api/admin/requests/${id}/approve`, { method: 'POST', body: JSON.stringify(body || {}) }),
   rejectRequest: (id: string) => request(`/api/admin/requests/${id}/reject`, { method: 'POST' }),
   getAdminPortfolios: () => request('/api/admin/portfolios'),
   updatePortfolio: (investorId: string, body: any) => request(`/api/admin/portfolios/${investorId}`, { method: 'PATCH', body: JSON.stringify(body) }),
@@ -145,4 +146,5 @@ export const api = {
   },
   applyTradingFee: (body: { investor_id: string; fee_percentage: number; notes?: string; period_start?: string; period_end?: string }) =>
     request('/api/admin/trading_fees', { method: 'POST', body: JSON.stringify(body) }),
+
 };

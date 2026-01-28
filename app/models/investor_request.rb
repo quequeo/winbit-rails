@@ -2,7 +2,19 @@ class InvestorRequest < ApplicationRecord
   self.table_name = 'requests'
 
   TYPES = %w[DEPOSIT WITHDRAWAL].freeze
-  METHODS = %w[USDT USDC LEMON_CASH CASH SWIFT].freeze
+  # Keep legacy methods for existing data/tests, but also allow new simplified
+  # methods used by winbit-app.
+  METHODS = %w[
+    USDT
+    USDC
+    LEMON_CASH
+    CASH
+    SWIFT
+    CASH_ARS
+    CASH_USD
+    TRANSFER_ARS
+    CRYPTO
+  ].freeze
   STATUSES = %w[PENDING APPROVED REJECTED].freeze
   NETWORKS = %w[TRC20 BEP20 ERC20 POLYGON].freeze
 

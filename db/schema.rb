@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_22_135320) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_28_151100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -58,6 +58,22 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_22_135320) do
     t.check_constraint "status::text = ANY (ARRAY['ACTIVE'::character varying::text, 'INACTIVE'::character varying::text])", name: "investors_status_check"
   end
 
+  create_table "payment_methods", force: :cascade do |t|
+    t.string "code", null: false
+    t.string "name", null: false
+    t.string "kind", null: false
+    t.boolean "active", default: true, null: false
+    t.boolean "enabled_for_deposit", default: true, null: false
+    t.boolean "enabled_for_withdrawal", default: true, null: false
+    t.boolean "requires_network", default: false, null: false
+    t.boolean "requires_lemontag", default: false, null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["active", "position"], name: "index_payment_methods_on_active_and_position"
+    t.index ["code"], name: "index_payment_methods_on_code", unique: true
+  end
+
   create_table "portfolio_histories", id: :string, force: :cascade do |t|
     t.string "investor_id", null: false
     t.datetime "date", default: -> { "CURRENT_TIMESTAMP" }, null: false
@@ -99,7 +115,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_22_135320) do
     t.string "attachment_url"
     t.index ["investor_id", "status"], name: "index_requests_on_investor_id_and_status"
     t.index ["status", "requested_at"], name: "index_requests_on_status_and_requested_at"
-    t.check_constraint "method::text = ANY (ARRAY['USDT'::character varying::text, 'USDC'::character varying::text, 'LEMON_CASH'::character varying::text, 'CASH'::character varying::text, 'SWIFT'::character varying::text])", name: "requests_method_check"
     t.check_constraint "network IS NULL OR (network::text = ANY (ARRAY['TRC20'::character varying::text, 'BEP20'::character varying::text, 'ERC20'::character varying::text, 'POLYGON'::character varying::text]))", name: "requests_network_check"
     t.check_constraint "request_type::text = ANY (ARRAY['DEPOSIT'::character varying::text, 'WITHDRAWAL'::character varying::text])", name: "requests_type_check"
     t.check_constraint "status::text = ANY (ARRAY['PENDING'::character varying::text, 'APPROVED'::character varying::text, 'REJECTED'::character varying::text])", name: "requests_status_check"

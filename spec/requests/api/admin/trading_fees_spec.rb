@@ -65,7 +65,7 @@ RSpec.describe 'Admin Trading Fees API', type: :request do
         fee_percentage: 30,
       }
 
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
       json = JSON.parse(response.body)
       expect(json['error']).to include('No hay ganancias')
       expect(json['profit_amount']).to eq(0)
@@ -157,7 +157,7 @@ RSpec.describe 'Admin Trading Fees API', type: :request do
         fee_percentage: 0,
       }
 
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
     end
   end
 

@@ -7,6 +7,14 @@ module Api
         total_aum = Portfolio.sum(:current_balance)
 
         end_date = Date.current
+        now = Time.current
+
+        # Strategy return (TWR) - YTD and All-time (since first record)
+        ytd_from = Time.zone.local(end_date.year, 1, 1, 0, 0, 0)
+        all_from = PortfolioHistory.where(status: 'COMPLETED').minimum(:date)
+
+        ytd_return = TimeWeightedReturnCalculator.for_platform(from: ytd_from, to: now)
+        all_return = TimeWeightedReturnCalculator.for_platform(from: all_from, to: now)
 
         days_param = params[:days].to_s.strip
 
@@ -34,6 +42,10 @@ module Api
             pendingRequestCount: pending_request_count,
             totalAum: total_aum.to_f,
             aumSeries: aum_series(start_date: start_date, end_date: end_date),
+            strategyReturnYtdUsd: ytd_return.pnl_usd,
+            strategyReturnYtdPercent: ytd_return.twr_percent,
+            strategyReturnAllUsd: all_return.pnl_usd,
+            strategyReturnAllPercent: all_return.twr_percent,
           },
         }
       end

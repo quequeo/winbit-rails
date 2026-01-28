@@ -20,6 +20,12 @@ RSpec.describe 'Public investors', type: :request do
     expect(json.dig('data', 'investor', 'email')).to eq('test@example.com')
     expect(json.dig('data', 'investor', 'name')).to eq('Juan Perez')
     expect(json.dig('data', 'portfolio', 'currentBalance')).to eq(100.0)
+
+     # Strategy return (TWR) fields are present
+     expect(json.dig('data', 'portfolio', 'strategyReturnYtdUSD')).to be_a(Numeric)
+     expect(json.dig('data', 'portfolio', 'strategyReturnYtdPercent')).to be_a(Numeric)
+     expect(json.dig('data', 'portfolio', 'strategyReturnAllUSD')).to be_a(Numeric)
+     expect(json.dig('data', 'portfolio', 'strategyReturnAllPercent')).to be_a(Numeric)
   end
 
   it 'GET /api/public/investor/:email returns 404 when missing' do

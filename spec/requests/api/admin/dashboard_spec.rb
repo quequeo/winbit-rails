@@ -52,6 +52,72 @@ RSpec.describe 'Admin Dashboard API', type: :request do
       expect(json['data']['aumSeries']).to be_an(Array)
       expect(json['data']['aumSeries'].length).to be >= 7
       expect(json['data']['aumSeries'].last['totalAum']).to eq(15000.0)
+
+      expect(json['data']['strategyReturnYtdUsd']).to be_a(Numeric)
+      expect(json['data']['strategyReturnYtdPercent']).to be_a(Numeric)
+      expect(json['data']['strategyReturnAllUsd']).to be_a(Numeric)
+      expect(json['data']['strategyReturnAllPercent']).to be_a(Numeric)
+    end
+
+    it 'clamps days to min 7 when days is too small' do
+      get '/api/admin/dashboard', params: { days: 3 }
+      expect(response).to have_http_status(:ok)
+      json = JSON.parse(response.body)
+      expect(json['data']['aumSeries'].length).to eq(7)
+    end
+
+    it 'clamps days to max 365 when days is too large' do
+      get '/api/admin/dashboard', params: { days: 1000 }
+      expect(response).to have_http_status(:ok)
+      json = JSON.parse(response.body)
+      expect(json['data']['aumSeries'].length).to eq(365)
+    end
+
+    it 'uses earliest movement date when days=0 (all-time) and series grows accordingly' do
+      # Create a history so "days=0" starts from the earliest movement date.
+      PortfolioHistory.create!(
+        investor: investor1,
+        event: 'DEPOSIT',
+        amount: 0,
+        previous_balance: 0,
+        new_balance: 10_000,
+        status: 'COMPLETED',
+        date: 10.days.ago
+      )
+
+      get '/api/admin/dashboard', params: { days: 0 }
+      expect(response).to have_http_status(:ok)
+      json = JSON.parse(response.body)
+      expect(json['data']['aumSeries'].length).to be >= 11
+    end
+
+    it 'returns aumSeries based on PortfolioHistory when movements exist' do
+      start = Date.current - 2
+      # Before range: sets initial balance at range start
+      PortfolioHistory.create!(
+        investor: investor1,
+        event: 'DEPOSIT',
+        amount: 10_000,
+        previous_balance: 0,
+        new_balance: 10_000,
+        status: 'COMPLETED',
+        date: Time.zone.local(start.year, start.month, start.day, 19, 0, 0) - 1.day
+      )
+      # Inside range: increase
+      PortfolioHistory.create!(
+        investor: investor1,
+        event: 'OPERATING_RESULT',
+        amount: 500,
+        previous_balance: 10_000,
+        new_balance: 10_500,
+        status: 'COMPLETED',
+        date: Time.zone.local(start.year, start.month, start.day, 17, 0, 0)
+      )
+
+      get '/api/admin/dashboard', params: { days: 7 }
+      expect(response).to have_http_status(:ok)
+      json = JSON.parse(response.body)
+      expect(json['data']['aumSeries']).to be_an(Array)
     end
 
     it 'returns zero counts when no data exists' do
@@ -70,6 +136,11 @@ RSpec.describe 'Admin Dashboard API', type: :request do
       expect(json['data']['aumSeries']).to be_an(Array)
       expect(json['data']['aumSeries'].length).to be >= 7
       expect(json['data']['aumSeries'].last['totalAum']).to eq(0.0)
+
+      expect(json['data']['strategyReturnYtdUsd']).to be_a(Numeric)
+      expect(json['data']['strategyReturnYtdPercent']).to be_a(Numeric)
+      expect(json['data']['strategyReturnAllUsd']).to be_a(Numeric)
+      expect(json['data']['strategyReturnAllPercent']).to be_a(Numeric)
     end
 
     it 'only counts ACTIVE investors' do

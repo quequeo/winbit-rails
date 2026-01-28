@@ -65,7 +65,7 @@ RSpec.describe 'Admin Daily Operating Results API', type: :request do
   describe 'GET /api/admin/daily_operating_results/by_month' do
     it 'returns 422 for invalid month param' do
       get '/api/admin/daily_operating_results/by_month', params: { month: '2025-13' }
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
     end
 
     it 'returns results ordered desc for that month' do
@@ -84,7 +84,7 @@ RSpec.describe 'Admin Daily Operating Results API', type: :request do
   describe 'GET /api/admin/daily_operating_results/preview' do
     it 'returns 422 when date is invalid' do
       get '/api/admin/daily_operating_results/preview', params: { date: 'bad', percent: 0.1 }
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
     end
 
     it 'returns preview data for eligible investors' do
