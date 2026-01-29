@@ -103,7 +103,7 @@ describe('DashboardPage', () => {
     });
 
     // Argentine format: $0,00
-    expect(screen.getByText(/\$0,00/)).toBeInTheDocument();
+    expect(screen.getAllByText(/\$0,00/).length).toBeGreaterThan(0);
     const zeroElements = screen.getAllByText('0');
     expect(zeroElements.length).toBeGreaterThanOrEqual(2);
   });

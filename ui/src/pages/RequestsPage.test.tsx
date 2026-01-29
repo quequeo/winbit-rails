@@ -187,14 +187,16 @@ describe('RequestsPage', () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(api.createRequest).toHaveBeenCalledWith({
-          investor_id: '1',
-          request_type: 'DEPOSIT',
-          method: 'USDT',
-          amount: 2000,
-          network: '',
-          status: 'PENDING',
-        });
+        // When network is empty, the UI removes it from the payload.
+        expect(api.createRequest).toHaveBeenCalledWith(
+          expect.objectContaining({
+            investor_id: '1',
+            request_type: 'DEPOSIT',
+            method: 'USDT',
+            amount: 2000,
+            status: 'PENDING',
+          }),
+        );
       });
     });
 

@@ -44,4 +44,3 @@ RSpec.describe ActivityLogger do
     expect(log.metadata).to include('from' => 'PENDING', 'to' => 'APPROVED', 'amount' => 123)
   end
 end
-

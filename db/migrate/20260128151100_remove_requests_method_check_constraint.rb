@@ -4,4 +4,3 @@ class RemoveRequestsMethodCheckConstraint < ActiveRecord::Migration[8.0]
     remove_check_constraint :requests, name: "requests_method_check"
   end
 end
-

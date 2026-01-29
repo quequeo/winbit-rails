@@ -45,4 +45,3 @@ class PortfolioRecalculator
     )
   end
 end
-

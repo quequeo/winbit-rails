@@ -184,4 +184,3 @@ RSpec.describe TimeWeightedReturnCalculator do
     expect(res.pnl_usd).to be_within(0.01).of(1700.0)
   end
 end
-

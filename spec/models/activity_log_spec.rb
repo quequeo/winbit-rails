@@ -32,4 +32,3 @@ RSpec.describe ActivityLog, type: :model do
     expect(ActivityLog.recent.first).to eq(newer)
   end
 end
-
