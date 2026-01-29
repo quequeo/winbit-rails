@@ -187,7 +187,6 @@ describe('RequestsPage', () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        // When network is empty, the UI removes it from the payload.
         expect(api.createRequest).toHaveBeenCalledWith(
           expect.objectContaining({
             investor_id: '1',

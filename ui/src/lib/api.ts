@@ -79,7 +79,7 @@ export const api = {
   deleteAdmin: (id: string) => request(`/api/admin/admins/${id}`, { method: 'DELETE' }),
   createInvestor: (body: { email: string; name: string }) =>
     request('/api/admin/investors', { method: 'POST', body: JSON.stringify(body) }),
-  updateInvestor: (id: string, body: { email: string; name: string }) =>
+  updateInvestor: (id: string, body: { email: string; name: string; trading_fee_frequency?: 'QUARTERLY' | 'ANNUAL' }) =>
     request(`/api/admin/investors/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
   deleteInvestor: (id: string) => request(`/api/admin/investors/${id}`, { method: 'DELETE' }),
   getAdminSettings: () => request('/api/admin/settings'),
@@ -146,5 +146,8 @@ export const api = {
   },
   applyTradingFee: (body: { investor_id: string; fee_percentage: number; notes?: string; period_start?: string; period_end?: string }) =>
     request('/api/admin/trading_fees', { method: 'POST', body: JSON.stringify(body) }),
+  updateTradingFee: (id: string, body: { fee_percentage: number; notes?: string }) =>
+    request(`/api/admin/trading_fees/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
+  deleteTradingFee: (id: string) => request(`/api/admin/trading_fees/${id}`, { method: 'DELETE' }),
 
 };

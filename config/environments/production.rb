@@ -1,5 +1,4 @@
 require "active_support/core_ext/integer/time"
-require Rails.root.join("lib/middleware/no_cache_html")
 
 Rails.application.configure do
   # Settings specified here will take precedence over those in config/application.rb.
@@ -15,11 +14,6 @@ Rails.application.configure do
 
   # Cache assets for far-future expiry since they are all digest stamped.
   config.public_file_server.headers = { "cache-control" => "public, max-age=#{1.year.to_i}" }
-
-  # Do NOT cache HTML (SPA entrypoints) served from /public.
-  # Without this, browsers/CDNs can cache `public/index.html` for 1 year and you
-  # keep seeing old UI even after a successful deploy.
-  config.middleware.insert_before ActionDispatch::Static, Middleware::NoCacheHtml
 
   # Enable serving of images, stylesheets, and JavaScripts from an asset server.
   # config.asset_host = "http://assets.example.com"

@@ -89,4 +89,19 @@ RSpec.describe TradingFeeApplicator do
     expect(applicator.apply).to eq(false)
     expect(applicator.errors.join(' ')).to include('ya aplicado')
   end
+
+  it 'rejects non-annual period when investor is ANNUAL' do
+    investor.update!(trading_fee_frequency: 'ANNUAL')
+
+    applicator = described_class.new(
+      investor,
+      fee_percentage: 30,
+      applied_by: admin,
+      period_start: Date.new(2025, 10, 1),
+      period_end: Date.new(2025, 12, 31),
+    )
+
+    expect(applicator.apply).to eq(false)
+    expect(applicator.errors.join(' ')).to include('ANNUAL')
+  end
 end

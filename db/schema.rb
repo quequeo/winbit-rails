@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_28_151100) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_29_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -54,8 +54,11 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_28_151100) do
     t.string "status", default: "ACTIVE", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "trading_fee_frequency", default: "QUARTERLY", null: false
     t.index ["email"], name: "index_investors_on_email", unique: true
+    t.index ["trading_fee_frequency"], name: "index_investors_on_trading_fee_frequency"
     t.check_constraint "status::text = ANY (ARRAY['ACTIVE'::character varying::text, 'INACTIVE'::character varying::text])", name: "investors_status_check"
+    t.check_constraint "trading_fee_frequency::text = ANY (ARRAY['QUARTERLY'::character varying, 'ANNUAL'::character varying]::text[])", name: "investors_trading_fee_frequency_check"
   end
 
   create_table "payment_methods", force: :cascade do |t|
@@ -132,10 +135,14 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_28_151100) do
     t.datetime "applied_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "voided_at"
+    t.string "voided_by_id"
     t.index ["applied_at"], name: "index_trading_fees_on_applied_at"
     t.index ["applied_by_id"], name: "index_trading_fees_on_applied_by_id"
     t.index ["investor_id", "period_start", "period_end"], name: "index_trading_fees_on_investor_and_period"
     t.index ["investor_id"], name: "index_trading_fees_on_investor_id"
+    t.index ["voided_at"], name: "index_trading_fees_on_voided_at"
+    t.index ["voided_by_id"], name: "index_trading_fees_on_voided_by_id"
   end
 
   create_table "users", id: :string, force: :cascade do |t|
@@ -177,4 +184,5 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_28_151100) do
   add_foreign_key "requests", "investors"
   add_foreign_key "trading_fees", "investors"
   add_foreign_key "trading_fees", "users", column: "applied_by_id"
+  add_foreign_key "trading_fees", "users", column: "voided_by_id"
 end

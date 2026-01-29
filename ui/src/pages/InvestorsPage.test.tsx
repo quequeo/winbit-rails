@@ -245,6 +245,7 @@ describe('InvestorsPage', () => {
         expect(api.updateInvestor).toHaveBeenCalledWith('1', {
           email: 'updated@test.com',
           name: 'Investor One',
+          trading_fee_frequency: 'QUARTERLY',
         });
       });
 

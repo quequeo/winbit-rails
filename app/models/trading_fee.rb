@@ -1,6 +1,9 @@
 class TradingFee < ApplicationRecord
   belongs_to :investor
   belongs_to :applied_by, class_name: 'User'
+  belongs_to :voided_by, class_name: 'User', optional: true
+
+  scope :active, -> { where(voided_at: nil) }
 
   validates :period_start, presence: true
   validates :period_end, presence: true
@@ -25,7 +28,7 @@ class TradingFee < ApplicationRecord
   def no_overlapping_fees_for_same_investor
     return if investor_id.blank? || period_start.blank? || period_end.blank?
 
-    overlapping = TradingFee.where(investor_id: investor_id)
+    overlapping = TradingFee.active.where(investor_id: investor_id)
                             .where.not(id: id)
                             .where('period_start <= ? AND period_end >= ?', period_end, period_start)
 

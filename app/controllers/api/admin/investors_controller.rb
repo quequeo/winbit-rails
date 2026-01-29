@@ -30,6 +30,7 @@ module Api
               email: inv.email,
               name: inv.name,
               status: inv.status,
+              tradingFeeFrequency: inv.trading_fee_frequency,
               createdAt: inv.created_at,
               updatedAt: inv.updated_at,
               portfolio: inv.portfolio ? {
@@ -62,6 +63,7 @@ module Api
           email: params.require(:email),
           name: params.require(:name),
           status: 'ACTIVE',
+          trading_fee_frequency: params[:trading_fee_frequency].presence || 'QUARTERLY',
         )
 
         ActiveRecord::Base.transaction do
@@ -95,10 +97,15 @@ module Api
         inv = Investor.find_by(id: params[:id])
         return render_error('Inversor no encontrado', status: :not_found) unless inv
 
-        inv.update!(
+        attrs = {
           email: params.require(:email),
           name: params.require(:name),
-        )
+        }
+        if params.key?(:trading_fee_frequency)
+          attrs[:trading_fee_frequency] = params[:trading_fee_frequency]
+        end
+
+        inv.update!(attrs)
 
         # Log activity
         ActivityLogger.log(

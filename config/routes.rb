@@ -45,6 +45,8 @@ Rails.application.routes.draw do
 
       get 'trading_fees', to: 'trading_fees#index', format: false
       post 'trading_fees', to: 'trading_fees#create', format: false
+      patch 'trading_fees/:id', to: 'trading_fees#update', format: false
+      delete 'trading_fees/:id', to: 'trading_fees#destroy', format: false
       get 'trading_fees/calculate', to: 'trading_fees#calculate', format: false
       get 'trading_fees/investors_summary', to: 'trading_fees#investors_summary', format: false
     end

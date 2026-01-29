@@ -1,16 +1,19 @@
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../lib/api';
+import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 
 type InvestorSummary = {
   investor_id: string;
   investor_name: string;
   investor_email: string;
+  trading_fee_frequency?: 'QUARTERLY' | 'ANNUAL';
   current_balance: number;
   period_start: string;
   period_end: string;
   profit_amount: number;
   has_profit: boolean;
   already_applied?: boolean;
+  applied_fee_id?: string;
   applied_fee_amount?: number;
   applied_fee_percentage?: number;
   monthly_profits?: { month: string; amount: number }[];
@@ -28,94 +31,46 @@ type TradingFeeCalculation = {
   balance_after_fee: number;
 };
 
+type TradingFeeEdit = {
+  applied_fee_id: string;
+  investor_id: string;
+  investor_name: string;
+  period_start: string;
+  period_end: string;
+  profit_amount: number;
+  current_balance: number;
+  fee_percentage: number;
+  fee_amount: number;
+};
+
 export const TradingFeesPage = () => {
   const [investors, setInvestors] = useState<InvestorSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [percentages, setPercentages] = useState<Record<string, string>>({});
   const [confirmModal, setConfirmModal] = useState<TradingFeeCalculation | null>(null);
+  const [editModal, setEditModal] = useState<TradingFeeEdit | null>(null);
   const [applying, setApplying] = useState(false);
   const [notes, setNotes] = useState('');
+  const [editNotes, setEditNotes] = useState('');
+  const [editPercentage, setEditPercentage] = useState('30');
   const [investorFilter, setInvestorFilter] = useState('');
   const [flash, setFlash] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [detailModal, setDetailModal] = useState<InvestorSummary | null>(null);
-
-  const computeQuarterStart = (d: Date) => {
-    const y = d.getUTCFullYear();
-    const m = d.getUTCMonth();
-    const qStartMonth = Math.floor(m / 3) * 3;
-    return new Date(Date.UTC(y, qStartMonth, 1));
-  };
-
-  const computeQuarterEnd = (quarterStart: Date) => {
-    const y = quarterStart.getUTCFullYear();
-    const m = quarterStart.getUTCMonth();
-    // end = last day of month (m+2)
-    return new Date(Date.UTC(y, m + 3, 0));
-  };
-
-  const computeLastCompletedQuarterEnd = () => {
-    const now = new Date();
-    const currentQStart = computeQuarterStart(now);
-    return new Date(currentQStart.getTime() - 24 * 60 * 60 * 1000);
-  };
-
-  const formatYmd = (d: Date) => {
-    const yyyy = String(d.getUTCFullYear());
-    const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
-    const dd = String(d.getUTCDate()).padStart(2, '0');
-    return `${yyyy}-${mm}-${dd}`;
-  };
-
-  type QuarterOption = { label: string; period_start: string; period_end: string; is_closed: boolean };
-
-  const buildQuarterOptions = () => {
-    const now = new Date();
-    const lastClosedEnd = computeLastCompletedQuarterEnd();
-
-    const opts: QuarterOption[] = [];
-
-    // include current quarter first
-    const currentStart = computeQuarterStart(now);
-    const currentEnd = computeQuarterEnd(currentStart);
-    opts.push({
-      label: `Q${Math.floor(currentStart.getUTCMonth() / 3) + 1} ${currentStart.getUTCFullYear()} (${formatYmd(currentStart)} - ${formatYmd(currentEnd)})`,
-      period_start: formatYmd(currentStart),
-      period_end: formatYmd(currentEnd),
-      is_closed: false,
-    });
-
-    // then include last N closed quarters
-    let cursorEnd = lastClosedEnd;
-    for (let i = 0; i < 8; i++) {
-      const qStart = computeQuarterStart(cursorEnd);
-      const qEnd = computeQuarterEnd(qStart);
-      const q = Math.floor(qStart.getUTCMonth() / 3) + 1;
-      opts.push({
-        label: `Q${q} ${qStart.getUTCFullYear()} (${formatYmd(qStart)} - ${formatYmd(qEnd)})`,
-        period_start: formatYmd(qStart),
-        period_end: formatYmd(qEnd),
-        is_closed: true,
-      });
-      cursorEnd = new Date(qStart.getTime() - 24 * 60 * 60 * 1000);
-    }
-
-    // de-dup by period
-    const seen = new Set<string>();
-    return opts.filter((o) => {
-      const k = `${o.period_start}..${o.period_end}`;
-      if (seen.has(k)) return false;
-      seen.add(k);
-      return true;
-    });
-  };
-  const quarterOptions = useMemo(() => buildQuarterOptions(), []);
-  const [selectedQuarter, setSelectedQuarter] = useState(() => quarterOptions[0]);
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    open: boolean;
+    feeId: string | null;
+    investorName: string;
+    periodStart: string;
+    periodEnd: string;
+  }>({ open: false, feeId: null, investorName: '', periodStart: '', periodEnd: '' });
+  const PAGE_SIZE_OPTIONS = [10, 20, 50] as const;
+  const [pageSize, setPageSize] = useState<(typeof PAGE_SIZE_OPTIONS)[number]>(20);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
-    void loadInvestorsSummary(selectedQuarter?.period_start, selectedQuarter?.period_end);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedQuarter?.period_start, selectedQuarter?.period_end]);
+    void loadInvestorsSummary(undefined, undefined);
+  }, []);
 
   useEffect(() => {
     if (!flash) return;
@@ -177,6 +132,14 @@ export const TradingFeesPage = () => {
     return `Q${q} ${year}`;
   };
 
+  const formatPeriodLabel = (inv: InvestorSummary) => {
+    if (inv.trading_fee_frequency === 'ANNUAL') {
+      const y = String(inv.period_start || '').slice(0, 4);
+      return y ? `Año ${y}` : 'Año';
+    }
+    return formatQuarterLabel(inv.period_start);
+  };
+
   const formatDate = (dateStr: string) => {
     const s = String(dateStr || '').trim();
 
@@ -206,8 +169,8 @@ export const TradingFeesPage = () => {
       const response = (await api.calculateTradingFee({
         investor_id: investor.investor_id,
         fee_percentage: percentage,
-        period_start: selectedQuarter?.period_start,
-        period_end: selectedQuarter?.period_end,
+        period_start: investor.period_start,
+        period_end: investor.period_end,
       })) as TradingFeeCalculation;
 
       setConfirmModal(response);
@@ -233,9 +196,77 @@ export const TradingFeesPage = () => {
       setFlash({ type: 'success', message: 'Comisión aplicada exitosamente' });
       setConfirmModal(null);
       setNotes('');
-      await loadInvestorsSummary(selectedQuarter?.period_start, selectedQuarter?.period_end);
+      await loadInvestorsSummary(undefined, undefined);
     } catch (err: any) {
       setFlash({ type: 'error', message: err.message || 'Error al aplicar comisión' });
+    } finally {
+      setApplying(false);
+    }
+  };
+
+  const handleEditClick = (investor: InvestorSummary) => {
+    if (!investor.applied_fee_id) {
+      setFlash({ type: 'error', message: 'No se encontró el ID de la comisión aplicada' });
+      return;
+    }
+    const pct = typeof investor.applied_fee_percentage === 'number' ? investor.applied_fee_percentage : 30;
+    const feeAmt = typeof investor.applied_fee_amount === 'number' ? investor.applied_fee_amount : 0;
+    setEditPercentage(String(pct));
+    setEditNotes('');
+    setEditModal({
+      applied_fee_id: investor.applied_fee_id,
+      investor_id: investor.investor_id,
+      investor_name: investor.investor_name,
+      period_start: investor.period_start,
+      period_end: investor.period_end,
+      profit_amount: investor.profit_amount,
+      current_balance: investor.current_balance,
+      fee_percentage: pct,
+      fee_amount: feeAmt,
+    });
+  };
+
+  const handleConfirmEdit = async () => {
+    if (!editModal) return;
+
+    const nextPct = parseFloat(editPercentage || '');
+    if (Number.isNaN(nextPct) || nextPct <= 0 || nextPct > 100) {
+      setFlash({ type: 'error', message: 'El porcentaje debe estar entre 0 y 100' });
+      return;
+    }
+
+    try {
+      setApplying(true);
+      await api.updateTradingFee(editModal.applied_fee_id, {
+        fee_percentage: nextPct,
+        notes: editNotes || undefined,
+      });
+      setFlash({ type: 'success', message: 'Comisión actualizada exitosamente' });
+      setEditModal(null);
+      setEditNotes('');
+      await loadInvestorsSummary(undefined, undefined);
+    } catch (err: any) {
+      setFlash({ type: 'error', message: err.message || 'Error al actualizar comisión' });
+    } finally {
+      setApplying(false);
+    }
+  };
+
+  const requestDeleteFee = (feeId: string, investorName: string, periodStart: string, periodEnd: string) => {
+    setDeleteConfirm({ open: true, feeId, investorName, periodStart, periodEnd });
+  };
+
+  const confirmDeleteFee = async () => {
+    if (!deleteConfirm.feeId) return;
+    try {
+      setApplying(true);
+      await api.deleteTradingFee(deleteConfirm.feeId);
+      setFlash({ type: 'success', message: 'Comisión eliminada (anulada) exitosamente' });
+      setEditModal(null);
+      setEditNotes('');
+      await loadInvestorsSummary(undefined, undefined);
+    } catch (err: any) {
+      setFlash({ type: 'error', message: err.message || 'Error al eliminar comisión' });
     } finally {
       setApplying(false);
     }
@@ -251,6 +282,20 @@ export const TradingFeesPage = () => {
     });
   }, [investors, investorFilter]);
 
+  useEffect(() => {
+    setPage(1);
+  }, [investorFilter, pageSize, investors.length]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredInvestors.length / pageSize));
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+
+  const visibleInvestors = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return filteredInvestors.slice(start, start + pageSize);
+  }, [filteredInvestors, page, pageSize]);
+
   if (loading) {
     return <div className="p-6 text-gray-600">Cargando...</div>;
   }
@@ -263,28 +308,9 @@ export const TradingFeesPage = () => {
     <div>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Comisiones</h1>
-        <p className="mt-1 text-sm text-gray-600">Aplicar Trading Fees por período trimestral.</p>
+        <p className="mt-1 text-sm text-gray-600">Aplicar Trading Fees por período (trimestral o anual según inversor).</p>
 
         <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
-          <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-gray-700">Trimestre</label>
-            <select
-              className="h-10 rounded border border-gray-300 bg-white px-3 text-sm"
-              value={`${selectedQuarter?.period_start}..${selectedQuarter?.period_end}`}
-              onChange={(e) => {
-                const v = e.target.value;
-                const opt = quarterOptions.find((o) => `${o.period_start}..${o.period_end}` === v);
-                if (opt) setSelectedQuarter(opt);
-              }}
-            >
-              {quarterOptions.map((o) => (
-                <option key={`${o.period_start}..${o.period_end}`} value={`${o.period_start}..${o.period_end}`}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
           <div className="flex flex-1 flex-col gap-1 min-w-[240px]">
             <label className="text-sm font-medium text-gray-700">Inversor</label>
             <div className="flex items-center gap-2">
@@ -345,8 +371,7 @@ export const TradingFeesPage = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 bg-white">
-            {filteredInvestors.map((investor) => {
-              const isSelectedQuarterClosed = !!selectedQuarter?.is_closed;
+            {visibleInvestors.map((investor) => {
               const isApplied = !!investor.already_applied;
               const appliedPct = typeof investor.applied_fee_percentage === 'number' ? investor.applied_fee_percentage : null;
               const percentage = parseFloat(percentages[investor.investor_id] || (appliedPct !== null ? String(appliedPct) : '30'));
@@ -360,9 +385,14 @@ export const TradingFeesPage = () => {
                   <td className="px-6 py-4">
                     <div className="text-sm font-medium text-gray-900">{investor.investor_name}</div>
                     <div className="text-xs text-gray-500">{investor.investor_email}</div>
+                    <div className="mt-1">
+                      <span className="inline-flex rounded-full bg-purple-50 px-2 py-0.5 text-[11px] font-semibold text-purple-800">
+                        {investor.trading_fee_frequency === 'ANNUAL' ? 'Anual' : 'Trimestral'}
+                      </span>
+                    </div>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-900">
-                    <div className="font-medium">{formatQuarterLabel(investor.period_start)}</div>
+                    <div className="font-medium">{formatPeriodLabel(investor)}</div>
                     <div className="text-xs text-gray-500">{formatDate(investor.period_start)} al {formatDate(investor.period_end)}</div>
                   </td>
                   <td className="px-6 py-4 text-right text-sm">
@@ -405,7 +435,11 @@ export const TradingFeesPage = () => {
                       step="0.1"
                       value={isApplied && appliedPct !== null ? String(appliedPct) : (percentages[investor.investor_id] || '30')}
                       onChange={(e) => handlePercentageChange(investor.investor_id, e.target.value)}
-                      disabled={!investor.has_profit || isApplied || !isSelectedQuarterClosed}
+                      onWheel={(e) => {
+                        // Prevent mouse wheel from changing number inputs (common UX bug on desktop trackpads/mice)
+                        e.currentTarget.blur();
+                      }}
+                      disabled={!investor.has_profit || isApplied}
                       className="w-20 rounded border border-gray-300 px-2 py-1 text-center text-sm disabled:bg-gray-100"
                     />
                   </td>
@@ -417,10 +451,50 @@ export const TradingFeesPage = () => {
                     )}
                   </td>
                   <td className="px-6 py-4 text-center">
-                    {!isSelectedQuarterClosed ? (
-                      <span className="text-xs text-gray-500">Pendiente</span>
-                    ) : isApplied ? (
-                      <span className="text-xs text-gray-500">Realizada</span>
+                    {isApplied ? (
+                      <div className="flex items-center justify-center gap-2">
+                        <button
+                          type="button"
+                          title="Editar"
+                          onClick={() => handleEditClick(investor)}
+                          className="rounded border border-gray-300 bg-white p-2 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                          disabled={applying}
+                        >
+                          <svg aria-hidden viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                            />
+                          </svg>
+                        </button>
+                        <button
+                          type="button"
+                          title="Eliminar"
+                          onClick={() => {
+                            if (!investor.applied_fee_id) {
+                              setFlash({ type: 'error', message: 'No se encontró el ID de la comisión aplicada' });
+                              return;
+                            }
+                            requestDeleteFee(
+                              investor.applied_fee_id,
+                              investor.investor_name,
+                              investor.period_start,
+                              investor.period_end,
+                            );
+                          }}
+                          className="rounded border border-red-200 bg-white p-2 text-red-600 hover:bg-red-50 disabled:opacity-50"
+                          disabled={applying}
+                        >
+                          <svg aria-hidden viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                            />
+                          </svg>
+                        </button>
+                      </div>
                     ) : investor.has_profit ? (
                       <button
                         onClick={() => void handleApplyClick(investor)}
@@ -437,6 +511,45 @@ export const TradingFeesPage = () => {
             })}
           </tbody>
         </table>
+      </div>
+
+      <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-2 text-sm text-gray-600">
+          <span>Filas por página:</span>
+          <select
+            className="h-9 rounded border border-gray-300 bg-white px-2 text-sm"
+            value={pageSize}
+            onChange={(e) => setPageSize(parseInt(e.target.value, 10) as (typeof PAGE_SIZE_OPTIONS)[number])}
+          >
+            {PAGE_SIZE_OPTIONS.map((n) => (
+              <option key={n} value={n}>
+                {n}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="flex items-center justify-between gap-3">
+          <button
+            type="button"
+            className="rounded border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+            disabled={page <= 1}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+          >
+            Anterior
+          </button>
+          <div className="text-sm text-gray-700">
+            Página <span className="font-semibold">{page}</span> de <span className="font-semibold">{totalPages}</span>
+          </div>
+          <button
+            type="button"
+            className="rounded border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+            disabled={page >= totalPages}
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+          >
+            Siguiente
+          </button>
+        </div>
       </div>
 
       {detailModal ? (
@@ -461,7 +574,7 @@ export const TradingFeesPage = () => {
             <div className="px-5 py-4">
               <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">Total trimestre</span>
+                  <span className="text-sm font-medium text-gray-700">Total período</span>
                   <span
                     className={
                       (detailModal.profit_amount ?? 0) > 0
@@ -500,7 +613,7 @@ export const TradingFeesPage = () => {
               </div>
 
               <div className="mt-4 text-xs text-gray-500">
-                Nota: el total del trimestre es la suma de los 3 meses (puede incluir meses negativos).
+                Nota: el total del período es la suma de los meses (puede incluir meses negativos).
               </div>
             </div>
           </div>
@@ -578,6 +691,137 @@ export const TradingFeesPage = () => {
           </div>
         </div>
       ) : null}
+
+      {editModal ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+            <h2 className="mb-4 text-xl font-bold text-gray-900">Editar comisión aplicada</h2>
+
+            {(() => {
+              const currentFee = editModal.fee_amount;
+              const nextPct = parseFloat(editPercentage || '');
+              const nextFee = Number.isNaN(nextPct) ? null : (editModal.profit_amount * (nextPct / 100)).toFixed(2);
+              const nextFeeNum = nextFee === null ? null : Number(nextFee);
+              const delta = nextFeeNum === null ? null : (nextFeeNum - currentFee);
+              const balanceAfter = delta === null ? null : (editModal.current_balance - delta);
+
+              return (
+                <>
+                  <div className="mb-4 space-y-2 rounded-lg bg-purple-50 p-4">
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">Inversor:</span>
+                      <span className="text-sm font-semibold">{editModal.investor_name}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">Período:</span>
+                      <span className="text-sm">
+                        {formatDate(editModal.period_start)} - {formatDate(editModal.period_end)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">Ganancias:</span>
+                      <span className="text-sm font-semibold text-green-700">{formatCurrency(editModal.profit_amount)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">Comisión actual:</span>
+                      <span className="text-sm font-semibold text-gray-900">{formatCurrency(currentFee)}</span>
+                    </div>
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="mb-1 block text-sm font-medium text-gray-700">Nuevo porcentaje</label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.1"
+                      value={editPercentage}
+                      onChange={(e) => setEditPercentage(e.target.value)}
+                      onWheel={(e) => {
+                        // Prevent mouse wheel from changing number inputs (common UX bug on desktop trackpads/mice)
+                        e.currentTarget.blur();
+                      }}
+                      className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
+                    />
+                    <div className="mt-2 text-sm text-gray-700">
+                      Nuevo monto: <span className="font-semibold">{nextFeeNum === null ? '—' : formatCurrency(nextFeeNum)}</span>
+                    </div>
+                    <div className="mt-1 text-sm text-gray-700">
+                      Diferencia: <span className="font-semibold">{delta === null ? '—' : formatCurrency(delta)}</span>
+                    </div>
+                    <div className="mt-1 text-sm text-gray-700">
+                      Balance después del ajuste:{' '}
+                      <span className="font-semibold">{balanceAfter === null ? '—' : formatCurrency(balanceAfter)}</span>
+                    </div>
+                    <p className="mt-2 text-xs text-gray-500">
+                      Esto no reescribe historia: crea un ajuste contable por la diferencia y actualiza el balance actual.
+                    </p>
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="mb-1 block text-sm font-medium text-gray-700">Notas (opcional)</label>
+                    <textarea
+                      value={editNotes}
+                      onChange={(e) => setEditNotes(e.target.value)}
+                      rows={3}
+                      className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
+                      placeholder="Agregar notas..."
+                    />
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setEditModal(null)}
+                      disabled={applying}
+                      className="flex-1 rounded border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        requestDeleteFee(editModal.applied_fee_id, editModal.investor_name, editModal.period_start, editModal.period_end)
+                      }
+                      disabled={applying}
+                      className="rounded bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                    >
+                      Eliminar
+                    </button>
+                    <button
+                      onClick={() => void handleConfirmEdit()}
+                      disabled={applying}
+                      className="flex-1 rounded bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 disabled:opacity-50"
+                    >
+                      {applying ? 'Guardando...' : 'Guardar'}
+                    </button>
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+        </div>
+      ) : null}
+
+      <ConfirmDialog
+        isOpen={deleteConfirm.open}
+        onClose={() => setDeleteConfirm({ open: false, feeId: null, investorName: '', periodStart: '', periodEnd: '' })}
+        onConfirm={() => void confirmDeleteFee()}
+        title="Eliminar comisión aplicada"
+        message={
+          <>
+            ¿Querés eliminar (anular) la comisión de <span className="font-semibold">{deleteConfirm.investorName}</span>?
+            <br />
+            <span className="text-gray-600">
+              Período: {formatDate(deleteConfirm.periodStart)} - {formatDate(deleteConfirm.periodEnd)}
+            </span>
+            <br />
+            <span className="text-gray-600">Esto devolverá el monto al balance del inversor.</span>
+          </>
+        }
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        confirmVariant="danger"
+      />
     </div>
   );
 };

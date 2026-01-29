@@ -2,6 +2,7 @@ module Api
   module Admin
     class TradingFeesController < BaseController
       before_action :set_investor, only: [:calculate, :create]
+      before_action :set_trading_fee, only: [:update, :destroy]
 
       # GET /api/admin/trading_fees
       # Lista todas las comisiones aplicadas con filtros opcionales
@@ -24,8 +25,11 @@ module Api
         start_date, end_date = extract_period_params
 
         if start_date && end_date
+          ok = validate_period_for_investor!(@investor, start_date, end_date)
+          return unless ok
+
           profit_amount = profits_for(@investor, start_date, end_date)
-          existing_fee = TradingFee.find_by(investor_id: @investor.id, period_start: start_date, period_end: end_date)
+          existing_fee = TradingFee.active.find_by(investor_id: @investor.id, period_start: start_date, period_end: end_date)
 
           if existing_fee
             render json: {
@@ -71,7 +75,7 @@ module Api
         calculator = TradingFeeCalculator.new(@investor)
         result = calculator.calculate
 
-        existing_fee = TradingFee.find_by(
+        existing_fee = TradingFee.active.find_by(
           investor_id: @investor.id,
           period_start: result[:period_start],
           period_end: result[:period_end]
@@ -129,7 +133,10 @@ module Api
         start_date, end_date = extract_period_params
 
         if start_date && end_date
-          if TradingFee.exists?(investor_id: @investor.id, period_start: start_date, period_end: end_date)
+          ok = validate_period_for_investor!(@investor, start_date, end_date)
+          return unless ok
+
+          if TradingFee.active.exists?(investor_id: @investor.id, period_start: start_date, period_end: end_date)
             render_error('Trading fee ya aplicado para este período', status: :conflict)
             return
           end
@@ -167,7 +174,7 @@ module Api
 
         # Evitar doble cobro del mismo período (por defecto)
         result = TradingFeeCalculator.new(@investor).calculate
-        if TradingFee.exists?(investor_id: @investor.id, period_start: result[:period_start], period_end: result[:period_end])
+        if TradingFee.active.exists?(investor_id: @investor.id, period_start: result[:period_start], period_end: result[:period_end])
           render_error('Trading fee ya aplicado para este período', status: :conflict)
           return
         end
@@ -200,6 +207,144 @@ module Api
         end
       end
 
+      # PATCH /api/admin/trading_fees/:id
+      # Edita una comisión ya aplicada sin re-escribir historia: crea un ajuste contable (PortfolioHistory)
+      # por la diferencia y actualiza el balance actual del inversor.
+      def update
+        return unless @trading_fee
+
+        fee_percentage = params[:fee_percentage]&.to_f
+        notes = params[:notes]
+
+        if fee_percentage.blank? || fee_percentage <= 0 || fee_percentage > 100
+          render_error('El porcentaje debe estar entre 0 y 100', status: :unprocessable_entity)
+          return
+        end
+
+        fee = @trading_fee
+        investor = fee.investor
+        portfolio = investor.portfolio
+        unless portfolio
+          render_error('Portfolio no encontrado', status: :unprocessable_entity)
+          return
+        end
+
+        old_fee_amount = fee.fee_amount.to_f
+        new_fee_amount = (fee.profit_amount.to_f * (fee_percentage / 100.0)).round(2)
+        delta = (new_fee_amount - old_fee_amount).round(2)
+
+        ApplicationRecord.transaction do
+          old_fee_percentage = fee.fee_percentage.to_f
+
+          # Always persist the updated fee info, even if delta is 0 (e.g. notes fix).
+          fee.update!(
+            fee_percentage: fee_percentage,
+            fee_amount: new_fee_amount,
+            notes: notes
+          )
+
+          if delta != 0.0
+            new_balance = (portfolio.current_balance.to_f - delta).round(2)
+            if new_balance < 0
+              fee.errors.add(:base, 'Insufficient balance to apply trading fee adjustment')
+              raise ActiveRecord::RecordInvalid, fee
+            end
+
+            PortfolioHistory.create!(
+              investor: investor,
+              event: 'TRADING_FEE_ADJUSTMENT',
+              amount: (-delta).round(2), # negative => extra charge, positive => refund
+              previous_balance: portfolio.current_balance.to_f,
+              new_balance: new_balance,
+              status: 'COMPLETED',
+              date: Time.current
+            )
+
+            portfolio.update!(current_balance: new_balance)
+          end
+
+          ActivityLogger.log(
+            user: current_user,
+            target: fee,
+            action: 'TRADING_FEE_UPDATED',
+            metadata: {
+              old_fee_percentage: old_fee_percentage,
+              new_fee_percentage: fee_percentage,
+              old_fee_amount: old_fee_amount,
+              new_fee_amount: new_fee_amount,
+              delta: delta,
+              investor_id: investor.id,
+              period_start: fee.period_start,
+              period_end: fee.period_end
+            }
+          )
+        end
+
+        render json: serialize_trading_fee(fee.reload), status: :ok
+      rescue ActiveRecord::RecordInvalid => e
+        render_error(e.message, status: :unprocessable_entity)
+      rescue StandardError => e
+        render_error("Error updating trading fee: #{e.message}", status: :unprocessable_entity)
+      end
+
+      # DELETE /api/admin/trading_fees/:id
+      # "Elimina" (anula) una comisión aplicada: revierte el impacto en balance con un ajuste contable
+      # y marca la comisión como voided para permitir re-aplicar el período si hace falta.
+      def destroy
+        return unless @trading_fee
+
+        fee = @trading_fee
+        if fee.voided_at.present?
+          render_error('Trading fee ya fue anulada', status: :conflict)
+          return
+        end
+
+        investor = fee.investor
+        portfolio = investor.portfolio
+        unless portfolio
+          render_error('Portfolio no encontrado', status: :unprocessable_entity)
+          return
+        end
+
+        fee_amount = fee.fee_amount.to_f
+
+        ApplicationRecord.transaction do
+          new_balance = (portfolio.current_balance.to_f + fee_amount).round(2)
+
+          PortfolioHistory.create!(
+            investor: investor,
+            event: 'TRADING_FEE_ADJUSTMENT',
+            amount: fee_amount.round(2), # refund
+            previous_balance: portfolio.current_balance.to_f,
+            new_balance: new_balance,
+            status: 'COMPLETED',
+            date: Time.current
+          )
+
+          portfolio.update!(current_balance: new_balance)
+
+          fee.update!(voided_at: Time.current, voided_by: current_user)
+
+          ActivityLogger.log(
+            user: current_user,
+            target: fee,
+            action: 'TRADING_FEE_VOIDED',
+            metadata: {
+              fee_amount: fee_amount,
+              investor_id: investor.id,
+              period_start: fee.period_start,
+              period_end: fee.period_end
+            }
+          )
+        end
+
+        render json: serialize_trading_fee(fee.reload), status: :ok
+      rescue ActiveRecord::RecordInvalid => e
+        render_error(e.message, status: :unprocessable_entity)
+      rescue StandardError => e
+        render_error("Error voiding trading fee: #{e.message}", status: :unprocessable_entity)
+      end
+
       # GET /api/admin/trading_fees/investors_summary
       # optional: ?period_start=YYYY-MM-DD&period_end=YYYY-MM-DD
       def investors_summary
@@ -213,18 +358,20 @@ module Api
             next if invested <= 0
 
             profit_amount = profits_for(investor, start_date, end_date)
-            existing_fee = TradingFee.find_by(investor_id: investor.id, period_start: start_date, period_end: end_date)
+            existing_fee = TradingFee.active.find_by(investor_id: investor.id, period_start: start_date, period_end: end_date)
 
             {
               investor_id: investor.id,
               investor_name: investor.name,
               investor_email: investor.email,
+              trading_fee_frequency: investor.trading_fee_frequency,
               current_balance: investor.portfolio&.current_balance || 0,
               period_start: start_date,
               period_end: end_date,
               profit_amount: profit_amount,
               has_profit: profit_amount > 0,
               already_applied: !!existing_fee,
+              applied_fee_id: existing_fee&.id,
               applied_fee_amount: existing_fee&.fee_amount&.to_f,
               applied_fee_percentage: existing_fee&.fee_percentage&.to_f,
               monthly_profits: monthly_breakdown_for(investor, start_date, end_date)
@@ -236,7 +383,7 @@ module Api
             invested = invested_amount_at(investor, result[:period_end])
             next if invested <= 0
 
-            existing_fee = TradingFee.find_by(
+            existing_fee = TradingFee.active.find_by(
               investor_id: investor.id,
               period_start: result[:period_start],
               period_end: result[:period_end]
@@ -246,12 +393,14 @@ module Api
               investor_id: investor.id,
               investor_name: investor.name,
               investor_email: investor.email,
+              trading_fee_frequency: investor.trading_fee_frequency,
               current_balance: investor.portfolio&.current_balance || 0,
               period_start: result[:period_start],
               period_end: result[:period_end],
               profit_amount: result[:profit_amount],
               has_profit: result[:profit_amount] > 0,
               already_applied: !!existing_fee,
+              applied_fee_id: existing_fee&.id,
               applied_fee_amount: existing_fee&.fee_amount&.to_f,
               applied_fee_percentage: existing_fee&.fee_percentage&.to_f,
               monthly_profits: monthly_breakdown_for(investor, result[:period_start], result[:period_end])
@@ -275,6 +424,13 @@ module Api
         end
       end
 
+      def set_trading_fee
+        @trading_fee = TradingFee.includes(:investor).find_by(id: params[:id])
+        return if @trading_fee
+
+        render_error('Trading fee no encontrado', status: :not_found)
+      end
+
       def extract_period_params
         return [nil, nil] unless params[:period_start].present? && params[:period_end].present?
 
@@ -283,6 +439,21 @@ module Api
         [start_date, end_date]
       rescue ArgumentError
         [nil, nil]
+      end
+
+      def validate_period_for_investor!(investor, start_date, end_date)
+        return true if investor.blank? || start_date.blank? || end_date.blank?
+        return true unless investor.respond_to?(:trading_fee_frequency) && investor.trading_fee_frequency == 'ANNUAL'
+
+        expected_start = start_date.beginning_of_year.to_date
+        expected_end = start_date.end_of_year.to_date
+
+        if start_date != expected_start || end_date != expected_end
+          render_error('Este inversor está configurado como ANNUAL: el período debe ser un año calendario completo', status: :unprocessable_entity)
+          return false
+        end
+
+        true
       end
 
       def monthly_breakdown_for(investor, start_date, end_date)
@@ -364,6 +535,8 @@ module Api
           fee_amount: fee.fee_amount,
           notes: fee.notes,
           applied_at: fee.applied_at,
+          voided_at: fee.voided_at,
+          voided_by_id: fee.voided_by_id,
           created_at: fee.created_at
         }
       end

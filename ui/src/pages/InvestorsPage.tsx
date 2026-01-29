@@ -3,6 +3,7 @@ import { api } from '../lib/api';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
+import { Select } from '../components/ui/Select';
 
 export const InvestorsPage = () => {
   const [data, setData] = useState<any>(null);
@@ -11,7 +12,11 @@ export const InvestorsPage = () => {
   const [formData, setFormData] = useState({ email: '', name: '' });
   const [submitting, setSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({ email: '', name: '' });
+  const [editForm, setEditForm] = useState({
+    email: '',
+    name: '',
+    tradingFeeFrequency: 'QUARTERLY' as 'QUARTERLY' | 'ANNUAL',
+  });
   const [sortBy, setSortBy] = useState<string>('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; investor: any | null }>({
@@ -54,7 +59,11 @@ export const InvestorsPage = () => {
     e.preventDefault();
     setSubmitting(true);
     try {
-      await api.updateInvestor(id, editForm);
+      await api.updateInvestor(id, {
+        email: editForm.email,
+        name: editForm.name,
+        trading_fee_frequency: editForm.tradingFeeFrequency,
+      });
       setEditingId(null);
       fetchInvestors();
     } catch (err: any) {
@@ -80,7 +89,11 @@ export const InvestorsPage = () => {
 
   const startEdit = (investor: any) => {
     setEditingId(investor.id);
-    setEditForm({ email: investor.email, name: investor.name });
+    setEditForm({
+      email: investor.email,
+      name: investor.name,
+      tradingFeeFrequency: investor.tradingFeeFrequency === 'ANNUAL' ? 'ANNUAL' : 'QUARTERLY',
+    });
   };
 
   if (error) return <div className="text-red-600">{error}</div>;
@@ -171,6 +184,19 @@ export const InvestorsPage = () => {
                   placeholder="Nombre"
                   className="text-sm"
                 />
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-gray-700">Comisión trading</label>
+                  <Select
+                    value={editForm.tradingFeeFrequency}
+                    onChange={(v) => setEditForm({ ...editForm, tradingFeeFrequency: v as 'QUARTERLY' | 'ANNUAL' })}
+                    portal
+                    options={[
+                      { value: 'QUARTERLY', label: 'Trimestral' },
+                      { value: 'ANNUAL', label: 'Anual' },
+                    ]}
+                  />
+                  <p className="mt-1 text-[11px] text-gray-500">Anual = se cobra una vez por año (año calendario cerrado).</p>
+                </div>
                 <div className="flex gap-2">
                   <Button type="submit" disabled={submitting} className="text-sm py-1 px-3">
                     Guardar
@@ -191,13 +217,9 @@ export const InvestorsPage = () => {
                     <p className="truncate text-sm font-semibold text-gray-900">{inv.name}</p>
                     <p className="truncate mt-1 text-sm text-gray-600">{inv.email}</p>
                   </div>
-                  <span
-                    className={`shrink-0 inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
-                      inv.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                    }`}
-                  >
-                    {inv.status === 'ACTIVE' ? 'Activo' : 'Inactivo'}
-                  </span>
+                </div>
+                <div className="mt-2 text-xs text-gray-500">
+                  Trading fee: {inv.tradingFeeFrequency === 'ANNUAL' ? 'Anual' : 'Trimestral'}
                 </div>
                 <div className="mt-3 flex gap-2">
                   <button
@@ -241,15 +263,7 @@ export const InvestorsPage = () => {
                   </button>
                 </th>
                 <th className="py-2">Email</th>
-                <th className="py-2">
-                  <button
-                    onClick={() => handleSort('status')}
-                    className="flex items-center gap-1 hover:text-gray-700"
-                  >
-                    Estado
-                    <span className="text-xs">{getSortIcon('status')}</span>
-                  </button>
-                </th>
+                <th className="py-2 w-44">Trading fee</th>
                 <th className="py-2 text-right">Acciones</th>
               </tr>
             </thead>
@@ -276,7 +290,18 @@ export const InvestorsPage = () => {
                           className="text-sm"
                         />
                       </td>
-                      <td className="py-2" colSpan={1}></td>
+                      <td className="py-2">
+                        <Select
+                          className="w-44"
+                          value={editForm.tradingFeeFrequency}
+                          onChange={(v) => setEditForm({ ...editForm, tradingFeeFrequency: v as 'QUARTERLY' | 'ANNUAL' })}
+                          portal
+                          options={[
+                            { value: 'QUARTERLY', label: 'Trimestral' },
+                            { value: 'ANNUAL', label: 'Anual' },
+                          ]}
+                        />
+                      </td>
                       <td className="py-2 text-right">
                         <div className="flex gap-2 justify-end">
                           <Button
@@ -299,15 +324,9 @@ export const InvestorsPage = () => {
                     <>
                       <td className="py-2 font-medium">{inv.name}</td>
                       <td className="py-2 text-gray-600">{inv.email}</td>
-                      <td className="py-2">
-                        <span
-                          className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
-                            inv.status === 'ACTIVE'
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-gray-100 text-gray-800'
-                          }`}
-                        >
-                          {inv.status === 'ACTIVE' ? 'Activo' : 'Inactivo'}
+                      <td className="py-2 w-44">
+                        <span className="inline-flex rounded-full bg-purple-50 px-2 py-1 text-xs font-semibold text-purple-800">
+                          {inv.tradingFeeFrequency === 'ANNUAL' ? 'Anual' : 'Trimestral'}
                         </span>
                       </td>
                       <td className="py-2 text-right">

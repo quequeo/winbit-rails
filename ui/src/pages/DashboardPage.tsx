@@ -324,11 +324,11 @@ export const DashboardPage = () => {
       </div>
 
       <div className="grid gap-6 md:grid-cols-4">
-        <div className="rounded-lg bg-white p-6 shadow transform transition-transform duration-200 ease-out hover:-translate-y-1 hover:shadow-lg">
+        <div className="rounded-lg bg-white p-6 shadow">
           <p className="text-sm font-medium text-gray-600">Resultado estrategia {year} (USD)</p>
           <p className="mt-2 text-2xl font-bold text-gray-900">{formatCurrencyAR(data.data.strategyReturnYtdUsd ?? 0)}</p>
         </div>
-        <div className="rounded-lg bg-white p-6 shadow transform transition-transform duration-200 ease-out hover:-translate-y-1 hover:shadow-lg">
+        <div className="rounded-lg bg-white p-6 shadow">
           <p className="text-sm font-medium text-gray-600">Resultado estrategia {year} (%)</p>
           <p className="mt-2 text-2xl font-bold text-gray-900">
             {data.data.strategyReturnYtdPercent !== undefined
@@ -336,11 +336,11 @@ export const DashboardPage = () => {
               : '0.00%'}
           </p>
         </div>
-        <div className="rounded-lg bg-white p-6 shadow transform transition-transform duration-200 ease-out hover:-translate-y-1 hover:shadow-lg">
+        <div className="rounded-lg bg-white p-6 shadow">
           <p className="text-sm font-medium text-gray-600">Resultado estrategia histórico (USD)</p>
           <p className="mt-2 text-2xl font-bold text-gray-900">{formatCurrencyAR(data.data.strategyReturnAllUsd ?? 0)}</p>
         </div>
-        <div className="rounded-lg bg-white p-6 shadow transform transition-transform duration-200 ease-out hover:-translate-y-1 hover:shadow-lg">
+        <div className="rounded-lg bg-white p-6 shadow">
           <p className="text-sm font-medium text-gray-600">Resultado estrategia histórico (%)</p>
           <p className="mt-2 text-2xl font-bold text-gray-900">
             {data.data.strategyReturnAllPercent !== undefined

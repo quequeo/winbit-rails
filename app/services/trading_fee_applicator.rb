@@ -18,6 +18,10 @@ class TradingFeeApplicator
     if @period_start_override.present? && @period_end_override.present?
       @period_start = @period_start_override.to_date
       @period_end = @period_end_override.to_date
+
+      validate_period_for_investor
+      return false if errors.any?
+
       @profit_amount = PortfolioHistory.where(investor_id: investor.id, event: 'OPERATING_RESULT', status: 'COMPLETED')
                                      .where(date: @period_start.beginning_of_day..@period_end.end_of_day)
                                      .sum(:amount)
@@ -70,6 +74,20 @@ class TradingFeeApplicator
     end
 
     @errors << 'Applied by user is required' if applied_by.blank?
+  end
+
+  # Guardrail: inversores ANNUAL solo pueden aplicarse por año calendario completo.
+  def validate_period_for_investor
+    return unless investor.respond_to?(:trading_fee_frequency) && investor.trading_fee_frequency == 'ANNUAL'
+
+    return if @period_start.blank? || @period_end.blank?
+
+    expected_start = @period_start.beginning_of_year.to_date
+    expected_end = @period_start.end_of_year.to_date
+
+    if @period_start != expected_start || @period_end != expected_end
+      @errors << 'Este inversor está configurado como ANNUAL: el período debe ser un año calendario completo'
+    end
   end
 
   def validate_profit

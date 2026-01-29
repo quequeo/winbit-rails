@@ -118,6 +118,22 @@ RSpec.describe 'Admin Trading Fees API', type: :request do
       expect(json['already_applied']).to eq(true)
       expect(json['error']).to include('ya aplicado')
     end
+
+    it 'returns 422 when investor is ANNUAL but period is not a full calendar year' do
+      inv = create_investor_with_portfolio(email: 'inv_annual@test.com')
+      inv.update!(trading_fee_frequency: 'ANNUAL')
+
+      get '/api/admin/trading_fees/calculate', params: {
+        investor_id: inv.id,
+        period_start: '2025-10-01',
+        period_end: '2025-12-31',
+        fee_percentage: 30,
+      }
+
+      expect(response).to have_http_status(:unprocessable_content)
+      json = JSON.parse(response.body)
+      expect(json['error']).to include('ANNUAL')
+    end
   end
 
   describe 'POST /api/admin/trading_fees' do
@@ -158,6 +174,47 @@ RSpec.describe 'Admin Trading Fees API', type: :request do
       }
 
       expect(response).to have_http_status(:unprocessable_content)
+    end
+  end
+
+  describe 'PATCH /api/admin/trading_fees/:id' do
+    it 'updates an applied trading fee by creating an adjustment and updating balance' do
+      inv = create_investor_with_portfolio(email: 'edit1@test.com')
+      inv.portfolio.update!(current_balance: 1100, total_invested: 1000)
+
+      add_history(inv: inv, event: 'DEPOSIT', amount: 1000, date: Time.zone.local(2025, 10, 1, 19, 0, 0), prev: 0, newb: 1000)
+      add_history(inv: inv, event: 'OPERATING_RESULT', amount: 100, date: Time.zone.local(2025, 11, 10, 17, 0, 0), prev: 1000, newb: 1100)
+
+      # Apply original fee: 30% => 30
+      post '/api/admin/trading_fees', params: {
+        investor_id: inv.id,
+        period_start: '2025-10-01',
+        period_end: '2025-12-31',
+        fee_percentage: 30,
+        notes: 'original',
+      }
+      expect(response).to have_http_status(:created)
+      fee_id = JSON.parse(response.body)['id']
+
+      inv.reload
+      expect(inv.portfolio.current_balance.to_f).to eq(1070.0)
+
+      # Edit fee: 20% => 20, refund 10
+      login_as(admin, scope: :user)
+      patch "/api/admin/trading_fees/#{fee_id}", params: { fee_percentage: 20, notes: 'edited' }
+      expect(response).to have_http_status(:ok)
+
+      inv.reload
+      expect(inv.portfolio.current_balance.to_f).to eq(1080.0)
+
+      fee = TradingFee.find(fee_id)
+      expect(fee.fee_percentage.to_f).to eq(20.0)
+      expect(fee.fee_amount.to_f).to eq(20.0)
+      expect(fee.notes).to eq('edited')
+
+      adj = PortfolioHistory.where(investor_id: inv.id, event: 'TRADING_FEE_ADJUSTMENT').order(date: :desc).first
+      expect(adj).to be_present
+      expect(adj.amount.to_f).to eq(10.0) # refund
     end
   end
 

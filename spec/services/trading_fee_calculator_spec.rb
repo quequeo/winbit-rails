@@ -67,4 +67,14 @@ RSpec.describe TradingFeeCalculator do
     expect(result[:period_start]).to eq(Date.new(2025, 10, 1))
     expect(result[:period_end]).to eq(Date.new(2025, 12, 31))
   end
+
+  it 'returns last completed year range when investor is ANNUAL' do
+    investor.update!(trading_fee_frequency: 'ANNUAL')
+
+    calc = described_class.new(investor, reference_date: Date.new(2026, 1, 21))
+    result = calc.calculate
+
+    expect(result[:period_start]).to eq(Date.new(2025, 1, 1))
+    expect(result[:period_end]).to eq(Date.new(2025, 12, 31))
+  end
 end
