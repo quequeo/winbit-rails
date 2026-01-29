@@ -56,8 +56,9 @@ describe('ActivityLogsPage', () => {
       expect(screen.getByText('Registro de Actividad')).toBeInTheDocument()
     })
 
-    const filter = screen.getByLabelText('Filtrar por acción')
-    await user.selectOptions(filter, 'create_investor')
+    // Open custom Select (button is labelled by the <label htmlFor="filterAction" />)
+    await user.click(screen.getByRole('button', { name: 'Filtrar por acción' }))
+    await user.click(screen.getByRole('option', { name: 'Crear inversor' }))
 
     await waitFor(() => {
       expect(api.getActivityLogs).toHaveBeenLastCalledWith(expect.objectContaining({ filter_action: 'create_investor' }))

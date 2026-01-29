@@ -4,6 +4,38 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 
+const WinbitCheckbox = ({
+  checked,
+  onChange,
+}: {
+  checked: boolean;
+  onChange: (next: boolean) => void;
+}) => {
+  return (
+    <span className="relative inline-flex h-4 w-4 items-center justify-center">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="peer sr-only"
+      />
+      <span className="h-4 w-4 rounded border border-gray-300 bg-white peer-checked:border-[#58b098] peer-checked:bg-[#58b098] peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#58b098]/40" />
+      <svg
+        aria-hidden
+        viewBox="0 0 20 20"
+        className="pointer-events-none absolute h-3 w-3 text-white opacity-0 peer-checked:opacity-100"
+        fill="currentColor"
+      >
+        <path
+          fillRule="evenodd"
+          d="M16.704 5.29a1 1 0 010 1.414l-7.5 7.5a1 1 0 01-1.414 0l-3.5-3.5a1 1 0 011.414-1.414l2.793 2.793 6.793-6.793a1 1 0 011.414 0z"
+          clipRule="evenodd"
+        />
+      </svg>
+    </span>
+  );
+};
+
 export const AdminsPage = () => {
   const [data, setData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
@@ -215,20 +247,16 @@ export const AdminsPage = () => {
                 <div className="space-y-2">
                   <p className="text-xs font-semibold text-gray-700">Notificaciones:</p>
                   <label className="flex items-center gap-2 text-xs cursor-pointer">
-                    <input
-                      type="checkbox"
+                    <WinbitCheckbox
                       checked={editForm.notify_deposit_created}
-                      onChange={(e) => setEditForm({ ...editForm, notify_deposit_created: e.target.checked })}
-                      className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 cursor-pointer"
+                      onChange={(next) => setEditForm({ ...editForm, notify_deposit_created: next })}
                     />
                     <span className="text-gray-700">Depósito recibido</span>
                   </label>
                   <label className="flex items-center gap-2 text-xs cursor-pointer">
-                    <input
-                      type="checkbox"
+                    <WinbitCheckbox
                       checked={editForm.notify_withdrawal_created}
-                      onChange={(e) => setEditForm({ ...editForm, notify_withdrawal_created: e.target.checked })}
-                      className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 cursor-pointer"
+                      onChange={(next) => setEditForm({ ...editForm, notify_withdrawal_created: next })}
                     />
                     <span className="text-gray-700">Retiro solicitado</span>
                   </label>
@@ -265,20 +293,20 @@ export const AdminsPage = () => {
                   <p className="text-xs font-semibold text-gray-700 mb-2">Notificaciones:</p>
                   <div className="flex flex-col gap-2">
                     <label className="flex items-center gap-2 text-xs cursor-pointer">
-                      <input
-                        type="checkbox"
+                      <WinbitCheckbox
                         checked={a.notify_deposit_created ?? true}
-                        onChange={() => handleNotificationToggle(a.id, 'notify_deposit_created', a.notify_deposit_created ?? true)}
-                        className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 cursor-pointer"
+                        onChange={() =>
+                          handleNotificationToggle(a.id, 'notify_deposit_created', a.notify_deposit_created ?? true)
+                        }
                       />
                       <span className="text-gray-700">Depósito recibido</span>
                     </label>
                     <label className="flex items-center gap-2 text-xs cursor-pointer">
-                      <input
-                        type="checkbox"
+                      <WinbitCheckbox
                         checked={a.notify_withdrawal_created ?? true}
-                        onChange={() => handleNotificationToggle(a.id, 'notify_withdrawal_created', a.notify_withdrawal_created ?? true)}
-                        className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 cursor-pointer"
+                        onChange={() =>
+                          handleNotificationToggle(a.id, 'notify_withdrawal_created', a.notify_withdrawal_created ?? true)
+                        }
                       />
                       <span className="text-gray-700">Retiro solicitado</span>
                     </label>
@@ -287,7 +315,7 @@ export const AdminsPage = () => {
                 <div className="mt-3 flex gap-2">
                   <button
                     onClick={() => startEdit(a)}
-                    className="p-2 text-blue-600 hover:bg-blue-50 rounded"
+                    className="rounded p-2 text-[#58b098] hover:bg-[#58b098]/10"
                     title="Editar"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -364,20 +392,16 @@ export const AdminsPage = () => {
                       <td className="py-2">
                         <div className="flex flex-col gap-2">
                           <label className="flex items-center gap-2 text-xs cursor-pointer">
-                            <input
-                              type="checkbox"
+                            <WinbitCheckbox
                               checked={editForm.notify_deposit_created}
-                              onChange={(e) => setEditForm({ ...editForm, notify_deposit_created: e.target.checked })}
-                              className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 cursor-pointer"
+                              onChange={(next) => setEditForm({ ...editForm, notify_deposit_created: next })}
                             />
                             <span className="text-gray-700">Depósito recibido</span>
                           </label>
                           <label className="flex items-center gap-2 text-xs cursor-pointer">
-                            <input
-                              type="checkbox"
+                            <WinbitCheckbox
                               checked={editForm.notify_withdrawal_created}
-                              onChange={(e) => setEditForm({ ...editForm, notify_withdrawal_created: e.target.checked })}
-                              className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 cursor-pointer"
+                              onChange={(next) => setEditForm({ ...editForm, notify_withdrawal_created: next })}
                             />
                             <span className="text-gray-700">Retiro solicitado</span>
                           </label>
@@ -419,20 +443,24 @@ export const AdminsPage = () => {
                       <td className="py-2">
                         <div className="flex flex-col gap-2">
                           <label className="flex items-center gap-2 text-xs cursor-pointer">
-                            <input
-                              type="checkbox"
+                            <WinbitCheckbox
                               checked={a.notify_deposit_created ?? true}
-                              onChange={() => handleNotificationToggle(a.id, 'notify_deposit_created', a.notify_deposit_created ?? true)}
-                              className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 cursor-pointer"
+                              onChange={() =>
+                                handleNotificationToggle(a.id, 'notify_deposit_created', a.notify_deposit_created ?? true)
+                              }
                             />
                             <span className="text-gray-700">Depósito recibido</span>
                           </label>
                           <label className="flex items-center gap-2 text-xs cursor-pointer">
-                            <input
-                              type="checkbox"
+                            <WinbitCheckbox
                               checked={a.notify_withdrawal_created ?? true}
-                              onChange={() => handleNotificationToggle(a.id, 'notify_withdrawal_created', a.notify_withdrawal_created ?? true)}
-                              className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 cursor-pointer"
+                              onChange={() =>
+                                handleNotificationToggle(
+                                  a.id,
+                                  'notify_withdrawal_created',
+                                  a.notify_withdrawal_created ?? true,
+                                )
+                              }
                             />
                             <span className="text-gray-700">Retiro solicitado</span>
                           </label>
@@ -442,7 +470,7 @@ export const AdminsPage = () => {
                         <div className="flex gap-2 justify-end">
                           <button
                             onClick={() => startEdit(a)}
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded"
+                            className="rounded p-2 text-[#58b098] hover:bg-[#58b098]/10"
                             title="Editar"
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

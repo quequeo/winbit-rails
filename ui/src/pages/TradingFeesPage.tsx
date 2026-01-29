@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../lib/api';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
+import { Select } from '../components/ui/Select';
 
 type InvestorSummary = {
   investor_id: string;
@@ -358,7 +359,173 @@ export const TradingFeesPage = () => {
       ) : null}
 
       </div>
-      <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm">
+      {/* Mobile: cards */}
+      <div className="grid gap-3 md:hidden">
+        {visibleInvestors.map((investor) => {
+          const isApplied = !!investor.already_applied;
+          const appliedPct = typeof investor.applied_fee_percentage === 'number' ? investor.applied_fee_percentage : null;
+          const rawPct = percentages[investor.investor_id];
+          const pct = isApplied && appliedPct !== null ? appliedPct : rawPct === '' ? null : parseFloat(rawPct ?? '30');
+          const pctIsValid = pct !== null && Number.isFinite(pct);
+          const feeAmount =
+            investor.has_profit && pctIsValid ? investor.profit_amount * (pct! / 100) : null;
+          const shownFeeAmount =
+            isApplied && typeof investor.applied_fee_amount === 'number'
+              ? investor.applied_fee_amount
+              : feeAmount;
+
+          return (
+            <div key={investor.investor_id} className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="truncate text-sm font-semibold text-gray-900">{investor.investor_name}</div>
+                  <div className="truncate text-xs text-gray-500">{investor.investor_email}</div>
+                </div>
+                <span className="shrink-0 inline-flex rounded-full bg-purple-50 px-2 py-0.5 text-[11px] font-semibold text-purple-800">
+                  {investor.trading_fee_frequency === 'ANNUAL' ? 'Anual' : 'Trimestral'}
+                </span>
+              </div>
+
+              <div className="mt-3 grid grid-cols-2 gap-3">
+                <div>
+                  <div className="text-[11px] font-medium uppercase tracking-wide text-gray-500">Período</div>
+                  <div className="mt-1 text-sm font-medium text-gray-900">{formatPeriodLabel(investor)}</div>
+                  <div className="mt-0.5 text-xs text-gray-500">
+                    {formatDate(investor.period_start)} al {formatDate(investor.period_end)}
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-[11px] font-medium uppercase tracking-wide text-gray-500">Rendimientos</div>
+                  <div className="mt-1">
+                    {investor.has_profit ? (
+                      <span className="text-sm font-semibold text-green-600">{formatCurrency(investor.profit_amount)}</span>
+                    ) : (
+                      <span className="text-sm text-gray-400">Sin ganancias</span>
+                    )}
+                  </div>
+                  {Array.isArray(investor.monthly_profits) && investor.monthly_profits.length > 0 ? (
+                    <button
+                      type="button"
+                      className="mt-1 inline-flex items-center justify-end gap-1 text-xs text-gray-500 hover:text-gray-700"
+                      onClick={() => setDetailModal(investor)}
+                    >
+                      <span>Detalle</span>
+                      <svg
+                        aria-hidden
+                        viewBox="0 0 24 24"
+                        className="h-4 w-4 text-gray-500"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="mt-3 grid grid-cols-2 items-center gap-3">
+                <div>
+                  <div className="text-[11px] font-medium uppercase tracking-wide text-gray-500">Porcentaje</div>
+                  <div className="mt-1 flex items-center gap-2">
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.1"
+                      value={
+                        isApplied && appliedPct !== null
+                          ? String(appliedPct)
+                          : rawPct !== undefined
+                            ? rawPct
+                            : '30'
+                      }
+                      onChange={(e) => handlePercentageChange(investor.investor_id, e.target.value)}
+                      onWheel={(e) => {
+                        e.currentTarget.blur();
+                      }}
+                      disabled={!investor.has_profit || isApplied}
+                      className="h-9 w-20 rounded border border-gray-300 px-2 text-sm disabled:bg-gray-100"
+                    />
+                    <span className="text-sm font-medium text-gray-700">%</span>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-[11px] font-medium uppercase tracking-wide text-gray-500">Comisión</div>
+                  <div className="mt-2">
+                    {investor.has_profit ? (
+                      <span className="text-sm font-semibold text-purple-600">
+                        {shownFeeAmount === null ? '—' : formatCurrency(shownFeeAmount)}
+                      </span>
+                    ) : (
+                      <span className="text-sm text-gray-400">—</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 flex items-center justify-end gap-2">
+                {isApplied ? (
+                  <>
+                    <button
+                      type="button"
+                      title="Editar"
+                      onClick={() => handleEditClick(investor)}
+                      className="rounded border border-gray-300 bg-white p-2 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                      disabled={applying}
+                    >
+                      <svg aria-hidden viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                        />
+                      </svg>
+                    </button>
+                    <button
+                      type="button"
+                      title="Eliminar"
+                      onClick={() => {
+                        if (!investor.applied_fee_id) {
+                          setFlash({ type: 'error', message: 'No se encontró el ID de la comisión aplicada' });
+                          return;
+                        }
+                        requestDeleteFee(investor.applied_fee_id, investor.investor_name, investor.period_start, investor.period_end);
+                      }}
+                      className="rounded border border-red-200 bg-white p-2 text-red-600 hover:bg-red-50 disabled:opacity-50"
+                      disabled={applying}
+                    >
+                      <svg aria-hidden viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                        />
+                      </svg>
+                    </button>
+                  </>
+                ) : investor.has_profit ? (
+                  <button
+                    onClick={() => void handleApplyClick(investor)}
+                    className="rounded bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700"
+                  >
+                    Aplicar
+                  </button>
+                ) : (
+                  <span className="text-xs text-gray-500">No corresponde</span>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Desktop: table */}
+      <div className="hidden md:block overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
@@ -374,11 +541,14 @@ export const TradingFeesPage = () => {
             {visibleInvestors.map((investor) => {
               const isApplied = !!investor.already_applied;
               const appliedPct = typeof investor.applied_fee_percentage === 'number' ? investor.applied_fee_percentage : null;
-              const percentage = parseFloat(percentages[investor.investor_id] || (appliedPct !== null ? String(appliedPct) : '30'));
-              const displayPct = isApplied && appliedPct !== null ? appliedPct : percentage;
-
-              const feeAmount = investor.has_profit ? investor.profit_amount * (displayPct / 100) : 0;
-              const shownFeeAmount = isApplied && typeof investor.applied_fee_amount === 'number' ? investor.applied_fee_amount : feeAmount;
+              const rawPct = percentages[investor.investor_id];
+              const pct = isApplied && appliedPct !== null ? appliedPct : rawPct === '' ? null : parseFloat(rawPct ?? '30');
+              const pctIsValid = pct !== null && Number.isFinite(pct);
+              const feeAmount = investor.has_profit && pctIsValid ? investor.profit_amount * (pct! / 100) : null;
+              const shownFeeAmount =
+                isApplied && typeof investor.applied_fee_amount === 'number'
+                  ? investor.applied_fee_amount
+                  : feeAmount;
 
               return (
                 <tr key={investor.investor_id} className="hover:bg-gray-50">
@@ -433,7 +603,13 @@ export const TradingFeesPage = () => {
                       min="0"
                       max="100"
                       step="0.1"
-                      value={isApplied && appliedPct !== null ? String(appliedPct) : (percentages[investor.investor_id] || '30')}
+                      value={
+                        isApplied && appliedPct !== null
+                          ? String(appliedPct)
+                          : rawPct !== undefined
+                            ? rawPct
+                            : '30'
+                      }
                       onChange={(e) => handlePercentageChange(investor.investor_id, e.target.value)}
                       onWheel={(e) => {
                         // Prevent mouse wheel from changing number inputs (common UX bug on desktop trackpads/mice)
@@ -445,7 +621,9 @@ export const TradingFeesPage = () => {
                   </td>
                   <td className="px-6 py-4 text-right">
                     {investor.has_profit ? (
-                      <span className="font-semibold text-purple-600">{formatCurrency(shownFeeAmount)}</span>
+                      <span className="font-semibold text-purple-600">
+                        {shownFeeAmount === null ? '—' : formatCurrency(shownFeeAmount)}
+                      </span>
                     ) : (
                       <span className="text-gray-400">—</span>
                     )}
@@ -516,17 +694,13 @@ export const TradingFeesPage = () => {
       <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2 text-sm text-gray-600">
           <span>Filas por página:</span>
-          <select
-            className="h-9 rounded border border-gray-300 bg-white px-2 text-sm"
-            value={pageSize}
-            onChange={(e) => setPageSize(parseInt(e.target.value, 10) as (typeof PAGE_SIZE_OPTIONS)[number])}
-          >
-            {PAGE_SIZE_OPTIONS.map((n) => (
-              <option key={n} value={n}>
-                {n}
-              </option>
-            ))}
-          </select>
+          <Select
+            portal
+            className="w-24"
+            value={String(pageSize)}
+            onChange={(v) => setPageSize(parseInt(v, 10) as (typeof PAGE_SIZE_OPTIONS)[number])}
+            options={PAGE_SIZE_OPTIONS.map((n) => ({ value: String(n), label: String(n) }))}
+          />
         </div>
 
         <div className="flex items-center justify-between gap-3">

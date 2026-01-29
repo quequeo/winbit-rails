@@ -224,7 +224,7 @@ export const InvestorsPage = () => {
                 <div className="mt-3 flex gap-2">
                   <button
                     onClick={() => startEdit(inv)}
-                    className="p-2 text-blue-600 hover:bg-blue-50 rounded"
+                    className="rounded p-2 text-[#58b098] hover:bg-[#58b098]/10"
                     title="Editar"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -333,7 +333,7 @@ export const InvestorsPage = () => {
                         <div className="flex gap-2 justify-end">
                           <button
                             onClick={() => startEdit(inv)}
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded"
+                            className="rounded p-2 text-[#58b098] hover:bg-[#58b098]/10"
                             title="Editar"
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

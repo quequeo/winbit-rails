@@ -63,8 +63,8 @@ describe('TradingFeesPage', () => {
       expect(screen.getByText('Comisiones')).toBeInTheDocument()
     })
 
-    expect(screen.getByText('Investor One')).toBeInTheDocument()
-    expect(screen.getByText('Investor Two')).toBeInTheDocument()
+    expect(screen.getAllByText('Investor One').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Investor Two').length).toBeGreaterThan(0)
   })
 
   it('filters by investor name/email', async () => {
@@ -74,13 +74,13 @@ describe('TradingFeesPage', () => {
     render(<TradingFeesPage />)
 
     await waitFor(() => {
-      expect(screen.getByText('Investor One')).toBeInTheDocument()
+      expect(screen.getAllByText('Investor One').length).toBeGreaterThan(0)
     })
 
     const filter = screen.getByPlaceholderText('Buscar por nombre o email...')
     await user.type(filter, 'one@test.com')
 
-    expect(screen.getByText('Investor One')).toBeInTheDocument()
+    expect(screen.getAllByText('Investor One').length).toBeGreaterThan(0)
     expect(screen.queryByText('Investor Two')).not.toBeInTheDocument()
   })
 
@@ -92,7 +92,7 @@ describe('TradingFeesPage', () => {
     render(<TradingFeesPage />)
 
     await waitFor(() => {
-      expect(screen.getByText('Investor One')).toBeInTheDocument()
+      expect(screen.getAllByText('Investor One').length).toBeGreaterThan(0)
     })
 
     // Pencil icon button has title="Editar"
@@ -123,7 +123,7 @@ describe('TradingFeesPage', () => {
     render(<TradingFeesPage />)
 
     await waitFor(() => {
-      expect(screen.getByText('Investor One')).toBeInTheDocument()
+      expect(screen.getAllByText('Investor One').length).toBeGreaterThan(0)
     })
 
     const trashBtn = screen.getAllByTitle('Eliminar')[0]

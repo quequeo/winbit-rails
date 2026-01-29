@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
+import { Select } from '../components/ui/Select';
 
 type ActivityLog = {
   id: number;
@@ -104,26 +105,27 @@ export const ActivityLogsPage = () => {
           <label htmlFor="filterAction" className="mb-1 block text-sm font-medium text-gray-700">
             Filtrar por acción
           </label>
-          <select
+          <Select
             id="filterAction"
             value={filterAction}
-            onChange={(e) => setFilterAction(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-[#58b098] focus:outline-none focus:ring-1 focus:ring-[#58b098]"
-          >
-            <option value="">Todas las acciones</option>
-            <option value="approve_request">Aprobar solicitud</option>
-            <option value="reject_request">Rechazar solicitud</option>
-            <option value="update_portfolio">Actualizar portfolio</option>
-            <option value="create_investor">Crear inversor</option>
-            <option value="update_investor">Actualizar inversor</option>
-            <option value="deactivate_investor">Desactivar inversor</option>
-            <option value="activate_investor">Activar inversor</option>
-            <option value="delete_investor">Eliminar inversor</option>
-            <option value="create_admin">Crear admin</option>
-            <option value="update_admin">Actualizar admin</option>
-            <option value="delete_admin">Eliminar admin</option>
-            <option value="update_settings">Actualizar configuración</option>
-          </select>
+            onChange={(v) => setFilterAction(v)}
+            portal
+            options={[
+              { value: '', label: 'Todas las acciones' },
+              { value: 'approve_request', label: 'Aprobar solicitud' },
+              { value: 'reject_request', label: 'Rechazar solicitud' },
+              { value: 'update_portfolio', label: 'Actualizar portfolio' },
+              { value: 'create_investor', label: 'Crear inversor' },
+              { value: 'update_investor', label: 'Actualizar inversor' },
+              { value: 'deactivate_investor', label: 'Desactivar inversor' },
+              { value: 'activate_investor', label: 'Activar inversor' },
+              { value: 'delete_investor', label: 'Eliminar inversor' },
+              { value: 'create_admin', label: 'Crear admin' },
+              { value: 'update_admin', label: 'Actualizar admin' },
+              { value: 'delete_admin', label: 'Eliminar admin' },
+              { value: 'update_settings', label: 'Actualizar configuración' },
+            ]}
+          />
         </div>
       </div>
 
