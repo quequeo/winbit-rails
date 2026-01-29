@@ -6,6 +6,10 @@ Backoffice administrativo (Rails 8) + UI (React/Vite/TS) servido desde Rails.
 - **Backend**: Rails API + Postgres + Devise + Google OAuth
 - **UI**: `ui/` (React + Vite + TypeScript + Tailwind). Rails sirve el build desde `public/`.
 
+## Cursor / AI context (para no “re-explicar”)
+
+- Reglas persistentes para agentes: `.cursor/rules/winbit-context.mdc`
+
 ## 📋 Requisitos
 
 - Ruby **3.2.4** (ver `.ruby-version`)

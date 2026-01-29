@@ -1,0 +1,25 @@
+---
+description: Winbit Rails context (repos, Heroku deploy, tests, cache gotchas)
+alwaysApply: true
+---
+
+# Winbit Rails (Backoffice) — Contexto rápido
+
+## Repos y deploy
+
+- Este proyecto vive en **su repo propio**: `github.com/quequeo/winbit-rails` (NO es monorepo con winbit-app).
+- **Producción**: Heroku app `winbit-rails` con **auto-deploy desde GitHub main**.
+- Deploy:
+  - `git push origin main` (no usar `git push heroku main`).
+
+## Tests y coverage
+
+- RSpec: `bundle exec rspec` (SimpleCov → `coverage/index.html`)
+- UI (en `ui/`): `npm run test:run` / `npm run test:coverage`
+
+## Gotcha: HTML cacheado en admin.winbit.com.ar
+
+- Rails en prod puede setear cache largo para archivos estáticos (`public_file_server.headers`).
+- Si `public/index.html` (SPA) queda cacheado, podés ver UI vieja aunque el deploy haya salido bien.
+- Mantener “no-cache/no-store” para HTML (entrypoint) y cache largo solo para assets con hash.
+
