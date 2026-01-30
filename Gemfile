@@ -1,7 +1,7 @@
 source "https://rubygems.org"
 
 # Keep Ruby version explicit (Heroku/CI reproducibility)
-ruby "3.2.4"
+ruby "3.3.9"
 
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
 gem "rails", "~> 8.0.4"
