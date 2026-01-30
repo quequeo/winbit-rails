@@ -18,6 +18,7 @@ Rails.application.routes.draw do
 
       resources :investors, only: [:index, :show, :create, :update, :destroy], format: false do
         post 'toggle_status', on: :member
+        post 'referral_commissions', on: :member
       end
 
       get 'portfolios', to: 'portfolios#index', format: false

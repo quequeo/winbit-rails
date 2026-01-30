@@ -82,6 +82,10 @@ export const api = {
   updateInvestor: (id: string, body: { email: string; name: string; trading_fee_frequency?: 'QUARTERLY' | 'ANNUAL' }) =>
     request(`/api/admin/investors/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
   deleteInvestor: (id: string) => request(`/api/admin/investors/${id}`, { method: 'DELETE' }),
+  applyReferralCommission: (
+    investorId: string,
+    body: { amount: number; applied_at?: string }
+  ) => request(`/api/admin/investors/${investorId}/referral_commissions`, { method: 'POST', body: JSON.stringify(body) }),
   getAdminSettings: () => request('/api/admin/settings'),
   updateAdminSettings: (body: { investor_notifications_enabled?: boolean; investor_email_whitelist?: string[] | string }) =>
     request('/api/admin/settings', { method: 'PATCH', body: JSON.stringify(body) }),

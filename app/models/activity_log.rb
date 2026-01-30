@@ -16,6 +16,7 @@ class ActivityLog < ApplicationRecord
     update_admin
     delete_admin
     distribute_profit
+    apply_referral_commission
     update_settings
   ].freeze
 
@@ -42,6 +43,7 @@ class ActivityLog < ApplicationRecord
     when 'update_admin' then 'Administrador actualizado'
     when 'delete_admin' then 'Administrador eliminado'
     when 'distribute_profit' then 'Ganancias distribuidas'
+    when 'apply_referral_commission' then 'Comisión por referido aplicada'
     when 'update_settings' then 'Configuración actualizada'
     else action
     end

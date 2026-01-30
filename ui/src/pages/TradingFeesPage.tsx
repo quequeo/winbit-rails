@@ -2,6 +2,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { api } from '../lib/api';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { Select } from '../components/ui/Select';
+import { Input } from '../components/ui/Input';
+import { Button } from '../components/ui/Button';
+import { DatePicker } from '../components/ui/DatePicker';
 
 type InvestorSummary = {
   investor_id: string;
@@ -52,12 +55,16 @@ export const TradingFeesPage = () => {
   const [confirmModal, setConfirmModal] = useState<TradingFeeCalculation | null>(null);
   const [editModal, setEditModal] = useState<TradingFeeEdit | null>(null);
   const [applying, setApplying] = useState(false);
+  const [refApplying, setRefApplying] = useState(false);
   const [notes, setNotes] = useState('');
   const [editNotes, setEditNotes] = useState('');
   const [editPercentage, setEditPercentage] = useState('30');
   const [investorFilter, setInvestorFilter] = useState('');
   const [flash, setFlash] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [detailModal, setDetailModal] = useState<InvestorSummary | null>(null);
+  const [refInvestorId, setRefInvestorId] = useState<string>('');
+  const [refAmount, setRefAmount] = useState<string>('');
+  const [refAppliedAt, setRefAppliedAt] = useState<string>('');
   const [deleteConfirm, setDeleteConfirm] = useState<{
     open: boolean;
     feeId: string | null;
@@ -253,6 +260,36 @@ export const TradingFeesPage = () => {
     }
   };
 
+  const handleApplyReferralCommission = async () => {
+    const investorId = refInvestorId.trim();
+    const amount = Number(refAmount);
+    if (!investorId) {
+      setFlash({ type: 'error', message: 'Seleccioná un inversor' });
+      return;
+    }
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setFlash({ type: 'error', message: 'Ingresá un monto mayor a 0' });
+      return;
+    }
+
+    try {
+      setRefApplying(true);
+      await api.applyReferralCommission(investorId, {
+        amount,
+        applied_at: refAppliedAt.trim() ? refAppliedAt.trim() : undefined,
+      });
+
+      setFlash({ type: 'success', message: 'Comisión por referido aplicada' });
+      setRefAmount('');
+      setRefAppliedAt('');
+      await loadInvestorsSummary(undefined, undefined);
+    } catch (err: any) {
+      setFlash({ type: 'error', message: err.message || 'Error al aplicar comisión por referido' });
+    } finally {
+      setRefApplying(false);
+    }
+  };
+
   const requestDeleteFee = (feeId: string, investorName: string, periodStart: string, periodEnd: string) => {
     setDeleteConfirm({ open: true, feeId, investorName, periodStart, periodEnd });
   };
@@ -332,6 +369,65 @@ export const TradingFeesPage = () => {
                 </button>
               ) : null}
             </div>
+          </div>
+        </div>
+
+        <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div className="min-w-0">
+              <div className="text-sm font-semibold text-blue-900">Comisión por referido (manual)</div>
+              <div className="mt-0.5 text-xs text-blue-900/70">
+                Carga un monto puntual al balance del inversor. Si usás una fecha pasada, se recalcula el historial.
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-4">
+            <div className="sm:col-span-2">
+              <label className="mb-1 block text-xs font-medium text-blue-900/80">Inversor</label>
+              <Select
+                portal
+                value={refInvestorId}
+                onChange={(v) => setRefInvestorId(v)}
+                options={[
+                  { value: '', label: 'Seleccionar...' },
+                  ...investors.map((inv) => ({
+                    value: inv.investor_id,
+                    label: `${inv.investor_name} — ${inv.investor_email}`,
+                  })),
+                ]}
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-blue-900/80">Monto (USD)</label>
+              <Input
+                type="number"
+                inputMode="decimal"
+                value={refAmount}
+                onChange={(e) => setRefAmount(e.target.value)}
+                onWheel={(e) => {
+                  // Prevent mouse wheel from changing number inputs (common UX bug on desktop trackpads/mice)
+                  e.currentTarget.blur();
+                }}
+                placeholder="Ej: 50"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-blue-900/80">
+                Fecha (opcional)
+              </label>
+              <DatePicker value={refAppliedAt} onChange={setRefAppliedAt} />
+            </div>
+          </div>
+
+          <div className="mt-3 flex justify-end">
+            <Button
+              onClick={() => void handleApplyReferralCommission()}
+              disabled={refApplying}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {refApplying ? 'Aplicando...' : 'Aplicar comisión'}
+            </Button>
           </div>
         </div>
 

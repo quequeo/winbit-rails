@@ -141,6 +141,54 @@ module Api
         head :no_content
       end
 
+      # POST /api/admin/investors/:id/referral_commissions
+      # Body: { amount: number, applied_at?: string }
+      def referral_commissions
+        inv = Investor.includes(:portfolio).find_by(id: params[:id])
+        return render_error('Inversor no encontrado', status: :not_found) unless inv
+
+        amount = params.require(:amount)
+        applied_at = params[:applied_at].presence
+
+        portfolio = inv.portfolio || Portfolio.create!(investor: inv)
+        from_balance = portfolio.current_balance.to_f
+
+        applicator = ReferralCommissionApplicator.new(
+          inv,
+          amount: amount,
+          applied_by: current_user,
+          applied_at: applied_at
+        )
+
+        if applicator.apply
+          portfolio.reload
+
+          ActivityLogger.log(
+            user: current_user,
+            action: 'apply_referral_commission',
+            target: inv,
+            metadata: {
+              amount: amount.to_f,
+              from: from_balance,
+              to: portfolio.current_balance.to_f
+            }
+          )
+
+          render json: {
+            data: {
+              investor_id: inv.id,
+              current_balance: portfolio.current_balance.to_f
+            }
+          }, status: :created
+        else
+          render_error(applicator.errors.join(', '), status: :unprocessable_entity)
+        end
+      rescue ActionController::ParameterMissing => e
+        render_error(e.message, status: :bad_request)
+      rescue StandardError => e
+        render_error(e.message, status: :bad_request)
+      end
+
       def destroy
         inv = Investor.find_by(id: params[:id])
         return render_error('Inversor no encontrado', status: :not_found) unless inv
