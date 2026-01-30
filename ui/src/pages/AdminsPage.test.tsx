@@ -89,7 +89,7 @@ describe('AdminsPage', () => {
         expect(api.getAdminAdmins).toHaveBeenCalled();
       });
 
-      const addButton = screen.getByRole('button', { name: /Agregar Admin/i });
+      const addButton = await screen.findByRole('button', { name: /Agregar Admin/i });
       fireEvent.click(addButton);
 
       expect(screen.getByText('Nuevo Admin')).toBeInTheDocument();
@@ -108,7 +108,7 @@ describe('AdminsPage', () => {
       });
 
       // Open form
-      const addButton = screen.getByRole('button', { name: /Agregar Admin/i });
+      const addButton = await screen.findByRole('button', { name: /Agregar Admin/i });
       await user.click(addButton);
 
       // Fill form
@@ -148,7 +148,7 @@ describe('AdminsPage', () => {
         expect(api.getAdminAdmins).toHaveBeenCalled();
       });
 
-      const addButton = screen.getByRole('button', { name: /Agregar Admin/i });
+      const addButton = await screen.findByRole('button', { name: /Agregar Admin/i });
       await user.click(addButton);
 
       const emailInput = screen.getByPlaceholderText('admin@ejemplo.com');
@@ -182,7 +182,7 @@ describe('AdminsPage', () => {
         expect(api.getAdminAdmins).toHaveBeenCalled();
       });
 
-      const addButton = screen.getByRole('button', { name: /Agregar Admin/i });
+      const addButton = await screen.findByRole('button', { name: /Agregar Admin/i });
       await user.click(addButton);
 
       const emailInput = screen.getByPlaceholderText('admin@ejemplo.com');
@@ -515,7 +515,7 @@ describe('AdminsPage', () => {
       });
 
       // Open form
-      const addButton = screen.getByRole('button', { name: /Agregar Admin/i });
+      const addButton = await screen.findByRole('button', { name: /Agregar Admin/i });
       await user.click(addButton);
 
       expect(screen.getByText('Nuevo Admin')).toBeInTheDocument();
@@ -571,7 +571,7 @@ describe('AdminsPage', () => {
       });
 
       // Open form
-      const addButton = screen.getByRole('button', { name: /Agregar Admin/i });
+      const addButton = await screen.findByRole('button', { name: /Agregar Admin/i });
       await user.click(addButton);
 
       // Fill all fields
@@ -664,7 +664,7 @@ describe('AdminsPage', () => {
       });
 
       // Open form
-      const addButton = screen.getByRole('button', { name: /Agregar Admin/i });
+      const addButton = await screen.findByRole('button', { name: /Agregar Admin/i });
       await user.click(addButton);
       expect(screen.getByText('Nuevo Admin')).toBeInTheDocument();
 
@@ -674,7 +674,7 @@ describe('AdminsPage', () => {
       expect(screen.queryByText('Nuevo Admin')).not.toBeInTheDocument();
 
       // Re-open form
-      const addButtonAgain = screen.getByRole('button', { name: /Agregar Admin/i });
+      const addButtonAgain = await screen.findByRole('button', { name: /Agregar Admin/i });
       await user.click(addButtonAgain);
       expect(screen.getByText('Nuevo Admin')).toBeInTheDocument();
     });
