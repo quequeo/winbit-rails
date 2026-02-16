@@ -69,8 +69,6 @@ export const api = {
   approveRequest: (id: string, body?: { processed_at?: string }) =>
     request(`/api/admin/requests/${id}/approve`, { method: 'POST', body: JSON.stringify(body || {}) }),
   rejectRequest: (id: string) => request(`/api/admin/requests/${id}/reject`, { method: 'POST' }),
-  getAdminPortfolios: () => request('/api/admin/portfolios'),
-  updatePortfolio: (investorId: string, body: any) => request(`/api/admin/portfolios/${investorId}`, { method: 'PATCH', body: JSON.stringify(body) }),
   getAdminAdmins: () => request('/api/admin/admins'),
   createAdmin: (body: { email: string; name?: string; role: 'ADMIN' | 'SUPERADMIN' }) =>
     request('/api/admin/admins', { method: 'POST', body: JSON.stringify(body) }),
