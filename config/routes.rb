@@ -21,9 +21,6 @@ Rails.application.routes.draw do
         post 'referral_commissions', on: :member
       end
 
-      get 'portfolios', to: 'portfolios#index', format: false
-      patch 'portfolios/:id', to: 'portfolios#update', format: false
-
       get 'requests', to: 'requests_list#index', format: false
       post 'requests', to: 'requests#create', format: false
       patch 'requests/:id', to: 'requests#update', format: false

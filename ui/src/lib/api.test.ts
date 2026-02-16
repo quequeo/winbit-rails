@@ -320,41 +320,6 @@ describe('api', () => {
     });
   });
 
-  describe('Portfolio operations', () => {
-    it('should fetch portfolios', async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        headers: new Headers({ 'content-type': 'application/json' }),
-        text: async () => JSON.stringify({ data: [] }),
-      });
-
-      await api.getAdminPortfolios();
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/admin/portfolios'),
-        expect.any(Object),
-      );
-    });
-
-    it('should update a portfolio', async () => {
-      const portfolioData = { current_balance: 10000 };
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        headers: new Headers({ 'content-type': 'application/json' }),
-        text: async () => JSON.stringify({ data: portfolioData }),
-      });
-
-      await api.updatePortfolio('1', portfolioData);
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/admin/portfolios/1'),
-        expect.objectContaining({
-          method: 'PATCH',
-          body: JSON.stringify(portfolioData),
-        }),
-      );
-    });
-  });
 
   describe('Admin operations', () => {
     it('should fetch admins', async () => {
