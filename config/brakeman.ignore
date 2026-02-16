@@ -1,0 +1,14 @@
+{
+  "ignored_warnings": [
+    {
+      "fingerprint": "52affbf993837f91b9bbbfe839aa814063569b3c7d052c2978997e9face46e75",
+      "note": "Role is validated manually against User::ROLES whitelist in admin_create_params"
+    },
+    {
+      "fingerprint": "7e5fa3d2d481d214b8108b101562b8483ea3875db34fe9be74883b75204478f7",
+      "note": "Role is validated manually against User::ROLES whitelist in admin_update_params"
+    }
+  ],
+  "updated": "2026-02-16",
+  "brakeman_version": "7.1.2"
+}
