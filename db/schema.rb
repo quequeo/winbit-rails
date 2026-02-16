@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_29_130000) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_16_173617) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -55,6 +55,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_29_130000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "trading_fee_frequency", default: "QUARTERLY", null: false
+    t.string "password_digest"
     t.index ["email"], name: "index_investors_on_email", unique: true
     t.index ["trading_fee_frequency"], name: "index_investors_on_trading_fee_frequency"
     t.check_constraint "status::text = ANY (ARRAY['ACTIVE'::character varying::text, 'INACTIVE'::character varying::text])", name: "investors_status_check"

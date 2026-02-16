@@ -77,7 +77,7 @@ export const api = {
   deleteAdmin: (id: string) => request(`/api/admin/admins/${id}`, { method: 'DELETE' }),
   createInvestor: (body: { email: string; name: string }) =>
     request('/api/admin/investors', { method: 'POST', body: JSON.stringify(body) }),
-  updateInvestor: (id: string, body: { email: string; name: string; trading_fee_frequency?: 'QUARTERLY' | 'SEMESTRAL' | 'ANNUAL' }) =>
+  updateInvestor: (id: string, body: { email: string; name: string; trading_fee_frequency?: 'QUARTERLY' | 'SEMESTRAL' | 'ANNUAL'; password?: string }) =>
     request(`/api/admin/investors/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
   deleteInvestor: (id: string) => request(`/api/admin/investors/${id}`, { method: 'DELETE' }),
   toggleInvestorStatus: (id: string) => request(`/api/admin/investors/${id}/toggle_status`, { method: 'POST' }),
