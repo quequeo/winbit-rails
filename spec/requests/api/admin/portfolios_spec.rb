@@ -1,7 +1,7 @@
 require 'rails_helper'
 
 RSpec.describe 'Admin Portfolios API', type: :request do
-  let!(:admin) { User.create!(email: 'admin@test.com', name: 'Admin', role: 'ADMIN', provider: 'google_oauth2', uid: '12345') }
+  let!(:admin) { User.create!(email: 'admin@test.com', name: 'Admin', role: 'SUPERADMIN', provider: 'google_oauth2', uid: '12345') }
   let!(:investor1) { Investor.create!(email: 'inv1@test.com', name: 'Investor 1', status: 'ACTIVE') }
   let!(:investor2) { Investor.create!(email: 'inv2@test.com', name: 'Investor 2', status: 'ACTIVE') }
   let!(:investor3) { Investor.create!(email: 'inv3@test.com', name: 'Investor 3', status: 'INACTIVE') }

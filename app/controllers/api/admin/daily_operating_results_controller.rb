@@ -1,6 +1,8 @@
 module Api
   module Admin
     class DailyOperatingResultsController < BaseController
+      before_action :require_superadmin!, only: [:create]
+
       # GET /api/admin/daily_operating_results
       def index
         page = params[:page].to_i
@@ -20,10 +22,7 @@ module Api
         }
       end
 
-      # GET /api/admin/daily_operating_results/monthly_summary
-      # optional: ?months=6
-      # GET /api/admin/daily_operating_results/monthly_summary
-      # optional: ?months=6
+      # GET /api/admin/daily_operating_results/monthly_summary?months=6
       def monthly_summary
         months = params[:months].to_i
         months = 6 if months <= 0
@@ -62,8 +61,6 @@ module Api
         render json: { data: data }
       end
 
-
-
       # GET /api/admin/daily_operating_results/by_month?month=YYYY-MM
       def by_month
         month = params[:month].to_s.strip
@@ -85,7 +82,7 @@ module Api
       end
 
 
-      # GET /api/admin/daily_operating_results/preview?date=YYYY-MM-DD&percent=0.10?date=YYYY-MM-DD&percent=0.10
+      # GET /api/admin/daily_operating_results/preview?date=YYYY-MM-DD&percent=0.10
       def preview
         date = parse_date(params[:date])
         percent = params[:percent]

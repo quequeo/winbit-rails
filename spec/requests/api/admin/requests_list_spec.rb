@@ -58,7 +58,7 @@ RSpec.describe 'Admin requests list', type: :request do
     end
 
     it 'returns all requests ordered by requested_at desc' do
-      get '/api/admin/requests'
+      get '/api/admin/requests', params: { per_page: 200 }
 
       expect(response).to have_http_status(:ok)
       json = JSON.parse(response.body)
@@ -72,7 +72,7 @@ RSpec.describe 'Admin requests list', type: :request do
     end
 
     it 'returns requests with correct structure and investor data' do
-      get '/api/admin/requests'
+      get '/api/admin/requests', params: { per_page: 200 }
 
       json = JSON.parse(response.body)
       first_request = json['data']['requests'][0]
@@ -93,7 +93,7 @@ RSpec.describe 'Admin requests list', type: :request do
     end
 
     it 'filters by status when status param is provided' do
-      get '/api/admin/requests', params: { status: 'PENDING' }
+      get '/api/admin/requests', params: { status: 'PENDING', per_page: 200 }
 
       json = JSON.parse(response.body)
 
@@ -102,7 +102,7 @@ RSpec.describe 'Admin requests list', type: :request do
     end
 
     it 'filters by type when type param is provided' do
-      get '/api/admin/requests', params: { type: 'DEPOSIT' }
+      get '/api/admin/requests', params: { type: 'DEPOSIT', per_page: 200 }
 
       json = JSON.parse(response.body)
 
@@ -111,7 +111,7 @@ RSpec.describe 'Admin requests list', type: :request do
     end
 
     it 'filters by both status and type when both params are provided' do
-      get '/api/admin/requests', params: { status: 'PENDING', type: 'DEPOSIT' }
+      get '/api/admin/requests', params: { status: 'PENDING', type: 'DEPOSIT', per_page: 200 }
 
       json = JSON.parse(response.body)
 
@@ -122,7 +122,7 @@ RSpec.describe 'Admin requests list', type: :request do
     end
 
     it 'includes attachment_url when present' do
-      get '/api/admin/requests'
+      get '/api/admin/requests', params: { per_page: 200 }
 
       json = JSON.parse(response.body)
       request_with_attachment = json['data']['requests'].find { |r| r['id'] == pending_deposit.id }
@@ -131,7 +131,7 @@ RSpec.describe 'Admin requests list', type: :request do
     end
 
     it 'includes processed_at when request is processed' do
-      get '/api/admin/requests'
+      get '/api/admin/requests', params: { per_page: 200 }
 
       json = JSON.parse(response.body)
       processed_request = json['data']['requests'].find { |r| r['id'] == approved_withdrawal.id }
@@ -140,7 +140,7 @@ RSpec.describe 'Admin requests list', type: :request do
     end
 
     it 'returns correct pending count regardless of filters' do
-      get '/api/admin/requests', params: { status: 'APPROVED' }
+      get '/api/admin/requests', params: { status: 'APPROVED', per_page: 200 }
 
       json = JSON.parse(response.body)
 
@@ -156,7 +156,7 @@ RSpec.describe 'Admin requests list', type: :request do
       end
 
       it 'returns empty array and zero pending count' do
-        get '/api/admin/requests'
+        get '/api/admin/requests', params: { per_page: 200 }
 
         json = JSON.parse(response.body)
 
@@ -167,7 +167,7 @@ RSpec.describe 'Admin requests list', type: :request do
 
     context 'when filter matches no requests' do
       it 'returns empty array but correct pending count' do
-        get '/api/admin/requests', params: { status: 'CANCELLED' }
+        get '/api/admin/requests', params: { status: 'CANCELLED', per_page: 200 }
 
         json = JSON.parse(response.body)
 

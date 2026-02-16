@@ -1,6 +1,8 @@
 module Api
   module Admin
     class AdminsController < BaseController
+      before_action :require_superadmin!, only: [:create, :update, :destroy]
+
       def index
         admins = User.order(created_at: :desc).map do |admin|
           {
@@ -17,14 +19,9 @@ module Api
       end
 
       def create
-        admin = User.new(
-          email: params.require(:email),
-          name: params[:name],
-          role: params[:role] || 'ADMIN',
-        )
+        admin = User.new(admin_create_params)
         admin.save!
 
-        # Log activity
         ActivityLogger.log(
           user: current_user,
           action: 'create_admin',
@@ -42,19 +39,8 @@ module Api
         admin = User.find_by(id: params[:id])
         return render_error('Admin no encontrado', status: :not_found) unless admin
 
-        update_params = {
-          email: params.require(:email),
-          name: params[:name],
-          role: params[:role] || admin.role,
-        }
+        admin.update!(admin_update_params(admin))
 
-        # Incluir preferencias de notificaciones si están presentes
-        update_params[:notify_deposit_created] = params[:notify_deposit_created] if params.key?(:notify_deposit_created)
-        update_params[:notify_withdrawal_created] = params[:notify_withdrawal_created] if params.key?(:notify_withdrawal_created)
-
-        admin.update!(update_params)
-
-        # Log activity
         ActivityLogger.log(
           user: current_user,
           action: 'update_admin',
@@ -69,8 +55,6 @@ module Api
       end
 
       def destroy
-        require_superadmin!
-        return if performed?
         admin = User.find_by(id: params[:id])
         return render_error('Admin no encontrado', status: :not_found) unless admin
 
@@ -82,7 +66,6 @@ module Api
           return render_error('No se puede eliminar el último admin', status: :bad_request)
         end
 
-        # Log activity before destroying
         ActivityLogger.log(
           user: current_user,
           action: 'delete_admin',
@@ -91,6 +74,29 @@ module Api
 
         admin.destroy!
         head :no_content
+      end
+
+      private
+
+      def admin_create_params
+        permitted = params.permit(:email, :name, :role)
+        {
+          email: permitted.fetch(:email),
+          name: permitted[:name],
+          role: permitted[:role].presence&.upcase&.in?(User::ROLES) ? permitted[:role].upcase : 'ADMIN',
+        }
+      end
+
+      def admin_update_params(admin)
+        permitted = params.permit(:email, :name, :role, :notify_deposit_created, :notify_withdrawal_created)
+        attrs = {
+          email: permitted.fetch(:email),
+          name: permitted[:name],
+          role: permitted[:role].presence&.upcase&.in?(User::ROLES) ? permitted[:role].upcase : admin.role,
+        }
+        attrs[:notify_deposit_created] = permitted[:notify_deposit_created] if permitted.key?(:notify_deposit_created)
+        attrs[:notify_withdrawal_created] = permitted[:notify_withdrawal_created] if permitted.key?(:notify_withdrawal_created)
+        attrs
       end
     end
   end

@@ -1,7 +1,7 @@
 require 'rails_helper'
 
 RSpec.describe 'Api::Admin::Settings', type: :request do
-  let(:user) { User.create!(email: 'admin@example.com', name: 'Admin', role: 'ADMIN', provider: 'google_oauth2', uid: '12345') }
+  let(:user) { User.create!(email: 'admin@example.com', name: 'Admin', role: 'SUPERADMIN', provider: 'google_oauth2', uid: '12345') }
 
   before do
     sign_in user, scope: :user

@@ -6,8 +6,8 @@ module Api
         per_page = (params[:per_page] || 50).to_i
         per_page = [per_page, 100].min # Max 100 per page
 
-        # Base query with eager loading
-        logs = ActivityLog.includes(:user, :target).recent
+        # Base query with eager loading (polymorphic, so we preload broadly)
+        logs = ActivityLog.includes(:user).preload(:target).recent
 
         # Filters
         logs = logs.by_user(params[:user_id]) if params[:user_id].present?

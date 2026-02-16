@@ -1,7 +1,7 @@
 require 'rails_helper'
 
 RSpec.describe 'Admin Daily Operating Results API', type: :request do
-  let!(:admin) { User.create!(email: 'admin@test.com', name: 'Admin', role: 'ADMIN', provider: 'google_oauth2', uid: '12345') }
+  let!(:admin) { User.create!(email: 'admin@test.com', name: 'Admin', role: 'SUPERADMIN', provider: 'google_oauth2', uid: '12345') }
 
   before do
     login_as(admin, scope: :user)

@@ -9,7 +9,15 @@ module Api
         scope = scope.where(status: status) if status.present?
         scope = scope.where(request_type: type) if type.present?
 
-        data = scope.map do |r|
+        # Pagination (default: all records up to 200 per page)
+        page = [params[:page].to_i, 1].max
+        raw_per_page = params[:per_page].to_i
+        per_page = raw_per_page.positive? ? raw_per_page.clamp(1, 200) : 200
+
+        total = scope.count
+        paginated = scope.offset((page - 1) * per_page).limit(per_page)
+
+        data = paginated.map do |r|
           {
             id: r.id,
             investorId: r.investor_id,
@@ -33,6 +41,12 @@ module Api
           data: {
             requests: data,
             pendingCount: pending_count,
+            pagination: {
+              page: page,
+              per_page: per_page,
+              total: total,
+              total_pages: (total.to_f / per_page).ceil,
+            },
           },
         }
       end

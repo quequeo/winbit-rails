@@ -1,16 +1,14 @@
 module Api
   module Admin
     class InvestorsController < BaseController
+      before_action :require_superadmin!, only: [:destroy]
+
       def index
         sort_by = params[:sort_by] || 'created_at'
-        sort_order = params[:sort_order] || 'desc'
-
-        # Validar sort_order
-        sort_order = %w[asc desc].include?(sort_order) ? sort_order : 'desc'
+        sort_order = %w[asc desc].include?(params[:sort_order]) ? params[:sort_order] : 'desc'
 
         investors = Investor.includes(:portfolio)
 
-        # Aplicar ordenamiento
         case sort_by
         when 'balance'
           investors = investors.left_joins(:portfolio)
@@ -59,12 +57,7 @@ module Api
       end
 
       def create
-        inv = Investor.new(
-          email: params.require(:email),
-          name: params.require(:name),
-          status: 'ACTIVE',
-          trading_fee_frequency: params[:trading_fee_frequency].presence || 'QUARTERLY',
-        )
+        inv = Investor.new(investor_create_params)
 
         ActiveRecord::Base.transaction do
           inv.save!
@@ -78,7 +71,6 @@ module Api
             annual_return_percent: 0,
           )
 
-          # Log activity
           ActivityLogger.log(
             user: current_user,
             action: 'create_investor',
@@ -97,17 +89,8 @@ module Api
         inv = Investor.find_by(id: params[:id])
         return render_error('Inversor no encontrado', status: :not_found) unless inv
 
-        attrs = {
-          email: params.require(:email),
-          name: params.require(:name),
-        }
-        if params.key?(:trading_fee_frequency)
-          attrs[:trading_fee_frequency] = params[:trading_fee_frequency]
-        end
+        inv.update!(investor_update_params)
 
-        inv.update!(attrs)
-
-        # Log activity
         ActivityLogger.log(
           user: current_user,
           action: 'update_investor',
@@ -129,7 +112,6 @@ module Api
         new_status = inv.status == 'ACTIVE' ? 'INACTIVE' : 'ACTIVE'
         inv.update!(status: new_status)
 
-        # Log activity
         action = new_status == 'ACTIVE' ? 'activate_investor' : 'deactivate_investor'
         ActivityLogger.log(
           user: current_user,
@@ -142,13 +124,13 @@ module Api
       end
 
       # POST /api/admin/investors/:id/referral_commissions
-      # Body: { amount: number, applied_at?: string }
       def referral_commissions
         inv = Investor.includes(:portfolio).find_by(id: params[:id])
         return render_error('Inversor no encontrado', status: :not_found) unless inv
 
-        amount = params.require(:amount)
-        applied_at = params[:applied_at].presence
+        permitted = params.permit(:amount, :applied_at)
+        amount = permitted.fetch(:amount)
+        applied_at = permitted[:applied_at].presence
 
         portfolio = inv.portfolio || Portfolio.create!(investor: inv)
         from_balance = portfolio.current_balance.to_f
@@ -193,7 +175,6 @@ module Api
         inv = Investor.find_by(id: params[:id])
         return render_error('Inversor no encontrado', status: :not_found) unless inv
 
-        # Log activity before destroying
         ActivityLogger.log(
           user: current_user,
           action: 'delete_investor',
@@ -202,6 +183,28 @@ module Api
 
         inv.destroy!
         head :no_content
+      end
+
+      private
+
+      def investor_create_params
+        permitted = params.permit(:email, :name, :trading_fee_frequency)
+        {
+          email: permitted.fetch(:email),
+          name: permitted.fetch(:name),
+          status: 'ACTIVE',
+          trading_fee_frequency: permitted[:trading_fee_frequency].presence || 'QUARTERLY',
+        }
+      end
+
+      def investor_update_params
+        permitted = params.permit(:email, :name, :trading_fee_frequency)
+        attrs = {
+          email: permitted.fetch(:email),
+          name: permitted.fetch(:name),
+        }
+        attrs[:trading_fee_frequency] = permitted[:trading_fee_frequency] if permitted.key?(:trading_fee_frequency)
+        attrs
       end
     end
   end

@@ -2,27 +2,27 @@ module Api
   module Admin
     class RequestsController < BaseController
       def create
-        investor = Investor.find_by(id: params.require(:investor_id))
+        permitted = params.permit(:investor_id, :request_type, :method, :amount, :network, :status, :requested_at, :processed_at)
+
+        investor = Investor.find_by(id: permitted.fetch(:investor_id))
         return render_error('Inversor no encontrado', status: :not_found) unless investor
 
-        requested_at = params[:requested_at].presence
-        processed_at = params[:processed_at].presence
-        status_param = (params[:status] || 'PENDING').to_s
+        requested_at = permitted[:requested_at].presence
+        processed_at = permitted[:processed_at].presence
+        status_param = (permitted[:status] || 'PENDING').to_s
 
         req = InvestorRequest.new(
           investor_id: investor.id,
-          request_type: params.require(:request_type),
-          method: params.require(:method),
-          amount: params.require(:amount),
-          network: params[:network].presence,
+          request_type: permitted.fetch(:request_type),
+          method: permitted.fetch(:method),
+          amount: permitted.fetch(:amount),
+          network: permitted[:network].presence,
           status: 'PENDING',
           requested_at: requested_at || Time.current,
         )
 
         req.save!
 
-        # Allow creating an already-approved request with a backdated processed_at.
-        # This is a safe shortcut for admin data entry/testing.
         if status_param == 'APPROVED'
           Requests::Approve.new(request_id: req.id, processed_at: processed_at).call
         elsif status_param == 'REJECTED'
@@ -40,16 +40,18 @@ module Api
         req = InvestorRequest.find_by(id: params[:id])
         return render_error('Solicitud no encontrada', status: :not_found) unless req
 
-        investor = Investor.find_by(id: params.require(:investor_id))
+        permitted = params.permit(:investor_id, :request_type, :method, :amount, :network, :status)
+
+        investor = Investor.find_by(id: permitted.fetch(:investor_id))
         return render_error('Inversor no encontrado', status: :not_found) unless investor
 
         req.update!(
           investor_id: investor.id,
-          request_type: params.require(:request_type),
-          method: params.require(:method),
-          amount: params.require(:amount),
-          network: params[:network].presence,
-          status: params[:status] || req.status,
+          request_type: permitted.fetch(:request_type),
+          method: permitted.fetch(:method),
+          amount: permitted.fetch(:amount),
+          network: permitted[:network].presence,
+          status: permitted[:status] || req.status,
         )
 
         head :no_content
@@ -68,10 +70,11 @@ module Api
       end
 
       def approve
-        req = InvestorRequest.find(params[:id])
-        Requests::Approve.new(request_id: params[:id], processed_at: params[:processed_at]).call
+        req = InvestorRequest.find_by(id: params[:id])
+        return render_error('Solicitud no encontrada', status: :not_found) unless req
 
-        # Log activity
+        Requests::Approve.new(request_id: req.id, processed_at: params[:processed_at]).call
+
         ActivityLogger.log(
           user: current_user,
           action: 'approve_request',
@@ -89,10 +92,11 @@ module Api
       end
 
       def reject
-        req = InvestorRequest.find(params[:id])
-        Requests::Reject.new(request_id: params[:id]).call
+        req = InvestorRequest.find_by(id: params[:id])
+        return render_error('Solicitud no encontrada', status: :not_found) unless req
 
-        # Log activity
+        Requests::Reject.new(request_id: req.id).call
+
         ActivityLogger.log(
           user: current_user,
           action: 'reject_request',

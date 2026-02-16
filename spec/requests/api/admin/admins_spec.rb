@@ -83,13 +83,16 @@ RSpec.describe 'Admin Admins API', type: :request do
       expect(json['error']).to include('Email')
     end
 
-    it 'returns error when role is invalid' do
+    it 'defaults to ADMIN when role is invalid' do
       post '/api/admin/admins', params: {
         email: 'new@test.com',
         role: 'INVALID'
       }
 
-      expect(response).to have_http_status(:bad_request)
+      expect(response).to have_http_status(:created)
+      json = JSON.parse(response.body)
+      new_admin = User.find(json['data']['id'])
+      expect(new_admin.role).to eq('ADMIN')
     end
 
     it 'defaults to ADMIN role when role is missing' do
@@ -152,13 +155,15 @@ RSpec.describe 'Admin Admins API', type: :request do
       expect(response).to have_http_status(:bad_request)
     end
 
-    it 'returns error when role is invalid' do
+    it 'keeps existing role when role is invalid' do
       patch "/api/admin/admins/#{admin.id}", params: {
         email: admin.email,
         role: 'INVALID'
       }
 
-      expect(response).to have_http_status(:bad_request)
+      expect(response).to have_http_status(:no_content)
+      admin.reload
+      expect(admin.role).to eq('ADMIN')
     end
   end
 
