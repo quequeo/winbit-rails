@@ -6,6 +6,9 @@ Rails.application.routes.draw do
 
   namespace :api do
     namespace :public do
+      post 'auth/login', to: 'auth#login', format: false
+      post 'auth/change_password', to: 'auth#change_password', format: false
+
       get 'investor/*email/history', to: 'investors#history', format: false
       get 'investor/*email', to: 'investors#show', format: false
       get 'wallets', to: 'wallets#index', format: false

@@ -29,6 +29,7 @@ module Api
               name: inv.name,
               status: inv.status,
               tradingFeeFrequency: inv.trading_fee_frequency,
+              hasPassword: inv.password_digest.present?,
               createdAt: inv.created_at,
               updatedAt: inv.updated_at,
               portfolio: inv.portfolio ? {
@@ -189,22 +190,25 @@ module Api
       private
 
       def investor_create_params
-        permitted = params.permit(:email, :name, :trading_fee_frequency)
-        {
+        permitted = params.permit(:email, :name, :trading_fee_frequency, :password)
+        attrs = {
           email: permitted.fetch(:email),
           name: permitted.fetch(:name),
           status: 'ACTIVE',
           trading_fee_frequency: permitted[:trading_fee_frequency].presence || 'QUARTERLY',
         }
+        attrs[:password] = permitted[:password] if permitted[:password].present?
+        attrs
       end
 
       def investor_update_params
-        permitted = params.permit(:email, :name, :trading_fee_frequency)
+        permitted = params.permit(:email, :name, :trading_fee_frequency, :password)
         attrs = {
           email: permitted.fetch(:email),
           name: permitted.fetch(:name),
         }
         attrs[:trading_fee_frequency] = permitted[:trading_fee_frequency] if permitted.key?(:trading_fee_frequency)
+        attrs[:password] = permitted[:password] if permitted[:password].present?
         attrs
       end
     end

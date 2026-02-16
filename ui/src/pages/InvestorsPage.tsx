@@ -16,13 +16,14 @@ export const InvestorsPage = () => {
   const [data, setData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({ email: '', name: '' });
+  const [formData, setFormData] = useState({ email: '', name: '', password: '' });
   const [submitting, setSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({
     email: '',
     name: '',
     tradingFeeFrequency: 'QUARTERLY' as 'QUARTERLY' | 'SEMESTRAL' | 'ANNUAL',
+    newPassword: '',
   });
   const [sortBy, setSortBy] = useState<string>('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
@@ -51,8 +52,9 @@ export const InvestorsPage = () => {
     e.preventDefault();
     setSubmitting(true);
     try {
-      await api.createInvestor(formData);
-      setFormData({ email: '', name: '' });
+      const { password, ...rest } = formData;
+      await api.createInvestor(password ? { ...rest, password } : rest);
+      setFormData({ email: '', name: '', password: '' });
       setShowForm(false);
       fetchInvestors();
     } catch (err: any) {
@@ -66,11 +68,13 @@ export const InvestorsPage = () => {
     e.preventDefault();
     setSubmitting(true);
     try {
-      await api.updateInvestor(id, {
+      const updateBody: any = {
         email: editForm.email,
         name: editForm.name,
         trading_fee_frequency: editForm.tradingFeeFrequency,
-      });
+      };
+      if (editForm.newPassword) updateBody.password = editForm.newPassword;
+      await api.updateInvestor(id, updateBody);
       setEditingId(null);
       fetchInvestors();
     } catch (err: any) {
@@ -109,6 +113,7 @@ export const InvestorsPage = () => {
       email: investor.email,
       name: investor.name,
       tradingFeeFrequency: investor.tradingFeeFrequency || 'QUARTERLY',
+      newPassword: '',
     });
   };
 
@@ -166,6 +171,17 @@ export const InvestorsPage = () => {
                 placeholder="María González"
               />
             </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
+              <Input
+                type="password"
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                placeholder="Mínimo 6 caracteres"
+                minLength={6}
+              />
+              <p className="mt-1 text-xs text-gray-500">Opcional. Si no se establece, el inversor solo podrá acceder con Google.</p>
+            </div>
             <div className="flex gap-3">
               <Button type="submit" disabled={submitting}>
                 {submitting ? 'Creando...' : 'Crear Inversor'}
@@ -211,6 +227,19 @@ export const InvestorsPage = () => {
                       { value: 'SEMESTRAL', label: 'Semestral' },
                       { value: 'ANNUAL', label: 'Anual' },
                     ]}
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-gray-700">
+                    Nueva contraseña {inv.hasPassword ? '' : '(sin contraseña)'}
+                  </label>
+                  <Input
+                    type="password"
+                    value={editForm.newPassword}
+                    onChange={(e) => setEditForm({ ...editForm, newPassword: e.target.value })}
+                    placeholder="Dejar vacío para no cambiar"
+                    className="text-sm"
+                    minLength={6}
                   />
                 </div>
                 <div className="flex gap-2">
@@ -323,6 +352,7 @@ export const InvestorsPage = () => {
                   </button>
                 </th>
                 <th className="py-2 w-36">Trading fee</th>
+                <th className="py-2">Auth</th>
                 <th className="py-2 text-right">Acciones</th>
               </tr>
             </thead>
@@ -362,6 +392,16 @@ export const InvestorsPage = () => {
                             { value: 'SEMESTRAL', label: 'Semestral' },
                             { value: 'ANNUAL', label: 'Anual' },
                           ]}
+                        />
+                      </td>
+                      <td className="py-2">
+                        <Input
+                          type="password"
+                          value={editForm.newPassword}
+                          onChange={(e) => setEditForm({ ...editForm, newPassword: e.target.value })}
+                          placeholder="Nueva contraseña"
+                          className="text-sm w-36"
+                          minLength={6}
                         />
                       </td>
                       <td className="py-2 text-right">
@@ -406,6 +446,18 @@ export const InvestorsPage = () => {
                         <span className="inline-flex rounded-full bg-purple-50 px-2 py-1 text-xs font-semibold text-purple-800">
                           {frequencyLabel(inv.tradingFeeFrequency)}
                         </span>
+                      </td>
+                      <td className="py-2">
+                        {inv.hasPassword ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700" title="Tiene contraseña configurada">
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                            Pass
+                          </span>
+                        ) : (
+                          <span className="inline-flex rounded-full bg-gray-50 px-2 py-0.5 text-xs text-gray-400">
+                            Solo Google
+                          </span>
+                        )}
                       </td>
                       <td className="py-2 text-right">
                         <div className="flex gap-2 justify-end">
