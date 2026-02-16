@@ -1,6 +1,6 @@
 class Investor < ApplicationRecord
   STATUSES = %w[ACTIVE INACTIVE].freeze
-  TRADING_FEE_FREQUENCIES = %w[QUARTERLY ANNUAL].freeze
+  TRADING_FEE_FREQUENCIES = %w[QUARTERLY SEMESTRAL ANNUAL].freeze
 
   has_one :portfolio, dependent: :destroy
   has_many :portfolio_histories, dependent: :destroy

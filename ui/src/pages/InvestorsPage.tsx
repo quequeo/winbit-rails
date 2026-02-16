@@ -15,7 +15,7 @@ export const InvestorsPage = () => {
   const [editForm, setEditForm] = useState({
     email: '',
     name: '',
-    tradingFeeFrequency: 'QUARTERLY' as 'QUARTERLY' | 'ANNUAL',
+    tradingFeeFrequency: 'QUARTERLY' as 'QUARTERLY' | 'SEMESTRAL' | 'ANNUAL',
   });
   const [sortBy, setSortBy] = useState<string>('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
@@ -92,7 +92,7 @@ export const InvestorsPage = () => {
     setEditForm({
       email: investor.email,
       name: investor.name,
-      tradingFeeFrequency: investor.tradingFeeFrequency === 'ANNUAL' ? 'ANNUAL' : 'QUARTERLY',
+      tradingFeeFrequency: investor.tradingFeeFrequency || 'QUARTERLY',
     });
   };
 
@@ -188,14 +188,14 @@ export const InvestorsPage = () => {
                   <label className="mb-1 block text-xs font-medium text-gray-700">Comisión trading</label>
                   <Select
                     value={editForm.tradingFeeFrequency}
-                    onChange={(v) => setEditForm({ ...editForm, tradingFeeFrequency: v as 'QUARTERLY' | 'ANNUAL' })}
+                    onChange={(v) => setEditForm({ ...editForm, tradingFeeFrequency: v as 'QUARTERLY' | 'SEMESTRAL' | 'ANNUAL' })}
                     portal
                     options={[
                       { value: 'QUARTERLY', label: 'Trimestral' },
+                      { value: 'SEMESTRAL', label: 'Semestral' },
                       { value: 'ANNUAL', label: 'Anual' },
                     ]}
                   />
-                  <p className="mt-1 text-[11px] text-gray-500">Anual = se cobra una vez por año (año calendario cerrado).</p>
                 </div>
                 <div className="flex gap-2">
                   <Button type="submit" disabled={submitting} className="text-sm py-1 px-3">
@@ -219,7 +219,7 @@ export const InvestorsPage = () => {
                   </div>
                 </div>
                 <div className="mt-2 text-xs text-gray-500">
-                  Trading fee: {inv.tradingFeeFrequency === 'ANNUAL' ? 'Anual' : 'Trimestral'}
+                  Trading fee: {inv.tradingFeeFrequency === 'ANNUAL' ? 'Anual' : inv.tradingFeeFrequency === 'SEMESTRAL' ? 'Semestral' : 'Trimestral'}
                 </div>
                 <div className="mt-3 flex gap-2">
                   <button
@@ -294,10 +294,11 @@ export const InvestorsPage = () => {
                         <Select
                           className="w-44"
                           value={editForm.tradingFeeFrequency}
-                          onChange={(v) => setEditForm({ ...editForm, tradingFeeFrequency: v as 'QUARTERLY' | 'ANNUAL' })}
+                          onChange={(v) => setEditForm({ ...editForm, tradingFeeFrequency: v as 'QUARTERLY' | 'SEMESTRAL' | 'ANNUAL' })}
                           portal
                           options={[
                             { value: 'QUARTERLY', label: 'Trimestral' },
+                            { value: 'SEMESTRAL', label: 'Semestral' },
                             { value: 'ANNUAL', label: 'Anual' },
                           ]}
                         />
@@ -326,7 +327,7 @@ export const InvestorsPage = () => {
                       <td className="py-2 text-gray-600">{inv.email}</td>
                       <td className="py-2 w-44">
                         <span className="inline-flex rounded-full bg-purple-50 px-2 py-1 text-xs font-semibold text-purple-800">
-                          {inv.tradingFeeFrequency === 'ANNUAL' ? 'Anual' : 'Trimestral'}
+                          {inv.tradingFeeFrequency === 'ANNUAL' ? 'Anual' : inv.tradingFeeFrequency === 'SEMESTRAL' ? 'Semestral' : 'Trimestral'}
                         </span>
                       </td>
                       <td className="py-2 text-right">

@@ -10,7 +10,7 @@ type InvestorSummary = {
   investor_id: string;
   investor_name: string;
   investor_email: string;
-  trading_fee_frequency?: 'QUARTERLY' | 'ANNUAL';
+  trading_fee_frequency?: 'QUARTERLY' | 'SEMESTRAL' | 'ANNUAL';
   current_balance: number;
   period_start: string;
   period_end: string;
@@ -478,7 +478,7 @@ export const TradingFeesPage = () => {
                   <div className="truncate text-xs text-gray-500">{investor.investor_email}</div>
                 </div>
                 <span className="shrink-0 inline-flex rounded-full bg-purple-50 px-2 py-0.5 text-[11px] font-semibold text-purple-800">
-                  {investor.trading_fee_frequency === 'ANNUAL' ? 'Anual' : 'Trimestral'}
+                  {investor.trading_fee_frequency === 'ANNUAL' ? 'Anual' : investor.trading_fee_frequency === 'SEMESTRAL' ? 'Semestral' : 'Trimestral'}
                 </span>
               </div>
 
@@ -653,7 +653,7 @@ export const TradingFeesPage = () => {
                     <div className="text-xs text-gray-500">{investor.investor_email}</div>
                     <div className="mt-1">
                       <span className="inline-flex rounded-full bg-purple-50 px-2 py-0.5 text-[11px] font-semibold text-purple-800">
-                        {investor.trading_fee_frequency === 'ANNUAL' ? 'Anual' : 'Trimestral'}
+                        {investor.trading_fee_frequency === 'ANNUAL' ? 'Anual' : investor.trading_fee_frequency === 'SEMESTRAL' ? 'Semestral' : 'Trimestral'}
                       </span>
                     </div>
                   </td>

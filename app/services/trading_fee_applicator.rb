@@ -76,17 +76,29 @@ class TradingFeeApplicator
     @errors << 'Applied by user is required' if applied_by.blank?
   end
 
-  # Guardrail: inversores ANNUAL solo pueden aplicarse por año calendario completo.
+  # Guardrail: valida que el período coincida con la frecuencia del inversor.
   def validate_period_for_investor
-    return unless investor.respond_to?(:trading_fee_frequency) && investor.trading_fee_frequency == 'ANNUAL'
-
     return if @period_start.blank? || @period_end.blank?
+    return unless investor.respond_to?(:trading_fee_frequency)
 
-    expected_start = @period_start.beginning_of_year.to_date
-    expected_end = @period_start.end_of_year.to_date
+    freq = investor.trading_fee_frequency
 
-    if @period_start != expected_start || @period_end != expected_end
-      @errors << 'Este inversor está configurado como ANNUAL: el período debe ser un año calendario completo'
+    if freq == 'ANNUAL'
+      expected_start = @period_start.beginning_of_year.to_date
+      expected_end = @period_start.end_of_year.to_date
+
+      if @period_start != expected_start || @period_end != expected_end
+        @errors << 'Este inversor está configurado como ANNUAL: el período debe ser un año calendario completo'
+      end
+    elsif freq == 'SEMESTRAL'
+      valid_semesters = [
+        [Date.new(@period_start.year, 1, 1), Date.new(@period_start.year, 6, 30)],
+        [Date.new(@period_start.year, 7, 1), Date.new(@period_start.year, 12, 31)]
+      ]
+
+      unless valid_semesters.any? { |s, e| @period_start == s && @period_end == e }
+        @errors << 'Este inversor está configurado como SEMESTRAL: el período debe ser un semestre completo (Ene-Jun o Jul-Dic)'
+      end
     end
   end
 
