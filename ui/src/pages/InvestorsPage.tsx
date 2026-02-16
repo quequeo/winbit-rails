@@ -4,6 +4,13 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { Select } from '../components/ui/Select';
+import { formatCurrencyAR } from '../lib/formatters';
+
+const frequencyLabel = (freq: string) => {
+  if (freq === 'ANNUAL') return 'Anual';
+  if (freq === 'SEMESTRAL') return 'Semestral';
+  return 'Trimestral';
+};
 
 export const InvestorsPage = () => {
   const [data, setData] = useState<any>(null);
@@ -84,6 +91,15 @@ export const InvestorsPage = () => {
       fetchInvestors();
     } catch (err: any) {
       alert(err.message || 'Error al eliminar inversor');
+    }
+  };
+
+  const handleToggleStatus = async (investor: any) => {
+    try {
+      await api.toggleInvestorStatus(investor.id);
+      fetchInvestors();
+    } catch (err: any) {
+      alert(err.message || 'Error al cambiar status');
     }
   };
 
@@ -217,9 +233,34 @@ export const InvestorsPage = () => {
                     <p className="truncate text-sm font-semibold text-gray-900">{inv.name}</p>
                     <p className="truncate mt-1 text-sm text-gray-600">{inv.email}</p>
                   </div>
+                  <button
+                    onClick={() => handleToggleStatus(inv)}
+                    className={`shrink-0 inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold cursor-pointer ${
+                      inv.status === 'ACTIVE'
+                        ? 'bg-green-50 text-green-700 hover:bg-green-100'
+                        : 'bg-red-50 text-red-700 hover:bg-red-100'
+                    }`}
+                    title={inv.status === 'ACTIVE' ? 'Desactivar' : 'Activar'}
+                  >
+                    {inv.status === 'ACTIVE' ? 'Activo' : 'Inactivo'}
+                  </button>
+                </div>
+                <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <p className="text-xs text-gray-500">Capital Actual</p>
+                    <p className="mt-1 font-mono font-semibold text-gray-900">
+                      {formatCurrencyAR(inv.portfolio?.currentBalance ?? 0)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Total Invertido</p>
+                    <p className="mt-1 font-mono font-semibold text-gray-900">
+                      {formatCurrencyAR(inv.portfolio?.totalInvested ?? 0)}
+                    </p>
+                  </div>
                 </div>
                 <div className="mt-2 text-xs text-gray-500">
-                  Trading fee: {inv.tradingFeeFrequency === 'ANNUAL' ? 'Anual' : inv.tradingFeeFrequency === 'SEMESTRAL' ? 'Semestral' : 'Trimestral'}
+                  Trading fee: {frequencyLabel(inv.tradingFeeFrequency)}
                 </div>
                 <div className="mt-3 flex gap-2">
                   <button
@@ -263,7 +304,25 @@ export const InvestorsPage = () => {
                   </button>
                 </th>
                 <th className="py-2">Email</th>
-                <th className="py-2 w-44">Trading fee</th>
+                <th className="py-2">
+                  <button
+                    onClick={() => handleSort('status')}
+                    className="flex items-center gap-1 hover:text-gray-700"
+                  >
+                    Status
+                    <span className="text-xs">{getSortIcon('status')}</span>
+                  </button>
+                </th>
+                <th className="py-2 text-right">
+                  <button
+                    onClick={() => handleSort('balance')}
+                    className="flex items-center gap-1 hover:text-gray-700 ml-auto"
+                  >
+                    Capital Actual
+                    <span className="text-xs">{getSortIcon('balance')}</span>
+                  </button>
+                </th>
+                <th className="py-2 w-36">Trading fee</th>
                 <th className="py-2 text-right">Acciones</th>
               </tr>
             </thead>
@@ -290,9 +349,11 @@ export const InvestorsPage = () => {
                           className="text-sm"
                         />
                       </td>
+                      <td className="py-2" />
+                      <td className="py-2" />
                       <td className="py-2">
                         <Select
-                          className="w-44"
+                          className="w-36"
                           value={editForm.tradingFeeFrequency}
                           onChange={(v) => setEditForm({ ...editForm, tradingFeeFrequency: v as 'QUARTERLY' | 'SEMESTRAL' | 'ANNUAL' })}
                           portal
@@ -325,9 +386,25 @@ export const InvestorsPage = () => {
                     <>
                       <td className="py-2 font-medium">{inv.name}</td>
                       <td className="py-2 text-gray-600">{inv.email}</td>
-                      <td className="py-2 w-44">
+                      <td className="py-2">
+                        <button
+                          onClick={() => handleToggleStatus(inv)}
+                          className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold cursor-pointer ${
+                            inv.status === 'ACTIVE'
+                              ? 'bg-green-50 text-green-700 hover:bg-green-100'
+                              : 'bg-red-50 text-red-700 hover:bg-red-100'
+                          }`}
+                          title={inv.status === 'ACTIVE' ? 'Click para desactivar' : 'Click para activar'}
+                        >
+                          {inv.status === 'ACTIVE' ? 'Activo' : 'Inactivo'}
+                        </button>
+                      </td>
+                      <td className="py-2 text-right font-mono">
+                        {formatCurrencyAR(inv.portfolio?.currentBalance ?? 0)}
+                      </td>
+                      <td className="py-2 w-36">
                         <span className="inline-flex rounded-full bg-purple-50 px-2 py-1 text-xs font-semibold text-purple-800">
-                          {inv.tradingFeeFrequency === 'ANNUAL' ? 'Anual' : inv.tradingFeeFrequency === 'SEMESTRAL' ? 'Semestral' : 'Trimestral'}
+                          {frequencyLabel(inv.tradingFeeFrequency)}
                         </span>
                       </td>
                       <td className="py-2 text-right">

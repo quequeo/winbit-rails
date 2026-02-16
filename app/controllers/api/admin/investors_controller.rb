@@ -33,6 +33,7 @@ module Api
               updatedAt: inv.updated_at,
               portfolio: inv.portfolio ? {
                 currentBalance: inv.portfolio.current_balance.to_f,
+                totalInvested: inv.portfolio.total_invested.to_f,
               } : nil,
             }
           },
