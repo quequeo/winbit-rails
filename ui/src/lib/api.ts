@@ -75,7 +75,7 @@ export const api = {
   updateAdmin: (id: string, body: { email: string; name?: string; role: 'ADMIN' | 'SUPERADMIN' }) =>
     request(`/api/admin/admins/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
   deleteAdmin: (id: string) => request(`/api/admin/admins/${id}`, { method: 'DELETE' }),
-  createInvestor: (body: { email: string; name: string }) =>
+  createInvestor: (body: { email: string; name: string; password?: string }) =>
     request('/api/admin/investors', { method: 'POST', body: JSON.stringify(body) }),
   updateInvestor: (id: string, body: { email: string; name: string; trading_fee_frequency?: 'QUARTERLY' | 'SEMESTRAL' | 'ANNUAL'; password?: string }) =>
     request(`/api/admin/investors/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
