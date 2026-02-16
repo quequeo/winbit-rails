@@ -69,6 +69,16 @@ module Api
               item[:tradingFeePeriodLabel] = quarter_label(fee.period_end)
               item[:tradingFeePeriodStart] = fee.period_start
               item[:tradingFeePeriodEnd] = fee.period_end
+              # Calculate original % from history amount (fee may have been updated since)
+              profit = fee.profit_amount.to_f
+              item[:tradingFeePercentage] = profit.positive? ? (h.amount.to_f.abs / profit * 100).round(2) : fee.fee_percentage.to_f
+            end
+          end
+
+          if h.event == 'TRADING_FEE_ADJUSTMENT'
+            fee = find_trading_fee_for_adjustment(fees, h)
+            if fee
+              item[:tradingFeePeriodLabel] = quarter_label(fee.period_end)
               item[:tradingFeePercentage] = fee.fee_percentage.to_f
             end
           end
@@ -109,11 +119,20 @@ module Api
       end
 
       def find_trading_fee_for_history(fees, history)
-        amt = history.amount.to_f.abs
         ts = history.date.to_time.to_i
 
+        # Match by applied_at proximity (amount may have changed if fee was later edited)
         fees.find do |f|
-          (f.fee_amount.to_f - amt).abs < 0.01 && (f.applied_at.to_i - ts).abs <= 600
+          (f.applied_at.to_i - ts).abs <= 600
+        end
+      end
+
+      def find_trading_fee_for_adjustment(fees, history)
+        ts = history.date.to_time.to_i
+
+        # Match by updated_at or voided_at proximity (adjustments are created when fees are edited/voided)
+        fees.find do |f|
+          (f.updated_at.to_i - ts).abs <= 600 || (f.voided_at && (f.voided_at.to_i - ts).abs <= 600)
         end
       end
 
