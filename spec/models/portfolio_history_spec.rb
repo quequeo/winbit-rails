@@ -153,7 +153,7 @@ RSpec.describe PortfolioHistory, type: :model do
       history = PortfolioHistory.create!(
         investor: investor,
         event: 'TRADING_FEE',
-        amount: 50,
+        amount: -50,
         previous_balance: 5000,
         new_balance: 4950
       )
@@ -223,6 +223,61 @@ RSpec.describe PortfolioHistory, type: :model do
       )
 
       expect(history.previous_balance - history.new_balance).to eq(withdrawal_amount)
+    end
+
+    it 'rejects inconsistent balances for completed events' do
+      history = PortfolioHistory.new(
+        investor: investor,
+        event: 'DEPOSIT',
+        amount: 1000,
+        previous_balance: 5000,
+        new_balance: 5800,
+        status: 'COMPLETED'
+      )
+
+      expect(history).not_to be_valid
+      expect(history.errors[:new_balance]).to include('must be consistent with previous_balance and amount')
+    end
+
+    it 'allows pending entries without strict balance consistency' do
+      history = PortfolioHistory.new(
+        investor: investor,
+        event: 'DEPOSIT',
+        amount: 1000,
+        previous_balance: 5000,
+        new_balance: 5800,
+        status: 'PENDING'
+      )
+
+      expect(history).to be_valid
+    end
+
+    it 'requires positive amount for WITHDRAWAL' do
+      history = PortfolioHistory.new(
+        investor: investor,
+        event: 'WITHDRAWAL',
+        amount: -100,
+        previous_balance: 1000,
+        new_balance: 1100,
+        status: 'COMPLETED'
+      )
+
+      expect(history).not_to be_valid
+      expect(history.errors[:amount]).to include('must be greater than 0 for WITHDRAWAL')
+    end
+
+    it 'requires negative amount for TRADING_FEE' do
+      history = PortfolioHistory.new(
+        investor: investor,
+        event: 'TRADING_FEE',
+        amount: 100,
+        previous_balance: 1000,
+        new_balance: 900,
+        status: 'COMPLETED'
+      )
+
+      expect(history).not_to be_valid
+      expect(history.errors[:amount]).to include('must be lower than 0 for TRADING_FEE')
     end
   end
 

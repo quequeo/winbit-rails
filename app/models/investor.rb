@@ -1,6 +1,6 @@
 class Investor < ApplicationRecord
   STATUSES = %w[ACTIVE INACTIVE].freeze
-  TRADING_FEE_FREQUENCIES = %w[QUARTERLY SEMESTRAL ANNUAL].freeze
+  TRADING_FEE_FREQUENCIES = %w[MONTHLY QUARTERLY SEMESTRAL ANNUAL].freeze
 
   has_secure_password validations: false
 
@@ -9,7 +9,12 @@ class Investor < ApplicationRecord
   has_many :investor_requests, dependent: :destroy
   has_many :trading_fees, dependent: :destroy
 
-  validates :email, presence: true, uniqueness: true
+  before_validation :normalize_email
+
+  validates :email,
+            presence: true,
+            format: { with: URI::MailTo::EMAIL_REGEXP },
+            uniqueness: { case_sensitive: false }
   validates :name, presence: true
   validates :status, presence: true, inclusion: { in: STATUSES }
   validates :trading_fee_frequency, presence: true, inclusion: { in: TRADING_FEE_FREQUENCIES }
@@ -24,6 +29,10 @@ class Investor < ApplicationRecord
   end
 
   private
+
+  def normalize_email
+    self.email = email.to_s.strip.downcase
+  end
 
   def new_record_with_password?
     new_record? && password.present?

@@ -15,7 +15,7 @@ export const EditInvestorPage = () => {
   const [form, setForm] = useState({
     email: '',
     name: '',
-    tradingFeeFrequency: 'QUARTERLY' as 'QUARTERLY' | 'SEMESTRAL' | 'ANNUAL',
+    tradingFeeFrequency: 'QUARTERLY' as 'MONTHLY' | 'QUARTERLY' | 'SEMESTRAL' | 'ANNUAL',
     newPassword: '',
   });
 
@@ -103,8 +103,9 @@ export const EditInvestorPage = () => {
             <label className="block text-sm font-medium text-gray-700 mb-1">Frecuencia trading fee</label>
             <Select
               value={form.tradingFeeFrequency}
-              onChange={(v) => setForm({ ...form, tradingFeeFrequency: v as 'QUARTERLY' | 'SEMESTRAL' | 'ANNUAL' })}
+              onChange={(v) => setForm({ ...form, tradingFeeFrequency: v as 'MONTHLY' | 'QUARTERLY' | 'SEMESTRAL' | 'ANNUAL' })}
               options={[
+                { value: 'MONTHLY', label: 'Mensual' },
                 { value: 'QUARTERLY', label: 'Trimestral' },
                 { value: 'SEMESTRAL', label: 'Semestral' },
                 { value: 'ANNUAL', label: 'Anual' },

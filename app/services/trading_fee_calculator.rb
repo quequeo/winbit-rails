@@ -24,8 +24,22 @@ class TradingFeeCalculator
     frequency == "ANNUAL"
   end
 
+  def monthly?
+    frequency == "MONTHLY"
+  end
+
   def semestral?
     frequency == "SEMESTRAL"
+  end
+
+  # MONTHLY: último mes calendario cerrado.
+  # Ej: si hoy es 21/01/2026 -> 01/12/2025..31/12/2025
+  def last_completed_month_start
+    (reference_date.beginning_of_month - 1.month).beginning_of_month.to_date
+  end
+
+  def last_completed_month_end
+    (reference_date.beginning_of_month - 1.day).to_date
   end
 
   # QUARTERLY: último trimestre cerrado.
@@ -69,7 +83,9 @@ class TradingFeeCalculator
   end
 
   def default_period_start
-    if annual?
+    if monthly?
+      last_completed_month_start
+    elsif annual?
       last_completed_year_start
     elsif semestral?
       last_completed_semester_start
@@ -79,7 +95,9 @@ class TradingFeeCalculator
   end
 
   def default_period_end
-    if annual?
+    if monthly?
+      last_completed_month_end
+    elsif annual?
       last_completed_year_end
     elsif semestral?
       last_completed_semester_end
