@@ -122,6 +122,17 @@ RSpec.describe 'Admin Investors API', type: :request do
       expect(investor.name).to eq('Updated Name')
     end
 
+    it 'updates investor status from edit endpoint' do
+      patch "/api/admin/investors/#{investor.id}", params: {
+        email: investor.email,
+        name: investor.name,
+        status: 'INACTIVE'
+      }
+
+      expect(response).to have_http_status(:no_content)
+      expect(investor.reload.status).to eq('INACTIVE')
+    end
+
     it 'returns error when investor not found' do
       patch '/api/admin/investors/nonexistent-id', params: {
         email: 'test@test.com',
@@ -182,12 +193,23 @@ RSpec.describe 'Admin Investors API', type: :request do
     it 'deletes the investor and associated records' do
       investor_id = investor.id
       Portfolio.create!(investor: investor, current_balance: 500)
+      TradingFee.create!(
+        investor: investor,
+        applied_by: admin,
+        period_start: Date.new(2025, 10, 1),
+        period_end: Date.new(2025, 12, 31),
+        profit_amount: 100,
+        fee_percentage: 30,
+        fee_amount: 30,
+        applied_at: Time.current
+      )
 
       delete "/api/admin/investors/#{investor_id}"
 
       expect(response).to have_http_status(:no_content)
       expect(Investor.find_by(id: investor_id)).to be_nil
       expect(Portfolio.find_by(investor_id: investor_id)).to be_nil
+      expect(TradingFee.where(investor_id: investor_id)).to be_empty
     end
 
     it 'returns error when investor not found' do

@@ -86,7 +86,7 @@ export const TradingFeesPage = () => {
     return () => clearTimeout(t);
   }, [flash]);
 
-  const loadInvestorsSummary = async (period_start?: string, period_end?: string) => {
+  const loadInvestorsSummary = async (period_start?: string, period_end?: string, opts?: { suppressError?: boolean }) => {
     try {
       setLoading(true);
       setError('');
@@ -100,7 +100,9 @@ export const TradingFeesPage = () => {
       });
       setPercentages(initialPercentages);
     } catch (err: any) {
-      setError(err.message || 'Error al cargar inversores');
+      if (!opts?.suppressError) {
+        setError(err.message || 'Error al cargar inversores');
+      }
     } finally {
       setLoading(false);
     }
@@ -220,7 +222,8 @@ export const TradingFeesPage = () => {
       setFlash({ type: 'success', message: 'Comisión aplicada exitosamente' });
       setConfirmModal(null);
       setNotes('');
-      await loadInvestorsSummary(undefined, undefined);
+
+      await loadInvestorsSummary(undefined, undefined, { suppressError: true });
     } catch (err: any) {
       setFlash({ type: 'error', message: err.message || 'Error al aplicar comisión' });
     } finally {

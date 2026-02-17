@@ -28,8 +28,8 @@ class TimeWeightedReturnCalculator
     new(from: from, to: to).compute_for_investor(investor_id: investor_id)
   end
 
-  def self.for_platform(from:, to: Time.current)
-    new(from: from, to: to).compute_for_platform
+  def self.for_platform(from:, to: Time.current, investor_ids: nil)
+    new(from: from, to: to).compute_for_platform(investor_ids: investor_ids)
   end
 
   def initialize(from:, to:)
@@ -122,16 +122,16 @@ class TimeWeightedReturnCalculator
     )
   end
 
-  def compute_for_platform
+  def compute_for_platform(investor_ids: nil)
     range_start = from || Time.at(0)
     range_end = to || Time.current
 
     # Initialize per-investor balances at range start (strictly before start, then we replay within range)
-    investor_ids = Portfolio.distinct.pluck(:investor_id)
+    investor_ids = investor_ids.nil? ? Portfolio.distinct.pluck(:investor_id) : Array(investor_ids)
 
     # If there is no history at all, fall back to the current AUM snapshot (0% return).
-    unless PortfolioHistory.where(status: 'COMPLETED').exists?
-      current = bd(Portfolio.sum(:current_balance))
+    unless PortfolioHistory.where(status: 'COMPLETED', investor_id: investor_ids).exists?
+      current = bd(Portfolio.where(investor_id: investor_ids).sum(:current_balance))
       eff = current.positive? ? range_start : nil
       return Result.new(
         twr_percent: 0.0,

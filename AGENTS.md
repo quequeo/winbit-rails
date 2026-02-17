@@ -239,6 +239,7 @@ Jobs:
 ### Reglas de commits
 
 - Mensaje conciso (1-2 líneas).
+- NO usar prefijos tipo `chore`, `fix`, `feat`, `feature`, `docs`, `refactor`, `style`, `test`, `perf`, `ci`, `build` ni variantes similares en el mensaje del commit.
 - NUNCA mencionar Cursor, Claude, AI, LLM, copilot ni herramientas de IA.
 - PROHIBIDO cualquier trailer `Co-authored-by` que mencione IA.
 - Usar `git -c commit.cleanup=verbatim` para evitar trailers automáticos.

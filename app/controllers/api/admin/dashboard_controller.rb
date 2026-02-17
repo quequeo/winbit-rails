@@ -11,10 +11,10 @@ module Api
         now = Time.current
 
         ytd_from = Time.zone.local(end_date.year, 1, 1, 0, 0, 0)
-        all_from = PortfolioHistory.where(status: 'COMPLETED').minimum(:date)
+        all_from = PortfolioHistory.where(status: 'COMPLETED', investor_id: active_investor_ids).minimum(:date)
 
-        ytd_return = TimeWeightedReturnCalculator.for_platform(from: ytd_from, to: now)
-        all_return = TimeWeightedReturnCalculator.for_platform(from: all_from, to: now)
+        ytd_return = TimeWeightedReturnCalculator.for_platform(from: ytd_from, to: now, investor_ids: active_investor_ids)
+        all_return = TimeWeightedReturnCalculator.for_platform(from: all_from, to: now, investor_ids: active_investor_ids)
 
         days_param = params[:days].to_s.strip
 

@@ -52,6 +52,53 @@ RSpec.describe 'Admin Trading Fees API', type: :request do
       expect(json.first['id']).to eq(fee.id)
       expect(json.first['investor_id']).to eq(inv.id)
     end
+
+    it 'excludes voided fees and inactive investors fees' do
+      active_investor = create_investor_with_portfolio(email: 'active_for_index@test.com')
+      inactive_investor = create_investor_with_portfolio(email: 'inactive_for_index@test.com')
+      inactive_investor.update!(status: 'INACTIVE')
+
+      visible_fee = TradingFee.create!(
+        investor: active_investor,
+        applied_by: admin,
+        period_start: Date.new(2025, 10, 1),
+        period_end: Date.new(2025, 12, 31),
+        profit_amount: 100,
+        fee_percentage: 30,
+        fee_amount: 30,
+        applied_at: Time.current
+      )
+
+      TradingFee.create!(
+        investor: active_investor,
+        applied_by: admin,
+        period_start: Date.new(2026, 1, 1),
+        period_end: Date.new(2026, 3, 31),
+        profit_amount: 100,
+        fee_percentage: 30,
+        fee_amount: 30,
+        applied_at: Time.current,
+        voided_at: Time.current,
+        voided_by: admin
+      )
+
+      TradingFee.create!(
+        investor: inactive_investor,
+        applied_by: admin,
+        period_start: Date.new(2025, 10, 1),
+        period_end: Date.new(2025, 12, 31),
+        profit_amount: 100,
+        fee_percentage: 30,
+        fee_amount: 30,
+        applied_at: Time.current
+      )
+
+      get '/api/admin/trading_fees'
+
+      expect(response).to have_http_status(:ok)
+      json = JSON.parse(response.body)
+      expect(json.map { |row| row['id'] }).to contain_exactly(visible_fee.id)
+    end
   end
 
   describe 'GET /api/admin/trading_fees/calculate' do
