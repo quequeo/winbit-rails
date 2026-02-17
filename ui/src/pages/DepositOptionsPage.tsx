@@ -68,6 +68,7 @@ type FormState = {
   category: string;
   label: string;
   currency: string;
+  active: boolean;
   position: number;
   details: Record<string, string>;
 };
@@ -76,6 +77,7 @@ const emptyForm = (cat = 'CASH_ARS'): FormState => ({
   category: cat,
   label: '',
   currency: DEFAULT_CURRENCY[cat] || 'ARS',
+  active: true,
   position: 0,
   details: {},
 });
@@ -160,6 +162,7 @@ export const DepositOptionsPage = () => {
       category: opt.category,
       label: opt.label,
       currency: opt.currency,
+      active: opt.active,
       position: opt.position,
       details: { ...opt.details },
     });
@@ -174,6 +177,7 @@ export const DepositOptionsPage = () => {
         category: editForm.category,
         label: editForm.label,
         currency: editForm.currency,
+        active: editForm.active,
         position: editForm.position,
         details: editForm.details,
       });
@@ -271,6 +275,7 @@ export const DepositOptionsPage = () => {
                     title="Editar opción"
                     submitLabel="Guardar"
                     onCategoryChange={(cat) => handleCategoryChange(cat, setEditForm, editForm)}
+                    allowActiveEdit
                   />
                 ) : (
                   <OptionCard
@@ -313,6 +318,7 @@ export const DepositOptionsPage = () => {
                             title="Editar opción"
                             submitLabel="Guardar"
                             onCategoryChange={(cat) => handleCategoryChange(cat, setEditForm, editForm)}
+                            allowActiveEdit
                           />
                         </td>
                       ) : (
@@ -404,6 +410,7 @@ function DepositOptionForm({
   title,
   submitLabel,
   onCategoryChange,
+  allowActiveEdit = false,
 }: {
   form: FormState;
   setForm: (s: FormState) => void;
@@ -413,6 +420,7 @@ function DepositOptionForm({
   title: string;
   submitLabel: string;
   onCategoryChange: (cat: string) => void;
+  allowActiveEdit?: boolean;
 }) {
   const fields = CATEGORY_FIELDS[form.category] || [];
 
@@ -465,6 +473,19 @@ function DepositOptionForm({
               onChange={(e) => setForm({ ...form, position: parseInt(e.target.value) || 0 })}
             />
           </div>
+          {allowActiveEdit && (
+            <div>
+              <label className="mb-1 block text-sm font-medium text-gray-700">Estado</label>
+              <select
+                value={form.active ? 'true' : 'false'}
+                onChange={(e) => setForm({ ...form, active: e.target.value === 'true' })}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-[#58b098] focus:outline-none focus:ring-1 focus:ring-[#58b098]"
+              >
+                <option value="true">Activo</option>
+                <option value="false">Inactivo</option>
+              </select>
+            </div>
+          )}
         </div>
 
         {fields.length > 0 && (
