@@ -151,7 +151,7 @@ describe('RequestsPage', () => {
         expect(api.getAdminRequests).toHaveBeenCalled();
       });
 
-      const addButton = screen.getByRole('button', { name: /Agregar Solicitud/i });
+      const addButton = await screen.findByRole('button', { name: /Agregar Solicitud/i });
       fireEvent.click(addButton);
 
       expect(screen.getByText('Nueva Solicitud')).toBeInTheDocument();
@@ -169,7 +169,7 @@ describe('RequestsPage', () => {
       });
 
       // Open form
-      const addButton = screen.getByRole('button', { name: /Agregar Solicitud/i });
+      const addButton = await screen.findByRole('button', { name: /Agregar Solicitud/i });
       await user.click(addButton);
 
       // Fill form
@@ -212,7 +212,7 @@ describe('RequestsPage', () => {
         expect(api.getAdminRequests).toHaveBeenCalled();
       });
 
-      const addButton = screen.getByRole('button', { name: /Agregar Solicitud/i });
+      const addButton = await screen.findByRole('button', { name: /Agregar Solicitud/i });
       await user.click(addButton);
 
       const investorSelect = screen.getByLabelText(/Inversor/i);

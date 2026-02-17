@@ -31,6 +31,12 @@ module Api
           return render_error('Invalid request data', status: :bad_request)
         end
 
+        # Deposits require attachment unless the method is cash
+        cash_methods = %w[CASH_ARS CASH_USD]
+        if type == 'DEPOSIT' && !cash_methods.include?(method) && attachment_url.blank?
+          return render_error('Attachment is required for non-cash deposits', status: :bad_request)
+        end
+
         # Withdrawal validation: balance must be sufficient
         if type == 'WITHDRAWAL'
           if investor.portfolio.nil?

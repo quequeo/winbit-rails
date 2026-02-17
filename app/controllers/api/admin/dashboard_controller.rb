@@ -2,9 +2,10 @@ module Api
   module Admin
     class DashboardController < BaseController
       def show
-        investor_count = Investor.where(status: 'ACTIVE').count
-        pending_request_count = InvestorRequest.where(status: 'PENDING').count
-        total_aum = Portfolio.sum(:current_balance)
+        active_investor_ids = Investor.where(status: 'ACTIVE').pluck(:id)
+        investor_count = active_investor_ids.size
+        pending_request_count = InvestorRequest.where(status: 'PENDING', investor_id: active_investor_ids).count
+        total_aum = Portfolio.where(investor_id: active_investor_ids).sum(:current_balance)
 
         end_date = Date.current
         now = Time.current
@@ -58,13 +59,15 @@ module Api
         start_date = start_date.to_date
         end_date = end_date.to_date
 
+        active_ids = Investor.where(status: 'ACTIVE').pluck(:id)
+
         # If we don't have any movements yet, show a flat line.
-        unless PortfolioHistory.where(status: 'COMPLETED').exists?
-          current = Portfolio.sum(:current_balance).to_f
+        unless PortfolioHistory.where(status: 'COMPLETED', investor_id: active_ids).exists?
+          current = Portfolio.where(investor_id: active_ids).sum(:current_balance).to_f
           return (start_date..end_date).map { |d| { date: d.strftime('%Y-%m-%d'), totalAum: current } }
         end
 
-        investor_ids = Portfolio.distinct.pluck(:investor_id)
+        investor_ids = active_ids
 
         range_start_time = Time.zone.local(start_date.year, start_date.month, start_date.day, 0, 0, 0)
         range_end_time = Time.zone.local(end_date.year, end_date.month, end_date.day, 23, 59, 59)
