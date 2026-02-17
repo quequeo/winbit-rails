@@ -186,7 +186,7 @@ export const DailyOperatingResultsPage = () => {
             <div>
               <h2 className="text-xl font-bold text-gray-900">Preview</h2>
               <p className="mt-1 text-sm text-gray-600">
-                Saldos calculados al cierre del <span className="font-semibold">{preview.date}</span> (17:00, antes de aplicar la operativa).
+                Saldos calculados al cierre del <span className="font-semibold">{preview.date}</span> (18:00 GMT-3, antes de aplicar la operativa).
                 Si hubo movimientos posteriores (depósitos/retiros/trading fees), puede diferir del balance actual.
               </p>
               <p className="mt-1 text-sm text-gray-600">
