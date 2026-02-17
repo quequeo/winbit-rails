@@ -25,36 +25,13 @@ module Api
         end
 
         render json: {
-          data: investors.map { |inv|
-            {
-              id: inv.id,
-              email: inv.email,
-              name: inv.name,
-              status: inv.status,
-              tradingFeeFrequency: inv.trading_fee_frequency,
-              hasPassword: inv.password_digest.present?,
-              createdAt: inv.created_at,
-              updatedAt: inv.updated_at,
-              portfolio: inv.portfolio ? {
-                currentBalance: inv.portfolio.current_balance.to_f,
-                totalInvested: inv.portfolio.total_invested.to_f,
-              } : nil,
-            }
-          },
+          data: investors.map { |inv| AdminInvestorSerializer.new(inv).as_json }
         }
       end
 
       def show
         render json: {
-          data: {
-            id: @investor.id,
-            email: @investor.email,
-            name: @investor.name,
-            status: @investor.status,
-            portfolio: @investor.portfolio,
-            portfolioHistory: @investor.portfolio_histories.order(date: :desc).limit(10),
-            requests: @investor.investor_requests.order(requested_at: :desc).limit(10),
-          },
+          data: AdminInvestorDetailSerializer.new(@investor).as_json
         }
       end
 

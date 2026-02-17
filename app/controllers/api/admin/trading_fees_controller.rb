@@ -16,7 +16,7 @@ module Api
           fees = fees.where('period_start >= ? AND period_end <= ?', params[:period_start], params[:period_end])
         end
 
-        render json: fees.map { |fee| serialize_trading_fee(fee) }
+        render json: fees.map { |fee| TradingFeeSerializer.new(fee).as_json }
       end
 
       # GET /api/admin/trading_fees/calculate?investor_id=xxx
@@ -165,7 +165,7 @@ module Api
               }
             )
 
-            render json: serialize_trading_fee(fee), status: :created
+            render json: TradingFeeSerializer.new(fee).as_json, status: :created
           else
             render_error(applicator.errors.join(', '), status: :unprocessable_entity)
           end
@@ -201,7 +201,7 @@ module Api
             }
           )
 
-          render json: serialize_trading_fee(fee), status: :created
+          render json: TradingFeeSerializer.new(fee).as_json, status: :created
         else
           render_error(applicator.errors.join(', '), status: :unprocessable_entity)
         end
@@ -275,7 +275,7 @@ module Api
           )
         end
 
-        render json: serialize_trading_fee(fee.reload), status: :ok
+        render json: TradingFeeSerializer.new(fee.reload).as_json, status: :ok
       rescue ActiveRecord::RecordInvalid => e
         render_error(e.message, status: :unprocessable_entity)
       rescue StandardError => e
@@ -332,7 +332,7 @@ module Api
           )
         end
 
-        render json: serialize_trading_fee(fee.reload), status: :ok
+        render json: TradingFeeSerializer.new(fee.reload).as_json, status: :ok
       rescue ActiveRecord::RecordInvalid => e
         render_error(e.message, status: :unprocessable_entity)
       rescue StandardError => e
@@ -354,22 +354,14 @@ module Api
             profit_amount = profits_for(investor, start_date, end_date)
             existing_fee = TradingFee.active.find_by(investor_id: investor.id, period_start: start_date, period_end: end_date)
 
-            {
-              investor_id: investor.id,
-              investor_name: investor.name,
-              investor_email: investor.email,
-              trading_fee_frequency: investor.trading_fee_frequency,
-              current_balance: investor.portfolio&.current_balance || 0,
+            TradingFeeInvestorSummarySerializer.new(
+              investor: investor,
               period_start: start_date,
               period_end: end_date,
               profit_amount: profit_amount,
-              has_profit: profit_amount > 0,
-              already_applied: !!existing_fee,
-              applied_fee_id: existing_fee&.id,
-              applied_fee_amount: existing_fee&.fee_amount&.to_f,
-              applied_fee_percentage: existing_fee&.fee_percentage&.to_f,
-              monthly_profits: monthly_breakdown_for(investor, start_date, end_date)
-            }
+              monthly_profits: monthly_breakdown_for(investor, start_date, end_date),
+              existing_fee: existing_fee
+            ).as_json
           else
             calculator = TradingFeeCalculator.new(investor)
             result = calculator.calculate
@@ -383,22 +375,14 @@ module Api
               period_end: result[:period_end]
             )
 
-            {
-              investor_id: investor.id,
-              investor_name: investor.name,
-              investor_email: investor.email,
-              trading_fee_frequency: investor.trading_fee_frequency,
-              current_balance: investor.portfolio&.current_balance || 0,
+            TradingFeeInvestorSummarySerializer.new(
+              investor: investor,
               period_start: result[:period_start],
               period_end: result[:period_end],
               profit_amount: result[:profit_amount],
-              has_profit: result[:profit_amount] > 0,
-              already_applied: !!existing_fee,
-              applied_fee_id: existing_fee&.id,
-              applied_fee_amount: existing_fee&.fee_amount&.to_f,
-              applied_fee_percentage: existing_fee&.fee_percentage&.to_f,
-              monthly_profits: monthly_breakdown_for(investor, result[:period_start], result[:period_end])
-            }
+              monthly_profits: monthly_breakdown_for(investor, result[:period_start], result[:period_end]),
+              existing_fee: existing_fee
+            ).as_json
           end
         end
 
@@ -535,27 +519,6 @@ module Api
                        .where(date: range)
                        .sum(:amount)
                        .to_f
-      end
-
-      def serialize_trading_fee(fee)
-        {
-          id: fee.id,
-          investor_id: fee.investor_id,
-          investor_name: fee.investor.name,
-          investor_email: fee.investor.email,
-          applied_by_id: fee.applied_by_id,
-          applied_by_name: fee.applied_by.name,
-          period_start: fee.period_start,
-          period_end: fee.period_end,
-          profit_amount: fee.profit_amount,
-          fee_percentage: fee.fee_percentage,
-          fee_amount: fee.fee_amount,
-          notes: fee.notes,
-          applied_at: fee.applied_at,
-          voided_at: fee.voided_at,
-          voided_by_id: fee.voided_by_id,
-          created_at: fee.created_at
-        }
       end
     end
   end

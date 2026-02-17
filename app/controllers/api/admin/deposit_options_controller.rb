@@ -8,7 +8,7 @@ module Api
         options = DepositOption.ordered
 
         render json: {
-          data: options.map { |o| serialize(o) },
+          data: options.map { |o| DepositOptionSerializer.new(o).as_json }
         }
       end
 
@@ -23,7 +23,7 @@ module Api
             target: option,
             metadata: { label: option.label, category: option.category }
           )
-          render json: { data: serialize(option) }, status: :created
+          render json: { data: DepositOptionSerializer.new(option).as_json }, status: :created
         else
           render_error(option.errors.full_messages.join(", "), status: :unprocessable_entity)
         end
@@ -38,7 +38,7 @@ module Api
             target: @deposit_option,
             metadata: { label: @deposit_option.label, category: @deposit_option.category }
           )
-          render json: { data: serialize(@deposit_option) }
+          render json: { data: DepositOptionSerializer.new(@deposit_option).as_json }
         else
           render_error(@deposit_option.errors.full_messages.join(", "), status: :unprocessable_entity)
         end
@@ -74,7 +74,7 @@ module Api
           }
         )
 
-        render json: { data: serialize(@deposit_option) }
+        render json: { data: DepositOptionSerializer.new(@deposit_option).as_json }
       end
 
       private
@@ -89,20 +89,6 @@ module Api
 
       def deposit_option_params
         params.permit(:category, :label, :currency, :active, :position, details: {})
-      end
-
-      def serialize(option)
-        {
-          id: option.id,
-          category: option.category,
-          label: option.label,
-          currency: option.currency,
-          details: option.details,
-          active: option.active,
-          position: option.position,
-          createdAt: option.created_at,
-          updatedAt: option.updated_at,
-        }
       end
     end
   end

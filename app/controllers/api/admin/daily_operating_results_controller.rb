@@ -10,8 +10,8 @@ module Api
         results = paginated_result[:records]
 
         render json: {
-          data: results.map { |r| serialize_result(r) },
-          meta: paginated_result[:pagination],
+          data: results.map { |r| DailyOperatingResultSerializer.new(r).as_json },
+          meta: paginated_result[:pagination]
         }
       end
 
@@ -47,7 +47,7 @@ module Api
             days: rs.size,
             compounded_percent: compounded.to_f,
             first_date: rs.map(&:date).min,
-            last_date: rs.map(&:date).max,
+            last_date: rs.map(&:date).max
           }
         end
 
@@ -68,7 +68,7 @@ module Api
         results = DailyOperatingResult.where(date: start_date..end_date).order(date: :desc)
 
         render json: {
-          data: results.map { |r| { id: r.id, date: r.date, percent: r.percent.to_f } },
+          data: results.map { |r| DailyOperatingResultByMonthItemSerializer.new(r).as_json }
         }
       rescue ArgumentError
         render_error('Mes inválido. Usar formato YYYY-MM', status: :unprocessable_entity)
@@ -84,7 +84,7 @@ module Api
           date: date,
           percent: percent,
           applied_by: current_user,
-          notes: params[:notes],
+          notes: params[:notes]
         )
 
         data = applicator.preview
@@ -106,12 +106,12 @@ module Api
           date: date,
           percent: percent,
           applied_by: current_user,
-          notes: params[:notes],
+          notes: params[:notes]
         )
 
         if applicator.apply
           result = DailyOperatingResult.find_by!(date: date)
-          render json: { data: serialize_result(result) }, status: :created
+          render json: { data: DailyOperatingResultSerializer.new(result).as_json }, status: :created
         else
           # Duplicado/no-backfill -> conflict
           status = applicator.errors.any? { |e| e.include?('Ya existe') } ? :conflict : :unprocessable_entity
@@ -120,22 +120,6 @@ module Api
       end
 
       private
-
-      def serialize_result(r)
-        {
-          id: r.id,
-          date: r.date,
-          percent: r.percent.to_f,
-          notes: r.notes,
-          applied_at: r.applied_at,
-          applied_by: {
-            id: r.applied_by_id,
-            email: r.applied_by&.email,
-            name: r.applied_by&.name,
-          },
-          created_at: r.created_at,
-        }
-      end
     end
   end
 end

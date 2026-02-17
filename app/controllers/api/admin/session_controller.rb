@@ -3,10 +3,7 @@ module Api
     class SessionController < BaseController
       def show
         render json: {
-          data: {
-            email: current_user.email,
-            superadmin: current_user.superadmin?
-          }
+          data: AdminSessionSerializer.new(current_user).as_json
         }
       end
     end

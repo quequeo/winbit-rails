@@ -38,16 +38,16 @@ module Api
         end
 
         render json: {
-          data: {
-            investorCount: investor_count,
-            pendingRequestCount: pending_request_count,
-            totalAum: total_aum.to_f,
-            aumSeries: aum_series(start_date: start_date, end_date: end_date),
-            strategyReturnYtdUsd: ytd_return.pnl_usd,
-            strategyReturnYtdPercent: ytd_return.twr_percent,
-            strategyReturnAllUsd: all_return.pnl_usd,
-            strategyReturnAllPercent: all_return.twr_percent,
-          },
+          data: AdminDashboardSerializer.new(
+            investor_count: investor_count,
+            pending_request_count: pending_request_count,
+            total_aum: total_aum,
+            aum_series: aum_series(start_date: start_date, end_date: end_date),
+            strategy_return_ytd_usd: ytd_return.pnl_usd,
+            strategy_return_ytd_percent: ytd_return.twr_percent,
+            strategy_return_all_usd: all_return.pnl_usd,
+            strategy_return_all_percent: all_return.twr_percent
+          ).as_json
         }
       end
 
