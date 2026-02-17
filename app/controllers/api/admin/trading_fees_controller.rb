@@ -4,8 +4,6 @@ module Api
       before_action :set_investor, only: [:calculate, :create]
       before_action :set_trading_fee, only: [:update, :destroy]
 
-      # GET /api/admin/trading_fees
-      # Lista todas las comisiones aplicadas con filtros opcionales
       def index
         fees = TradingFee.includes(:investor, :applied_by)
                          .order(applied_at: :desc)
@@ -19,8 +17,6 @@ module Api
         render json: fees.map { |fee| TradingFeeSerializer.new(fee).as_json }
       end
 
-      # GET /api/admin/trading_fees/calculate?investor_id=xxx
-      # (optional) &period_start=YYYY-MM-DD&period_end=YYYY-MM-DD
       def calculate
         start_date, end_date = extract_period_params
 
@@ -121,7 +117,6 @@ module Api
         }
       end
 
-      # POST /api/admin/trading_fees
       def create
         fee_percentage = params[:fee_percentage]&.to_f
 
@@ -172,7 +167,6 @@ module Api
           return
         end
 
-        # Evitar doble cobro del mismo período (por defecto)
         result = TradingFeeCalculator.new(@investor).calculate
         if TradingFee.active.exists?(investor_id: @investor.id, period_start: result[:period_start], period_end: result[:period_end])
           render_error('Trading fee ya aplicado para este período', status: :conflict)
@@ -207,9 +201,6 @@ module Api
         end
       end
 
-      # PATCH /api/admin/trading_fees/:id
-      # Edita una comisión ya aplicada sin re-escribir historia: crea un ajuste contable (PortfolioHistory)
-      # por la diferencia y actualiza el balance actual del inversor.
       def update
         return unless @trading_fee
 
@@ -236,7 +227,6 @@ module Api
         ApplicationRecord.transaction do
           old_fee_percentage = fee.fee_percentage.to_f
 
-          # Always persist the updated fee info, even if delta is 0 (e.g. notes fix).
           fee.update!(
             fee_percentage: fee_percentage,
             fee_amount: new_fee_amount,
@@ -253,7 +243,7 @@ module Api
             PortfolioHistory.create!(
               investor: investor,
               event: 'TRADING_FEE_ADJUSTMENT',
-              amount: (-delta).round(2), # negative => extra charge, positive => refund
+              amount: (-delta).round(2),
               previous_balance: portfolio.current_balance.to_f,
               new_balance: new_balance,
               status: 'COMPLETED',
@@ -282,9 +272,6 @@ module Api
         render_error("Error updating trading fee: #{e.message}", status: :unprocessable_entity)
       end
 
-      # DELETE /api/admin/trading_fees/:id
-      # "Elimina" (anula) una comisión aplicada: revierte el impacto en balance con un ajuste contable
-      # y marca la comisión como voided para permitir re-aplicar el período si hace falta.
       def destroy
         return unless @trading_fee
 
@@ -309,7 +296,7 @@ module Api
           PortfolioHistory.create!(
             investor: investor,
             event: 'TRADING_FEE_ADJUSTMENT',
-            amount: fee_amount.round(2), # refund
+            amount: fee_amount.round(2),
             previous_balance: portfolio.current_balance.to_f,
             new_balance: new_balance,
             status: 'COMPLETED',
@@ -339,8 +326,6 @@ module Api
         render_error("Error voiding trading fee: #{e.message}", status: :unprocessable_entity)
       end
 
-      # GET /api/admin/trading_fees/investors_summary
-      # optional: ?period_start=YYYY-MM-DD&period_end=YYYY-MM-DD
       def investors_summary
         investors = Investor.where(status: 'ACTIVE').includes(:portfolio)
 

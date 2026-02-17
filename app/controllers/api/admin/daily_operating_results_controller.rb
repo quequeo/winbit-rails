@@ -3,7 +3,6 @@ module Api
     class DailyOperatingResultsController < BaseController
       before_action :require_superadmin!, only: [:create]
 
-      # GET /api/admin/daily_operating_results
       def index
         scope = DailyOperatingResult.includes(:applied_by).order(date: :desc)
         paginated_result = paginate(scope, default_per_page: 10, max_per_page: 50)
@@ -15,7 +14,6 @@ module Api
         }
       end
 
-      # GET /api/admin/daily_operating_results/monthly_summary?months=6
       def monthly_summary
         months = params[:months].to_i
         months = 6 if months <= 0
@@ -54,7 +52,6 @@ module Api
         render json: { data: data }
       end
 
-      # GET /api/admin/daily_operating_results/by_month?month=YYYY-MM
       def by_month
         month = params[:month].to_s.strip
         unless month.match?(/^\d{4}-\d{2}$/)
@@ -75,7 +72,6 @@ module Api
       end
 
 
-      # GET /api/admin/daily_operating_results/preview?date=YYYY-MM-DD&percent=0.10
       def preview
         date = parse_date_param(params[:date])
         percent = params[:percent]
@@ -96,8 +92,6 @@ module Api
         render json: { data: data }
       end
 
-      # POST /api/admin/daily_operating_results
-      # body: { date: YYYY-MM-DD, percent: number, notes?: string }
       def create
         date = parse_date_param(params[:date])
         percent = params[:percent]
@@ -113,7 +107,6 @@ module Api
           result = DailyOperatingResult.find_by!(date: date)
           render json: { data: DailyOperatingResultSerializer.new(result).as_json }, status: :created
         else
-          # Duplicado/no-backfill -> conflict
           status = applicator.errors.any? { |e| e.include?('Ya existe') } ? :conflict : :unprocessable_entity
           render_error(applicator.errors.join(', '), status: status)
         end

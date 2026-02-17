@@ -31,13 +31,11 @@ module Api
           return render_error('Invalid request data', status: :bad_request)
         end
 
-        # Deposits require attachment unless the method is cash
         cash_methods = %w[CASH_ARS CASH_USD]
         if type == 'DEPOSIT' && !cash_methods.include?(method) && attachment_url.blank?
           return render_error('Attachment is required for non-cash deposits', status: :bad_request)
         end
 
-        # Withdrawal validation: balance must be sufficient
         if type == 'WITHDRAWAL'
           if investor.portfolio.nil?
             return render_error('No portfolio found', status: :bad_request)
@@ -64,7 +62,6 @@ module Api
           return render_error('Invalid request data', status: :bad_request, details: req.errors.to_hash)
         end
 
-        # Send notification emails
         begin
           if req.request_type == 'DEPOSIT'
             InvestorMailer.deposit_created(investor, req).deliver_later
@@ -75,7 +72,6 @@ module Api
           end
         rescue => e
           Rails.logger.error("Failed to send email notification: #{e.message}")
-          # Continue even if email fails - don't block the request creation
         end
 
         render json: {

@@ -31,7 +31,6 @@ module Api
         return unless investor
         return unless require_active_investor!(investor, message: 'Investor is not active')
 
-        # Portfolio histories (completed movements)
         fees = investor.trading_fees.order(applied_at: :desc).to_a
 
         histories = investor.portfolio_histories.order(date: :desc).map { |h|
@@ -43,7 +42,6 @@ module Api
               extra[:tradingFeePeriodLabel] = quarter_label(fee.period_end)
               extra[:tradingFeePeriodStart] = fee.period_start
               extra[:tradingFeePeriodEnd] = fee.period_end
-              # Calculate original % from history amount (fee may have been updated since)
               profit = fee.profit_amount.to_f
               extra[:tradingFeePercentage] = profit.positive? ? (h.amount.to_f.abs / profit * 100).round(2) : fee.fee_percentage.to_f
             end
@@ -60,12 +58,10 @@ module Api
           PublicPortfolioHistoryItemSerializer.new(h, extra: extra).as_json
         }
 
-        # Pending and rejected requests
         requests = investor.investor_requests.where(status: ['PENDING', 'REJECTED']).order(requested_at: :desc).map { |r|
           PublicPendingRequestHistoryItemSerializer.new(r).as_json
         }
 
-        # Combine and sort by date
         combined = (histories + requests).sort_by { |item| item[:date] }.reverse
 
         render json: { data: combined }
@@ -82,7 +78,6 @@ module Api
       def find_trading_fee_for_history(fees, history)
         ts = history.date.to_time.to_i
 
-        # Match by applied_at proximity (amount may have changed if fee was later edited)
         fees.find do |f|
           (f.applied_at.to_i - ts).abs <= 600
         end
@@ -91,7 +86,6 @@ module Api
       def find_trading_fee_for_adjustment(fees, history)
         ts = history.date.to_time.to_i
 
-        # Match by updated_at or voided_at proximity (adjustments are created when fees are edited/voided)
         fees.find do |f|
           (f.updated_at.to_i - ts).abs <= 600 || (f.voided_at && (f.voided_at.to_i - ts).abs <= 600)
         end
