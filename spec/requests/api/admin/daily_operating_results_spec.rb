@@ -142,9 +142,21 @@ RSpec.describe 'Admin Daily Operating Results API', type: :request do
 
     it 'allows creating a past date even when a later date exists' do
       DailyOperatingResult.create!(date: Date.new(2025, 6, 10), percent: 0.1, applied_by: admin, applied_at: Time.current)
+      target_date = Date.new(2025, 6, 9)
+      at_time = Time.zone.local(target_date.year, target_date.month, target_date.day, 17, 0, 0)
+      create_investor_with_balance(balance: 1000, at_time: at_time)
 
       post '/api/admin/daily_operating_results', params: { date: '2025-06-09', percent: 1.0 }
       expect(response).to have_http_status(:created)
+    end
+
+    it 'returns 422 when no active investors have capital at that date' do
+      post '/api/admin/daily_operating_results', params: { date: '2025-06-11', percent: 1.0 }
+
+      expect(response).to have_http_status(:unprocessable_content)
+      json = JSON.parse(response.body)
+      expect(json['error']).to include('No hay inversores activos con capital')
+      expect(DailyOperatingResult.find_by(date: Date.new(2025, 6, 11))).to be_nil
     end
   end
 end

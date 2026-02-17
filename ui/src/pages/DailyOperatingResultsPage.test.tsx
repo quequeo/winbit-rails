@@ -68,5 +68,38 @@ describe('DailyOperatingResultsPage', () => {
       )
     })
   })
+
+  it('disables apply when preview has zero impacted investors', async () => {
+    const user = userEvent.setup()
+    vi.mocked(api.previewDailyOperatingResult).mockResolvedValueOnce({
+      data: {
+        date: '2025-10-07',
+        percent: 0.01,
+        investors_count: 0,
+        total_before: 0,
+        total_delta: 0,
+        total_after: 0,
+        investors: [],
+      },
+    })
+
+    render(<DailyOperatingResultsPage />)
+
+    const percentInput = screen.getByPlaceholderText('Ej: 0,10')
+    await user.clear(percentInput)
+    await user.type(percentInput, '0,01')
+
+    const previewBtn = screen.getByRole('button', { name: /Previsualizar/i })
+    await user.click(previewBtn)
+
+    await waitFor(() => {
+      expect(screen.getByText('Preview')).toBeInTheDocument()
+    })
+
+    const applyBtn = screen.getByRole('button', { name: 'Aplicar' })
+    expect(applyBtn).toBeDisabled()
+    expect(screen.getByText(/No hay inversores activos con capital para esa fecha/i)).toBeInTheDocument()
+    expect(api.createDailyOperatingResult).not.toHaveBeenCalled()
+  })
 })
 

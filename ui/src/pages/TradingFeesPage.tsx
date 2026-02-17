@@ -854,7 +854,7 @@ export const TradingFeesPage = () => {
       </div>
 
       {detailModal ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/15 p-4">
           <div className="w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl">
             <div className="flex items-start justify-between border-b border-gray-100 px-5 py-4">
               <div>
@@ -922,7 +922,7 @@ export const TradingFeesPage = () => {
       ) : null}
 
       {confirmModal ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/15 p-4">
           <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
             <h2 className="mb-4 text-xl font-bold text-gray-900">¿Aplicar comisión?</h2>
 
@@ -994,7 +994,7 @@ export const TradingFeesPage = () => {
       ) : null}
 
       {editModal ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/15 p-4">
           <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
             <h2 className="mb-4 text-xl font-bold text-gray-900">Editar comisión aplicada</h2>
 
