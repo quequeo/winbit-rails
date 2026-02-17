@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_16_173617) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_17_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -46,6 +46,21 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_16_173617) do
     t.datetime "updated_at", null: false
     t.index ["applied_at"], name: "index_daily_operating_results_on_applied_at"
     t.index ["date"], name: "index_daily_operating_results_on_date", unique: true
+  end
+
+  create_table "deposit_options", id: :string, force: :cascade do |t|
+    t.string "category", null: false
+    t.string "label", null: false
+    t.string "currency", null: false
+    t.jsonb "details", default: {}, null: false
+    t.boolean "active", default: true, null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["active", "position"], name: "index_deposit_options_on_active_and_position"
+    t.index ["category"], name: "index_deposit_options_on_category"
+    t.check_constraint "category::text = ANY (ARRAY['CASH_ARS'::character varying, 'CASH_USD'::character varying, 'BANK_ARS'::character varying, 'LEMON'::character varying, 'CRYPTO'::character varying, 'SWIFT'::character varying]::text[])", name: "deposit_options_category_check"
+    t.check_constraint "currency::text = ANY (ARRAY['ARS'::character varying, 'USD'::character varying, 'USDT'::character varying, 'USDC'::character varying]::text[])", name: "deposit_options_currency_check"
   end
 
   create_table "investors", id: :string, force: :cascade do |t|
