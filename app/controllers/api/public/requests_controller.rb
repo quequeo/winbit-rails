@@ -79,21 +79,7 @@ module Api
         end
 
         render json: {
-          data: {
-            id: req.id,
-            investorId: req.investor_id,
-            type: req.request_type,
-            amount: req.amount.to_f,
-            method: req.method,
-            status: req.status,
-            lemontag: req.lemontag,
-            transactionHash: req.transaction_hash,
-            network: req.network,
-            notes: req.notes,
-            attachmentUrl: req.attachment_url,
-            requestedAt: req.requested_at,
-            processedAt: req.processed_at,
-          },
+          data: PublicRequestSerializer.new(req).as_json
         }, status: :created
       end
     end

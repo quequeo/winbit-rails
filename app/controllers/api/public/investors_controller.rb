@@ -14,30 +14,14 @@ module Api
         ytd_return = TimeWeightedReturnCalculator.for_investor(investor_id: investor.id, from: year_start, to: now)
         all_return = TimeWeightedReturnCalculator.for_investor(investor_id: investor.id, from: nil, to: now)
 
-        response = {
-          investor: {
-            email: investor.email,
-            name: format_name(investor.name),
-          },
-          portfolio: investor.portfolio ? {
-            currentBalance: investor.portfolio.current_balance.to_f,
-            totalInvested: investor.portfolio.total_invested.to_f,
-            accumulatedReturnUSD: investor.portfolio.accumulated_return_usd.to_f,
-            accumulatedReturnPercent: investor.portfolio.accumulated_return_percent.to_f,
-            annualReturnUSD: investor.portfolio.annual_return_usd.to_f,
-            annualReturnPercent: investor.portfolio.annual_return_percent.to_f,
-            # Strategy return (TWR) - main metric for the portal
-            strategyReturnYtdUSD: ytd_return.pnl_usd,
-            strategyReturnYtdPercent: ytd_return.twr_percent,
-            strategyReturnYtdFrom: ytd_return.effective_start_at&.to_date&.strftime('%Y-%m-%d'),
-            strategyReturnAllUSD: all_return.pnl_usd,
-            strategyReturnAllPercent: all_return.twr_percent,
-            strategyReturnAllFrom: all_return.effective_start_at&.to_date&.strftime('%Y-%m-%d'),
-            updatedAt: investor.portfolio.updated_at,
-          } : nil,
+        render json: {
+          data: PublicInvestorShowSerializer.new(
+            investor: investor,
+            formatted_name: format_name(investor.name),
+            ytd_return: ytd_return,
+            all_return: all_return
+          ).as_json
         }
-
-        render json: { data: response }
       end
 
       def history
@@ -51,57 +35,34 @@ module Api
         fees = investor.trading_fees.order(applied_at: :desc).to_a
 
         histories = investor.portfolio_histories.order(date: :desc).map { |h|
-          item = {
-            id: h.id,
-            investorId: h.investor_id,
-            date: h.date,
-            event: h.event,
-            amount: h.amount.to_f,
-            previousBalance: h.previous_balance.to_f,
-            newBalance: h.new_balance.to_f,
-            status: h.status,
-            createdAt: h.created_at,
-          }
+          extra = {}
 
           if h.event == 'TRADING_FEE'
             fee = find_trading_fee_for_history(fees, h)
             if fee
-              item[:tradingFeePeriodLabel] = quarter_label(fee.period_end)
-              item[:tradingFeePeriodStart] = fee.period_start
-              item[:tradingFeePeriodEnd] = fee.period_end
+              extra[:tradingFeePeriodLabel] = quarter_label(fee.period_end)
+              extra[:tradingFeePeriodStart] = fee.period_start
+              extra[:tradingFeePeriodEnd] = fee.period_end
               # Calculate original % from history amount (fee may have been updated since)
               profit = fee.profit_amount.to_f
-              item[:tradingFeePercentage] = profit.positive? ? (h.amount.to_f.abs / profit * 100).round(2) : fee.fee_percentage.to_f
+              extra[:tradingFeePercentage] = profit.positive? ? (h.amount.to_f.abs / profit * 100).round(2) : fee.fee_percentage.to_f
             end
           end
 
           if h.event == 'TRADING_FEE_ADJUSTMENT'
             fee = find_trading_fee_for_adjustment(fees, h)
             if fee
-              item[:tradingFeePeriodLabel] = quarter_label(fee.period_end)
-              item[:tradingFeePercentage] = fee.fee_percentage.to_f
+              extra[:tradingFeePeriodLabel] = quarter_label(fee.period_end)
+              extra[:tradingFeePercentage] = fee.fee_percentage.to_f
             end
           end
 
-          item
+          PublicPortfolioHistoryItemSerializer.new(h, extra: extra).as_json
         }
 
         # Pending and rejected requests
         requests = investor.investor_requests.where(status: ['PENDING', 'REJECTED']).order(requested_at: :desc).map { |r|
-          {
-            id: "request_#{r.id}",
-            investorId: r.investor_id,
-            date: r.requested_at,
-            event: r.request_type,
-            amount: r.amount.to_f,
-            previousBalance: nil,
-            newBalance: nil,
-            status: r.status,
-            createdAt: r.requested_at,
-            method: r.method,
-            network: r.network,
-            notes: r.notes,
-          }
+          PublicPendingRequestHistoryItemSerializer.new(r).as_json
         }
 
         # Combine and sort by date

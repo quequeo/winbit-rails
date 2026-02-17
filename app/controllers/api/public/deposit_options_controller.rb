@@ -6,16 +6,7 @@ module Api
         options = DepositOption.active.ordered
 
         render json: {
-          data: options.map { |o|
-            {
-              id: o.id,
-              category: o.category,
-              label: o.label,
-              currency: o.currency,
-              details: o.details,
-              position: o.position,
-            }
-          },
+          data: options.map { |o| PublicDepositOptionSerializer.new(o).as_json }
         }
       end
     end
