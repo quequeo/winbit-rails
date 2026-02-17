@@ -99,6 +99,7 @@ class DailyOperatingResultApplicator
   def validate_inputs
     @errors << 'Date is required' if date.blank?
     @errors << 'Applied by user is required' if applied_by.blank?
+    @errors << 'No se puede cargar operativa diaria con fecha futura' if date.present? && date > Date.current
 
     # No duplicados
     if date.present? && DailyOperatingResult.exists?(date: date)

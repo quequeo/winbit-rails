@@ -73,10 +73,15 @@ export const DailyOperatingResultsPage = () => {
   };
 
   const isValidISODate = (v: string) => /^\d{4}-\d{2}-\d{2}$/.test(v);
+  const isFutureDate = (v: string) => v > todayISO();
 
   const runPreview = async () => {
     if (!date || !isValidISODate(date)) {
       showAlert('Fecha inválida', 'Usá el selector de fecha (formato YYYY-MM-DD).');
+      return;
+    }
+    if (isFutureDate(date)) {
+      showAlert('Fecha inválida', 'No se puede cargar operativa diaria con fecha futura.');
       return;
     }
     if (parsedPercent === null) {
