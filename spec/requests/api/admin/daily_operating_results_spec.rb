@@ -43,6 +43,22 @@ RSpec.describe 'Admin Daily Operating Results API', type: :request do
       expect(json['meta']['per_page']).to eq(1)
       expect(json['meta']['total']).to eq(2)
     end
+
+    it 'includes notes in list payload' do
+      DailyOperatingResult.create!(
+        date: Date.new(2025, 6, 3),
+        percent: 0.2,
+        notes: 'Operativa con volatilidad alta',
+        applied_by: admin,
+        applied_at: Time.current
+      )
+
+      get '/api/admin/daily_operating_results'
+
+      expect(response).to have_http_status(:ok)
+      json = JSON.parse(response.body)
+      expect(json['data'].first['notes']).to eq('Operativa con volatilidad alta')
+    end
   end
 
   describe 'GET /api/admin/daily_operating_results/monthly_summary' do
@@ -69,7 +85,7 @@ RSpec.describe 'Admin Daily Operating Results API', type: :request do
     end
 
     it 'returns results ordered desc for that month' do
-      DailyOperatingResult.create!(date: Date.new(2025, 6, 2), percent: 0.1, applied_by: admin, applied_at: Time.current)
+      DailyOperatingResult.create!(date: Date.new(2025, 6, 2), percent: 0.1, notes: 'Segundo día', applied_by: admin, applied_at: Time.current)
       DailyOperatingResult.create!(date: Date.new(2025, 6, 1), percent: -0.1, applied_by: admin, applied_at: Time.current)
 
       get '/api/admin/daily_operating_results/by_month', params: { month: '2025-06' }
@@ -78,6 +94,7 @@ RSpec.describe 'Admin Daily Operating Results API', type: :request do
       json = JSON.parse(response.body)
       expect(json['data'].first['date']).to eq('2025-06-02')
       expect(json['data'].last['date']).to eq('2025-06-01')
+      expect(json['data'].first['notes']).to eq('Segundo día')
     end
   end
 

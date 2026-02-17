@@ -7,7 +7,8 @@ class DailyOperatingResultByMonthItemSerializer
     {
       id: result.id,
       date: result.date,
-      percent: result.percent.to_f
+      percent: result.percent.to_f,
+      notes: result.notes
     }
   end
 
