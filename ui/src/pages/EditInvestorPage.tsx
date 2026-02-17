@@ -17,6 +17,7 @@ export const EditInvestorPage = () => {
     name: '',
     status: 'ACTIVE' as 'ACTIVE' | 'INACTIVE',
     tradingFeeFrequency: 'QUARTERLY' as 'MONTHLY' | 'QUARTERLY' | 'SEMESTRAL' | 'ANNUAL',
+    tradingFeePercentage: '30',
     newPassword: '',
   });
 
@@ -32,6 +33,7 @@ export const EditInvestorPage = () => {
             name: inv.name,
             status: inv.status || 'ACTIVE',
             tradingFeeFrequency: inv.tradingFeeFrequency || 'QUARTERLY',
+            tradingFeePercentage: String(inv.tradingFeePercentage ?? 30),
             newPassword: '',
           });
         } else {
@@ -50,11 +52,18 @@ export const EditInvestorPage = () => {
     if (!id) return;
     setSubmitting(true);
     try {
+      const pct = Number(form.tradingFeePercentage);
+      if (!Number.isFinite(pct) || pct <= 0 || pct > 100) {
+        alert('El porcentaje debe estar entre 0 y 100');
+        return;
+      }
+
       const body: any = {
         email: form.email,
         name: form.name,
         status: form.status,
         trading_fee_frequency: form.tradingFeeFrequency,
+        trading_fee_percentage: pct,
       };
       if (form.newPassword) body.password = form.newPassword;
       await api.updateInvestor(id, body);
@@ -128,6 +137,18 @@ export const EditInvestorPage = () => {
                 { value: 'SEMESTRAL', label: 'Semestral' },
                 { value: 'ANNUAL', label: 'Anual' },
               ]}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Trading fee (%)</label>
+            <Input
+              type="number"
+              min={0}
+              max={100}
+              step="0.1"
+              value={form.tradingFeePercentage}
+              onChange={(e) => setForm({ ...form, tradingFeePercentage: e.target.value })}
             />
           </div>
 

@@ -25,6 +25,7 @@ describe('TradingFeesPage', () => {
       investor_name: 'Investor One',
       investor_email: 'one@test.com',
       trading_fee_frequency: 'QUARTERLY',
+      investor_trading_fee_percentage: 35,
       current_balance: 1080,
       period_start: '2025-10-01',
       period_end: '2025-12-31',
@@ -41,6 +42,7 @@ describe('TradingFeesPage', () => {
       investor_name: 'Investor Two',
       investor_email: 'two@test.com',
       trading_fee_frequency: 'ANNUAL',
+      investor_trading_fee_percentage: 27.5,
       current_balance: 5000,
       period_start: '2025-01-01',
       period_end: '2025-12-31',
@@ -82,6 +84,20 @@ describe('TradingFeesPage', () => {
 
     expect(screen.getAllByText('Investor One').length).toBeGreaterThan(0)
     expect(screen.queryByText('Investor Two')).not.toBeInTheDocument()
+  })
+
+  it('uses investor default percentage on non-applied rows', async () => {
+    vi.mocked(api.getTradingFeesSummary).mockResolvedValue(mockRows)
+
+    render(<TradingFeesPage />)
+
+    await waitFor(() => {
+      expect(screen.getAllByText('Investor Two').length).toBeGreaterThan(0)
+    })
+
+    const pctInputs = screen.getAllByRole('spinbutton') as HTMLInputElement[]
+    const investorTwoInput = pctInputs.find((el) => el.value === '27.5')
+    expect(investorTwoInput).toBeDefined()
   })
 
   it('opens edit modal and calls update', async () => {

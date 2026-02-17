@@ -9,7 +9,7 @@ module Api
         investor = find_investor_by_id(id: permitted.fetch(:investor_id))
         return unless investor
 
-        requested_at = permitted[:requested_at].presence
+        requested_at = permitted[:requested_at].presence || permitted[:processed_at].presence
         processed_at = permitted[:processed_at].presence
         status_param = (permitted[:status] || 'PENDING').to_s
 

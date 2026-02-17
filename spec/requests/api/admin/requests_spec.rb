@@ -51,4 +51,26 @@ RSpec.describe 'Admin requests', type: :request do
     req.reload
     expect(req.status).to eq('REJECTED')
   end
+
+  it 'POST /api/admin/requests uses provided past date for request and processing' do
+    investor = Investor.create!(email: 'c@example.com', name: 'c', status: 'ACTIVE')
+    Portfolio.create!(investor_id: investor.id, current_balance: 100, total_invested: 100)
+
+    post '/api/admin/requests', params: {
+      investor_id: investor.id,
+      request_type: 'DEPOSIT',
+      method: 'USDT',
+      amount: 50,
+      status: 'APPROVED',
+      processed_at: '2025-01-10',
+    }
+
+    expect(response).to have_http_status(:created)
+    req_id = JSON.parse(response.body).dig('data', 'id')
+    req = InvestorRequest.find(req_id)
+
+    expect(req.status).to eq('APPROVED')
+    expect(req.requested_at.to_date).to eq(Date.new(2025, 1, 10))
+    expect(req.processed_at.to_date).to eq(Date.new(2025, 1, 10))
+  end
 end

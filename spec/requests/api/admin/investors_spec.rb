@@ -72,6 +72,7 @@ RSpec.describe 'Admin Investors API', type: :request do
       expect(investor.email).to eq('new@test.com')
       expect(investor.name).to eq('New Investor')
       expect(investor.status).to eq('ACTIVE')
+      expect(investor.trading_fee_percentage.to_f).to eq(30.0)
       expect(investor.portfolio).to be_present
       expect(investor.portfolio.current_balance).to eq(0)
     end
@@ -126,11 +127,14 @@ RSpec.describe 'Admin Investors API', type: :request do
       patch "/api/admin/investors/#{investor.id}", params: {
         email: investor.email,
         name: investor.name,
-        status: 'INACTIVE'
+        status: 'INACTIVE',
+        trading_fee_percentage: 25
       }
 
       expect(response).to have_http_status(:no_content)
-      expect(investor.reload.status).to eq('INACTIVE')
+      investor.reload
+      expect(investor.status).to eq('INACTIVE')
+      expect(investor.trading_fee_percentage.to_f).to eq(25.0)
     end
 
     it 'returns error when investor not found' do

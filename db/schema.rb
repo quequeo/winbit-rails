@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_18_090000) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_18_090001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -71,10 +71,12 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_18_090000) do
     t.datetime "updated_at", null: false
     t.string "trading_fee_frequency", default: "QUARTERLY", null: false
     t.string "password_digest"
+    t.decimal "trading_fee_percentage", precision: 5, scale: 2, default: "30.0", null: false
     t.index ["email"], name: "index_investors_on_email", unique: true
     t.index ["trading_fee_frequency"], name: "index_investors_on_trading_fee_frequency"
     t.check_constraint "status::text = ANY (ARRAY['ACTIVE'::character varying::text, 'INACTIVE'::character varying::text])", name: "investors_status_check"
     t.check_constraint "trading_fee_frequency::text = ANY (ARRAY['MONTHLY'::character varying, 'QUARTERLY'::character varying, 'SEMESTRAL'::character varying, 'ANNUAL'::character varying]::text[])", name: "investors_trading_fee_frequency_check"
+    t.check_constraint "trading_fee_percentage > 0::numeric AND trading_fee_percentage <= 100::numeric", name: "investors_trading_fee_percentage_check"
   end
 
   create_table "payment_methods", force: :cascade do |t|

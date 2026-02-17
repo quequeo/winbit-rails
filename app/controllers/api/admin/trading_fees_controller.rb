@@ -53,7 +53,7 @@ module Api
             return
           end
 
-          fee_percentage = params[:fee_percentage]&.to_f || 30.0
+          fee_percentage = params[:fee_percentage].present? ? params[:fee_percentage].to_f : @investor.trading_fee_percentage.to_f
           fee_amount = (profit_amount * (fee_percentage / 100.0)).round(2)
 
           render json: {
@@ -103,7 +103,7 @@ module Api
           return
         end
 
-        fee_percentage = params[:fee_percentage]&.to_f || 30.0
+        fee_percentage = params[:fee_percentage].present? ? params[:fee_percentage].to_f : @investor.trading_fee_percentage.to_f
         fee_amount = (result[:profit_amount] * (fee_percentage / 100.0)).round(2)
 
         render json: {
@@ -121,9 +121,9 @@ module Api
       end
 
       def create
-        fee_percentage = params[:fee_percentage]&.to_f
+        fee_percentage = params[:fee_percentage].present? ? params[:fee_percentage].to_f : @investor.trading_fee_percentage.to_f
 
-        if fee_percentage.blank? || fee_percentage <= 0 || fee_percentage > 100
+        if fee_percentage <= 0 || fee_percentage > 100
           render_error('El porcentaje debe estar entre 0 y 100', status: :unprocessable_entity)
           return
         end

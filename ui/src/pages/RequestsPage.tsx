@@ -73,6 +73,9 @@ export const RequestsPage = () => {
         amount: Number(formData.amount),
       };
 
+      if (payload.processed_at) {
+        payload.requested_at = payload.processed_at;
+      }
       if (!payload.network) delete payload.network;
       if (!payload.processed_at) delete payload.processed_at;
 

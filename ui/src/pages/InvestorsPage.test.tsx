@@ -28,6 +28,7 @@ describe('InvestorsPage', () => {
         name: 'Investor One',
         status: 'ACTIVE',
         tradingFeeFrequency: 'QUARTERLY',
+        tradingFeePercentage: 30,
         hasPassword: false,
         portfolio: { currentBalance: 1000, totalInvested: 800 },
       },
@@ -37,6 +38,7 @@ describe('InvestorsPage', () => {
         name: 'Investor Two',
         status: 'INACTIVE',
         tradingFeeFrequency: 'ANNUAL',
+        tradingFeePercentage: 25,
         hasPassword: true,
         portfolio: { currentBalance: 500, totalInvested: 400 },
       },
@@ -126,6 +128,7 @@ describe('InvestorsPage', () => {
         expect(api.createInvestor).toHaveBeenCalledWith({
           email: 'new@test.com',
           name: 'New Investor',
+          trading_fee_percentage: 30,
         });
       });
 

@@ -139,6 +139,26 @@ RSpec.describe 'Admin Trading Fees API', type: :request do
       expect(json['already_applied']).to eq(false)
     end
 
+    it 'uses investor default trading fee percentage when fee_percentage is not sent' do
+      inv = create_investor_with_portfolio(email: 'inv_default_fee@test.com')
+      inv.update!(trading_fee_percentage: 22.5)
+      inv.portfolio.update!(current_balance: 1100, total_invested: 1000)
+
+      add_history(inv: inv, event: 'DEPOSIT', amount: 1000, date: Time.zone.local(2025, 10, 1, 19, 0, 0), prev: 0, newb: 1000)
+      add_history(inv: inv, event: 'OPERATING_RESULT', amount: 100, date: Time.zone.local(2025, 11, 10, 17, 0, 0), prev: 1000, newb: 1100)
+
+      get '/api/admin/trading_fees/calculate', params: {
+        investor_id: inv.id,
+        period_start: '2025-10-01',
+        period_end: '2025-12-31',
+      }
+
+      expect(response).to have_http_status(:ok)
+      json = JSON.parse(response.body)
+      expect(json['fee_percentage'].to_f).to eq(22.5)
+      expect(json['fee_amount'].to_f).to eq(22.5)
+    end
+
     it 'returns 409 when fee already exists for that period' do
       inv = create_investor_with_portfolio(email: 'inv4@test.com')
 
@@ -284,6 +304,7 @@ RSpec.describe 'Admin Trading Fees API', type: :request do
   describe 'GET /api/admin/trading_fees/investors_summary' do
     it 'returns active investors with invested > 0 and monthly breakdown' do
       inv1 = create_investor_with_portfolio(email: 'sum1@test.com')
+      inv1.update!(trading_fee_percentage: 22.5)
       inv2 = create_investor_with_portfolio(email: 'sum2@test.com')
 
       # inv1 invested + profits
@@ -307,6 +328,7 @@ RSpec.describe 'Admin Trading Fees API', type: :request do
       row = json.first
       expect(row['profit_amount']).to eq(15.0)
       expect(row['has_profit']).to eq(true)
+      expect(row['investor_trading_fee_percentage']).to eq(22.5)
       expect(row['monthly_profits']).to be_an(Array)
       months = row['monthly_profits'].map { |m| m['month'] }
       expect(months).to include('2025-10', '2025-11', '2025-12')
