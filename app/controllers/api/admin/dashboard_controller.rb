@@ -10,7 +10,6 @@ module Api
         end_date = Date.current
         now = Time.current
 
-        # Strategy return (TWR) - YTD and All-time (since first record)
         ytd_from = Time.zone.local(end_date.year, 1, 1, 0, 0, 0)
         all_from = PortfolioHistory.where(status: 'COMPLETED').minimum(:date)
 
@@ -19,7 +18,6 @@ module Api
 
         days_param = params[:days].to_s.strip
 
-        # days=0 => "Todo desde el inicio" (desde el primer movimiento), con un cap de seguridad.
         if days_param == '0'
           earliest = PortfolioHistory.where(status: 'COMPLETED').minimum(:date)&.to_date
           start_date = earliest || (end_date - 89)
@@ -53,15 +51,12 @@ module Api
 
       private
 
-      # Returns daily total AUM snapshots for the given date range (inclusive).
-      # If there is no PortfolioHistory yet, fall back to a flat series based on current Portfolio balances.
       def aum_series(start_date:, end_date:)
         start_date = start_date.to_date
         end_date = end_date.to_date
 
         active_ids = Investor.where(status: 'ACTIVE').pluck(:id)
 
-        # If we don't have any movements yet, show a flat line.
         unless PortfolioHistory.where(status: 'COMPLETED', investor_id: active_ids).exists?
           current = Portfolio.where(investor_id: active_ids).sum(:current_balance).to_f
           return (start_date..end_date).map { |d| { date: d.strftime('%Y-%m-%d'), totalAum: current } }
@@ -75,7 +70,6 @@ module Api
         balances = {}
         total = 0.0
 
-        # Initialize balances at range start from the last known balance before the range.
         initial_rows = PortfolioHistory
                        .where(status: 'COMPLETED', investor_id: investor_ids)
                        .where('date < ?', range_start_time)
