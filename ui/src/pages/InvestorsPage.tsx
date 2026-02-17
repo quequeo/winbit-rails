@@ -19,8 +19,6 @@ export const InvestorsPage = () => {
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({ email: '', name: '', password: '' });
   const [submitting, setSubmitting] = useState(false);
-  const [sortBy, setSortBy] = useState<string>('name');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; investor: any | null }>({
     isOpen: false,
     investor: null,
@@ -28,15 +26,14 @@ export const InvestorsPage = () => {
 
   const fetchInvestors = () => {
     api
-      .getAdminInvestors({ sort_by: sortBy, sort_order: sortOrder })
+      .getAdminInvestors({})
       .then((res) => setData(res))
       .catch((e) => setError(e.message));
   };
 
   useEffect(() => {
     fetchInvestors();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sortBy, sortOrder]);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,20 +72,6 @@ export const InvestorsPage = () => {
     } catch (err: any) {
       alert(err.message || 'Error al cambiar status');
     }
-  };
-
-  const handleSort = (field: string) => {
-    if (sortBy === field) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortBy(field);
-      setSortOrder('desc');
-    }
-  };
-
-  const getSortIcon = (field: string) => {
-    if (sortBy !== field) return '↕️';
-    return sortOrder === 'asc' ? '↑' : '↓';
   };
 
   if (error) return <div className="text-red-600">{error}</div>;
@@ -221,18 +204,10 @@ export const InvestorsPage = () => {
           <table className="min-w-full">
             <thead>
               <tr className="text-left text-sm text-gray-500 border-b border-gray-200">
-                <th className="pb-3 pr-4">
-                  <button onClick={() => handleSort('name')} className="flex items-center gap-1 hover:text-gray-700">
-                    Nombre <span className="text-xs">{getSortIcon('name')}</span>
-                  </button>
-                </th>
+                <th className="pb-3 pr-4">Nombre</th>
                 <th className="pb-3 pr-4">Email</th>
                 <th className="pb-3 pr-4 text-center">Status</th>
-                <th className="pb-3 pr-4 text-right">
-                  <button onClick={() => handleSort('balance')} className="flex items-center gap-1 hover:text-gray-700 ml-auto">
-                    Capital Actual <span className="text-xs">{getSortIcon('balance')}</span>
-                  </button>
-                </th>
+                <th className="pb-3 pr-4 text-right">Capital Actual</th>
                 <th className="pb-3 pr-4 text-center">Fee</th>
                 <th className="pb-3 pr-4 text-center">Auth</th>
                 <th className="pb-3 text-right">Acciones</th>

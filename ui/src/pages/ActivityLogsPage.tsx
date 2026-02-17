@@ -71,13 +71,12 @@ export const ActivityLogsPage = () => {
   };
 
   const getActionBadgeColor = (action: string) => {
-    if (action.includes('approve')) return 'bg-green-100 text-green-800';
-    if (action.includes('reject')) return 'bg-red-100 text-red-800';
-    if (action.includes('delete') || action.includes('deactivate'))
+    if (action.includes('approve') || action.includes('activate')) return 'bg-green-100 text-green-800';
+    if (action.includes('reject') || action.includes('delete') || action.includes('deactivate') || action.includes('void'))
       return 'bg-red-100 text-red-800';
-    if (action.includes('create')) return 'bg-blue-100 text-blue-800';
-    if (action.includes('update')) return 'bg-yellow-100 text-yellow-800';
-    if (action.includes('activate')) return 'bg-green-100 text-green-800';
+    if (action.includes('create') || action.includes('apply')) return 'bg-blue-100 text-blue-800';
+    if (action.includes('update') || action.includes('toggle')) return 'bg-yellow-100 text-yellow-800';
+    if (action.includes('distribute')) return 'bg-purple-100 text-purple-800';
     return 'bg-gray-100 text-gray-800';
   };
 
@@ -114,12 +113,20 @@ export const ActivityLogsPage = () => {
               { value: '', label: 'Todas las acciones' },
               { value: 'approve_request', label: 'Aprobar solicitud' },
               { value: 'reject_request', label: 'Rechazar solicitud' },
-              { value: 'update_portfolio', label: 'Actualizar portfolio' },
               { value: 'create_investor', label: 'Crear inversor' },
               { value: 'update_investor', label: 'Actualizar inversor' },
               { value: 'deactivate_investor', label: 'Desactivar inversor' },
               { value: 'activate_investor', label: 'Activar inversor' },
               { value: 'delete_investor', label: 'Eliminar inversor' },
+              { value: 'apply_referral_commission', label: 'Comisión por referido' },
+              { value: 'apply_trading_fee', label: 'Trading fee aplicado' },
+              { value: 'update_trading_fee', label: 'Trading fee actualizado' },
+              { value: 'void_trading_fee', label: 'Trading fee anulado' },
+              { value: 'create_deposit_option', label: 'Opción depósito creada' },
+              { value: 'update_deposit_option', label: 'Opción depósito actualizada' },
+              { value: 'delete_deposit_option', label: 'Opción depósito eliminada' },
+              { value: 'toggle_deposit_option', label: 'Opción depósito activada/desactivada' },
+              { value: 'distribute_profit', label: 'Ganancias distribuidas' },
               { value: 'create_admin', label: 'Crear admin' },
               { value: 'update_admin', label: 'Actualizar admin' },
               { value: 'delete_admin', label: 'Eliminar admin' },
@@ -190,6 +197,9 @@ export const ActivityLogsPage = () => {
                         request_type: 'Tipo',
                         method: 'Método',
                         network: 'Red',
+                        label: 'Etiqueta',
+                        category: 'Categoría',
+                        active: 'Activo',
                       };
 
                       const label = labelMap[key] || key;
@@ -198,9 +208,11 @@ export const ActivityLogsPage = () => {
                         <div key={key} className="text-xs">
                           <span className="font-medium text-gray-700">{label}:</span>{' '}
                           <span className="text-gray-600">
-                            {typeof value === 'number' && key === 'amount'
+                            {typeof value === 'number' && (key === 'amount' || key === 'from' || key === 'to')
                               ? `$${value.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                              : String(value)}
+                              : typeof value === 'boolean'
+                                ? value ? 'Sí' : 'No'
+                                : String(value)}
                           </span>
                         </div>
                       );

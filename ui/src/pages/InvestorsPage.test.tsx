@@ -78,35 +78,13 @@ describe('InvestorsPage', () => {
       });
     });
 
-    it('calls API with sort parameters when sorting column headers are clicked', async () => {
+    it('fetches investors on mount', async () => {
       vi.mocked(api.getAdminInvestors).mockResolvedValue(mockInvestors);
 
       renderWithRouter(<InvestorsPage />);
 
       await waitFor(() => {
-        expect(api.getAdminInvestors).toHaveBeenCalled();
-      });
-
-      const nameButtons = screen.getAllByText(/Nombre/i);
-      const nameButton = nameButtons.find((el) => el.closest('button'))?.closest('button');
-
-      expect(nameButton).toBeDefined();
-      fireEvent.click(nameButton!);
-
-      await waitFor(() => {
-        expect(api.getAdminInvestors).toHaveBeenCalledWith({
-          sort_by: 'name',
-          sort_order: 'desc',
-        });
-      });
-
-      fireEvent.click(nameButton!);
-
-      await waitFor(() => {
-        expect(api.getAdminInvestors).toHaveBeenCalledWith({
-          sort_by: 'name',
-          sort_order: 'asc',
-        });
+        expect(api.getAdminInvestors).toHaveBeenCalledWith({});
       });
     });
   });

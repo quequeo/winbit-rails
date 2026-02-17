@@ -66,6 +66,20 @@ module Api
           else
             "Solicitud ##{log.target_id}"
           end
+        when 'TradingFee'
+          fee = log.target
+          if fee
+            "#{fee.investor&.name} — $#{fee.fee_amount}"
+          else
+            "Trading fee ##{log.target_id}"
+          end
+        when 'DepositOption'
+          option = log.target
+          if option
+            "#{option.category}: #{option.label}"
+          else
+            "Opción de depósito ##{log.target_id}"
+          end
         when 'User'
           log.target&.name || "Admin ##{log.target_id}"
         when 'AppSetting'

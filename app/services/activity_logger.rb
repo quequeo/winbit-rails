@@ -9,8 +9,10 @@ class ActivityLogger
     def log(user:, action:, target:, metadata: {})
       return unless user.present? && action.present? && target.present?
 
-      # Only keep relevant metadata (limit to avoid bloat)
-      clean_metadata = metadata.slice(:amount, :status, :from, :to, :reason, :request_type, :method)
+      clean_metadata = metadata.slice(
+        :amount, :status, :from, :to, :reason,
+        :request_type, :method, :label, :category, :active
+      )
 
       ActivityLog.create!(
         user: user,

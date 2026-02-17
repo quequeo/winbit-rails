@@ -156,7 +156,7 @@ module Api
             ActivityLogger.log(
               user: current_user,
               target: fee,
-              action: 'TRADING_FEE_APPLIED',
+              action: 'apply_trading_fee',
               metadata: {
                 amount: applicator.fee_amount,
                 request_type: 'TRADING_FEE',
@@ -192,7 +192,7 @@ module Api
           ActivityLogger.log(
             user: current_user,
             target: fee,
-            action: 'TRADING_FEE_APPLIED',
+            action: 'apply_trading_fee',
             metadata: {
               amount: applicator.fee_amount,
               request_type: 'TRADING_FEE',
@@ -266,16 +266,11 @@ module Api
           ActivityLogger.log(
             user: current_user,
             target: fee,
-            action: 'TRADING_FEE_UPDATED',
+            action: 'update_trading_fee',
             metadata: {
-              old_fee_percentage: old_fee_percentage,
-              new_fee_percentage: fee_percentage,
-              old_fee_amount: old_fee_amount,
-              new_fee_amount: new_fee_amount,
-              delta: delta,
-              investor_id: investor.id,
-              period_start: fee.period_start,
-              period_end: fee.period_end
+              amount: new_fee_amount,
+              from: old_fee_amount,
+              to: new_fee_amount
             }
           )
         end
@@ -328,12 +323,11 @@ module Api
           ActivityLogger.log(
             user: current_user,
             target: fee,
-            action: 'TRADING_FEE_VOIDED',
+            action: 'void_trading_fee',
             metadata: {
-              fee_amount: fee_amount,
-              investor_id: investor.id,
-              period_start: fee.period_start,
-              period_end: fee.period_end
+              amount: fee_amount,
+              from: fee_amount,
+              to: 0
             }
           )
         end
