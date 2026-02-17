@@ -5,12 +5,7 @@ module Api
 
       # GET /api/admin/settings
       def index
-        settings = {
-          investor_notifications_enabled: AppSetting.investor_notifications_enabled?,
-          investor_email_whitelist: AppSetting.investor_email_whitelist,
-        }
-
-        render json: { data: settings }
+        render json: { data: AdminSettingsSerializer.new.as_json }
       end
 
       # PATCH /api/admin/settings
@@ -60,12 +55,7 @@ module Api
           )
         end
 
-        settings = {
-          investor_notifications_enabled: AppSetting.investor_notifications_enabled?,
-          investor_email_whitelist: AppSetting.investor_email_whitelist,
-        }
-
-        render json: { data: settings }
+        render json: { data: AdminSettingsSerializer.new.as_json }
       end
     end
   end

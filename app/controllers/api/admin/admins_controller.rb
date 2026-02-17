@@ -5,17 +5,7 @@ module Api
       before_action :set_admin, only: [:update, :destroy]
 
       def index
-        admins = User.order(created_at: :desc).map do |admin|
-          {
-            id: admin.id,
-            name: admin.name,
-            email: admin.email,
-            role: admin.role,
-            notify_deposit_created: admin.notify_deposit_created,
-            notify_withdrawal_created: admin.notify_withdrawal_created,
-            created_at: admin.created_at,
-          }
-        end
+        admins = User.order(created_at: :desc).map { |admin| AdminUserSerializer.new(admin).as_json }
         render json: { data: admins }
       end
 
