@@ -1,55 +1,17 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { api } from '../lib/api';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 
-const WinbitCheckbox = ({
-  checked,
-  onChange,
-}: {
-  checked: boolean;
-  onChange: (next: boolean) => void;
-}) => {
-  return (
-    <span className="relative inline-flex h-4 w-4 items-center justify-center">
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={(e) => onChange(e.target.checked)}
-        className="peer sr-only"
-      />
-      <span className="h-4 w-4 rounded border border-gray-300 bg-white peer-checked:border-[#58b098] peer-checked:bg-[#58b098] peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#58b098]/40" />
-      <svg
-        aria-hidden
-        viewBox="0 0 20 20"
-        className="pointer-events-none absolute h-3 w-3 text-white opacity-0 peer-checked:opacity-100"
-        fill="currentColor"
-      >
-        <path
-          fillRule="evenodd"
-          d="M16.704 5.29a1 1 0 010 1.414l-7.5 7.5a1 1 0 01-1.414 0l-3.5-3.5a1 1 0 011.414-1.414l2.793 2.793 6.793-6.793a1 1 0 011.414 0z"
-          clipRule="evenodd"
-        />
-      </svg>
-    </span>
-  );
-};
-
 export const AdminsPage = () => {
+  const navigate = useNavigate();
   const [data, setData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({ email: '', name: '', role: 'ADMIN' as 'ADMIN' | 'SUPERADMIN' });
   const [submitting, setSubmitting] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({ 
-    email: '', 
-    name: '', 
-    role: 'ADMIN' as 'ADMIN' | 'SUPERADMIN',
-    notify_deposit_created: true,
-    notify_withdrawal_created: true,
-  });
   const [loggedInEmail, setLoggedInEmail] = useState<string>('');
   const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; admin: any | null }>({
     isOpen: false,
@@ -89,20 +51,6 @@ export const AdminsPage = () => {
     }
   };
 
-  const handleEditSubmit = async (e: React.FormEvent, id: string) => {
-    e.preventDefault();
-    setSubmitting(true);
-    try {
-      await api.updateAdmin(id, editForm);
-      setEditingId(null);
-      fetchAdmins();
-    } catch (err: any) {
-      alert(err.message || 'Error al actualizar admin');
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
   const handleDelete = (admin: any) => {
     if (admin.email === loggedInEmail) {
       alert('No puedes eliminar tu propia cuenta.');
@@ -118,34 +66,6 @@ export const AdminsPage = () => {
       fetchAdmins();
     } catch (err: any) {
       alert(err.message || 'Error al eliminar admin');
-    }
-  };
-
-  const startEdit = (admin: any) => {
-    setEditingId(admin.id);
-    setEditForm({ 
-      email: admin.email, 
-      name: admin.name || '', 
-      role: admin.role,
-      notify_deposit_created: admin.notify_deposit_created ?? true,
-      notify_withdrawal_created: admin.notify_withdrawal_created ?? true,
-    });
-  };
-
-  const handleNotificationToggle = async (adminId: string, field: 'notify_deposit_created' | 'notify_withdrawal_created', currentValue: boolean) => {
-    try {
-      const admin = admins.find((a: any) => a.id === adminId);
-      if (!admin) return;
-
-      await api.updateAdmin(adminId, {
-        email: admin.email,
-        name: admin.name,
-        role: admin.role,
-        [field]: !currentValue,
-      });
-      fetchAdmins();
-    } catch (err: any) {
-      alert(err.message || 'Error al actualizar notificaciones');
     }
   };
 
@@ -218,127 +138,50 @@ export const AdminsPage = () => {
       <div className="grid gap-3 px-1 md:hidden">
         {admins.map((a: any) => (
           <div key={a.id} className="w-full overflow-hidden rounded-lg bg-white p-4 shadow">
-            {editingId === a.id ? (
-              <form onSubmit={(e) => handleEditSubmit(e, a.id)} className="space-y-3">
-                <Input
-                  type="email"
-                  required
-                  value={editForm.email}
-                  onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                  placeholder="Email"
-                  className="text-sm"
-                />
-                <Input
-                  type="text"
-                  value={editForm.name}
-                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                  placeholder="Nombre"
-                  className="text-sm"
-                />
-                <select
-                  required
-                  value={editForm.role}
-                  onChange={(e) => setEditForm({ ...editForm, role: e.target.value as 'ADMIN' | 'SUPERADMIN' })}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                >
-                  <option value="ADMIN">Admin</option>
-                  <option value="SUPERADMIN">Super Admin</option>
-                </select>
-                <div className="space-y-2">
-                  <p className="text-xs font-semibold text-gray-700">Notificaciones:</p>
-                  <label className="flex items-center gap-2 text-xs cursor-pointer">
-                    <WinbitCheckbox
-                      checked={editForm.notify_deposit_created}
-                      onChange={(next) => setEditForm({ ...editForm, notify_deposit_created: next })}
-                    />
-                    <span className="text-gray-700">Depósito recibido</span>
-                  </label>
-                  <label className="flex items-center gap-2 text-xs cursor-pointer">
-                    <WinbitCheckbox
-                      checked={editForm.notify_withdrawal_created}
-                      onChange={(next) => setEditForm({ ...editForm, notify_withdrawal_created: next })}
-                    />
-                    <span className="text-gray-700">Retiro solicitado</span>
-                  </label>
-                </div>
-                <div className="flex gap-2">
-                  <Button type="submit" disabled={submitting} className="text-sm py-1 px-3">
-                    Guardar
-                  </Button>
-                  <Button
-                    type="button"
-                    onClick={() => setEditingId(null)}
-                    className="text-sm py-1 px-3 bg-gray-500 hover:bg-gray-600"
-                  >
-                    Cancelar
-                  </Button>
-                </div>
-              </form>
-            ) : (
-              <>
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold text-gray-900">{a.email}</p>
-                    <p className="mt-1 text-sm text-gray-600">{a.name || '-'}</p>
-                  </div>
-                  <span
-                    className={`shrink-0 inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
-                      a.role === 'SUPERADMIN' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'
-                    }`}
-                  >
-                    {a.role === 'SUPERADMIN' ? 'Super Admin' : 'Admin'}
-                  </span>
-                </div>
-                <div className="mt-3 border-t pt-3">
-                  <p className="text-xs font-semibold text-gray-700 mb-2">Notificaciones:</p>
-                  <div className="flex flex-col gap-2">
-                    <label className="flex items-center gap-2 text-xs cursor-pointer">
-                      <WinbitCheckbox
-                        checked={a.notify_deposit_created ?? true}
-                        onChange={() =>
-                          handleNotificationToggle(a.id, 'notify_deposit_created', a.notify_deposit_created ?? true)
-                        }
-                      />
-                      <span className="text-gray-700">Depósito recibido</span>
-                    </label>
-                    <label className="flex items-center gap-2 text-xs cursor-pointer">
-                      <WinbitCheckbox
-                        checked={a.notify_withdrawal_created ?? true}
-                        onChange={() =>
-                          handleNotificationToggle(a.id, 'notify_withdrawal_created', a.notify_withdrawal_created ?? true)
-                        }
-                      />
-                      <span className="text-gray-700">Retiro solicitado</span>
-                    </label>
-                  </div>
-                </div>
-                <div className="mt-3 flex gap-2">
-                  <button
-                    onClick={() => startEdit(a)}
-                    className="rounded p-2 text-[#58b098] hover:bg-[#58b098]/10"
-                    title="Editar"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                    </svg>
-                  </button>
-                  <button
-                    onClick={() => handleDelete(a)}
-                    disabled={a.email === loggedInEmail}
-                    className={`p-2 rounded ${
-                      a.email === loggedInEmail
-                        ? 'text-gray-400 cursor-not-allowed'
-                        : 'text-red-600 hover:bg-red-50'
-                    }`}
-                    title={a.email === loggedInEmail ? 'No puedes eliminar tu propia cuenta' : 'Eliminar'}
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
-                </div>
-              </>
-            )}
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold text-gray-900">{a.email}</p>
+                <p className="mt-1 text-sm text-gray-600">{a.name || '-'}</p>
+              </div>
+              <span
+                className={`shrink-0 inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
+                  a.role === 'SUPERADMIN' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'
+                }`}
+              >
+                {a.role === 'SUPERADMIN' ? 'Super Admin' : 'Admin'}
+              </span>
+            </div>
+            <div className="mt-3 border-t pt-3 text-xs text-gray-600">
+              Notificaciones activas:{' '}
+              <span className="font-semibold">
+                {(a.notify_deposit_created ? 1 : 0) + (a.notify_withdrawal_created ? 1 : 0)} / 2
+              </span>
+            </div>
+            <div className="mt-3 flex gap-2">
+              <button
+                onClick={() => navigate(`/admins/${a.id}/edit`)}
+                className="rounded p-2 text-[#58b098] hover:bg-[#58b098]/10"
+                title="Editar"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+              </button>
+              <button
+                onClick={() => handleDelete(a)}
+                disabled={a.email === loggedInEmail}
+                className={`p-2 rounded ${
+                  a.email === loggedInEmail
+                    ? 'text-gray-400 cursor-not-allowed'
+                    : 'text-red-600 hover:bg-red-50'
+                }`}
+                title={a.email === loggedInEmail ? 'No puedes eliminar tu propia cuenta' : 'Eliminar'}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            </div>
           </div>
         ))}
       </div>
@@ -359,142 +202,49 @@ export const AdminsPage = () => {
             <tbody className="divide-y divide-gray-200">
               {admins.map((a: any) => (
                 <tr key={a.id} className="text-sm">
-                  {editingId === a.id ? (
-                    <>
-                      <td className="py-2">
-                        <Input
-                          type="email"
-                          required
-                          value={editForm.email}
-                          onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                          className="text-sm"
-                        />
-                      </td>
-                      <td className="py-2">
-                        <Input
-                          type="text"
-                          value={editForm.name}
-                          onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                          className="text-sm"
-                        />
-                      </td>
-                      <td className="py-2">
-                        <select
-                          required
-                          value={editForm.role}
-                          onChange={(e) => setEditForm({ ...editForm, role: e.target.value as 'ADMIN' | 'SUPERADMIN' })}
-                          className="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none"
-                        >
-                          <option value="ADMIN">Admin</option>
-                          <option value="SUPERADMIN">Super Admin</option>
-                        </select>
-                      </td>
-                      <td className="py-2">
-                        <div className="flex flex-col gap-2">
-                          <label className="flex items-center gap-2 text-xs cursor-pointer">
-                            <WinbitCheckbox
-                              checked={editForm.notify_deposit_created}
-                              onChange={(next) => setEditForm({ ...editForm, notify_deposit_created: next })}
-                            />
-                            <span className="text-gray-700">Depósito recibido</span>
-                          </label>
-                          <label className="flex items-center gap-2 text-xs cursor-pointer">
-                            <WinbitCheckbox
-                              checked={editForm.notify_withdrawal_created}
-                              onChange={(next) => setEditForm({ ...editForm, notify_withdrawal_created: next })}
-                            />
-                            <span className="text-gray-700">Retiro solicitado</span>
-                          </label>
-                        </div>
-                      </td>
-                      <td className="py-2 text-right">
-                        <div className="flex gap-2 justify-end">
-                          <Button
-                            onClick={(e) => handleEditSubmit(e, a.id)}
-                            disabled={submitting}
-                            className="text-sm py-1 px-3"
-                          >
-                            Guardar
-                          </Button>
-                          <Button
-                            onClick={() => setEditingId(null)}
-                            className="text-sm py-1 px-3 bg-gray-500 hover:bg-gray-600"
-                          >
-                            Cancelar
-                          </Button>
-                        </div>
-                      </td>
-                    </>
-                  ) : (
-                    <>
-                      <td className="py-2 font-medium">{a.email}</td>
-                      <td className="py-2">{a.name || '-'}</td>
-                      <td className="py-2">
-                        <span
-                          className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
-                            a.role === 'SUPERADMIN'
-                              ? 'bg-purple-100 text-purple-800'
-                              : 'bg-blue-100 text-blue-800'
-                          }`}
-                        >
-                          {a.role === 'SUPERADMIN' ? 'Super Admin' : 'Admin'}
-                        </span>
-                      </td>
-                      <td className="py-2">
-                        <div className="flex flex-col gap-2">
-                          <label className="flex items-center gap-2 text-xs cursor-pointer">
-                            <WinbitCheckbox
-                              checked={a.notify_deposit_created ?? true}
-                              onChange={() =>
-                                handleNotificationToggle(a.id, 'notify_deposit_created', a.notify_deposit_created ?? true)
-                              }
-                            />
-                            <span className="text-gray-700">Depósito recibido</span>
-                          </label>
-                          <label className="flex items-center gap-2 text-xs cursor-pointer">
-                            <WinbitCheckbox
-                              checked={a.notify_withdrawal_created ?? true}
-                              onChange={() =>
-                                handleNotificationToggle(
-                                  a.id,
-                                  'notify_withdrawal_created',
-                                  a.notify_withdrawal_created ?? true,
-                                )
-                              }
-                            />
-                            <span className="text-gray-700">Retiro solicitado</span>
-                          </label>
-                        </div>
-                      </td>
-                      <td className="py-2 text-right">
-                        <div className="flex gap-2 justify-end">
-                          <button
-                            onClick={() => startEdit(a)}
-                            className="rounded p-2 text-[#58b098] hover:bg-[#58b098]/10"
-                            title="Editar"
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                            </svg>
-                          </button>
-                          <button
-                            onClick={() => handleDelete(a)}
-                            disabled={a.email === loggedInEmail}
-                            className={`p-2 rounded ${
-                              a.email === loggedInEmail
-                                ? 'text-gray-400 cursor-not-allowed'
-                                : 'text-red-600 hover:bg-red-50'
-                            }`}
-                            title={a.email === loggedInEmail ? 'No puedes eliminar tu propia cuenta' : 'Eliminar'}
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                          </button>
-                        </div>
-                      </td>
-                    </>
-                  )}
+                  <td className="py-2 font-medium">{a.email}</td>
+                  <td className="py-2">{a.name || '-'}</td>
+                  <td className="py-2">
+                    <span
+                      className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
+                        a.role === 'SUPERADMIN'
+                          ? 'bg-purple-100 text-purple-800'
+                          : 'bg-blue-100 text-blue-800'
+                      }`}
+                    >
+                      {a.role === 'SUPERADMIN' ? 'Super Admin' : 'Admin'}
+                    </span>
+                  </td>
+                  <td className="py-2 text-gray-700">
+                    {(a.notify_deposit_created ? 1 : 0) + (a.notify_withdrawal_created ? 1 : 0)} / 2 activas
+                  </td>
+                  <td className="py-2 text-right">
+                    <div className="flex gap-2 justify-end">
+                      <button
+                        onClick={() => navigate(`/admins/${a.id}/edit`)}
+                        className="rounded p-2 text-[#58b098] hover:bg-[#58b098]/10"
+                        title="Editar"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={() => handleDelete(a)}
+                        disabled={a.email === loggedInEmail}
+                        className={`p-2 rounded ${
+                          a.email === loggedInEmail
+                            ? 'text-gray-400 cursor-not-allowed'
+                            : 'text-red-600 hover:bg-red-50'
+                        }`}
+                        title={a.email === loggedInEmail ? 'No puedes eliminar tu propia cuenta' : 'Eliminar'}
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>

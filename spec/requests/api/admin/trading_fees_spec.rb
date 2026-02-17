@@ -118,6 +118,58 @@ RSpec.describe 'Admin Trading Fees API', type: :request do
       expect(json.map { |row| row['id'] }).to contain_exactly(visible_fee.id)
     end
 
+    it 'includes voided fees when include_voided=true' do
+      investor = create_investor_with_portfolio(email: 'with_voided@test.com')
+
+      active_fee = TradingFee.create!(
+        investor: investor,
+        applied_by: admin,
+        period_start: Date.new(2025, 10, 1),
+        period_end: Date.new(2025, 12, 31),
+        profit_amount: 100,
+        fee_percentage: 30,
+        fee_amount: 30,
+        applied_at: Time.zone.parse('2025-12-31 19:00:00')
+      )
+      PortfolioHistory.create!(
+        investor: investor,
+        event: 'TRADING_FEE',
+        amount: -30,
+        previous_balance: 1000,
+        new_balance: 970,
+        status: 'COMPLETED',
+        date: Time.zone.parse('2025-12-31 19:00:05')
+      )
+
+      voided_fee = TradingFee.create!(
+        investor: investor,
+        applied_by: admin,
+        period_start: Date.new(2026, 1, 1),
+        period_end: Date.new(2026, 3, 31),
+        profit_amount: 120,
+        fee_percentage: 30,
+        fee_amount: 36,
+        applied_at: Time.zone.parse('2026-03-31 19:00:00'),
+        voided_at: Time.current,
+        voided_by: admin
+      )
+      PortfolioHistory.create!(
+        investor: investor,
+        event: 'TRADING_FEE',
+        amount: -36,
+        previous_balance: 970,
+        new_balance: 934,
+        status: 'COMPLETED',
+        date: Time.zone.parse('2026-03-31 19:00:05')
+      )
+
+      get '/api/admin/trading_fees', params: { include_voided: true }
+
+      expect(response).to have_http_status(:ok)
+      json = JSON.parse(response.body)
+      expect(json.map { |row| row['id'] }).to include(active_fee.id, voided_fee.id)
+    end
+
     it 'excludes stale fees without matching TRADING_FEE history' do
       investor = create_investor_with_portfolio(email: 'stale_fee@test.com')
       fresh_investor = create_investor_with_portfolio(email: 'fresh_fee@test.com')

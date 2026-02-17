@@ -73,7 +73,16 @@ export const api = {
   getAdminAdmins: () => request(`${ADMIN_API_PREFIX}/admins`),
   createAdmin: (body: { email: string; name?: string; role: 'ADMIN' | 'SUPERADMIN' }) =>
     request(`${ADMIN_API_PREFIX}/admins`, { method: 'POST', body: JSON.stringify(body) }),
-  updateAdmin: (id: string, body: { email: string; name?: string; role: 'ADMIN' | 'SUPERADMIN' }) =>
+  updateAdmin: (
+    id: string,
+    body: {
+      email: string;
+      name?: string;
+      role: 'ADMIN' | 'SUPERADMIN';
+      notify_deposit_created?: boolean;
+      notify_withdrawal_created?: boolean;
+    },
+  ) =>
     request(`${ADMIN_API_PREFIX}/admins/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
   deleteAdmin: (id: string) => request(`${ADMIN_API_PREFIX}/admins/${id}`, { method: 'DELETE' }),
   createInvestor: (body: { email: string; name: string; trading_fee_percentage?: number; password?: string }) =>
@@ -127,9 +136,10 @@ export const api = {
   createDailyOperatingResult: (body: { date: string; percent: number; notes?: string }) =>
     request(`${ADMIN_API_PREFIX}/daily_operating_results`, { method: 'POST', body: JSON.stringify(body) }),
   // Trading Fees
-  getTradingFees: (params?: { investor_id?: string }) => {
+  getTradingFees: (params?: { investor_id?: string; include_voided?: boolean }) => {
     const qs = new URLSearchParams();
     if (params?.investor_id) qs.set('investor_id', params.investor_id);
+    if (params?.include_voided !== undefined) qs.set('include_voided', String(params.include_voided));
     const suffix = qs.toString() ? `?${qs.toString()}` : '';
     return request(`${ADMIN_API_PREFIX}/trading_fees${suffix}`);
   },
