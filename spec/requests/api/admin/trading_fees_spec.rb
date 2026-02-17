@@ -134,6 +134,22 @@ RSpec.describe 'Admin Trading Fees API', type: :request do
       json = JSON.parse(response.body)
       expect(json['error']).to include('ANNUAL')
     end
+
+    it 'returns 422 when investor is MONTHLY but period is not a full month' do
+      inv = create_investor_with_portfolio(email: 'inv_monthly@test.com')
+      inv.update!(trading_fee_frequency: 'MONTHLY')
+
+      get '/api/admin/trading_fees/calculate', params: {
+        investor_id: inv.id,
+        period_start: '2025-10-01',
+        period_end: '2025-12-31',
+        fee_percentage: 30,
+      }
+
+      expect(response).to have_http_status(:unprocessable_content)
+      json = JSON.parse(response.body)
+      expect(json['error']).to include('MONTHLY')
+    end
   end
 
   describe 'POST /api/admin/trading_fees' do

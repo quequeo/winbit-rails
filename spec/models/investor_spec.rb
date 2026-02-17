@@ -30,6 +30,28 @@ RSpec.describe Investor, type: :model do
       investor = Investor.create!(email: 'test@example.com', name: 'Test Investor')
       expect(investor.status).to eq('ACTIVE')
     end
+
+    it 'allows all trading fee frequencies' do
+      expect(Investor::TRADING_FEE_FREQUENCIES).to contain_exactly('MONTHLY', 'QUARTERLY', 'SEMESTRAL', 'ANNUAL')
+    end
+
+    it 'normalizes email on save (strip + downcase)' do
+      investor = Investor.create!(email: '  TEST@Example.COM  ', name: 'Test Investor', status: 'ACTIVE')
+      expect(investor.email).to eq('test@example.com')
+    end
+
+    it 'validates email format' do
+      investor = Investor.new(email: 'not-an-email', name: 'Test Investor', status: 'ACTIVE')
+      expect(investor).not_to be_valid
+      expect(investor.errors[:email]).to be_present
+    end
+
+    it 'validates email uniqueness case-insensitively' do
+      Investor.create!(email: 'test@example.com', name: 'One', status: 'ACTIVE')
+      investor = Investor.new(email: 'TEST@EXAMPLE.COM', name: 'Two', status: 'ACTIVE')
+      expect(investor).not_to be_valid
+      expect(investor.errors[:email]).to include('has already been taken')
+    end
   end
 
   describe 'associations' do
@@ -125,9 +147,9 @@ RSpec.describe Investor, type: :model do
       expect(investor.name).to eq('José María Ñ')
     end
 
-    it 'trims whitespace in email validation' do
-      investor = Investor.create!(email: 'test@example.com', name: 'Test', status: 'ACTIVE')
-      expect(investor.email).to eq('test@example.com')
+    it 'keeps unicode names' do
+      investor = Investor.create!(email: 'test+unicode@example.com', name: 'José María Ñ', status: 'ACTIVE')
+      expect(investor.name).to eq('José María Ñ')
     end
   end
 end

@@ -7,6 +7,7 @@ import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { formatCurrencyAR } from '../lib/formatters';
 
 const frequencyLabel = (freq: string) => {
+  if (freq === 'MONTHLY') return 'Mensual';
   if (freq === 'ANNUAL') return 'Anual';
   if (freq === 'SEMESTRAL') return 'Semestral';
   return 'Trimestral';

@@ -435,14 +435,39 @@ module Api
 
       def validate_period_for_investor!(investor, start_date, end_date)
         return true if investor.blank? || start_date.blank? || end_date.blank?
-        return true unless investor.respond_to?(:trading_fee_frequency) && investor.trading_fee_frequency == 'ANNUAL'
+        return true unless investor.respond_to?(:trading_fee_frequency)
 
-        expected_start = start_date.beginning_of_year.to_date
-        expected_end = start_date.end_of_year.to_date
-
-        if start_date != expected_start || end_date != expected_end
-          render_error('Este inversor está configurado como ANNUAL: el período debe ser un año calendario completo', status: :unprocessable_entity)
-          return false
+        case investor.trading_fee_frequency
+        when 'MONTHLY'
+          expected_start = start_date.beginning_of_month.to_date
+          expected_end = start_date.end_of_month.to_date
+          if start_date != expected_start || end_date != expected_end
+            render_error('Este inversor está configurado como MONTHLY: el período debe ser un mes calendario completo', status: :unprocessable_entity)
+            return false
+          end
+        when 'QUARTERLY'
+          expected_start = start_date.beginning_of_quarter.to_date
+          expected_end = start_date.end_of_quarter.to_date
+          if start_date != expected_start || end_date != expected_end
+            render_error('Este inversor está configurado como QUARTERLY: el período debe ser un trimestre completo', status: :unprocessable_entity)
+            return false
+          end
+        when 'SEMESTRAL'
+          valid_semesters = [
+            [Date.new(start_date.year, 1, 1), Date.new(start_date.year, 6, 30)],
+            [Date.new(start_date.year, 7, 1), Date.new(start_date.year, 12, 31)]
+          ]
+          unless valid_semesters.any? { |s, e| start_date == s && end_date == e }
+            render_error('Este inversor está configurado como SEMESTRAL: el período debe ser un semestre completo (Ene-Jun o Jul-Dic)', status: :unprocessable_entity)
+            return false
+          end
+        when 'ANNUAL'
+          expected_start = start_date.beginning_of_year.to_date
+          expected_end = start_date.end_of_year.to_date
+          if start_date != expected_start || end_date != expected_end
+            render_error('Este inversor está configurado como ANNUAL: el período debe ser un año calendario completo', status: :unprocessable_entity)
+            return false
+          end
         end
 
         true

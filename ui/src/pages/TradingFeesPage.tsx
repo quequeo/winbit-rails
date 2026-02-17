@@ -10,7 +10,7 @@ type InvestorSummary = {
   investor_id: string;
   investor_name: string;
   investor_email: string;
-  trading_fee_frequency?: 'QUARTERLY' | 'SEMESTRAL' | 'ANNUAL';
+  trading_fee_frequency?: 'MONTHLY' | 'QUARTERLY' | 'SEMESTRAL' | 'ANNUAL';
   current_balance: number;
   period_start: string;
   period_end: string;
@@ -144,6 +144,22 @@ export const TradingFeesPage = () => {
     if (inv.trading_fee_frequency === 'ANNUAL') {
       const y = String(inv.period_start || '').slice(0, 4);
       return y ? `Año ${y}` : 'Año';
+    }
+    if (inv.trading_fee_frequency === 'SEMESTRAL') {
+      const startMonth = String(inv.period_start || '').slice(5, 7);
+      const y = String(inv.period_start || '').slice(0, 4);
+      if (startMonth === '01') return `Sem 1 ${y}`;
+      if (startMonth === '07') return `Sem 2 ${y}`;
+      return y ? `Semestre ${y}` : 'Semestre';
+    }
+    if (inv.trading_fee_frequency === 'MONTHLY') {
+      const s = String(inv.period_start || '').trim();
+      const m = s.match(/^(\d{4})-(\d{2})-\d{2}$/);
+      if (!m) return 'Mes';
+      const year = m[1];
+      const mm = parseInt(m[2], 10);
+      const names = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+      return `${names[mm - 1] || m[2]} ${year}`;
     }
     return formatQuarterLabel(inv.period_start);
   };
@@ -346,7 +362,7 @@ export const TradingFeesPage = () => {
     <div>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Comisiones</h1>
-        <p className="mt-1 text-sm text-gray-600">Aplicar Trading Fees por período (trimestral o anual según inversor).</p>
+        <p className="mt-1 text-sm text-gray-600">Aplicar Trading Fees por período (mensual, trimestral, semestral o anual según inversor).</p>
 
         <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
           <div className="flex flex-1 flex-col gap-1 min-w-[240px]">
@@ -478,7 +494,13 @@ export const TradingFeesPage = () => {
                   <div className="truncate text-xs text-gray-500">{investor.investor_email}</div>
                 </div>
                 <span className="shrink-0 inline-flex rounded-full bg-purple-50 px-2 py-0.5 text-[11px] font-semibold text-purple-800">
-                  {investor.trading_fee_frequency === 'ANNUAL' ? 'Anual' : investor.trading_fee_frequency === 'SEMESTRAL' ? 'Semestral' : 'Trimestral'}
+                  {investor.trading_fee_frequency === 'ANNUAL'
+                    ? 'Anual'
+                    : investor.trading_fee_frequency === 'SEMESTRAL'
+                      ? 'Semestral'
+                      : investor.trading_fee_frequency === 'MONTHLY'
+                        ? 'Mensual'
+                        : 'Trimestral'}
                 </span>
               </div>
 
@@ -653,7 +675,13 @@ export const TradingFeesPage = () => {
                     <div className="text-xs text-gray-500">{investor.investor_email}</div>
                     <div className="mt-1">
                       <span className="inline-flex rounded-full bg-purple-50 px-2 py-0.5 text-[11px] font-semibold text-purple-800">
-                        {investor.trading_fee_frequency === 'ANNUAL' ? 'Anual' : investor.trading_fee_frequency === 'SEMESTRAL' ? 'Semestral' : 'Trimestral'}
+                        {investor.trading_fee_frequency === 'ANNUAL'
+                          ? 'Anual'
+                          : investor.trading_fee_frequency === 'SEMESTRAL'
+                            ? 'Semestral'
+                            : investor.trading_fee_frequency === 'MONTHLY'
+                              ? 'Mensual'
+                              : 'Trimestral'}
                       </span>
                     </div>
                   </td>

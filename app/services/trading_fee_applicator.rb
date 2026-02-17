@@ -83,7 +83,14 @@ class TradingFeeApplicator
 
     freq = investor.trading_fee_frequency
 
-    if freq == 'ANNUAL'
+    if freq == 'MONTHLY'
+      expected_start = @period_start.beginning_of_month.to_date
+      expected_end = @period_start.end_of_month.to_date
+
+      if @period_start != expected_start || @period_end != expected_end
+        @errors << 'Este inversor está configurado como MONTHLY: el período debe ser un mes calendario completo'
+      end
+    elsif freq == 'ANNUAL'
       expected_start = @period_start.beginning_of_year.to_date
       expected_end = @period_start.end_of_year.to_date
 
@@ -98,6 +105,13 @@ class TradingFeeApplicator
 
       unless valid_semesters.any? { |s, e| @period_start == s && @period_end == e }
         @errors << 'Este inversor está configurado como SEMESTRAL: el período debe ser un semestre completo (Ene-Jun o Jul-Dic)'
+      end
+    elsif freq == 'QUARTERLY'
+      expected_start = @period_start.beginning_of_quarter.to_date
+      expected_end = @period_start.end_of_quarter.to_date
+
+      if @period_start != expected_start || @period_end != expected_end
+        @errors << 'Este inversor está configurado como QUARTERLY: el período debe ser un trimestre completo'
       end
     end
   end

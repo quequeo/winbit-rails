@@ -104,4 +104,19 @@ RSpec.describe TradingFeeApplicator do
     expect(applicator.apply).to eq(false)
     expect(applicator.errors.join(' ')).to include('ANNUAL')
   end
+
+  it 'rejects non-monthly period when investor is MONTHLY' do
+    investor.update!(trading_fee_frequency: 'MONTHLY')
+
+    applicator = described_class.new(
+      investor,
+      fee_percentage: 30,
+      applied_by: admin,
+      period_start: Date.new(2025, 10, 1),
+      period_end: Date.new(2025, 12, 31),
+    )
+
+    expect(applicator.apply).to eq(false)
+    expect(applicator.errors.join(' ')).to include('MONTHLY')
+  end
 end
