@@ -2,6 +2,9 @@ module Api
   module Admin
     class InvestorsController < BaseController
       before_action :require_superadmin!, only: [:destroy]
+      before_action :set_investor, only: [:update, :toggle_status, :destroy]
+      before_action :set_investor_with_associations, only: [:show]
+      before_action :set_investor_with_portfolio, only: [:referral_commissions]
 
       def index
         sort_by = params[:sort_by] || 'created_at'
@@ -42,18 +45,15 @@ module Api
       end
 
       def show
-        inv = Investor.includes(:portfolio, :portfolio_histories, :investor_requests).find_by(id: params[:id])
-        return render_error('Inversor no encontrado', status: :not_found) unless inv
-
         render json: {
           data: {
-            id: inv.id,
-            email: inv.email,
-            name: inv.name,
-            status: inv.status,
-            portfolio: inv.portfolio,
-            portfolioHistory: inv.portfolio_histories.order(date: :desc).limit(10),
-            requests: inv.investor_requests.order(requested_at: :desc).limit(10),
+            id: @investor.id,
+            email: @investor.email,
+            name: @investor.name,
+            status: @investor.status,
+            portfolio: @investor.portfolio,
+            portfolioHistory: @investor.portfolio_histories.order(date: :desc).limit(10),
+            requests: @investor.investor_requests.order(requested_at: :desc).limit(10),
           },
         }
       end
@@ -88,15 +88,12 @@ module Api
       end
 
       def update
-        inv = Investor.find_by(id: params[:id])
-        return render_error('Inversor no encontrado', status: :not_found) unless inv
-
-        inv.update!(investor_update_params)
+        @investor.update!(investor_update_params)
 
         ActivityLogger.log(
           user: current_user,
           action: 'update_investor',
-          target: inv
+          target: @investor
         )
 
         head :no_content
@@ -107,18 +104,15 @@ module Api
       end
 
       def toggle_status
-        inv = Investor.find_by(id: params[:id])
-        return render_error('Inversor no encontrado', status: :not_found) unless inv
-
-        old_status = inv.status
-        new_status = inv.status == 'ACTIVE' ? 'INACTIVE' : 'ACTIVE'
-        inv.update!(status: new_status)
+        old_status = @investor.status
+        new_status = @investor.status == 'ACTIVE' ? 'INACTIVE' : 'ACTIVE'
+        @investor.update!(status: new_status)
 
         action = new_status == 'ACTIVE' ? 'activate_investor' : 'deactivate_investor'
         ActivityLogger.log(
           user: current_user,
           action: action,
-          target: inv,
+          target: @investor,
           metadata: { from: old_status, to: new_status }
         )
 
@@ -127,18 +121,15 @@ module Api
 
       # POST /api/admin/investors/:id/referral_commissions
       def referral_commissions
-        inv = Investor.includes(:portfolio).find_by(id: params[:id])
-        return render_error('Inversor no encontrado', status: :not_found) unless inv
-
         permitted = params.permit(:amount, :applied_at)
         amount = permitted.fetch(:amount)
         applied_at = permitted[:applied_at].presence
 
-        portfolio = inv.portfolio || Portfolio.create!(investor: inv)
+        portfolio = @investor.portfolio || Portfolio.create!(investor: @investor)
         from_balance = portfolio.current_balance.to_f
 
         applicator = ReferralCommissionApplicator.new(
-          inv,
+          @investor,
           amount: amount,
           applied_by: current_user,
           applied_at: applied_at
@@ -150,7 +141,7 @@ module Api
           ActivityLogger.log(
             user: current_user,
             action: 'apply_referral_commission',
-            target: inv,
+            target: @investor,
             metadata: {
               amount: amount.to_f,
               from: from_balance,
@@ -160,7 +151,7 @@ module Api
 
           render json: {
             data: {
-              investor_id: inv.id,
+              investor_id: @investor.id,
               current_balance: portfolio.current_balance.to_f
             }
           }, status: :created
@@ -174,20 +165,32 @@ module Api
       end
 
       def destroy
-        inv = Investor.find_by(id: params[:id])
-        return render_error('Inversor no encontrado', status: :not_found) unless inv
-
         ActivityLogger.log(
           user: current_user,
           action: 'delete_investor',
-          target: inv
+          target: @investor
         )
 
-        inv.destroy!
+        @investor.destroy!
         head :no_content
       end
 
       private
+
+      def set_investor
+        @investor = find_investor_by_id(id: params[:id])
+      end
+
+      def set_investor_with_associations
+        @investor = find_investor_by_id(
+          id: params[:id],
+          includes: [:portfolio, :portfolio_histories, :investor_requests]
+        )
+      end
+
+      def set_investor_with_portfolio
+        @investor = find_investor_by_id(id: params[:id], includes: [:portfolio])
+      end
 
       def investor_create_params
         permitted = params.permit(:email, :name, :trading_fee_frequency, :password)

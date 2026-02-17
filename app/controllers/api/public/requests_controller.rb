@@ -17,9 +17,9 @@ module Api
           return render_error('Invalid request data', status: :bad_request)
         end
 
-        investor = Investor.includes(:portfolio).find_by(email: email)
-        return render_error('Investor not found', status: :not_found) unless investor
-        return render_error('Investor is not active', status: :forbidden) unless investor.status_active?
+        investor = find_investor_by_email(email: email, includes: [:portfolio], message: 'Investor not found')
+        return unless investor
+        return unless require_active_investor!(investor, message: 'Investor is not active')
 
         amount_num = begin
           BigDecimal(amount.to_s)

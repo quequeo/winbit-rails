@@ -2,6 +2,7 @@ module Api
   module Admin
     class AdminsController < BaseController
       before_action :require_superadmin!, only: [:create, :update, :destroy]
+      before_action :set_admin, only: [:update, :destroy]
 
       def index
         admins = User.order(created_at: :desc).map do |admin|
@@ -36,15 +37,12 @@ module Api
       end
 
       def update
-        admin = User.find_by(id: params[:id])
-        return render_error('Admin no encontrado', status: :not_found) unless admin
-
-        admin.update!(admin_update_params(admin))
+        @admin.update!(admin_update_params(@admin))
 
         ActivityLogger.log(
           user: current_user,
           action: 'update_admin',
-          target: admin
+          target: @admin
         )
 
         head :no_content
@@ -55,10 +53,7 @@ module Api
       end
 
       def destroy
-        admin = User.find_by(id: params[:id])
-        return render_error('Admin no encontrado', status: :not_found) unless admin
-
-        if admin.id == current_user.id
+        if @admin.id == current_user.id
           return render_error('No puedes eliminar tu propia cuenta', status: :forbidden)
         end
 
@@ -69,14 +64,18 @@ module Api
         ActivityLogger.log(
           user: current_user,
           action: 'delete_admin',
-          target: admin
+          target: @admin
         )
 
-        admin.destroy!
+        @admin.destroy!
         head :no_content
       end
 
       private
+
+      def set_admin
+        @admin = find_record!(model: User, id: params[:id], message: 'Admin no encontrado')
+      end
 
       def admin_create_params
         permitted = params.permit(:email, :name, :role)

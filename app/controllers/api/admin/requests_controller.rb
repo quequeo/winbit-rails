@@ -1,11 +1,13 @@
 module Api
   module Admin
     class RequestsController < BaseController
+      before_action :set_request, only: [:update, :destroy, :approve, :reject]
+
       def create
         permitted = params.permit(:investor_id, :request_type, :method, :amount, :network, :status, :requested_at, :processed_at)
 
-        investor = Investor.find_by(id: permitted.fetch(:investor_id))
-        return render_error('Inversor no encontrado', status: :not_found) unless investor
+        investor = find_investor_by_id(id: permitted.fetch(:investor_id))
+        return unless investor
 
         requested_at = permitted[:requested_at].presence
         processed_at = permitted[:processed_at].presence
@@ -37,21 +39,18 @@ module Api
       end
 
       def update
-        req = InvestorRequest.find_by(id: params[:id])
-        return render_error('Solicitud no encontrada', status: :not_found) unless req
-
         permitted = params.permit(:investor_id, :request_type, :method, :amount, :network, :status)
 
-        investor = Investor.find_by(id: permitted.fetch(:investor_id))
-        return render_error('Inversor no encontrado', status: :not_found) unless investor
+        investor = find_investor_by_id(id: permitted.fetch(:investor_id))
+        return unless investor
 
-        req.update!(
+        @request.update!(
           investor_id: investor.id,
           request_type: permitted.fetch(:request_type),
           method: permitted.fetch(:method),
           amount: permitted.fetch(:amount),
           network: permitted[:network].presence,
-          status: permitted[:status] || req.status,
+          status: permitted[:status] || @request.status,
         )
 
         head :no_content
@@ -62,27 +61,21 @@ module Api
       end
 
       def destroy
-        req = InvestorRequest.find_by(id: params[:id])
-        return render_error('Solicitud no encontrada', status: :not_found) unless req
-
-        req.destroy!
+        @request.destroy!
         head :no_content
       end
 
       def approve
-        req = InvestorRequest.find_by(id: params[:id])
-        return render_error('Solicitud no encontrada', status: :not_found) unless req
-
-        Requests::Approve.new(request_id: req.id, processed_at: params[:processed_at]).call
+        Requests::Approve.new(request_id: @request.id, processed_at: params[:processed_at]).call
 
         ActivityLogger.log(
           user: current_user,
           action: 'approve_request',
-          target: req,
+          target: @request,
           metadata: {
-            request_type: req.request_type,
-            amount: req.amount.to_f,
-            method: req.method
+            request_type: @request.request_type,
+            amount: @request.amount.to_f,
+            method: @request.method
           }
         )
 
@@ -92,24 +85,31 @@ module Api
       end
 
       def reject
-        req = InvestorRequest.find_by(id: params[:id])
-        return render_error('Solicitud no encontrada', status: :not_found) unless req
-
-        Requests::Reject.new(request_id: req.id).call
+        Requests::Reject.new(request_id: @request.id).call
 
         ActivityLogger.log(
           user: current_user,
           action: 'reject_request',
-          target: req,
+          target: @request,
           metadata: {
-            request_type: req.request_type,
-            amount: req.amount.to_f
+            request_type: @request.request_type,
+            amount: @request.amount.to_f
           }
         )
 
         head :no_content
       rescue StandardError => e
         render_error(e.message, status: :bad_request)
+      end
+
+      private
+
+      def set_request
+        @request = find_record!(
+          model: InvestorRequest,
+          id: params[:id],
+          message: 'Solicitud no encontrada'
+        )
       end
     end
   end

@@ -10,8 +10,12 @@ module Api
           return render_error('Email y contraseña son requeridos', status: :bad_request)
         end
 
-        investor = Investor.find_by(email: email)
-        return render_error('Credenciales inválidas', status: :unauthorized) unless investor
+        investor = find_investor_by_email(
+          email: email,
+          message: 'Credenciales inválidas',
+          status: :unauthorized
+        )
+        return unless investor
         return render_error('Tu cuenta está desactivada', status: :forbidden) unless investor.status_active?
         return render_error('Credenciales inválidas', status: :unauthorized) unless investor.authenticate(password)
 
@@ -34,8 +38,8 @@ module Api
           return render_error('Todos los campos son requeridos', status: :bad_request)
         end
 
-        investor = Investor.find_by(email: email)
-        return render_error('Inversor no encontrado', status: :not_found) unless investor
+        investor = find_investor_by_email(email: email, message: 'Inversor no encontrado')
+        return unless investor
         return render_error('Contraseña actual incorrecta', status: :unauthorized) unless investor.authenticate(current_password)
 
         if new_password.length < 6

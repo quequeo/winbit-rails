@@ -5,20 +5,13 @@ module Api
 
       # GET /api/admin/daily_operating_results
       def index
-        page = params[:page].to_i
-        per_page = params[:per_page].to_i
-        page = 1 if page <= 0
-        per_page = 10 if per_page <= 0
-        per_page = 50 if per_page > 50
-
         scope = DailyOperatingResult.includes(:applied_by).order(date: :desc)
-        total = scope.count
-        total_pages = (total.to_f / per_page).ceil
-        results = scope.offset((page - 1) * per_page).limit(per_page)
+        paginated_result = paginate(scope, default_per_page: 10, max_per_page: 50)
+        results = paginated_result[:records]
 
         render json: {
           data: results.map { |r| serialize_result(r) },
-          meta: { page: page, per_page: per_page, total: total, total_pages: total_pages },
+          meta: paginated_result[:pagination],
         }
       end
 
@@ -84,7 +77,7 @@ module Api
 
       # GET /api/admin/daily_operating_results/preview?date=YYYY-MM-DD&percent=0.10
       def preview
-        date = parse_date(params[:date])
+        date = parse_date_param(params[:date])
         percent = params[:percent]
 
         applicator = DailyOperatingResultApplicator.new(
@@ -106,7 +99,7 @@ module Api
       # POST /api/admin/daily_operating_results
       # body: { date: YYYY-MM-DD, percent: number, notes?: string }
       def create
-        date = parse_date(params[:date])
+        date = parse_date_param(params[:date])
         percent = params[:percent]
 
         applicator = DailyOperatingResultApplicator.new(
@@ -127,13 +120,6 @@ module Api
       end
 
       private
-
-      def parse_date(value)
-        return nil if value.blank?
-        Date.parse(value.to_s)
-      rescue ArgumentError
-        nil
-      end
 
       def serialize_result(r)
         {
