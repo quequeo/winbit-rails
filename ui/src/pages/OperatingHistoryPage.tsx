@@ -7,6 +7,7 @@ type HistoryRow = {
   id: string;
   date: string;
   percent: number;
+  notes?: string | null;
   created_at: string;
 };
 
@@ -65,7 +66,7 @@ export const OperatingHistoryPage = () => {
 
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailMonth, setDetailMonth] = useState<string | null>(null);
-  const [detailRows, setDetailRows] = useState<{ id: string; date: string; percent: number }[]>([]);
+  const [detailRows, setDetailRows] = useState<{ id: string; date: string; percent: number; notes?: string | null }[]>([]);
   const [detailLoading, setDetailLoading] = useState(false);
 
 
@@ -195,12 +196,13 @@ useEffect(() => {
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">Fecha</th>
                 <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-700">Resultado (%)</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">Notas</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 bg-white">
               {history.length === 0 ? (
                 <tr>
-                  <td className="px-4 py-6 text-center text-sm text-gray-500" colSpan={2}>
+                  <td className="px-4 py-6 text-center text-sm text-gray-500" colSpan={3}>
                     {loadingHistory ? 'Cargando…' : 'No hay operativas cargadas.'}
                   </td>
                 </tr>
@@ -209,6 +211,7 @@ useEffect(() => {
                   <tr key={h.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3 text-sm text-gray-900">{h.date}</td>
                     <td className="px-4 py-3 text-right text-sm text-gray-900">{formatNumberAR(h.percent)}%</td>
+                    <td className="px-4 py-3 text-sm text-gray-700">{h.notes || '—'}</td>
                   </tr>
                 ))
               )}
@@ -259,12 +262,13 @@ useEffect(() => {
                         <tr>
                           <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">Fecha</th>
                           <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-700">Resultado (%)</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">Notas</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200 bg-white">
                         {detailRows.length === 0 ? (
                           <tr>
-                            <td className="px-4 py-6 text-center text-sm text-gray-500" colSpan={2}>
+                            <td className="px-4 py-6 text-center text-sm text-gray-500" colSpan={3}>
                               No hay operativas cargadas para este mes.
                             </td>
                           </tr>
@@ -273,6 +277,7 @@ useEffect(() => {
                             <tr key={r.id} className="hover:bg-gray-50">
                               <td className="px-4 py-3 text-sm text-gray-900">{r.date}</td>
                               <td className="px-4 py-3 text-right text-sm text-gray-900">{formatNumberAR(r.percent)}%</td>
+                              <td className="px-4 py-3 text-sm text-gray-700">{r.notes || '—'}</td>
                             </tr>
                           ))
                         )}

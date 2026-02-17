@@ -19,7 +19,7 @@ describe('OperatingHistoryPage', () => {
 
   it('loads monthly summary and daily history', async () => {
     vi.mocked(api.getDailyOperatingResults).mockResolvedValueOnce({
-      data: [{ id: '1', date: '2025-12-31', percent: 0.1, created_at: '2025-12-31T20:00:00Z' }],
+      data: [{ id: '1', date: '2025-12-31', percent: 0.1, notes: 'Cierre de año', created_at: '2025-12-31T20:00:00Z' }],
       meta: { page: 1, per_page: 10, total: 1, total_pages: 1 },
     })
     vi.mocked(api.getDailyOperatingMonthlySummary).mockResolvedValueOnce({
@@ -44,6 +44,7 @@ describe('OperatingHistoryPage', () => {
     expect(screen.getByText(/Dic 2025/i)).toBeInTheDocument()
     expect(screen.getByText('Detalle diario')).toBeInTheDocument()
     expect(screen.getByText('2025-12-31')).toBeInTheDocument()
+    expect(screen.getByText('Cierre de año')).toBeInTheDocument()
   })
 
   it('opens month detail modal', async () => {
@@ -64,7 +65,7 @@ describe('OperatingHistoryPage', () => {
       ],
     })
     vi.mocked(api.getDailyOperatingByMonth).mockResolvedValueOnce({
-      data: [{ id: 'd1', date: '2025-12-10', percent: 0.2 }],
+      data: [{ id: 'd1', date: '2025-12-10', percent: 0.2, notes: 'Ajuste intradía' }],
     })
 
     render(<OperatingHistoryPage />)
@@ -80,6 +81,7 @@ describe('OperatingHistoryPage', () => {
       expect(screen.getByText('Detalle del mes')).toBeInTheDocument()
     })
     expect(screen.getByText('2025-12-10')).toBeInTheDocument()
+    expect(screen.getByText('Ajuste intradía')).toBeInTheDocument()
   })
 })
 
