@@ -100,6 +100,10 @@ export const DailyOperatingResultsPage = () => {
   const apply = async () => {
     if (!preview) return;
     if (parsedPercent === null) return;
+    if (preview.investors_count <= 0) {
+      showAlert('Sin impacto', 'No hay inversores activos con capital para esa fecha. No se puede aplicar.');
+      return;
+    }
 
     try {
       setApplying(true);
@@ -118,6 +122,7 @@ export const DailyOperatingResultsPage = () => {
     if (!preview?.investors) return [];
     return [...preview.investors].sort((a, b) => (a.investor_name < b.investor_name ? -1 : 1));
   }, [preview]);
+  const canApplyPreview = !!preview && preview.investors_count > 0;
 
   return (
     <div className="space-y-6">
@@ -181,17 +186,23 @@ export const DailyOperatingResultsPage = () => {
             <div>
               <h2 className="text-xl font-bold text-gray-900">Preview</h2>
               <p className="mt-1 text-sm text-gray-600">
-                Saldos calculados al cierre del <span className="font-semibold">{preview.date}</span> (17:00, antes de aplicar la operativa).
+                Saldos calculados al cierre del <span className="font-semibold">{preview.date}</span> (18:00 GMT-3, antes de aplicar la operativa).
                 Si hubo movimientos posteriores (depósitos/retiros/trading fees), puede diferir del balance actual.
               </p>
               <p className="mt-1 text-sm text-gray-600">
                 Inversores impactados: <span className="font-semibold">{preview.investors_count}</span>
               </p>
             </div>
-            <Button type="button" onClick={() => setConfirmOpen(true)}>
+            <Button type="button" onClick={() => setConfirmOpen(true)} disabled={!canApplyPreview}>
               Aplicar
             </Button>
           </div>
+
+          {!canApplyPreview ? (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              No hay inversores activos con capital para esa fecha. No es posible aplicar la operativa.
+            </div>
+          ) : null}
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
@@ -245,7 +256,7 @@ export const DailyOperatingResultsPage = () => {
 {alertOpen ? (
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div
-            className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm transition-opacity"
+            className="fixed inset-0 bg-black/15 transition-opacity"
             onClick={() => setAlertOpen(false)}
           />
           <div className="flex min-h-full items-center justify-center p-4">

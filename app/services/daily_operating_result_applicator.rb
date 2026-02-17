@@ -52,6 +52,13 @@ class DailyOperatingResultApplicator
     validate_inputs
     return false if errors.any?
 
+    at_time = movement_time
+    investors = eligible_investors(at_time: at_time)
+    if investors.empty?
+      @errors << 'No hay inversores activos con capital para esa fecha'
+      return false
+    end
+
     ApplicationRecord.transaction do
       DailyOperatingResult.create!(
         date: date,
@@ -61,9 +68,7 @@ class DailyOperatingResultApplicator
         notes: notes,
       )
 
-      at_time = movement_time
-      eligible_investors(at_time: at_time).each do |inv|
-        portfolio = inv.portfolio
+      investors.each do |inv|
         before = balance_at(inv.id, at_time)
         delta = daily_delta(before)
         after = (before + delta).round(2, :half_up)

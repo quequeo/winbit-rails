@@ -243,7 +243,7 @@ useEffect(() => {
       {detailOpen ? (
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div
-            className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm transition-opacity"
+            className="fixed inset-0 bg-black/15 transition-opacity"
             onClick={() => setDetailOpen(false)}
           />
           <div className="flex min-h-full items-center justify-center p-4">
