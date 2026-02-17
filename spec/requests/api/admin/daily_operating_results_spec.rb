@@ -117,6 +117,15 @@ RSpec.describe 'Admin Daily Operating Results API', type: :request do
       expect(json['data']['investors_count']).to eq(1)
       expect(json['data']['investors'].first).to have_key('delta')
     end
+
+    it 'returns 422 for future dates' do
+      future_date = Date.current + 1.day
+      get '/api/admin/daily_operating_results/preview', params: { date: future_date.to_s, percent: 1.0 }
+
+      expect(response).to have_http_status(:unprocessable_content)
+      json = JSON.parse(response.body)
+      expect(json['error']).to include('fecha futura')
+    end
   end
 
   describe 'POST /api/admin/daily_operating_results' do
@@ -157,6 +166,16 @@ RSpec.describe 'Admin Daily Operating Results API', type: :request do
       json = JSON.parse(response.body)
       expect(json['error']).to include('No hay inversores activos con capital')
       expect(DailyOperatingResult.find_by(date: Date.new(2025, 6, 11))).to be_nil
+    end
+
+    it 'returns 422 when date is in the future' do
+      future_date = Date.current + 1.day
+      post '/api/admin/daily_operating_results', params: { date: future_date.to_s, percent: 1.0 }
+
+      expect(response).to have_http_status(:unprocessable_content)
+      json = JSON.parse(response.body)
+      expect(json['error']).to include('fecha futura')
+      expect(DailyOperatingResult.find_by(date: future_date)).to be_nil
     end
   end
 end

@@ -17,6 +17,8 @@ module Api
           fees = fees.where('period_start >= ? AND period_end <= ?', params[:period_start], params[:period_end])
         end
 
+        fees = fees.select { |fee| fee_backed_by_history?(fee) }
+
         render json: fees.map { |fee| TradingFeeSerializer.new(fee).as_json }
       end
 
@@ -341,6 +343,7 @@ module Api
 
             profit_amount = profits_for(investor, start_date, end_date)
             existing_fee = TradingFee.active.find_by(investor_id: investor.id, period_start: start_date, period_end: end_date)
+            existing_fee = nil if existing_fee.present? && !fee_backed_by_history?(existing_fee)
 
             TradingFeeInvestorSummarySerializer.new(
               investor: investor,
@@ -362,6 +365,7 @@ module Api
               period_start: result[:period_start],
               period_end: result[:period_end]
             )
+            existing_fee = nil if existing_fee.present? && !fee_backed_by_history?(existing_fee)
 
             TradingFeeInvestorSummarySerializer.new(
               investor: investor,
@@ -507,6 +511,20 @@ module Api
                        .where(date: range)
                        .sum(:amount)
                        .to_f
+      end
+
+      # Protects admin views against stale fee rows when old movements were deleted manually.
+      def fee_backed_by_history?(fee)
+        return false if fee.blank?
+
+        min_time = fee.applied_at - 5.minutes
+        max_time = fee.applied_at + 5.minutes
+        expected_amount = -fee.fee_amount.to_f
+
+        PortfolioHistory.where(investor_id: fee.investor_id, event: 'TRADING_FEE', status: 'COMPLETED')
+                        .where(date: min_time..max_time)
+                        .where(amount: expected_amount)
+                        .exists?
       end
     end
   end

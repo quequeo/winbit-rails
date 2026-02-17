@@ -41,7 +41,16 @@ RSpec.describe 'Admin Trading Fees API', type: :request do
         profit_amount: 100,
         fee_percentage: 30,
         fee_amount: 30,
-        applied_at: Time.current,
+        applied_at: Time.zone.parse('2025-12-31 19:00:00'),
+      )
+      PortfolioHistory.create!(
+        investor: inv,
+        event: 'TRADING_FEE',
+        amount: -30,
+        previous_balance: 1000,
+        new_balance: 970,
+        status: 'COMPLETED',
+        date: Time.zone.parse('2025-12-31 19:00:05')
       )
 
       get '/api/admin/trading_fees'
@@ -66,7 +75,16 @@ RSpec.describe 'Admin Trading Fees API', type: :request do
         profit_amount: 100,
         fee_percentage: 30,
         fee_amount: 30,
-        applied_at: Time.current
+        applied_at: Time.zone.parse('2025-12-31 19:00:00')
+      )
+      PortfolioHistory.create!(
+        investor: active_investor,
+        event: 'TRADING_FEE',
+        amount: -30,
+        previous_balance: 1000,
+        new_balance: 970,
+        status: 'COMPLETED',
+        date: Time.zone.parse('2025-12-31 19:00:05')
       )
 
       TradingFee.create!(
@@ -98,6 +116,49 @@ RSpec.describe 'Admin Trading Fees API', type: :request do
       expect(response).to have_http_status(:ok)
       json = JSON.parse(response.body)
       expect(json.map { |row| row['id'] }).to contain_exactly(visible_fee.id)
+    end
+
+    it 'excludes stale fees without matching TRADING_FEE history' do
+      investor = create_investor_with_portfolio(email: 'stale_fee@test.com')
+      fresh_investor = create_investor_with_portfolio(email: 'fresh_fee@test.com')
+
+      stale_fee = TradingFee.create!(
+        investor: investor,
+        applied_by: admin,
+        period_start: Date.new(2025, 10, 1),
+        period_end: Date.new(2025, 12, 31),
+        profit_amount: 100,
+        fee_percentage: 30,
+        fee_amount: 30,
+        applied_at: Time.zone.parse('2025-12-31 19:00:00')
+      )
+
+      fresh_fee = TradingFee.create!(
+        investor: fresh_investor,
+        applied_by: admin,
+        period_start: Date.new(2025, 10, 1),
+        period_end: Date.new(2025, 12, 31),
+        profit_amount: 200,
+        fee_percentage: 30,
+        fee_amount: 60,
+        applied_at: Time.zone.parse('2025-12-31 19:10:00')
+      )
+      PortfolioHistory.create!(
+        investor: fresh_investor,
+        event: 'TRADING_FEE',
+        amount: -60,
+        previous_balance: 1000,
+        new_balance: 940,
+        status: 'COMPLETED',
+        date: Time.zone.parse('2025-12-31 19:10:05')
+      )
+
+      get '/api/admin/trading_fees'
+
+      expect(response).to have_http_status(:ok)
+      json = JSON.parse(response.body)
+      expect(json.map { |row| row['id'] }).to contain_exactly(fresh_fee.id)
+      expect(json.map { |row| row['id'] }).not_to include(stale_fee.id)
     end
   end
 
@@ -332,6 +393,35 @@ RSpec.describe 'Admin Trading Fees API', type: :request do
       expect(row['monthly_profits']).to be_an(Array)
       months = row['monthly_profits'].map { |m| m['month'] }
       expect(months).to include('2025-10', '2025-11', '2025-12')
+    end
+
+    it 'does not mark stale fee as already applied when history was deleted' do
+      inv = create_investor_with_portfolio(email: 'stale_summary@test.com')
+      add_history(inv: inv, event: 'DEPOSIT', amount: 1000, date: Time.zone.local(2025, 10, 2, 19, 0, 0), prev: 0, newb: 1000)
+      add_history(inv: inv, event: 'OPERATING_RESULT', amount: 100, date: Time.zone.local(2025, 11, 10, 17, 0, 0), prev: 1000, newb: 1100)
+
+      TradingFee.create!(
+        investor: inv,
+        applied_by: admin,
+        period_start: Date.new(2025, 10, 1),
+        period_end: Date.new(2025, 12, 31),
+        profit_amount: 100,
+        fee_percentage: 30,
+        fee_amount: 30,
+        applied_at: Time.zone.parse('2025-12-31 19:00:00')
+      )
+
+      get '/api/admin/trading_fees/investors_summary', params: {
+        period_start: '2025-10-01',
+        period_end: '2025-12-31',
+      }
+
+      expect(response).to have_http_status(:ok)
+      json = JSON.parse(response.body)
+      row = json.find { |r| r['investor_id'] == inv.id }
+      expect(row).to be_present
+      expect(row['already_applied']).to eq(false)
+      expect(row['applied_fee_id']).to be_nil
     end
   end
 end
