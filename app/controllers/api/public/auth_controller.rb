@@ -20,11 +20,7 @@ module Api
         return render_error('Credenciales inválidas', status: :unauthorized) unless investor.authenticate(password)
 
         render json: {
-          investor: {
-            email: investor.email,
-            name: investor.name,
-            status: investor.status,
-          },
+          investor: PublicAuthInvestorSerializer.new(investor).as_json
         }
       end
 

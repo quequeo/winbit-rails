@@ -5,17 +5,7 @@ module Api
         wallets = Wallet.where(enabled: true).order(:asset, :network)
 
         render json: {
-          data: wallets.map { |w|
-            {
-              id: w.id,
-              asset: w.asset,
-              network: w.network,
-              address: w.address,
-              enabled: w.enabled,
-              createdAt: w.created_at,
-              updatedAt: w.updated_at,
-            }
-          },
+          data: wallets.map { |w| PublicWalletSerializer.new(w).as_json }
         }
       end
     end
