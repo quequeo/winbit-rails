@@ -236,7 +236,37 @@ describe('DepositOptionsPage', () => {
         expect(api.updateDepositOption).toHaveBeenCalledWith('1', expect.objectContaining({
           category: 'BANK_ARS',
           label: 'Banco Galicia',
+          active: true,
         }));
+      });
+    });
+
+    it('updates option active state from edit form', async () => {
+      vi.mocked(api.getDepositOptions).mockResolvedValue(mockOptions);
+      vi.mocked(api.updateDepositOption).mockResolvedValue({});
+
+      const user = userEvent.setup();
+      render(<DepositOptionsPage />);
+
+      await waitFor(() => {
+        expect(api.getDepositOptions).toHaveBeenCalled();
+      });
+
+      const editButtons = screen.getAllByTitle('Editar');
+      await user.click(editButtons[0]);
+
+      const selects = screen.getAllByRole('combobox');
+      const activeSelect = selects[2];
+      await user.selectOptions(activeSelect, 'false');
+
+      const saveButtons = screen.getAllByRole('button', { name: /Guardar/i });
+      await user.click(saveButtons[0]);
+
+      await waitFor(() => {
+        expect(api.updateDepositOption).toHaveBeenCalledWith(
+          '1',
+          expect.objectContaining({ active: false }),
+        );
       });
     });
   });

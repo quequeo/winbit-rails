@@ -157,7 +157,7 @@ export const api = {
   getDepositOptions: () => request(`${ADMIN_API_PREFIX}/deposit_options`),
   createDepositOption: (body: { category: string; label: string; currency: string; details: Record<string, string>; position?: number }) =>
     request(`${ADMIN_API_PREFIX}/deposit_options`, { method: 'POST', body: JSON.stringify(body) }),
-  updateDepositOption: (id: string, body: { category?: string; label?: string; currency?: string; details?: Record<string, string>; position?: number }) =>
+  updateDepositOption: (id: string, body: { category?: string; label?: string; currency?: string; active?: boolean; details?: Record<string, string>; position?: number }) =>
     request(`${ADMIN_API_PREFIX}/deposit_options/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
   deleteDepositOption: (id: string) => request(`${ADMIN_API_PREFIX}/deposit_options/${id}`, { method: 'DELETE' }),
   toggleDepositOption: (id: string) => request(`${ADMIN_API_PREFIX}/deposit_options/${id}/toggle_active`, { method: 'POST' }),
