@@ -12,6 +12,7 @@ Rails.application.routes.draw do
       get 'investor/*email/history', to: 'investors#history', format: false
       get 'investor/*email', to: 'investors#show', format: false
       get 'wallets', to: 'wallets#index', format: false
+      get 'deposit_options', to: 'deposit_options#index', format: false
       post 'requests', to: 'requests#create', format: false
     end
 
@@ -32,6 +33,10 @@ Rails.application.routes.draw do
       post 'requests/:id/reject', to: 'requests#reject', format: false
 
       resources :admins, only: [:index, :create, :update, :destroy], format: false
+
+      resources :deposit_options, only: [:index, :create, :update, :destroy], format: false do
+        post 'toggle_active', on: :member
+      end
 
       get 'settings', to: 'settings#index', format: false
       patch 'settings', to: 'settings#update', format: false

@@ -152,5 +152,12 @@ export const api = {
   updateTradingFee: (id: string, body: { fee_percentage: number; notes?: string }) =>
     request(`/api/admin/trading_fees/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
   deleteTradingFee: (id: string) => request(`/api/admin/trading_fees/${id}`, { method: 'DELETE' }),
-
+  // Deposit Options
+  getDepositOptions: () => request('/api/admin/deposit_options'),
+  createDepositOption: (body: { category: string; label: string; currency: string; details: Record<string, string>; position?: number }) =>
+    request('/api/admin/deposit_options', { method: 'POST', body: JSON.stringify(body) }),
+  updateDepositOption: (id: string, body: { category?: string; label?: string; currency?: string; details?: Record<string, string>; position?: number }) =>
+    request(`/api/admin/deposit_options/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
+  deleteDepositOption: (id: string) => request(`/api/admin/deposit_options/${id}`, { method: 'DELETE' }),
+  toggleDepositOption: (id: string) => request(`/api/admin/deposit_options/${id}/toggle_active`, { method: 'POST' }),
 };

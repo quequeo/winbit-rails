@@ -143,6 +143,14 @@ export const AdminLayout = () => {
               Comisiones
             </NavLink>
             <NavLink
+              to="/deposit-options"
+              className={({ isActive }) =>
+                isActive ? `${linkBase} border-[#58b098] text-[#58b098]` : linkBase
+              }
+            >
+              Depósitos
+            </NavLink>
+            <NavLink
               to="/admins"
               className={({ isActive }) =>
                 isActive ? `${linkBase} border-[#58b098] text-[#58b098]` : linkBase
@@ -216,6 +224,17 @@ export const AdminLayout = () => {
                 }
               >
                 Comisiones
+              </NavLink>
+              <NavLink
+                to="/deposit-options"
+                onClick={() => setMobileMenuOpen(false)}
+                className={({ isActive }) =>
+                  isActive
+                    ? 'rounded-lg bg-[#58b098]/10 px-3 py-2 text-sm font-medium text-[#58b098]'
+                    : 'rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50'
+                }
+              >
+                Depósitos
               </NavLink>
               <NavLink
                 to="/admins"
