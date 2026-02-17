@@ -14,6 +14,17 @@ Rails.application.routes.draw do
       get 'wallets', to: 'wallets#index', format: false
       get 'deposit_options', to: 'deposit_options#index', format: false
       post 'requests', to: 'requests#create', format: false
+
+      scope :v1 do
+        post 'auth/login', to: 'auth#login', format: false
+        post 'auth/change_password', to: 'auth#change_password', format: false
+
+        get 'investor/*email/history', to: 'investors#history', format: false
+        get 'investor/*email', to: 'investors#show', format: false
+        get 'wallets', to: 'wallets#index', format: false
+        get 'deposit_options', to: 'deposit_options#index', format: false
+        post 'requests', to: 'requests#create', format: false
+      end
     end
 
     namespace :admin do
@@ -55,6 +66,47 @@ Rails.application.routes.draw do
       delete 'trading_fees/:id', to: 'trading_fees#destroy', format: false
       get 'trading_fees/calculate', to: 'trading_fees#calculate', format: false
       get 'trading_fees/investors_summary', to: 'trading_fees#investors_summary', format: false
+
+      scope :v1 do
+        get 'session', to: 'session#show', format: false
+        get 'dashboard', to: 'dashboard#show', format: false
+
+        resources :investors, only: [:index, :show, :create, :update, :destroy], format: false do
+          post 'toggle_status', on: :member
+          post 'referral_commissions', on: :member
+        end
+
+        get 'requests', to: 'requests_list#index', format: false
+        post 'requests', to: 'requests#create', format: false
+        patch 'requests/:id', to: 'requests#update', format: false
+        delete 'requests/:id', to: 'requests#destroy', format: false
+        post 'requests/:id/approve', to: 'requests#approve', format: false
+        post 'requests/:id/reject', to: 'requests#reject', format: false
+
+        resources :admins, only: [:index, :create, :update, :destroy], format: false
+
+        resources :deposit_options, only: [:index, :create, :update, :destroy], format: false do
+          post 'toggle_active', on: :member
+        end
+
+        get 'settings', to: 'settings#index', format: false
+        patch 'settings', to: 'settings#update', format: false
+
+        get 'activity_logs', to: 'activity_logs#index', format: false
+
+        get 'daily_operating_results', to: 'daily_operating_results#index', format: false
+        get 'daily_operating_results/preview', to: 'daily_operating_results#preview', format: false
+        get 'daily_operating_results/monthly_summary', to: 'daily_operating_results#monthly_summary', format: false
+        get 'daily_operating_results/by_month', to: 'daily_operating_results#by_month', format: false
+        post 'daily_operating_results', to: 'daily_operating_results#create', format: false
+
+        get 'trading_fees', to: 'trading_fees#index', format: false
+        post 'trading_fees', to: 'trading_fees#create', format: false
+        patch 'trading_fees/:id', to: 'trading_fees#update', format: false
+        delete 'trading_fees/:id', to: 'trading_fees#destroy', format: false
+        get 'trading_fees/calculate', to: 'trading_fees#calculate', format: false
+        get 'trading_fees/investors_summary', to: 'trading_fees#investors_summary', format: false
+      end
     end
   end
 
