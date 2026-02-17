@@ -76,9 +76,9 @@ export const api = {
   updateAdmin: (id: string, body: { email: string; name?: string; role: 'ADMIN' | 'SUPERADMIN' }) =>
     request(`${ADMIN_API_PREFIX}/admins/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
   deleteAdmin: (id: string) => request(`${ADMIN_API_PREFIX}/admins/${id}`, { method: 'DELETE' }),
-  createInvestor: (body: { email: string; name: string; password?: string }) =>
+  createInvestor: (body: { email: string; name: string; trading_fee_percentage?: number; password?: string }) =>
     request(`${ADMIN_API_PREFIX}/investors`, { method: 'POST', body: JSON.stringify(body) }),
-  updateInvestor: (id: string, body: { email: string; name: string; status?: 'ACTIVE' | 'INACTIVE'; trading_fee_frequency?: 'MONTHLY' | 'QUARTERLY' | 'SEMESTRAL' | 'ANNUAL'; password?: string }) =>
+  updateInvestor: (id: string, body: { email: string; name: string; status?: 'ACTIVE' | 'INACTIVE'; trading_fee_frequency?: 'MONTHLY' | 'QUARTERLY' | 'SEMESTRAL' | 'ANNUAL'; trading_fee_percentage?: number; password?: string }) =>
     request(`${ADMIN_API_PREFIX}/investors/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
   deleteInvestor: (id: string) => request(`${ADMIN_API_PREFIX}/investors/${id}`, { method: 'DELETE' }),
   toggleInvestorStatus: (id: string) => request(`${ADMIN_API_PREFIX}/investors/${id}/toggle_status`, { method: 'POST' }),

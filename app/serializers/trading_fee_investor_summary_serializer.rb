@@ -14,6 +14,7 @@ class TradingFeeInvestorSummarySerializer
       investor_name: investor.name,
       investor_email: investor.email,
       trading_fee_frequency: investor.trading_fee_frequency,
+      investor_trading_fee_percentage: investor.trading_fee_percentage.to_f,
       current_balance: investor.portfolio&.current_balance || 0,
       period_start: period_start,
       period_end: period_end,

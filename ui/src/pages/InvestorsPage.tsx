@@ -18,7 +18,7 @@ export const InvestorsPage = () => {
   const [data, setData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({ email: '', name: '', password: '' });
+  const [formData, setFormData] = useState({ email: '', name: '', tradingFeePercentage: '30', password: '' });
   const [submitting, setSubmitting] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; investor: any | null }>({
     isOpen: false,
@@ -40,9 +40,20 @@ export const InvestorsPage = () => {
     e.preventDefault();
     setSubmitting(true);
     try {
-      const { password, ...rest } = formData;
-      await api.createInvestor(password ? { ...rest, password } : rest);
-      setFormData({ email: '', name: '', password: '' });
+      const pct = Number(formData.tradingFeePercentage);
+      if (!Number.isFinite(pct) || pct <= 0 || pct > 100) {
+        alert('El porcentaje debe estar entre 0 y 100');
+        return;
+      }
+
+      const { password, tradingFeePercentage, ...rest } = formData;
+      const payload = {
+        ...rest,
+        trading_fee_percentage: Number(tradingFeePercentage),
+      };
+
+      await api.createInvestor(password ? { ...payload, password } : payload);
+      setFormData({ email: '', name: '', tradingFeePercentage: '30', password: '' });
       setShowForm(false);
       fetchInvestors();
     } catch (err: any) {
@@ -114,6 +125,19 @@ export const InvestorsPage = () => {
               />
             </div>
             <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Trading fee (%)</label>
+              <Input
+                type="number"
+                min={0}
+                max={100}
+                step="0.1"
+                value={formData.tradingFeePercentage}
+                onChange={(e) => setFormData({ ...formData, tradingFeePercentage: e.target.value })}
+                placeholder="30"
+              />
+              <p className="mt-1 text-xs text-gray-500">Default 30%. Podés editarlo por inversor.</p>
+            </div>
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
               <Input
                 type="password"
@@ -172,7 +196,7 @@ export const InvestorsPage = () => {
               </div>
             </div>
             <div className="mt-2 flex items-center justify-between text-xs text-gray-500">
-              <span>Fee: {frequencyLabel(inv.tradingFeeFrequency)}</span>
+              <span>Fee: {frequencyLabel(inv.tradingFeeFrequency)} ({inv.tradingFeePercentage ?? 30}%)</span>
               <span>{inv.hasPassword ? '🔑 Pass' : 'Google'}</span>
             </div>
             <div className="mt-3 flex gap-2">
@@ -237,7 +261,7 @@ export const InvestorsPage = () => {
                   </td>
                   <td className="py-3 pr-4 text-center">
                     <span className="inline-flex rounded-full bg-purple-50 px-2 py-0.5 text-xs font-semibold text-purple-700">
-                      {frequencyLabel(inv.tradingFeeFrequency)}
+                      {frequencyLabel(inv.tradingFeeFrequency)} ({inv.tradingFeePercentage ?? 30}%)
                     </span>
                   </td>
                   <td className="py-3 pr-4 text-center">

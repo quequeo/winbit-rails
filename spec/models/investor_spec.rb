@@ -31,6 +31,11 @@ RSpec.describe Investor, type: :model do
       expect(investor.status).to eq('ACTIVE')
     end
 
+    it 'defaults trading fee percentage to 30' do
+      investor = Investor.create!(email: 'fee_default@example.com', name: 'Fee Default')
+      expect(investor.trading_fee_percentage.to_f).to eq(30.0)
+    end
+
     it 'allows all trading fee frequencies' do
       expect(Investor::TRADING_FEE_FREQUENCIES).to contain_exactly('MONTHLY', 'QUARTERLY', 'SEMESTRAL', 'ANNUAL')
     end
@@ -51,6 +56,12 @@ RSpec.describe Investor, type: :model do
       investor = Investor.new(email: 'TEST@EXAMPLE.COM', name: 'Two', status: 'ACTIVE')
       expect(investor).not_to be_valid
       expect(investor.errors[:email]).to include('has already been taken')
+    end
+
+    it 'validates trading fee percentage range' do
+      investor = Investor.new(email: 'bad_fee@example.com', name: 'Bad Fee', status: 'ACTIVE', trading_fee_percentage: 0)
+      expect(investor).not_to be_valid
+      expect(investor.errors[:trading_fee_percentage]).to be_present
     end
   end
 

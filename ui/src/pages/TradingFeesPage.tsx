@@ -11,6 +11,7 @@ type InvestorSummary = {
   investor_name: string;
   investor_email: string;
   trading_fee_frequency?: 'MONTHLY' | 'QUARTERLY' | 'SEMESTRAL' | 'ANNUAL';
+  investor_trading_fee_percentage?: number;
   current_balance: number;
   period_start: string;
   period_end: string;
@@ -96,7 +97,8 @@ export const TradingFeesPage = () => {
       const initialPercentages: Record<string, string> = {};
       response.forEach((inv) => {
         const applied = typeof inv.applied_fee_percentage === 'number' ? inv.applied_fee_percentage : null;
-        initialPercentages[inv.investor_id] = applied !== null ? String(applied) : '30';
+        const investorDefault = typeof inv.investor_trading_fee_percentage === 'number' ? inv.investor_trading_fee_percentage : 30;
+        initialPercentages[inv.investor_id] = applied !== null ? String(applied) : String(investorDefault);
       });
       setPercentages(initialPercentages);
     } catch (err: any) {

@@ -18,6 +18,7 @@ class Investor < ApplicationRecord
   validates :name, presence: true
   validates :status, presence: true, inclusion: { in: STATUSES }
   validates :trading_fee_frequency, presence: true, inclusion: { in: TRADING_FEE_FREQUENCIES }
+  validates :trading_fee_percentage, numericality: { greater_than: 0, less_than_or_equal_to: 100 }
   validates :password, length: { minimum: 6 }, if: -> { password_digest_changed? || new_record_with_password? }
 
   def status_active?

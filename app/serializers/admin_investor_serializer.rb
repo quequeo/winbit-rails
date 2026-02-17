@@ -10,6 +10,7 @@ class AdminInvestorSerializer
       name: investor.name,
       status: investor.status,
       tradingFeeFrequency: investor.trading_fee_frequency,
+      tradingFeePercentage: investor.trading_fee_percentage.to_f,
       hasPassword: investor.password_digest.present?,
       createdAt: investor.created_at,
       updatedAt: investor.updated_at,
