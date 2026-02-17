@@ -12,25 +12,7 @@ module Api
         paginated_result = paginate(logs, default_per_page: 50, max_per_page: 100)
         logs = paginated_result[:records]
 
-        logs_data = logs.map do |log|
-          {
-            id: log.id,
-            action: log.action,
-            action_description: log.action_description,
-            user: {
-              id: log.user.id,
-              name: log.user.name,
-              email: log.user.email
-            },
-            target: {
-              type: log.target_type,
-              id: log.target_id,
-              display: target_display(log)
-            },
-            metadata: log.metadata,
-            created_at: log.created_at
-          }
-        end
+        logs_data = logs.map { |log| ActivityLogSerializer.new(log).as_json }
 
         render json: {
           data: {
@@ -38,57 +20,6 @@ module Api
             pagination: paginated_result[:pagination]
           }
         }
-      end
-
-      private
-
-      def target_display(log)
-        case log.target_type
-        when 'Investor'
-          log.target&.name || "Inversor ##{log.target_id}"
-        when 'Portfolio'
-          investor = log.target&.investor
-          investor ? "Portfolio de #{investor.name}" : "Portfolio ##{log.target_id}"
-        when 'InvestorRequest'
-          req = log.target
-          if req
-            "#{req.request_type} - $#{req.amount}"
-          else
-            "Solicitud ##{log.target_id}"
-          end
-        when 'TradingFee'
-          fee = log.target
-          if fee
-            "#{fee.investor&.name} — $#{fee.fee_amount}"
-          else
-            "Trading fee ##{log.target_id}"
-          end
-        when 'DepositOption'
-          option = log.target
-          if option
-            "#{option.category}: #{option.label}"
-          else
-            "Opción de depósito ##{log.target_id}"
-          end
-        when 'User'
-          log.target&.name || "Admin ##{log.target_id}"
-        when 'AppSetting'
-          setting = log.target
-          if setting
-            case setting.key
-            when 'investor_notifications_enabled'
-              'Notificaciones a Inversores (Habilitado/Deshabilitado)'
-            when 'investor_email_whitelist'
-              'Lista Blanca de Emails de Inversores'
-            else
-              setting.description || setting.key
-            end
-          else
-            "Configuración ##{log.target_id}"
-          end
-        else
-          "#{log.target_type} ##{log.target_id}"
-        end
       end
     end
   end
