@@ -112,24 +112,27 @@ export const EditInvestorPage = () => {
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Nueva contraseña
-              {investor?.hasPassword ? (
+          {investor?.hasPassword ? (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Nueva contraseña
                 <span className="ml-2 text-xs text-blue-600 font-normal">(tiene contraseña)</span>
-              ) : (
-                <span className="ml-2 text-xs text-gray-400 font-normal">(sin contraseña)</span>
-              )}
-            </label>
-            <Input
-              type="password"
-              value={form.newPassword}
-              onChange={(e) => setForm({ ...form, newPassword: e.target.value })}
-              placeholder="Dejar vacío para no cambiar"
-              minLength={6}
-            />
-            <p className="mt-1 text-xs text-gray-500">Mínimo 6 caracteres. Solo se actualiza si completás este campo.</p>
-          </div>
+              </label>
+              <Input
+                type="password"
+                value={form.newPassword}
+                onChange={(e) => setForm({ ...form, newPassword: e.target.value })}
+                placeholder="Dejar vacío para no cambiar"
+                minLength={6}
+              />
+              <p className="mt-1 text-xs text-gray-500">Mínimo 6 caracteres. Solo se actualiza si completás este campo.</p>
+            </div>
+          ) : (
+            <div className="rounded-lg bg-gray-50 p-4 text-sm text-gray-600">
+              <p className="font-medium text-gray-700">Método de autenticación: Google</p>
+              <p className="mt-1">Este inversor ingresa con Google. No se puede configurar contraseña.</p>
+            </div>
+          )}
 
           <div className="flex gap-3 pt-2">
             <Button type="submit" disabled={submitting}>
