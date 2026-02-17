@@ -57,9 +57,10 @@ RSpec.describe 'Admin Trading Fees API', type: :request do
 
       expect(response).to have_http_status(:ok)
       json = JSON.parse(response.body)
-      expect(json).to be_an(Array)
-      expect(json.first['id']).to eq(fee.id)
-      expect(json.first['investor_id']).to eq(inv.id)
+      expect(json['data']).to be_an(Array)
+      expect(json['pagination']).to include('page' => 1, 'per_page' => 25, 'total' => 1, 'total_pages' => 1)
+      expect(json['data'].first['id']).to eq(fee.id)
+      expect(json['data'].first['investor_id']).to eq(inv.id)
     end
 
     it 'excludes voided fees and inactive investors fees' do
@@ -115,7 +116,7 @@ RSpec.describe 'Admin Trading Fees API', type: :request do
 
       expect(response).to have_http_status(:ok)
       json = JSON.parse(response.body)
-      expect(json.map { |row| row['id'] }).to contain_exactly(visible_fee.id)
+      expect(json['data'].map { |row| row['id'] }).to contain_exactly(visible_fee.id)
     end
 
     it 'includes voided fees when include_voided=true' do
@@ -167,7 +168,7 @@ RSpec.describe 'Admin Trading Fees API', type: :request do
 
       expect(response).to have_http_status(:ok)
       json = JSON.parse(response.body)
-      expect(json.map { |row| row['id'] }).to include(active_fee.id, voided_fee.id)
+      expect(json['data'].map { |row| row['id'] }).to include(active_fee.id, voided_fee.id)
     end
 
     it 'excludes stale fees without matching TRADING_FEE history' do
@@ -209,8 +210,45 @@ RSpec.describe 'Admin Trading Fees API', type: :request do
 
       expect(response).to have_http_status(:ok)
       json = JSON.parse(response.body)
-      expect(json.map { |row| row['id'] }).to contain_exactly(fresh_fee.id)
-      expect(json.map { |row| row['id'] }).not_to include(stale_fee.id)
+      expect(json['data'].map { |row| row['id'] }).to contain_exactly(fresh_fee.id)
+      expect(json['data'].map { |row| row['id'] }).not_to include(stale_fee.id)
+    end
+
+    it 'clamps per_page to 25 max' do
+      investor = create_investor_with_portfolio(email: 'paging_limit@test.com')
+
+      30.times do |i|
+        applied_at = Time.zone.parse("2025-12-31 19:00:#{format('%02d', i)}")
+        period_start = (Date.new(2024, 1, 1) >> i).beginning_of_month
+        period_end = period_start.end_of_month
+        fee = TradingFee.create!(
+          investor: investor,
+          applied_by: admin,
+          period_start: period_start,
+          period_end: period_end,
+          profit_amount: 100 + i,
+          fee_percentage: 30,
+          fee_amount: 30 + i,
+          applied_at: applied_at
+        )
+
+        PortfolioHistory.create!(
+          investor: investor,
+          event: 'TRADING_FEE',
+          amount: -fee.fee_amount.to_f,
+          previous_balance: 1000,
+          new_balance: 1000 - fee.fee_amount.to_f,
+          status: 'COMPLETED',
+          date: applied_at + 3.seconds
+        )
+      end
+
+      get '/api/admin/trading_fees', params: { include_voided: true, per_page: 1000, page: 1 }
+
+      expect(response).to have_http_status(:ok)
+      json = JSON.parse(response.body)
+      expect(json['data'].length).to eq(25)
+      expect(json['pagination']).to include('page' => 1, 'per_page' => 25, 'total' => 30, 'total_pages' => 2)
     end
   end
 
