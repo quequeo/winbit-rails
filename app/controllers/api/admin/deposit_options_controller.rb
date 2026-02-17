@@ -80,9 +80,11 @@ module Api
       private
 
       def set_deposit_option
-        @deposit_option = DepositOption.find(params[:id])
-      rescue ActiveRecord::RecordNotFound
-        render_error("Opción de depósito no encontrada", status: :not_found)
+        @deposit_option = find_record!(
+          model: DepositOption,
+          id: params[:id],
+          message: 'Opción de depósito no encontrada'
+        )
       end
 
       def deposit_option_params

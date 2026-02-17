@@ -4,9 +4,9 @@ module Api
       def show
         email = CGI.unescape(params[:email].to_s)
 
-        investor = Investor.includes(:portfolio).find_by(email: email)
-        return render_error('Investor not found', status: :not_found) unless investor
-        return render_error('Investor is not active', status: :forbidden) unless investor.status_active?
+        investor = find_investor_by_email(email: email, includes: [:portfolio], message: 'Investor not found')
+        return unless investor
+        return unless require_active_investor!(investor, message: 'Investor is not active')
 
         now = Time.current
         year_start = Time.zone.local(Date.current.year, 1, 1, 0, 0, 0)
@@ -43,9 +43,9 @@ module Api
       def history
         email = CGI.unescape(params[:email].to_s)
 
-        investor = Investor.find_by(email: email)
-        return render_error('Investor not found', status: :not_found) unless investor
-        return render_error('Investor is not active', status: :forbidden) unless investor.status_active?
+        investor = find_investor_by_email(email: email, message: 'Investor not found')
+        return unless investor
+        return unless require_active_investor!(investor, message: 'Investor is not active')
 
         # Portfolio histories (completed movements)
         fees = investor.trading_fees.order(applied_at: :desc).to_a

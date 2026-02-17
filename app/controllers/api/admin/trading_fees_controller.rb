@@ -411,28 +411,26 @@ module Api
 
       def set_investor
         investor_id = params[:investor_id] || params[:id]
-        @investor = Investor.includes(:portfolio).find_by(id: investor_id)
-
-        unless @investor
-          render_error('Inversor no encontrado', status: :not_found)
-        end
+        @investor = find_investor_by_id(id: investor_id, includes: [:portfolio])
       end
 
       def set_trading_fee
-        @trading_fee = TradingFee.includes(:investor).find_by(id: params[:id])
-        return if @trading_fee
-
-        render_error('Trading fee no encontrado', status: :not_found)
+        @trading_fee = find_record!(
+          model: TradingFee,
+          id: params[:id],
+          includes: [:investor],
+          message: 'Trading fee no encontrado'
+        )
       end
 
       def extract_period_params
         return [nil, nil] unless params[:period_start].present? && params[:period_end].present?
 
-        start_date = Date.parse(params[:period_start].to_s)
-        end_date = Date.parse(params[:period_end].to_s)
+        start_date = parse_date_param(params[:period_start])
+        end_date = parse_date_param(params[:period_end])
+        return [nil, nil] if start_date.blank? || end_date.blank?
+
         [start_date, end_date]
-      rescue ArgumentError
-        [nil, nil]
       end
 
       def validate_period_for_investor!(investor, start_date, end_date)

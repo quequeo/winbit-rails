@@ -2,10 +2,6 @@ module Api
   module Admin
     class ActivityLogsController < BaseController
       def index
-        page = (params[:page] || 1).to_i
-        per_page = (params[:per_page] || 50).to_i
-        per_page = [per_page, 100].min # Max 100 per page
-
         # Base query with eager loading (polymorphic, so we preload broadly)
         logs = ActivityLog.includes(:user).preload(:target).recent
 
@@ -13,9 +9,8 @@ module Api
         logs = logs.by_user(params[:user_id]) if params[:user_id].present?
         logs = logs.by_action(params[:filter_action]) if params[:filter_action].present?
 
-        # Pagination
-        total = logs.count
-        logs = logs.offset((page - 1) * per_page).limit(per_page)
+        paginated_result = paginate(logs, default_per_page: 50, max_per_page: 100)
+        logs = paginated_result[:records]
 
         logs_data = logs.map do |log|
           {
@@ -40,12 +35,7 @@ module Api
         render json: {
           data: {
             logs: logs_data,
-            pagination: {
-              page: page,
-              per_page: per_page,
-              total: total,
-              total_pages: (total.to_f / per_page).ceil
-            }
+            pagination: paginated_result[:pagination]
           }
         }
       end
