@@ -34,7 +34,7 @@ describe('api', () => {
       const result = await api.getAdminSession();
       expect(result).toEqual(mockData);
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/admin/session'),
+        expect.stringContaining('/api/admin/v1/session'),
         expect.objectContaining({
           credentials: 'include',
           headers: expect.objectContaining({
@@ -135,7 +135,7 @@ describe('api', () => {
 
       await api.getAdminDashboard();
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/admin/dashboard'),
+        expect.stringContaining('/api/admin/v1/dashboard'),
         expect.any(Object),
       );
     });
@@ -152,7 +152,7 @@ describe('api', () => {
 
       await api.getAdminInvestors();
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/admin/investors'),
+        expect.stringContaining('/api/admin/v1/investors'),
         expect.any(Object),
       );
       expect(mockFetch).toHaveBeenCalledWith(
@@ -188,7 +188,7 @@ describe('api', () => {
 
       await api.getAdminRequests();
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/admin/requests'),
+        expect.stringContaining('/api/admin/v1/requests'),
         expect.any(Object),
       );
     });
@@ -228,7 +228,7 @@ describe('api', () => {
 
       await api.createRequest(requestBody);
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/admin/requests'),
+        expect.stringContaining('/api/admin/v1/requests'),
         expect.objectContaining({
           method: 'POST',
           body: JSON.stringify(requestBody),
@@ -255,7 +255,7 @@ describe('api', () => {
 
       await api.updateRequest('1', requestBody);
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/admin/requests/1'),
+        expect.stringContaining('/api/admin/v1/requests/1'),
         expect.objectContaining({
           method: 'PATCH',
           body: JSON.stringify(requestBody),
@@ -274,7 +274,7 @@ describe('api', () => {
 
       await api.deleteRequest('1');
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/admin/requests/1'),
+        expect.stringContaining('/api/admin/v1/requests/1'),
         expect.objectContaining({
           method: 'DELETE',
         }),
@@ -293,7 +293,7 @@ describe('api', () => {
 
       await api.approveRequest('1');
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/admin/requests/1/approve'),
+        expect.stringContaining('/api/admin/v1/requests/1/approve'),
         expect.objectContaining({
           method: 'POST',
         }),
@@ -312,7 +312,7 @@ describe('api', () => {
 
       await api.rejectRequest('1');
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/admin/requests/1/reject'),
+        expect.stringContaining('/api/admin/v1/requests/1/reject'),
         expect.objectContaining({
           method: 'POST',
         }),
@@ -332,7 +332,7 @@ describe('api', () => {
 
       await api.getAdminAdmins();
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/admin/admins'),
+        expect.stringContaining('/api/admin/v1/admins'),
         expect.any(Object),
       );
     });
@@ -348,7 +348,7 @@ describe('api', () => {
 
       await api.createAdmin(adminData);
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/admin/admins'),
+        expect.stringContaining('/api/admin/v1/admins'),
         expect.objectContaining({
           method: 'POST',
           body: JSON.stringify(adminData),
@@ -367,7 +367,7 @@ describe('api', () => {
 
       await api.updateAdmin('1', adminData);
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/admin/admins/1'),
+        expect.stringContaining('/api/admin/v1/admins/1'),
         expect.objectContaining({
           method: 'PATCH',
           body: JSON.stringify(adminData),
@@ -384,7 +384,7 @@ describe('api', () => {
 
       await api.deleteAdmin('1');
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/admin/admins/1'),
+        expect.stringContaining('/api/admin/v1/admins/1'),
         expect.objectContaining({
           method: 'DELETE',
         }),
@@ -404,7 +404,7 @@ describe('api', () => {
 
       await api.createInvestor(investorData);
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/admin/investors'),
+        expect.stringContaining('/api/admin/v1/investors'),
         expect.objectContaining({
           method: 'POST',
           body: JSON.stringify(investorData),
@@ -423,7 +423,7 @@ describe('api', () => {
 
       await api.updateInvestor('1', investorData);
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/admin/investors/1'),
+        expect.stringContaining('/api/admin/v1/investors/1'),
         expect.objectContaining({
           method: 'PATCH',
           body: JSON.stringify(investorData),
@@ -440,7 +440,7 @@ describe('api', () => {
 
       await api.deleteInvestor('1');
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/admin/investors/1'),
+        expect.stringContaining('/api/admin/v1/investors/1'),
         expect.objectContaining({
           method: 'DELETE',
         }),
