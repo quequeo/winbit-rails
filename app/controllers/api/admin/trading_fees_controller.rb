@@ -5,7 +5,10 @@ module Api
       before_action :set_trading_fee, only: [:update, :destroy]
 
       def index
-        fees = TradingFee.includes(:investor, :applied_by)
+        fees = TradingFee.active
+                         .joins(:investor)
+                         .where(investors: { status: 'ACTIVE' })
+                         .includes(:investor, :applied_by)
                          .order(applied_at: :desc)
 
         fees = fees.where(investor_id: params[:investor_id]) if params[:investor_id].present?

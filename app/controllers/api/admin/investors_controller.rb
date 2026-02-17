@@ -182,11 +182,12 @@ module Api
       end
 
       def investor_update_params
-        permitted = params.permit(:email, :name, :trading_fee_frequency, :password)
+        permitted = params.permit(:email, :name, :status, :trading_fee_frequency, :password)
         attrs = {
           email: permitted.fetch(:email),
           name: permitted.fetch(:name),
         }
+        attrs[:status] = permitted[:status] if permitted.key?(:status)
         attrs[:trading_fee_frequency] = permitted[:trading_fee_frequency] if permitted.key?(:trading_fee_frequency)
         attrs[:password] = permitted[:password] if permitted[:password].present?
         attrs

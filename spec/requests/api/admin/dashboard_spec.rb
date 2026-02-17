@@ -156,5 +156,54 @@ RSpec.describe 'Admin Dashboard API', type: :request do
       json = JSON.parse(response.body)
       expect(json['data']['pendingRequestCount']).to eq(1) # request2 is APPROVED
     end
+
+    it 'excludes inactive investors from strategy return calculations' do
+      Portfolio.create!(investor: investor3, current_balance: 0, total_invested: 0)
+
+      PortfolioHistory.create!(
+        investor: investor1,
+        event: 'DEPOSIT',
+        amount: 1000,
+        previous_balance: 0,
+        new_balance: 1000,
+        status: 'COMPLETED',
+        date: Time.zone.local(2026, 1, 10, 19, 0, 0)
+      )
+      PortfolioHistory.create!(
+        investor: investor1,
+        event: 'OPERATING_RESULT',
+        amount: 100,
+        previous_balance: 1000,
+        new_balance: 1100,
+        status: 'COMPLETED',
+        date: Time.zone.local(2026, 1, 12, 17, 0, 0)
+      )
+
+      PortfolioHistory.create!(
+        investor: investor3,
+        event: 'DEPOSIT',
+        amount: 1000,
+        previous_balance: 0,
+        new_balance: 1000,
+        status: 'COMPLETED',
+        date: Time.zone.local(2026, 1, 10, 19, 0, 0)
+      )
+      PortfolioHistory.create!(
+        investor: investor3,
+        event: 'OPERATING_RESULT',
+        amount: 900,
+        previous_balance: 1000,
+        new_balance: 1900,
+        status: 'COMPLETED',
+        date: Time.zone.local(2026, 1, 12, 17, 0, 0)
+      )
+
+      get '/api/admin/dashboard', params: { days: 30 }
+      expect(response).to have_http_status(:ok)
+
+      json = JSON.parse(response.body)
+      expect(json['data']['strategyReturnAllUsd']).to be_within(0.01).of(100.0)
+      expect(json['data']['strategyReturnAllPercent']).to be_within(0.0001).of(10.0)
+    end
   end
 end

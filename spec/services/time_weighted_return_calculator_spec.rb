@@ -91,6 +91,60 @@ RSpec.describe TimeWeightedReturnCalculator do
     expect(res.pnl_usd).to be_within(0.01).of(100.0)
   end
 
+  it 'can restrict platform metrics to a subset of investors' do
+    active = Investor.create!(email: 'subset_active@example.com', name: 'subset_active', status: 'ACTIVE')
+    inactive = Investor.create!(email: 'subset_inactive@example.com', name: 'subset_inactive', status: 'INACTIVE')
+    Portfolio.create!(investor: active, current_balance: 0, total_invested: 0)
+    Portfolio.create!(investor: inactive, current_balance: 0, total_invested: 0)
+
+    PortfolioHistory.create!(
+      investor: active,
+      event: 'DEPOSIT',
+      amount: 1_000,
+      previous_balance: 0,
+      new_balance: 1_000,
+      status: 'COMPLETED',
+      date: t(2026, 1, 10, 19, 0, 0)
+    )
+    PortfolioHistory.create!(
+      investor: active,
+      event: 'OPERATING_RESULT',
+      amount: 100,
+      previous_balance: 1_000,
+      new_balance: 1_100,
+      status: 'COMPLETED',
+      date: t(2026, 1, 12, 17, 0, 0)
+    )
+
+    PortfolioHistory.create!(
+      investor: inactive,
+      event: 'DEPOSIT',
+      amount: 2_000,
+      previous_balance: 0,
+      new_balance: 2_000,
+      status: 'COMPLETED',
+      date: t(2026, 1, 10, 19, 0, 0)
+    )
+    PortfolioHistory.create!(
+      investor: inactive,
+      event: 'OPERATING_RESULT',
+      amount: 500,
+      previous_balance: 2_000,
+      new_balance: 2_500,
+      status: 'COMPLETED',
+      date: t(2026, 1, 12, 17, 0, 0)
+    )
+
+    res = described_class.for_platform(
+      from: t(2026, 1, 1, 0, 0, 0),
+      to: t(2026, 1, 31, 23, 59, 59),
+      investor_ids: [active.id]
+    )
+
+    expect(res.pnl_usd).to be_within(0.01).of(100.0)
+    expect(res.twr_percent).to be_within(0.0001).of(10.0)
+  end
+
   it 'computes investor TWR independent of withdrawals (example: +20% then withdraw)' do
     investor = Investor.create!(email: 'twr@example.com', name: 'twr', status: 'ACTIVE')
     Portfolio.create!(investor: investor, current_balance: 0, total_invested: 0, accumulated_return_usd: 0, accumulated_return_percent: 0)

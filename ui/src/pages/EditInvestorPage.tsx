@@ -15,6 +15,7 @@ export const EditInvestorPage = () => {
   const [form, setForm] = useState({
     email: '',
     name: '',
+    status: 'ACTIVE' as 'ACTIVE' | 'INACTIVE',
     tradingFeeFrequency: 'QUARTERLY' as 'MONTHLY' | 'QUARTERLY' | 'SEMESTRAL' | 'ANNUAL',
     newPassword: '',
   });
@@ -29,6 +30,7 @@ export const EditInvestorPage = () => {
           setForm({
             email: inv.email,
             name: inv.name,
+            status: inv.status || 'ACTIVE',
             tradingFeeFrequency: inv.tradingFeeFrequency || 'QUARTERLY',
             newPassword: '',
           });
@@ -51,6 +53,7 @@ export const EditInvestorPage = () => {
       const body: any = {
         email: form.email,
         name: form.name,
+        status: form.status,
         trading_fee_frequency: form.tradingFeeFrequency,
       };
       if (form.newPassword) body.password = form.newPassword;
@@ -97,6 +100,21 @@ export const EditInvestorPage = () => {
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+            <Select
+              value={form.status}
+              onChange={(v) => setForm({ ...form, status: v as 'ACTIVE' | 'INACTIVE' })}
+              options={[
+                { value: 'ACTIVE', label: 'Activo' },
+                { value: 'INACTIVE', label: 'Inactivo' },
+              ]}
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              Si está inactivo, pierde acceso a la app de clientes y queda excluido de cálculos globales.
+            </p>
           </div>
 
           <div>
