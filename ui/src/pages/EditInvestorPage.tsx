@@ -1,0 +1,146 @@
+import { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { api } from '../lib/api';
+import { Button } from '../components/ui/Button';
+import { Input } from '../components/ui/Input';
+import { Select } from '../components/ui/Select';
+
+export const EditInvestorPage = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [investor, setInvestor] = useState<any>(null);
+  const [form, setForm] = useState({
+    email: '',
+    name: '',
+    tradingFeeFrequency: 'QUARTERLY' as 'QUARTERLY' | 'SEMESTRAL' | 'ANNUAL',
+    newPassword: '',
+  });
+
+  useEffect(() => {
+    api
+      .getAdminInvestors({})
+      .then((res) => {
+        const inv = (res?.data || []).find((i: any) => String(i.id) === id);
+        if (inv) {
+          setInvestor(inv);
+          setForm({
+            email: inv.email,
+            name: inv.name,
+            tradingFeeFrequency: inv.tradingFeeFrequency || 'QUARTERLY',
+            newPassword: '',
+          });
+        } else {
+          setError('Inversor no encontrado');
+        }
+        setLoading(false);
+      })
+      .catch((e) => {
+        setError(e.message);
+        setLoading(false);
+      });
+  }, [id]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!id) return;
+    setSubmitting(true);
+    try {
+      const body: any = {
+        email: form.email,
+        name: form.name,
+        trading_fee_frequency: form.tradingFeeFrequency,
+      };
+      if (form.newPassword) body.password = form.newPassword;
+      await api.updateInvestor(id, body);
+      navigate('/investors');
+    } catch (err: any) {
+      alert(err.message || 'Error al actualizar inversor');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (loading) return <div className="text-gray-600">Cargando...</div>;
+  if (error) return <div className="text-red-600">{error}</div>;
+
+  return (
+    <div className="max-w-2xl mx-auto space-y-6">
+      <div className="flex items-center gap-4">
+        <button onClick={() => navigate('/investors')} className="text-gray-500 hover:text-gray-700">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <h1 className="text-2xl font-bold text-gray-900">Editar Inversor</h1>
+      </div>
+
+      <div className="rounded-lg bg-white p-6 shadow">
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+            <Input
+              type="email"
+              required
+              value={form.email}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
+            <Input
+              type="text"
+              required
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Frecuencia trading fee</label>
+            <Select
+              value={form.tradingFeeFrequency}
+              onChange={(v) => setForm({ ...form, tradingFeeFrequency: v as 'QUARTERLY' | 'SEMESTRAL' | 'ANNUAL' })}
+              options={[
+                { value: 'QUARTERLY', label: 'Trimestral' },
+                { value: 'SEMESTRAL', label: 'Semestral' },
+                { value: 'ANNUAL', label: 'Anual' },
+              ]}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Nueva contraseña
+              {investor?.hasPassword ? (
+                <span className="ml-2 text-xs text-blue-600 font-normal">(tiene contraseña)</span>
+              ) : (
+                <span className="ml-2 text-xs text-gray-400 font-normal">(sin contraseña)</span>
+              )}
+            </label>
+            <Input
+              type="password"
+              value={form.newPassword}
+              onChange={(e) => setForm({ ...form, newPassword: e.target.value })}
+              placeholder="Dejar vacío para no cambiar"
+              minLength={6}
+            />
+            <p className="mt-1 text-xs text-gray-500">Mínimo 6 caracteres. Solo se actualiza si completás este campo.</p>
+          </div>
+
+          <div className="flex gap-3 pt-2">
+            <Button type="submit" disabled={submitting}>
+              {submitting ? 'Guardando...' : 'Guardar cambios'}
+            </Button>
+            <Button type="button" onClick={() => navigate('/investors')} className="bg-gray-500 hover:bg-gray-600">
+              Cancelar
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};

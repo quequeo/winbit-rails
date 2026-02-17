@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AdminLayout } from './components/layout/AdminLayout';
 import { DashboardPage } from './pages/DashboardPage';
 import { InvestorsPage } from './pages/InvestorsPage';
+import { EditInvestorPage } from './pages/EditInvestorPage';
 import { RequestsPage } from './pages/RequestsPage';
 import { AdminsPage } from './pages/AdminsPage';
 import { SettingsPage } from './pages/SettingsPage';
@@ -21,6 +22,7 @@ function App() {
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/investors" element={<InvestorsPage />} />
+          <Route path="/investors/:id/edit" element={<EditInvestorPage />} />
           <Route path="/requests" element={<RequestsPage />} />
           <Route path="/daily-operating" element={<DailyOperatingResultsPage />} />
           <Route path="/operating-history" element={<OperatingHistoryPage />} />
