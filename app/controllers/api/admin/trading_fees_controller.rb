@@ -20,8 +20,12 @@ module Api
         end
 
         fees = fees.select { |fee| fee_backed_by_history?(fee) }
+        paginated = paginate_array(fees, default_per_page: 25, max_per_page: 25)
 
-        render json: fees.map { |fee| TradingFeeSerializer.new(fee).as_json }
+        render json: {
+          data: paginated[:records].map { |fee| TradingFeeSerializer.new(fee).as_json },
+          pagination: paginated[:pagination]
+        }
       end
 
       def calculate
@@ -527,6 +531,28 @@ module Api
                         .where(date: min_time..max_time)
                         .where(amount: expected_amount)
                         .exists?
+      end
+
+      def paginate_array(records, default_per_page:, max_per_page:)
+        page = params[:page].to_i
+        page = 1 if page <= 0
+
+        raw_per_page = params[:per_page].to_i
+        per_page = raw_per_page.positive? ? raw_per_page.clamp(1, max_per_page) : default_per_page
+
+        total = records.size
+        start_index = (page - 1) * per_page
+        paged_records = records.slice(start_index, per_page) || []
+
+        {
+          records: paged_records,
+          pagination: {
+            page: page,
+            per_page: per_page,
+            total: total,
+            total_pages: (total.to_f / per_page).ceil
+          }
+        }
       end
     end
   end

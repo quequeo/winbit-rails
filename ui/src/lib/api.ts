@@ -136,10 +136,12 @@ export const api = {
   createDailyOperatingResult: (body: { date: string; percent: number; notes?: string }) =>
     request(`${ADMIN_API_PREFIX}/daily_operating_results`, { method: 'POST', body: JSON.stringify(body) }),
   // Trading Fees
-  getTradingFees: (params?: { investor_id?: string; include_voided?: boolean }) => {
+  getTradingFees: (params?: { investor_id?: string; include_voided?: boolean; page?: number; per_page?: number }) => {
     const qs = new URLSearchParams();
     if (params?.investor_id) qs.set('investor_id', params.investor_id);
     if (params?.include_voided !== undefined) qs.set('include_voided', String(params.include_voided));
+    if (params?.page !== undefined) qs.set('page', String(params.page));
+    if (params?.per_page !== undefined) qs.set('per_page', String(params.per_page));
     const suffix = qs.toString() ? `?${qs.toString()}` : '';
     return request(`${ADMIN_API_PREFIX}/trading_fees${suffix}`);
   },

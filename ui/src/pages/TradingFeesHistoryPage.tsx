@@ -17,6 +17,18 @@ type TradingFeeHistoryRow = {
   voided_at?: string | null;
 };
 
+type Pagination = {
+  page: number;
+  per_page: number;
+  total: number;
+  total_pages: number;
+};
+
+type TradingFeesHistoryResponse = {
+  data: TradingFeeHistoryRow[];
+  pagination: Pagination;
+};
+
 const formatDate = (value: string | null | undefined) => {
   if (!value) return '—';
   const d = new Date(value);
@@ -41,6 +53,8 @@ const formatPeriod = (start: string, ending: string) => {
 
 export const TradingFeesHistoryPage = () => {
   const [rows, setRows] = useState<TradingFeeHistoryRow[]>([]);
+  const [pagination, setPagination] = useState<Pagination>({ page: 1, per_page: 25, total: 0, total_pages: 0 });
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
@@ -51,8 +65,32 @@ export const TradingFeesHistoryPage = () => {
       try {
         setLoading(true);
         setError('');
-        const data = (await api.getTradingFees({ include_voided: true })) as TradingFeeHistoryRow[];
-        setRows(Array.isArray(data) ? data : []);
+        const response = (await api.getTradingFees({
+          include_voided: true,
+          page,
+          per_page: 25,
+        })) as TradingFeesHistoryResponse | TradingFeeHistoryRow[];
+
+        if (Array.isArray(response)) {
+          setRows(response);
+          setPagination({
+            page: 1,
+            per_page: 25,
+            total: response.length,
+            total_pages: response.length > 0 ? 1 : 0,
+          });
+          return;
+        }
+
+        setRows(Array.isArray(response?.data) ? response.data : []);
+        setPagination(
+          response?.pagination || {
+            page,
+            per_page: 25,
+            total: 0,
+            total_pages: 0,
+          },
+        );
       } catch (err: any) {
         setError(err.message || 'Error al cargar historial');
       } finally {
@@ -60,7 +98,7 @@ export const TradingFeesHistoryPage = () => {
       }
     };
     void load();
-  }, []);
+  }, [page]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -108,7 +146,9 @@ export const TradingFeesHistoryPage = () => {
             <option value="ACTIVE">Cobradas</option>
             <option value="VOIDED">Anuladas</option>
           </select>
-          <div className="flex items-center text-sm text-gray-600">Resultados: {filtered.length}</div>
+          <div className="flex items-center text-sm text-gray-600">
+            Resultados en página: {filtered.length} de {rows.length} (total: {pagination.total})
+          </div>
         </div>
       </div>
 
@@ -182,6 +222,28 @@ export const TradingFeesHistoryPage = () => {
             </div>
           );
         })}
+      </div>
+
+      <div className="flex items-center justify-end gap-2">
+        <button
+          type="button"
+          onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+          disabled={pagination.page <= 1}
+          className="rounded border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          Anterior
+        </button>
+        <div className="text-sm text-gray-600">
+          Página {pagination.total_pages === 0 ? 0 : pagination.page} de {pagination.total_pages}
+        </div>
+        <button
+          type="button"
+          onClick={() => setPage((prev) => prev + 1)}
+          disabled={pagination.total_pages === 0 || pagination.page >= pagination.total_pages}
+          className="rounded border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          Siguiente
+        </button>
       </div>
     </div>
   );
