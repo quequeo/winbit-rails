@@ -60,6 +60,7 @@ export const OperatingHistoryPage = () => {
   const historyPerPage = 10;
 
   const [monthlySummary, setMonthlySummary] = useState<MonthlySummaryRow[]>([]);
+  const [monthlyOffset, setMonthlyOffset] = useState(0);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [loadingMonthly, setLoadingMonthly] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -85,16 +86,28 @@ export const OperatingHistoryPage = () => {
     }
   };
 
-  const loadMonthly = async () => {
+  const loadMonthly = async (offset: number) => {
     try {
       setLoadingMonthly(true);
-      const res: any = await api.getDailyOperatingMonthlySummary({ months: 12 });
+      const res: any = await api.getDailyOperatingMonthlySummary({ months: 12, offset });
       setMonthlySummary((res?.data || []) as MonthlySummaryRow[]);
     } catch {
       // ignore
     } finally {
       setLoadingMonthly(false);
     }
+  };
+
+  const goMonthlyOlder = () => {
+    const next = monthlyOffset + 12;
+    setMonthlyOffset(next);
+    void loadMonthly(next);
+  };
+
+  const goMonthlyNewer = () => {
+    const next = Math.max(0, monthlyOffset - 12);
+    setMonthlyOffset(next);
+    void loadMonthly(next);
   };
 
   
@@ -115,7 +128,7 @@ export const OperatingHistoryPage = () => {
 
 useEffect(() => {
     void loadHistory(1);
-    void loadMonthly();
+    void loadMonthly(0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -130,7 +143,7 @@ useEffect(() => {
           <h1 className="text-3xl font-bold text-gray-900">Historial de Operativas</h1>
           <p className="mt-1 text-sm text-gray-600">Resumen mensual + detalle diario (paginado).</p>
         </div>
-        <Button type="button" variant="outline" onClick={() => { void loadHistory(historyPage); void loadMonthly(); }} disabled={loadingHistory || loadingMonthly}>
+        <Button type="button" variant="outline" onClick={() => { void loadHistory(historyPage); void loadMonthly(monthlyOffset); }} disabled={loadingHistory || loadingMonthly}>
           Actualizar
         </Button>
       </div>
@@ -140,9 +153,37 @@ useEffect(() => {
       ) : null}
 
       <div className="rounded-lg bg-white p-6 shadow space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-gray-900">Resumen por mes</h2>
-          <div className="text-xs text-gray-500">Últimos 12 meses</div>
+        <div className="flex items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={goMonthlyOlder}
+            disabled={loadingMonthly || !monthlySummary.some((m) => m.days > 0)}
+            className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+            title="Meses anteriores"
+          >
+            &lsaquo;
+          </button>
+
+          <div className="flex-1 text-center">
+            <h2 className="text-xl font-bold text-gray-900">Resumen por mes</h2>
+            {monthlySummary.length > 0 ? (
+              <div className="text-xs text-gray-500 mt-0.5">
+                {monthLabel(monthlySummary[monthlySummary.length - 1].month)}
+                {' – '}
+                {monthLabel(monthlySummary[0].month)}
+              </div>
+            ) : null}
+          </div>
+
+          <button
+            type="button"
+            onClick={goMonthlyNewer}
+            disabled={loadingMonthly || monthlyOffset === 0}
+            className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+            title="Meses siguientes"
+          >
+            &rsaquo;
+          </button>
         </div>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">

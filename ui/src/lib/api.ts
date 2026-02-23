@@ -40,6 +40,13 @@ async function request(path: string, options?: RequestInit) {
 }
 
 export const api = {
+  adminLogin: (email: string, password: string) =>
+    request(`${ADMIN_API_PREFIX}/auth/login`, {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    }),
+  adminLogout: () =>
+    request(`${API_BASE_URL}/users/sign_out`, { method: 'DELETE' }),
   getAdminSession: () => request(`${ADMIN_API_PREFIX}/session`),
   getAdminDashboard: (params?: { days?: number }) => {
     const qs = new URLSearchParams();
@@ -115,9 +122,10 @@ export const api = {
     const suffix = qs.toString() ? `?${qs.toString()}` : '';
     return request(`${ADMIN_API_PREFIX}/daily_operating_results${suffix}`);
   },
-  getDailyOperatingMonthlySummary: (params?: { months?: number }) => {
+  getDailyOperatingMonthlySummary: (params?: { months?: number; offset?: number }) => {
     const qs = new URLSearchParams();
     if (params?.months) qs.set('months', params.months.toString());
+    if (params?.offset !== undefined && params.offset > 0) qs.set('offset', params.offset.toString());
     const suffix = qs.toString() ? `?${qs.toString()}` : '';
     return request(`${ADMIN_API_PREFIX}/daily_operating_results/monthly_summary${suffix}`);
   },

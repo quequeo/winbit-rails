@@ -4,17 +4,16 @@ class User < ApplicationRecord
   has_many :applied_trading_fees, class_name: 'TradingFee', foreign_key: 'applied_by_id', dependent: :restrict_with_error
 
   devise :database_authenticatable,
+         :recoverable,
+         :validatable,
          :omniauthable,
          omniauth_providers: [:google_oauth2]
 
-  validates :email, presence: true, uniqueness: true
   validates :role, presence: true, inclusion: { in: ROLES }
 
-  # Scopes for notification preferences
   scope :notify_deposits, -> { where(notify_deposit_created: true) }
   scope :notify_withdrawals, -> { where(notify_withdrawal_created: true) }
 
-  # OmniAuth-only: we don't require passwords.
   def password_required?
     false
   end

@@ -36,7 +36,10 @@ puts "✅ Seeded app settings"
 # Default is a minimal, deterministic scenario for Jaime (no withdrawals, no trading fees).
 # To run the larger random demo seed, use: SEED_RANDOM_DEMO=true bin/rails db:seed
 if Rails.env.development?
-  if ENV['SEED_RANDOM_DEMO'] == 'true'
+  if ENV['SEED_MULTI'] == 'true'
+    puts "🌱 SEED_MULTI=true: loading multi-investor demo seed..."
+    load Rails.root.join('db', 'seeds', 'demo_multi_investor.rb')
+  elsif ENV['SEED_RANDOM_DEMO'] == 'true'
     puts "🌱 SEED_RANDOM_DEMO=true: random demo seed is disabled in this setup. Use db/seeds/demo_jaime_amegar_2025.rb instead."
   else
     puts "🌱 Seeding minimal scenario (development): Jaime deposit +20% operating result..."

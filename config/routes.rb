@@ -28,6 +28,7 @@ Rails.application.routes.draw do
     end
 
     namespace :admin do
+      post 'auth/login', to: 'auth#login', format: false
       get 'session', to: 'session#show', format: false
       get 'dashboard', to: 'dashboard#show', format: false
 
@@ -68,6 +69,7 @@ Rails.application.routes.draw do
       get 'trading_fees/investors_summary', to: 'trading_fees#investors_summary', format: false
 
       scope :v1 do
+        post 'auth/login', to: 'auth#login', format: false
         get 'session', to: 'session#show', format: false
         get 'dashboard', to: 'dashboard#show', format: false
 
