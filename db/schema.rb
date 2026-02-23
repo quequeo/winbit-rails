@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_19_120000) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_23_202702) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -93,34 +93,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_19_120000) do
     t.datetime "updated_at", null: false
     t.index ["active", "position"], name: "index_payment_methods_on_active_and_position"
     t.index ["code"], name: "index_payment_methods_on_code", unique: true
-  end
-
-  create_table "plan_configs", force: :cascade do |t|
-    t.string "name", default: "Business Plan v1", null: false
-    t.string "version", default: "4.0", null: false
-    t.decimal "ticket_promedio", precision: 12, scale: 2, default: "850.0", null: false
-    t.decimal "costo_producto", precision: 12, scale: 2, default: "170.0", null: false
-    t.decimal "costo_envio", precision: 12, scale: 2, default: "100.0", null: false
-    t.decimal "comision_ml_pct", precision: 6, scale: 2, default: "17.5", null: false
-    t.decimal "retencion_fiscal_pct", precision: 6, scale: 2, default: "10.5", null: false
-    t.decimal "tipo_cambio_usd_mxn", precision: 10, scale: 4, default: "17.15", null: false
-    t.decimal "salario_socio_usd", precision: 12, scale: 2, default: "1000.0", null: false
-    t.integer "num_socios", default: 2, null: false
-    t.decimal "costo_contador", precision: 12, scale: 2, default: "3500.0", null: false
-    t.decimal "costo_infra_usd", precision: 12, scale: 2, default: "200.0", null: false
-    t.decimal "costo_empaque", precision: 12, scale: 2, default: "1500.0", null: false
-    t.decimal "pct_imprevistos", precision: 6, scale: 2, default: "5.0", null: false
-    t.decimal "inversion_total", precision: 14, scale: 2, default: "641800.0", null: false
-    t.jsonb "tramos_desembolso", default: [{"monto"=>280000, "nombre"=>"Tramo 1", "condicion"=>"Al firmar (mes 0)"}, {"monto"=>210000, "nombre"=>"Tramo 2", "condicion"=>"80+ ventas/mes (~mes 4-5)"}, {"monto"=>151800, "nombre"=>"Tramo 3", "condicion"=>"130+ ventas/mes (~mes 7-8)"}], null: false
-    t.decimal "equity_inversor_pct", precision: 6, scale: 2, default: "25.0", null: false
-    t.decimal "equity_socio_a_pct", precision: 6, scale: 2, default: "37.5", null: false
-    t.decimal "equity_socio_b_pct", precision: 6, scale: 2, default: "37.5", null: false
-    t.decimal "pct_utilidad_distribuir", precision: 6, scale: 2, default: "70.0", null: false
-    t.decimal "pct_utilidad_reinvertir", precision: 6, scale: 2, default: "30.0", null: false
-    t.jsonb "escenarios", default: [{"id"=>"conservador", "color"=>"#EF4444", "nombre"=>"Conservador", "ventas_mes1"=>25, "meses_proyeccion"=>20, "crecimiento_mensual_pct"=>15.0}, {"id"=>"moderado", "color"=>"#F59E0B", "nombre"=>"Moderado", "ventas_mes1"=>35, "meses_proyeccion"=>18, "crecimiento_mensual_pct"=>18.0}, {"id"=>"optimista", "color"=>"#10B981", "nombre"=>"Optimista", "ventas_mes1"=>50, "meses_proyeccion"=>15, "crecimiento_mensual_pct"=>25.0}], null: false
-    t.jsonb "competidores", default: [{"tipo"=>"Franquicia física + online", "nombre"=>"Erotika (Grupo Wham)", "alcance"=>"70+ tiendas nacionales", "dato_clave"=>"Ticket $1,500 MXN; franquicia $450K-$1.5M MXN; utilidad neta 25-35%", "crecimiento"=>"20-23% anual", "facturacion"=>"~$150K MXN/mes × 70+ tiendas"}, {"tipo"=>"E-commerce puro", "nombre"=>"Meibi", "alcance"=>"120K+ clientes, 1M+ seguidores", "dato_clave"=>"Líder e-commerce MX; enfoque educación sexual", "crecimiento"=>"54% en 2023", "facturacion"=>"Utilidad bruta 65%"}, {"tipo"=>"E-commerce, origen español", "nombre"=>"Platanomelón MX", "alcance"=>"200K+ comunidad", "dato_clave"=>"Contenido educativo + fulfillment tercerizado", "crecimiento"=>"Acelerado post-COVID", "facturacion"=>"Meta $40M MXN año 1"}, {"tipo"=>"Local + online básico", "nombre"=>"Sex shops pequeñas", "alcance"=>"1-3 sucursales locales", "dato_clave"=>"Márgenes 30-50% en productos premium", "crecimiento"=>"Variable", "facturacion"=>"$5-10M MXN/año"}], null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
   end
 
   create_table "portfolio_histories", id: :string, force: :cascade do |t|
