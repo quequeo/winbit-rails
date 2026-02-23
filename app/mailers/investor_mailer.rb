@@ -70,10 +70,15 @@ class InvestorMailer < ApplicationMailer
   end
 
   # Email cuando el admin aprueba el retiro
-  def withdrawal_approved(investor, request)
+  def withdrawal_approved(investor, request, withdrawal_fee = nil)
     @investor = investor
     @request = request
     @amount = format_currency(request.amount)
+    fee_amount = BigDecimal(withdrawal_fee&.dig(:fee_amount).presence.to_s.presence || '0')
+    net_amount = (BigDecimal(request.amount.to_s) - fee_amount).round(2, :half_up)
+    @withdrawal_fee_amount = format_currency(fee_amount)
+    @net_withdrawal_amount = format_currency(net_amount)
+    @show_withdrawal_fee = fee_amount.positive?
     @new_balance = format_currency(investor.portfolio&.current_balance || 0)
 
     return unless NotificationGate.should_send_to_investor?(investor.email)

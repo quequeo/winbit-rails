@@ -13,6 +13,8 @@ type TradingFeeHistoryRow = {
   profit_amount: number;
   fee_percentage: number;
   fee_amount: number;
+  source?: 'PERIODIC' | 'WITHDRAWAL';
+  withdrawal_amount?: number | null;
   applied_at: string;
   voided_at?: string | null;
 };
@@ -50,6 +52,9 @@ const formatPeriod = (start: string, ending: string) => {
   };
   return `${fmt(start)} - ${fmt(ending)}`;
 };
+
+const feeLabel = (row: TradingFeeHistoryRow) =>
+  row.source === 'WITHDRAWAL' ? 'Trading Fee por retiro' : 'Trading Fee';
 
 export const TradingFeesHistoryPage = () => {
   const [rows, setRows] = useState<TradingFeeHistoryRow[]>([]);
@@ -158,7 +163,8 @@ export const TradingFeesHistoryPage = () => {
             <tr>
               <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">Fecha</th>
               <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">Inversor</th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">Período</th>
+              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">Tipo</th>
+              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">Período / Retiro</th>
               <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-700">Profit</th>
               <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-700">%</th>
               <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-700">Fee cobrada</th>
@@ -176,7 +182,12 @@ export const TradingFeesHistoryPage = () => {
                     <div className="font-medium text-gray-900">{row.investor_name}</div>
                     <div className="text-xs text-gray-500">{row.investor_email}</div>
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-700">{formatPeriod(row.period_start, row.period_end)}</td>
+                  <td className="px-4 py-3 text-sm text-gray-700">{feeLabel(row)}</td>
+                  <td className="px-4 py-3 text-sm text-gray-700">
+                    {row.source === 'WITHDRAWAL'
+                      ? `Retiro: ${formatCurrencyAR(Number(row.withdrawal_amount || 0))}`
+                      : formatPeriod(row.period_start, row.period_end)}
+                  </td>
                   <td className="px-4 py-3 text-right text-sm text-gray-900">{formatCurrencyAR(row.profit_amount)}</td>
                   <td className="px-4 py-3 text-right text-sm text-gray-900">{row.fee_percentage}%</td>
                   <td className="px-4 py-3 text-right text-sm font-semibold text-purple-700">{formatCurrencyAR(row.fee_amount)}</td>
@@ -215,7 +226,12 @@ export const TradingFeesHistoryPage = () => {
               </div>
               <div className="mt-2 text-xs text-gray-600">Aplicada: {formatDate(row.applied_at)}</div>
               {isVoided ? <div className="text-xs text-red-600">Anulada: {formatDate(row.voided_at)}</div> : null}
-              <div className="mt-2 text-sm text-gray-700">Período: {formatPeriod(row.period_start, row.period_end)}</div>
+              <div className="mt-2 text-sm text-gray-700">Tipo: {feeLabel(row)}</div>
+              <div className="mt-1 text-sm text-gray-700">
+                {row.source === 'WITHDRAWAL'
+                  ? `Retiro: ${formatCurrencyAR(Number(row.withdrawal_amount || 0))}`
+                  : `Período: ${formatPeriod(row.period_start, row.period_end)}`}
+              </div>
               <div className="mt-1 text-sm text-gray-700">Profit: {formatCurrencyAR(row.profit_amount)}</div>
               <div className="mt-1 text-sm text-gray-700">Fee: {row.fee_percentage}% · {formatCurrencyAR(row.fee_amount)}</div>
               <div className="mt-1 text-xs text-gray-500">Aplicado por: {row.applied_by_name}</div>

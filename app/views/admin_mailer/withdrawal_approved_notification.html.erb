@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #059669 0%, #10b981 100%); color: white; padding: 24px; border-radius: 10px 10px 0 0; text-align: center; }
+    .content { background: #fff; padding: 24px; border: 1px solid #e5e7eb; border-top: none; }
+    .footer { background: #f9fafb; padding: 16px; border-radius: 0 0 10px 10px; border: 1px solid #e5e7eb; border-top: none; text-align: center; font-size: 14px; color: #6b7280; }
+    .box { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin: 16px 0; }
+    .cta { display: inline-block; background: #1e40af; color: white; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1 style="margin:0; font-size:22px;">Retiro Aprobado</h1>
+  </div>
+
+  <div class="content">
+    <p>Se aprobó un retiro del inversor <strong><%= @investor.name %></strong> (<%= @investor.email %>).</p>
+
+    <div class="box">
+      <p style="margin:8px 0;"><strong>Monto solicitado:</strong> <%= @amount %></p>
+      <% if @show_withdrawal_fee %>
+        <p style="margin:8px 0;"><strong>Trading Fee por retiro:</strong> <%= @withdrawal_fee_amount %></p>
+      <% else %>
+        <p style="margin:8px 0;"><strong>Trading Fee por retiro:</strong> $0,00</p>
+      <% end %>
+      <p style="margin:8px 0;"><strong>Monto neto transferido:</strong> <%= @net_withdrawal_amount %></p>
+      <p style="margin:8px 0;"><strong>ID solicitud:</strong> #<%= @request.id %></p>
+    </div>
+
+    <div style="text-align:center;">
+      <a href="<%= @review_url %>" class="cta">Ver solicitudes</a>
+    </div>
+  </div>
+
+  <div class="footer">
+    Email automático de Winbit.
+  </div>
+</body>
+</html>

@@ -40,6 +40,27 @@ class AdminMailer < ApplicationMailer
     )
   end
 
+  # Email cuando se aprueba un retiro y se aplica fee por retiro.
+  def withdrawal_approved_notification(request, withdrawal_fee = nil)
+    @request = request
+    @investor = request.investor
+    @amount = format_currency(request.amount)
+    fee_amount = BigDecimal(withdrawal_fee&.dig(:fee_amount).presence.to_s.presence || '0')
+    net_amount = (BigDecimal(request.amount.to_s) - fee_amount).round(2, :half_up)
+    @withdrawal_fee_amount = format_currency(fee_amount)
+    @net_withdrawal_amount = format_currency(net_amount)
+    @show_withdrawal_fee = fee_amount.positive?
+    @review_url = backoffice_url('/requests')
+
+    admin_emails = User.notify_withdrawals.pluck(:email)
+    return if admin_emails.empty?
+
+    mail(
+      to: admin_emails,
+      subject: "Retiro aprobado de #{@investor.name} - #{@amount}"
+    )
+  end
+
   private
 
   def format_currency(amount)

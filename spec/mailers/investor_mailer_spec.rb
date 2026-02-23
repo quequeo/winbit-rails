@@ -114,6 +114,16 @@ RSpec.describe InvestorMailer, type: :mailer do
       expect(mail.body.encoded).to match(/John Doe/)
       expect(mail.body.encoded).to match(/Retiro Aprobado/)
     end
+
+    it 'includes withdrawal trading fee details when provided' do
+      fee_data = {
+        fee_amount: BigDecimal('30.50')
+      }
+      mail_with_fee = described_class.withdrawal_approved(investor, withdrawal_request, fee_data)
+
+      expect(mail_with_fee.body.encoded).to match(/Trading Fee por retiro/)
+      expect(mail_with_fee.body.encoded).to match(/Monto neto transferido/)
+    end
   end
 
   describe '#withdrawal_rejected' do

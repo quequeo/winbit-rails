@@ -93,6 +93,15 @@
 
     <p style="text-align: center;"><span class="status">FONDOS ENVIADOS</span></p>
 
+    <% if @show_withdrawal_fee %>
+      <div style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px; padding:16px; margin:20px 0;">
+        <h3 style="margin-top:0; color:#111827;">Detalle del retiro</h3>
+        <p style="margin:8px 0;"><strong>Monto solicitado:</strong> <%= @amount %></p>
+        <p style="margin:8px 0;"><strong>Trading Fee por retiro:</strong> <%= @withdrawal_fee_amount %></p>
+        <p style="margin:8px 0;"><strong>Monto neto transferido:</strong> <%= @net_withdrawal_amount %></p>
+      </div>
+    <% end %>
+
     <div class="balance-box">
       <h3 style="margin-top: 0; color: #059669;">Balance Actualizado</h3>
       <div style="font-size: 28px; font-weight: bold; color: #059669;"><%= @new_balance %></div>

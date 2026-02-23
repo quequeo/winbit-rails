@@ -131,6 +131,7 @@ class TradingFeeApplicator
       profit_amount: @profit_amount,
       fee_percentage: fee_percentage,
       fee_amount: fee_amount,
+      source: 'PERIODIC',
       notes: notes,
       applied_at: Time.current
     )

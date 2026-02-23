@@ -61,4 +61,33 @@ RSpec.describe TradingFee, type: :model do
     expect(TradingFee.active).to include(active_fee)
     expect(TradingFee.active).not_to include(voided_fee)
   end
+
+  it 'requires withdrawal fields for source WITHDRAWAL' do
+    fee = build_fee(source: 'WITHDRAWAL', period_end: Date.new(2025, 10, 2))
+    expect(fee).not_to be_valid
+    expect(fee.errors[:withdrawal_amount]).to be_present
+    expect(fee.errors[:withdrawal_request_id]).to be_present
+  end
+
+  it 'allows overlapping fees when source is WITHDRAWAL' do
+    build_fee.save!
+    request = InvestorRequest.create!(
+      investor: investor,
+      request_type: 'WITHDRAWAL',
+      method: 'USDT',
+      amount: 1000,
+      status: 'APPROVED',
+      requested_at: Time.current,
+      processed_at: Time.current
+    )
+    withdrawal_fee = build_fee(
+      source: 'WITHDRAWAL',
+      period_start: Date.new(2025, 11, 1),
+      period_end: Date.new(2025, 11, 2),
+      withdrawal_amount: 1000,
+      withdrawal_request_id: request.id
+    )
+
+    expect(withdrawal_fee).to be_valid
+  end
 end

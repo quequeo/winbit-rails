@@ -94,4 +94,30 @@ RSpec.describe AdminMailer, type: :mailer do
       end
     end
   end
+
+  describe '#withdrawal_approved_notification' do
+    let(:approved_withdrawal) do
+      InvestorRequest.create!(
+        investor: investor,
+        request_type: 'WITHDRAWAL',
+        amount: 15000,
+        method: 'USDT',
+        status: 'APPROVED',
+        requested_at: Time.current,
+        processed_at: Time.current
+      )
+    end
+    let(:mail) { described_class.withdrawal_approved_notification(approved_withdrawal, { fee_amount: 45.75 }) }
+
+    it 'renders the headers' do
+      expect(mail.subject).to match('Retiro aprobado de John Doe')
+      expect(mail.to).to include('admin@example.com')
+    end
+
+    it 'renders the body with withdrawal fee details' do
+      expect(mail.body.encoded).to match('Trading Fee por retiro')
+      expect(mail.body.encoded).to match('Monto neto transferido')
+      expect(mail.body.encoded).to match('ID solicitud')
+    end
+  end
 end

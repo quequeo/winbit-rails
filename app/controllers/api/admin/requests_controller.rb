@@ -26,7 +26,7 @@ module Api
         req.save!
 
         if status_param == 'APPROVED'
-          Requests::Approve.new(request_id: req.id, processed_at: processed_at).call
+          Requests::Approve.new(request_id: req.id, processed_at: processed_at, approved_by: current_user).call
         elsif status_param == 'REJECTED'
           req.update!(status: 'REJECTED', processed_at: (processed_at.presence || Time.current))
         end
@@ -61,12 +61,28 @@ module Api
       end
 
       def destroy
+        if @request.status == 'APPROVED' && @request.request_type == 'WITHDRAWAL'
+          Requests::ReverseApprovedWithdrawal.new(request_id: @request.id, reversed_by: current_user).call
+        end
+
+        ActivityLogger.log(
+          user: current_user,
+          action: 'delete_request',
+          target: @request,
+          metadata: {
+            request_type: @request.request_type,
+            amount: @request.amount.to_f,
+            status: @request.status
+          }
+        )
         @request.destroy!
         head :no_content
+      rescue StandardError => e
+        render_error(e.message, status: :bad_request)
       end
 
       def approve
-        Requests::Approve.new(request_id: @request.id, processed_at: params[:processed_at]).call
+        Requests::Approve.new(request_id: @request.id, processed_at: params[:processed_at], approved_by: current_user).call
 
         ActivityLogger.log(
           user: current_user,
