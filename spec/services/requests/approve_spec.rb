@@ -7,6 +7,7 @@ RSpec.describe Requests::Approve, type: :service do
 
   let!(:investor) { Investor.create!(email: 'inv@test.com', name: 'Investor', status: 'ACTIVE') }
   let!(:portfolio) { Portfolio.create!(investor: investor, current_balance: 5000, total_invested: 5000) }
+  let!(:admin) { User.create!(email: 'admin-approve@test.com', name: 'Admin', role: 'ADMIN') }
 
   describe '#call' do
     context 'with a valid pending deposit request' do
@@ -22,7 +23,7 @@ RSpec.describe Requests::Approve, type: :service do
       end
 
       it 'updates request status to APPROVED' do
-        service = described_class.new(request_id: request.id)
+        service = described_class.new(request_id: request.id, approved_by: admin)
         service.call
 
         request.reload
@@ -31,7 +32,7 @@ RSpec.describe Requests::Approve, type: :service do
       end
 
       it 'updates portfolio balance' do
-        service = described_class.new(request_id: request.id)
+        service = described_class.new(request_id: request.id, approved_by: admin)
         service.call
 
         portfolio.reload
@@ -41,7 +42,7 @@ RSpec.describe Requests::Approve, type: :service do
 
       it 'creates a portfolio history record' do
         expect {
-          service = described_class.new(request_id: request.id)
+          service = described_class.new(request_id: request.id, approved_by: admin)
           service.call
         }.to change(PortfolioHistory, :count).by(1)
 
@@ -67,7 +68,7 @@ RSpec.describe Requests::Approve, type: :service do
       end
 
       it 'updates request status to APPROVED' do
-        service = described_class.new(request_id: request.id)
+        service = described_class.new(request_id: request.id, approved_by: admin)
         service.call
 
         request.reload
@@ -76,7 +77,7 @@ RSpec.describe Requests::Approve, type: :service do
       end
 
       it 'decreases portfolio balance' do
-        service = described_class.new(request_id: request.id)
+        service = described_class.new(request_id: request.id, approved_by: admin)
         service.call
 
         portfolio.reload
@@ -85,7 +86,7 @@ RSpec.describe Requests::Approve, type: :service do
 
       it 'creates a portfolio history record' do
         expect {
-          service = described_class.new(request_id: request.id)
+          service = described_class.new(request_id: request.id, approved_by: admin)
           service.call
         }.to change(PortfolioHistory, :count).by(1)
 
@@ -118,7 +119,7 @@ RSpec.describe Requests::Approve, type: :service do
           processed_at: Time.current
         )
 
-        service = described_class.new(request_id: approved_request.id)
+        service = described_class.new(request_id: approved_request.id, approved_by: admin)
 
         expect {
           service.call
@@ -149,7 +150,7 @@ RSpec.describe Requests::Approve, type: :service do
           requested_at: Time.current
         )
 
-        service = described_class.new(request_id: req.id, processed_at: t(2026, 1, 15, 19, 0, 0))
+        service = described_class.new(request_id: req.id, processed_at: t(2026, 1, 15, 19, 0, 0), approved_by: admin)
         service.call
 
         expect(PortfolioHistory.where(investor_id: investor.id).count).to be >= 2
@@ -170,11 +171,60 @@ RSpec.describe Requests::Approve, type: :service do
       end
 
       it 'raises error' do
-        service = described_class.new(request_id: request.id)
+        service = described_class.new(request_id: request.id, approved_by: admin)
 
         expect {
           service.call
         }.to raise_error(StandardError, /Balance insuficiente para realizar el retiro/)
+      end
+    end
+
+    context 'with withdrawal and pending profits' do
+      let!(:request) do
+        InvestorRequest.create!(
+          investor: investor,
+          request_type: 'WITHDRAWAL',
+          method: 'USDC',
+          amount: 1000,
+          status: 'PENDING',
+          requested_at: Time.current
+        )
+      end
+
+      before do
+        portfolio.update!(current_balance: 5500, total_invested: 5000)
+        PortfolioHistory.create!(
+          investor: investor,
+          event: 'OPERATING_RESULT',
+          amount: 500,
+          previous_balance: 5000,
+          new_balance: 5500,
+          status: 'COMPLETED',
+          date: 1.day.ago
+        )
+      end
+
+      it 'applies withdrawal trading fee and stores metadata' do
+        service = described_class.new(request_id: request.id, approved_by: admin)
+
+        expect { service.call }.to change(TradingFee, :count).by(1)
+
+        request.reload
+        expect(request.status).to eq('APPROVED')
+
+        fee = TradingFee.last
+        expect(fee.source).to eq('WITHDRAWAL')
+        expect(fee.withdrawal_request_id).to eq(request.id)
+        expect(fee.withdrawal_amount.to_f).to eq(1000.0)
+
+        withdrawal_history = PortfolioHistory.where(investor: investor, event: 'WITHDRAWAL').order(date: :desc).first
+        fee_history = PortfolioHistory.where(investor: investor, event: 'TRADING_FEE').order(date: :desc).first
+
+        expect(withdrawal_history).to be_present
+        expect(fee_history).to be_present
+        expect(withdrawal_history.amount.to_f).to be < 1000.0
+        expect(fee_history.amount.to_f).to be < 0
+        expect((withdrawal_history.amount.to_f + fee_history.amount.to_f.abs).round(2)).to eq(1000.0)
       end
     end
   end

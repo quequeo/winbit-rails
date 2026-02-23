@@ -29,6 +29,8 @@ describe('TradingFeesHistoryPage', () => {
           profit_amount: 100,
           fee_percentage: 30,
           fee_amount: 30,
+          source: 'PERIODIC',
+          withdrawal_amount: null,
           applied_at: '2025-12-31T19:00:00Z',
           voided_at: null,
         },
@@ -43,6 +45,8 @@ describe('TradingFeesHistoryPage', () => {
           profit_amount: 120,
           fee_percentage: 30,
           fee_amount: 36,
+          source: 'WITHDRAWAL',
+          withdrawal_amount: 15000,
           applied_at: '2026-03-31T19:00:00Z',
           voided_at: '2026-04-01T15:00:00Z',
         },
@@ -57,6 +61,8 @@ describe('TradingFeesHistoryPage', () => {
     expect(screen.getByText('Historial de Trading Fees')).toBeInTheDocument();
     expect(screen.getAllByText('Investor One').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Investor Two').length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Trading Fee por retiro/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Retiro: \$15.000,00/i).length).toBeGreaterThan(0);
 
     await user.selectOptions(screen.getByDisplayValue('Todos'), 'VOIDED');
     expect(screen.queryByText('Investor One')).not.toBeInTheDocument();
