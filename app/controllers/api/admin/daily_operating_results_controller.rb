@@ -16,11 +16,14 @@ module Api
 
       def monthly_summary
         months = params[:months].to_i
-        months = 6 if months <= 0
+        months = 12 if months <= 0
         months = 24 if months > 24
 
-        start_month = Date.current.beginning_of_month - (months - 1).months
-        end_month = Date.current.beginning_of_month
+        offset = params[:offset].to_i
+        offset = 0 if offset < 0
+
+        end_month   = Date.current.beginning_of_month - offset.months
+        start_month = end_month - (months - 1).months
 
         results = DailyOperatingResult.where(date: start_month..end_month.end_of_month).order(date: :desc)
         grouped = results.group_by { |r| r.date.beginning_of_month }

@@ -41,7 +41,7 @@ describe('OperatingHistoryPage', () => {
     })
 
     expect(screen.getByText('Resumen por mes')).toBeInTheDocument()
-    expect(screen.getByText(/Dic 2025/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/Dic 2025/i).length).toBeGreaterThan(0)
     expect(screen.getByText('Detalle diario')).toBeInTheDocument()
     expect(screen.getByText('2025-12-31')).toBeInTheDocument()
     expect(screen.getByText('Cierre de año')).toBeInTheDocument()
@@ -71,7 +71,7 @@ describe('OperatingHistoryPage', () => {
     render(<OperatingHistoryPage />)
 
     await waitFor(() => {
-      expect(screen.getByText(/Dic 2025/i)).toBeInTheDocument()
+      expect(screen.getAllByText(/Dic 2025/i).length).toBeGreaterThan(0)
     })
 
     const viewBtn = screen.getByLabelText('Ver detalle')

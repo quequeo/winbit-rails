@@ -152,8 +152,8 @@ export const TradingFeesPage = () => {
     if (inv.trading_fee_frequency === 'SEMESTRAL') {
       const startMonth = String(inv.period_start || '').slice(5, 7);
       const y = String(inv.period_start || '').slice(0, 4);
-      if (startMonth === '01') return `Sem 1 ${y}`;
-      if (startMonth === '07') return `Sem 2 ${y}`;
+      if (startMonth === '01') return `1er Semestre ${y}`;
+      if (startMonth === '07') return `2do Semestre ${y}`;
       return y ? `Semestre ${y}` : 'Semestre';
     }
     if (inv.trading_fee_frequency === 'MONTHLY') {
