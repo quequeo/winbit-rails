@@ -8,6 +8,7 @@ vi.mock('../lib/api', () => ({
   api: {
     previewDailyOperatingResult: vi.fn(),
     createDailyOperatingResult: vi.fn(),
+    getDailyOperatingResults: vi.fn().mockResolvedValue({ data: [], meta: { page: 1, per_page: 20, total: 0, total_pages: 0 } }),
   },
 }))
 
