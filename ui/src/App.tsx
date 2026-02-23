@@ -7,7 +7,7 @@ import { RequestsPage } from './pages/RequestsPage';
 import { AdminsHubPage } from './pages/AdminsHubPage';
 import { EditAdminPage } from './pages/EditAdminPage';
 import { ActivityLogsPage } from './pages/ActivityLogsPage';
-import { TradingFeesPage } from './pages/TradingFeesPage';
+import { ComisionesHubPage } from './pages/ComisionesHubPage';
 import { TradingFeesHistoryPage } from './pages/TradingFeesHistoryPage';
 import { DailyOperatingResultsPage } from './pages/DailyOperatingResultsPage';
 import { OperatingHistoryPage } from './pages/OperatingHistoryPage';
@@ -27,7 +27,7 @@ function App() {
           <Route path="/requests" element={<RequestsPage />} />
           <Route path="/daily-operating" element={<DailyOperatingResultsPage />} />
           <Route path="/operating-history" element={<OperatingHistoryPage />} />
-          <Route path="/trading-fees" element={<TradingFeesPage />} />
+          <Route path="/trading-fees" element={<ComisionesHubPage />} />
           <Route path="/trading-fees/history" element={<TradingFeesHistoryPage />} />
           <Route path="/admins" element={<AdminsHubPage />} />
           <Route path="/admins/:id/edit" element={<EditAdminPage />} />
