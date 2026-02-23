@@ -31,6 +31,7 @@ Rails.application.routes.draw do
       post 'auth/login', to: 'auth#login', format: false
       get 'session', to: 'session#show', format: false
       get 'dashboard', to: 'dashboard#show', format: false
+      get 'referral_commissions', to: 'referral_commissions#index', format: false
 
       resources :investors, only: [:index, :show, :create, :update, :destroy], format: false do
         post 'toggle_status', on: :member
@@ -72,6 +73,7 @@ Rails.application.routes.draw do
         post 'auth/login', to: 'auth#login', format: false
         get 'session', to: 'session#show', format: false
         get 'dashboard', to: 'dashboard#show', format: false
+        get 'referral_commissions', to: 'referral_commissions#index', format: false
 
         resources :investors, only: [:index, :show, :create, :update, :destroy], format: false do
           post 'toggle_status', on: :member
