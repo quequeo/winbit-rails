@@ -13,7 +13,7 @@ module Requests
       portfolio = req.investor.portfolio || Portfolio.create!(investor: req.investor)
       requested_amount = BigDecimal(req.amount.to_s)
       fee = TradingFee.active.find_by(withdrawal_request_id: req.id, source: 'WITHDRAWAL')
-      fee_amount = BigDecimal(fee&.fee_amount.to_s)
+      fee_amount = BigDecimal((fee&.fee_amount || 0).to_s)
       net_withdrawal_amount = (requested_amount - fee_amount).round(2, :half_up)
       raise StandardError, 'No se puede revertir: retiro neto inválido' if net_withdrawal_amount <= 0
 

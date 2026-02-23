@@ -41,7 +41,7 @@ module Requests
           else
             raise StandardError, 'Balance insuficiente para realizar el retiro' if previous_balance < requested_amount
 
-            withdrawal_fee = build_withdrawal_trading_fee(
+            withdrawal_fee = calculate_and_apply_withdrawal_fee(
               request: req,
               previous_balance: previous_balance,
               requested_amount: requested_amount,
@@ -81,7 +81,7 @@ module Requests
           else
             raise StandardError, 'Balance insuficiente para realizar el retiro' if previous_balance < requested_amount
 
-            withdrawal_fee = build_withdrawal_trading_fee(
+            withdrawal_fee = calculate_and_apply_withdrawal_fee(
               request: req,
               previous_balance: previous_balance,
               requested_amount: requested_amount,
@@ -167,7 +167,7 @@ module Requests
       nil
     end
 
-    def build_withdrawal_trading_fee(request:, previous_balance:, requested_amount:, processed_at:)
+    def calculate_and_apply_withdrawal_fee(request:, previous_balance:, requested_amount:, processed_at:)
       pending_profit = pending_profit_until(investor: request.investor, as_of: processed_at)
       fee_amount = BigDecimal('0')
       realized_profit = BigDecimal('0')
@@ -218,11 +218,11 @@ module Requests
       operating_profit = PortfolioHistory.where(investor_id: investor.id, event: 'OPERATING_RESULT', status: 'COMPLETED')
                                          .where('date <= ?', as_of)
                                          .sum(:amount)
-      feeed_profit = TradingFee.active.where(investor_id: investor.id)
+      fee_profit = TradingFee.active.where(investor_id: investor.id)
                                       .where('applied_at <= ?', as_of)
                                       .sum(:profit_amount)
 
-      pending = BigDecimal(operating_profit.to_s) - BigDecimal(feeed_profit.to_s)
+      pending = BigDecimal(operating_profit.to_s) - BigDecimal(fee_profit.to_s)
       pending.positive? ? pending : BigDecimal('0')
     end
 
