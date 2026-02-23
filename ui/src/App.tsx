@@ -4,15 +4,13 @@ import { DashboardPage } from './pages/DashboardPage';
 import { InvestorsPage } from './pages/InvestorsPage';
 import { EditInvestorPage } from './pages/EditInvestorPage';
 import { RequestsPage } from './pages/RequestsPage';
-import { AdminsPage } from './pages/AdminsPage';
+import { AdminsHubPage } from './pages/AdminsHubPage';
 import { EditAdminPage } from './pages/EditAdminPage';
-import { SettingsPage } from './pages/SettingsPage';
 import { ActivityLogsPage } from './pages/ActivityLogsPage';
 import { TradingFeesPage } from './pages/TradingFeesPage';
 import { TradingFeesHistoryPage } from './pages/TradingFeesHistoryPage';
 import { DailyOperatingResultsPage } from './pages/DailyOperatingResultsPage';
 import { OperatingHistoryPage } from './pages/OperatingHistoryPage';
-import { DepositOptionsPage } from './pages/DepositOptionsPage';
 import { LoginPage } from './pages/LoginPage';
 
 function App() {
@@ -31,10 +29,11 @@ function App() {
           <Route path="/operating-history" element={<OperatingHistoryPage />} />
           <Route path="/trading-fees" element={<TradingFeesPage />} />
           <Route path="/trading-fees/history" element={<TradingFeesHistoryPage />} />
-          <Route path="/deposit-options" element={<DepositOptionsPage />} />
-          <Route path="/admins" element={<AdminsPage />} />
+          <Route path="/admins" element={<AdminsHubPage />} />
           <Route path="/admins/:id/edit" element={<EditAdminPage />} />
-          <Route path="/settings" element={<SettingsPage />} />
+          {/* Legacy redirects */}
+          <Route path="/deposit-options" element={<Navigate to="/admins?tab=depositos" replace />} />
+          <Route path="/settings" element={<Navigate to="/admins?tab=configuracion" replace />} />
           <Route path="/activity" element={<ActivityLogsPage />} />
         </Route>
       </Routes>
