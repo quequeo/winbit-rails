@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { api } from '../lib/api';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -46,6 +46,26 @@ export const DailyOperatingResultsPage = () => {
   const [alertTitle, setAlertTitle] = useState<string>('');
   const [alertMessage, setAlertMessage] = useState<string>('');
 
+  type HistoryRow = { id: string; date: string; percent: number; applied_by: { name: string | null } };
+  type HistoryMeta = { page: number; per_page: number; total: number; total_pages: number };
+  const [historyRows, setHistoryRows] = useState<HistoryRow[]>([]);
+  const [historyMeta, setHistoryMeta] = useState<HistoryMeta | null>(null);
+  const [historyPage, setHistoryPage] = useState(1);
+  const [loadingHistory, setLoadingHistory] = useState(true);
+
+  const loadHistory = useCallback((p: number) => {
+    setLoadingHistory(true);
+    api
+      .getDailyOperatingResults({ page: p, per_page: 20 })
+      .then((res: any) => {
+        setHistoryRows(res?.data ?? []);
+        setHistoryMeta(res?.meta ?? null);
+      })
+      .catch(() => {})
+      .finally(() => setLoadingHistory(false));
+  }, []);
+
+  useEffect(() => { loadHistory(historyPage); }, [historyPage, loadHistory]);
 
   const parsedPercent = useMemo(() => {
     const cleaned = percent.replace(/%/g, '').trim();
@@ -116,6 +136,8 @@ export const DailyOperatingResultsPage = () => {
       setNotice({ type: 'success', message: 'Operativa diaria aplicada.' });
       setConfirmOpen(false);
       setPreview(null);
+      setHistoryPage(1);
+      loadHistory(1);
     } catch (e: any) {
       showAlert('No se pudo aplicar', extractErrorMessage(e, 'Error al aplicar'));
     } finally {
@@ -252,11 +274,74 @@ export const DailyOperatingResultsPage = () => {
         </div>
       ) : null}
 
+      {/* Recent history */}
+      <div>
+        <h2 className="mb-3 text-lg font-semibold text-gray-900">Últimas operativas aplicadas</h2>
 
+        {loadingHistory ? (
+          <div className="py-6 text-center text-sm text-gray-500">Cargando...</div>
+        ) : historyRows.length === 0 ? (
+          <div className="py-6 text-center text-sm text-gray-500">No hay operativas registradas.</div>
+        ) : (
+          <>
+            <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Fecha</th>
+                    <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-600">Rendimiento</th>
+                    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Aplicado por</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 bg-white">
+                  {historyRows.map((row) => {
+                    const d = new Date(row.date);
+                    const dateStr = d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                    const isPos = row.percent >= 0;
+                    return (
+                      <tr key={row.id} className="hover:bg-gray-50">
+                        <td className="px-5 py-3 text-sm text-gray-700">{dateStr}</td>
+                        <td className={`px-5 py-3 text-right text-sm font-semibold ${isPos ? 'text-green-700' : 'text-red-700'}`}>
+                          {isPos ? '+' : ''}{row.percent.toFixed(4).replace('.', ',')}%
+                        </td>
+                        <td className="px-5 py-3 text-sm text-gray-500">{row.applied_by?.name ?? '—'}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
 
-      
-
-      
+            {historyMeta && historyMeta.total_pages > 1 ? (
+              <div className="mt-4 flex items-center justify-between">
+                <span className="text-sm text-gray-600">
+                  Página <span className="font-semibold">{historyMeta.page}</span> de{' '}
+                  <span className="font-semibold">{historyMeta.total_pages}</span>
+                  {' · '}<span className="text-gray-500">{historyMeta.total} registros</span>
+                </span>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    disabled={historyPage <= 1}
+                    onClick={() => setHistoryPage((p) => p - 1)}
+                    className="rounded border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    Anterior
+                  </button>
+                  <button
+                    type="button"
+                    disabled={historyPage >= historyMeta.total_pages}
+                    onClick={() => setHistoryPage((p) => p + 1)}
+                    className="rounded border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    Siguiente
+                  </button>
+                </div>
+              </div>
+            ) : null}
+          </>
+        )}
+      </div>
 
 {alertOpen ? (
         <div className="fixed inset-0 z-50 overflow-y-auto">
