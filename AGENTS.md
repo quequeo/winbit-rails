@@ -193,6 +193,7 @@ bundle exec rspec && npm --prefix ui run test:run
 - Overrides en `.rubocop.yml`: trailing commas permitidas, string literals flexibles.
 - Métodos pequeños y nombres expresivos.
 - Callbacks solo si agregan valor claro.
+- Evitar comentarios en código salvo que sean estrictamente necesarios para explicar lógica no obvia.
 
 ### TypeScript (frontend admin)
 
