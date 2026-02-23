@@ -230,7 +230,7 @@ end
 timeline << { type: :deposit,    investor: :maria,    date: Date.new(2024,  9,  3), amount: 10_000 }
 timeline << { type: :withdrawal, investor: :carlos,   date: Date.new(2024, 12,  2), amount:  5_000 }
 timeline << { type: :deposit,    investor: :ana,      date: Date.new(2025,  1,  3), amount: 20_000 }
-timeline << { type: :deposit,    investor: :valentina,date: Date.new(2025,  2,  3), amount: 15_000 }
+timeline << { type: :deposit,    investor: :valentina, date: Date.new(2025,  2,  3), amount: 15_000 }
 timeline << { type: :referral,   investor: :diego,    date: Date.new(2025,  3,  3), amount:    300 }
 timeline << { type: :referral,   investor: :maria,    date: Date.new(2025,  6,  2), amount:    500 }
 timeline << { type: :withdrawal, investor: :roberto,  date: Date.new(2025,  7,  2), amount:  5_000 }
@@ -255,11 +255,11 @@ quarterly_schedule = [
   [:roberto,  Date.new(2025,  4,  1), Date.new(2025,  6, 30)],
   [:roberto,  Date.new(2025,  7,  1), Date.new(2025,  9, 30)],
   [:roberto,  Date.new(2025, 10,  1), Date.new(2025, 12, 31)],
-  [:valentina,Date.new(2024, 10,  1), Date.new(2024, 12, 31)],
-  [:valentina,Date.new(2025,  1,  1), Date.new(2025,  3, 31)],
-  [:valentina,Date.new(2025,  4,  1), Date.new(2025,  6, 30)],
-  [:valentina,Date.new(2025,  7,  1), Date.new(2025,  9, 30)],
-  [:valentina,Date.new(2025, 10,  1), Date.new(2025, 12, 31)],
+  [:valentina, Date.new(2024, 10,  1), Date.new(2024, 12, 31)],
+  [:valentina, Date.new(2025,  1,  1), Date.new(2025,  3, 31)],
+  [:valentina, Date.new(2025,  4,  1), Date.new(2025,  6, 30)],
+  [:valentina, Date.new(2025,  7,  1), Date.new(2025,  9, 30)],
+  [:valentina, Date.new(2025, 10,  1), Date.new(2025, 12, 31)],
   [:nicolas,  Date.new(2024,  7,  1), Date.new(2024,  9, 30)],
   [:nicolas,  Date.new(2024, 10,  1), Date.new(2024, 12, 31)],
   [:nicolas,  Date.new(2025,  1,  1), Date.new(2025,  3, 31)],
