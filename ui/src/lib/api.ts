@@ -102,6 +102,12 @@ export const api = {
     investorId: string,
     body: { amount: number; applied_at?: string }
   ) => request(`${ADMIN_API_PREFIX}/investors/${investorId}/referral_commissions`, { method: 'POST', body: JSON.stringify(body) }),
+  getReferralCommissions: (params?: { page?: number }) => {
+    const qs = new URLSearchParams();
+    if (params?.page && params.page > 1) qs.set('page', params.page.toString());
+    const suffix = qs.toString() ? `?${qs.toString()}` : '';
+    return request(`${ADMIN_API_PREFIX}/referral_commissions${suffix}`);
+  },
   getAdminSettings: () => request(`${ADMIN_API_PREFIX}/settings`),
   updateAdminSettings: (body: { investor_notifications_enabled?: boolean; investor_email_whitelist?: string[] | string }) =>
     request(`${ADMIN_API_PREFIX}/settings`, { method: 'PATCH', body: JSON.stringify(body) }),

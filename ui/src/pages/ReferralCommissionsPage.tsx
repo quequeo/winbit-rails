@@ -1,14 +1,27 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { api } from '../lib/api';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
 import { DatePicker } from '../components/ui/DatePicker';
+import { formatCurrencyAR } from '../lib/formatters';
 
-type Investor = {
+type Investor = { id: string; name: string; email: string };
+
+type ReferralRow = {
   id: string;
-  name: string;
-  email: string;
+  investor_id: string;
+  investor_name: string;
+  investor_email: string;
+  amount: number;
+  date: string;
+};
+
+type Pagination = { page: number; per_page: number; total: number; total_pages: number };
+
+const formatDate = (iso: string) => {
+  const d = new Date(iso);
+  return d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
 };
 
 export const ReferralCommissionsPage = () => {
@@ -19,6 +32,11 @@ export const ReferralCommissionsPage = () => {
   const [applying, setApplying] = useState(false);
   const [flash, setFlash] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
+  const [rows, setRows] = useState<ReferralRow[]>([]);
+  const [pagination, setPagination] = useState<Pagination | null>(null);
+  const [page, setPage] = useState(1);
+  const [loadingHistory, setLoadingHistory] = useState(true);
+
   useEffect(() => {
     api
       .getAdminInvestors()
@@ -28,6 +46,22 @@ export const ReferralCommissionsPage = () => {
       })
       .catch(() => {});
   }, []);
+
+  const loadHistory = useCallback((p: number) => {
+    setLoadingHistory(true);
+    api
+      .getReferralCommissions({ page: p })
+      .then((res: any) => {
+        setRows(res?.data ?? []);
+        setPagination(res?.pagination ?? null);
+      })
+      .catch(() => {})
+      .finally(() => setLoadingHistory(false));
+  }, []);
+
+  useEffect(() => {
+    loadHistory(page);
+  }, [page, loadHistory]);
 
   useEffect(() => {
     if (!flash) return;
@@ -56,6 +90,8 @@ export const ReferralCommissionsPage = () => {
       setAmount('');
       setAppliedAt('');
       setInvestorId('');
+      setPage(1);
+      loadHistory(1);
     } catch (err: any) {
       setFlash({ type: 'error', message: err.message || 'Error al aplicar comisión por referido' });
     } finally {
@@ -131,6 +167,74 @@ export const ReferralCommissionsPage = () => {
             {applying ? 'Aplicando...' : 'Aplicar comisión'}
           </Button>
         </div>
+      </div>
+
+      {/* History */}
+      <div className="mt-8">
+        <h2 className="mb-3 text-lg font-semibold text-gray-900">Historial</h2>
+
+        {loadingHistory ? (
+          <div className="py-6 text-center text-sm text-gray-500">Cargando...</div>
+        ) : rows.length === 0 ? (
+          <div className="py-6 text-center text-sm text-gray-500">No hay comisiones por referido registradas.</div>
+        ) : (
+          <>
+            <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Inversor</th>
+                    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Fecha</th>
+                    <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-600">Monto</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 bg-white">
+                  {rows.map((row) => (
+                    <tr key={row.id} className="hover:bg-gray-50">
+                      <td className="px-5 py-3">
+                        <div className="text-sm font-medium text-gray-900">{row.investor_name}</div>
+                        <div className="text-xs text-gray-500">{row.investor_email}</div>
+                      </td>
+                      <td className="px-5 py-3 text-sm text-gray-700">{formatDate(row.date)}</td>
+                      <td className="px-5 py-3 text-right text-sm font-semibold text-green-700">
+                        {formatCurrencyAR(row.amount)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {pagination && pagination.total_pages > 1 ? (
+              <div className="mt-4 flex items-center justify-between">
+                <span className="text-sm text-gray-600">
+                  Página <span className="font-semibold">{pagination.page}</span> de{' '}
+                  <span className="font-semibold">{pagination.total_pages}</span>
+                  {' · '}
+                  <span className="text-gray-500">{pagination.total} registros</span>
+                </span>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    disabled={page <= 1}
+                    onClick={() => setPage((p) => p - 1)}
+                    className="rounded border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    Anterior
+                  </button>
+                  <button
+                    type="button"
+                    disabled={page >= pagination.total_pages}
+                    onClick={() => setPage((p) => p + 1)}
+                    className="rounded border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    Siguiente
+                  </button>
+                </div>
+              </div>
+            ) : null}
+          </>
+        )}
       </div>
     </div>
   );

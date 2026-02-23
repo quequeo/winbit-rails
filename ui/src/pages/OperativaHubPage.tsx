@@ -1,19 +1,17 @@
 import { useSearchParams } from 'react-router-dom';
-import { TradingFeesPage } from './TradingFeesPage';
-import { ReferralCommissionsPage } from './ReferralCommissionsPage';
-import { TradingFeesHistoryPage } from './TradingFeesHistoryPage';
+import { DailyOperatingResultsPage } from './DailyOperatingResultsPage';
+import { OperatingHistoryPage } from './OperatingHistoryPage';
 
-type Tab = 'periodo' | 'referido' | 'historial';
+type Tab = 'diaria' | 'historial';
 
 const TABS: { id: Tab; label: string }[] = [
-  { id: 'periodo', label: 'Comisiones por período' },
-  { id: 'referido', label: 'Comisiones por referido' },
-  { id: 'historial', label: 'Historial de Comisiones' },
+  { id: 'diaria', label: 'Operativa Diaria' },
+  { id: 'historial', label: 'Historial de Operativas' },
 ];
 
-export const ComisionesHubPage = () => {
+export const OperativaHubPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = (searchParams.get('tab') as Tab) || 'periodo';
+  const activeTab = (searchParams.get('tab') as Tab) || 'diaria';
 
   const setTab = (tab: Tab) => {
     setSearchParams({ tab }, { replace: true });
@@ -40,9 +38,8 @@ export const ComisionesHubPage = () => {
         </nav>
       </div>
 
-      {activeTab === 'periodo' && <TradingFeesPage />}
-      {activeTab === 'referido' && <ReferralCommissionsPage />}
-      {activeTab === 'historial' && <TradingFeesHistoryPage />}
+      {activeTab === 'diaria' && <DailyOperatingResultsPage />}
+      {activeTab === 'historial' && <OperatingHistoryPage />}
     </div>
   );
 };

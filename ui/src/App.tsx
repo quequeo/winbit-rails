@@ -8,9 +8,7 @@ import { AdminsHubPage } from './pages/AdminsHubPage';
 import { EditAdminPage } from './pages/EditAdminPage';
 import { ActivityLogsPage } from './pages/ActivityLogsPage';
 import { ComisionesHubPage } from './pages/ComisionesHubPage';
-import { TradingFeesHistoryPage } from './pages/TradingFeesHistoryPage';
-import { DailyOperatingResultsPage } from './pages/DailyOperatingResultsPage';
-import { OperatingHistoryPage } from './pages/OperatingHistoryPage';
+import { OperativaHubPage } from './pages/OperativaHubPage';
 import { LoginPage } from './pages/LoginPage';
 
 function App() {
@@ -25,10 +23,11 @@ function App() {
           <Route path="/investors" element={<InvestorsPage />} />
           <Route path="/investors/:id/edit" element={<EditInvestorPage />} />
           <Route path="/requests" element={<RequestsPage />} />
-          <Route path="/daily-operating" element={<DailyOperatingResultsPage />} />
-          <Route path="/operating-history" element={<OperatingHistoryPage />} />
+          <Route path="/operativa" element={<OperativaHubPage />} />
+          <Route path="/daily-operating" element={<Navigate to="/operativa?tab=diaria" replace />} />
+          <Route path="/operating-history" element={<Navigate to="/operativa?tab=historial" replace />} />
           <Route path="/trading-fees" element={<ComisionesHubPage />} />
-          <Route path="/trading-fees/history" element={<TradingFeesHistoryPage />} />
+          <Route path="/trading-fees/history" element={<Navigate to="/trading-fees?tab=historial" replace />} />
           <Route path="/admins" element={<AdminsHubPage />} />
           <Route path="/admins/:id/edit" element={<EditAdminPage />} />
           {/* Legacy redirects */}
