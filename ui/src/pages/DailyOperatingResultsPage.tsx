@@ -302,7 +302,7 @@ export const DailyOperatingResultsPage = () => {
                       <tr key={row.id} className="hover:bg-gray-50">
                         <td className="px-5 py-3 text-sm text-gray-700">{dateStr}</td>
                         <td className={`px-5 py-3 text-right text-sm font-semibold ${isPos ? 'text-green-700' : 'text-red-700'}`}>
-                          {isPos ? '+' : ''}{row.percent.toFixed(4).replace('.', ',')}%
+                          {isPos ? '+' : ''}{row.percent.toFixed(2).replace('.', ',')}%
                         </td>
                         <td className="px-5 py-3 text-sm text-gray-500">{row.applied_by?.name ?? '—'}</td>
                       </tr>
