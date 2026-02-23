@@ -40,7 +40,7 @@ export const ActivityLogsPage = () => {
       setLoading(true);
       setError(null);
 
-      const params: any = { page, per_page: 50 };
+      const params: any = { page, per_page: 20 };
       if (filterAction) params.filter_action = filterAction;
 
       const res = await api.getActivityLogs(params);
@@ -68,6 +68,48 @@ export const ActivityLogsPage = () => {
       hour: '2-digit',
       minute: '2-digit',
     }).format(date);
+  };
+
+  const KEY_LABELS: Record<string, string> = {
+    nuevo_valor: 'Nuevo valor',
+    emails: 'Emails',
+    cantidad: 'Cantidad',
+    amount: 'Monto',
+    status: 'Estado',
+    from: 'Desde',
+    to: 'Hacia',
+    reason: 'Razón',
+    request_type: 'Tipo',
+    method: 'Método',
+    network: 'Red',
+    label: 'Etiqueta',
+    category: 'Categoría',
+    active: 'Activo',
+  };
+
+  const VALUE_LABELS: Record<string, string> = {
+    WITHDRAWAL: 'Retiro',
+    DEPOSIT: 'Depósito',
+    BANK_ARS: 'Banco (ARS)',
+    BANK_USD: 'Banco (USD)',
+    CASH_ARS: 'Efectivo (ARS)',
+    CASH_USD: 'Efectivo (USD)',
+    CRYPTO: 'Cripto',
+    LEMON: 'Lemon',
+    ACTIVE: 'Activo',
+    INACTIVE: 'Inactivo',
+    PENDING: 'Pendiente',
+    APPROVED: 'Aprobado',
+    REJECTED: 'Rechazado',
+  };
+
+  const formatValue = (key: string, value: unknown): string => {
+    if (typeof value === 'boolean') return value ? 'Sí' : 'No';
+    if (typeof value === 'number' && (key === 'amount' || key === 'from' || key === 'to')) {
+      return `$${value.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    }
+    const str = String(value);
+    return VALUE_LABELS[str] ?? str;
   };
 
   const getActionBadgeColor = (action: string) => {
@@ -184,39 +226,12 @@ export const ActivityLogsPage = () => {
                 <div>
                   <div className="text-xs font-medium text-gray-500 mb-1">Detalles</div>
                   <div className="space-y-1">
-                    {Object.entries(log.metadata).map(([key, value]) => {
-                      const labelMap: Record<string, string> = {
-                        nuevo_valor: 'Nuevo valor',
-                        emails: 'Emails',
-                        cantidad: 'Cantidad',
-                        amount: 'Monto',
-                        status: 'Estado',
-                        from: 'Desde',
-                        to: 'Hacia',
-                        reason: 'Razón',
-                        request_type: 'Tipo',
-                        method: 'Método',
-                        network: 'Red',
-                        label: 'Etiqueta',
-                        category: 'Categoría',
-                        active: 'Activo',
-                      };
-
-                      const label = labelMap[key] || key;
-
-                      return (
-                        <div key={key} className="text-xs">
-                          <span className="font-medium text-gray-700">{label}:</span>{' '}
-                          <span className="text-gray-600">
-                            {typeof value === 'number' && (key === 'amount' || key === 'from' || key === 'to')
-                              ? `$${value.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                              : typeof value === 'boolean'
-                                ? value ? 'Sí' : 'No'
-                                : String(value)}
-                          </span>
-                        </div>
-                      );
-                    })}
+                    {Object.entries(log.metadata).map(([key, value]) => (
+                      <div key={key} className="text-xs">
+                        <span className="font-medium text-gray-700">{KEY_LABELS[key] ?? key}:</span>{' '}
+                        <span className="text-gray-600">{formatValue(key, value)}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
@@ -280,35 +295,12 @@ export const ActivityLogsPage = () => {
                   <td className="px-4 py-3 text-sm text-gray-500">
                     {log.metadata && Object.keys(log.metadata).length > 0 ? (
                       <div className="max-w-xs">
-                        {Object.entries(log.metadata).map(([key, value]) => {
-                          // Traducir claves al español
-                          const labelMap: Record<string, string> = {
-                            nuevo_valor: 'Nuevo valor',
-                            emails: 'Emails',
-                            cantidad: 'Cantidad',
-                            amount: 'Monto',
-                            status: 'Estado',
-                            from: 'Desde',
-                            to: 'Hacia',
-                            reason: 'Razón',
-                            request_type: 'Tipo',
-                            method: 'Método',
-                            network: 'Red',
-                          };
-
-                          const label = labelMap[key] || key;
-
-                          return (
-                            <div key={key} className="text-xs mb-1">
-                              <span className="font-medium text-gray-700">{label}:</span>{' '}
-                              <span className="text-gray-600">
-                                {typeof value === 'number' && key === 'amount'
-                                  ? `$${value.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                                  : String(value)}
-                              </span>
-                            </div>
-                          );
-                        })}
+                        {Object.entries(log.metadata).map(([key, value]) => (
+                          <div key={key} className="text-xs mb-1">
+                            <span className="font-medium text-gray-700">{KEY_LABELS[key] ?? key}:</span>{' '}
+                            <span className="text-gray-600">{formatValue(key, value)}</span>
+                          </div>
+                        ))}
                       </div>
                     ) : (
                       <span className="text-gray-400">—</span>
