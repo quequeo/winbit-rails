@@ -22,8 +22,44 @@ const METHOD_LABELS: Record<string, string> = {
 
 const formatMethod = (method: string) => METHOD_LABELS[method] ?? method;
 
-const isImage = (url: string) => /\.(jpe?g|png|webp|gif)(\?|$)/i.test(url);
-const isPdf = (url: string) => /\.pdf(\?|$)/i.test(url);
+const looksLikeImage = (url: string) => /\.(jpe?g|png|webp|gif)/i.test(url) || /image/i.test(url);
+const looksLikePdf = (url: string) => /\.pdf/i.test(url);
+
+const AttachmentViewer = ({ url }: { url: string }) => {
+  const ensureAltMedia = (u: string) => {
+    if (u.includes('firebasestorage.googleapis.com') && !u.includes('alt=media')) {
+      return u + (u.includes('?') ? '&' : '?') + 'alt=media';
+    }
+    return u;
+  };
+
+  const safeUrl = ensureAltMedia(url);
+  const isImg = looksLikeImage(safeUrl);
+  const isPdf = looksLikePdf(safeUrl);
+
+  return (
+    <div className="flex flex-col gap-1">
+      {isImg && (
+        <a href={safeUrl} target="_blank" rel="noopener noreferrer">
+          <img
+            src={safeUrl}
+            alt="Comprobante"
+            className="max-h-16 max-w-[80px] rounded border border-gray-200 object-contain"
+            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+          />
+        </a>
+      )}
+      <a
+        href={safeUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-xs text-blue-600 hover:text-blue-800"
+      >
+        {isPdf ? '📄 Ver PDF' : '🖼 Ver comprobante'}
+      </a>
+    </div>
+  );
+};
 
 export const RequestsPage = () => {
   const [status, setStatus] = useState('');
@@ -330,23 +366,7 @@ export const RequestsPage = () => {
 
             {r.type === 'WITHDRAWAL' ? null : r.attachmentUrl ? (
               <div className="mt-3">
-                {isImage(r.attachmentUrl) && (
-                  <a href={r.attachmentUrl} target="_blank" rel="noopener noreferrer">
-                    <img src={r.attachmentUrl} alt="Comprobante" className="max-h-24 rounded border border-gray-200 object-contain" />
-                  </a>
-                )}
-                {isPdf(r.attachmentUrl) && (
-                  <a href={r.attachmentUrl} target="_blank" rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800">
-                    📄 Ver PDF
-                  </a>
-                )}
-                {!isImage(r.attachmentUrl) && !isPdf(r.attachmentUrl) && (
-                  <a href={r.attachmentUrl} target="_blank" rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800">
-                    Ver comprobante
-                  </a>
-                )}
+                <AttachmentViewer url={r.attachmentUrl} />
               </div>
             ) : null}
 
@@ -416,25 +436,7 @@ export const RequestsPage = () => {
                     {r.type === 'WITHDRAWAL' ? (
                       <span className="text-gray-400 text-sm">N/A</span>
                     ) : r.attachmentUrl ? (
-                      <div className="flex flex-col gap-1">
-                        {isImage(r.attachmentUrl) && (
-                          <a href={r.attachmentUrl} target="_blank" rel="noopener noreferrer">
-                            <img src={r.attachmentUrl} alt="Comprobante" className="max-h-16 max-w-[80px] rounded border border-gray-200 object-contain" />
-                          </a>
-                        )}
-                        {isPdf(r.attachmentUrl) && (
-                          <a href={r.attachmentUrl} target="_blank" rel="noopener noreferrer"
-                            className="text-xs text-blue-600 hover:text-blue-800">
-                            📄 Ver PDF
-                          </a>
-                        )}
-                        {!isImage(r.attachmentUrl) && !isPdf(r.attachmentUrl) && (
-                          <a href={r.attachmentUrl} target="_blank" rel="noopener noreferrer"
-                            className="text-xs text-blue-600 hover:text-blue-800">
-                            Ver comprobante
-                          </a>
-                        )}
-                      </div>
+                      <AttachmentViewer url={r.attachmentUrl} />
                     ) : (
                       <span className="text-gray-400 text-sm">—</span>
                     )}
