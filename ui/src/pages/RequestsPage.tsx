@@ -22,7 +22,6 @@ const METHOD_LABELS: Record<string, string> = {
 
 const formatMethod = (method: string) => METHOD_LABELS[method] ?? method;
 
-const looksLikeImage = (url: string) => /\.(jpe?g|png|webp|gif)/i.test(url) || /image/i.test(url);
 const looksLikePdf = (url: string) => /\.pdf/i.test(url);
 
 const AttachmentViewer = ({ url }: { url: string }) => {
@@ -34,30 +33,22 @@ const AttachmentViewer = ({ url }: { url: string }) => {
   };
 
   const safeUrl = ensureAltMedia(url);
-  const isImg = looksLikeImage(safeUrl);
   const isPdf = looksLikePdf(safeUrl);
 
+  const open = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    window.open(safeUrl, '_blank');
+  };
+
   return (
-    <div className="flex flex-col gap-1">
-      {isImg && (
-        <a href={safeUrl} target="_blank" rel="noopener noreferrer">
-          <img
-            src={safeUrl}
-            alt="Comprobante"
-            className="max-h-16 max-w-[80px] rounded border border-gray-200 object-contain"
-            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-          />
-        </a>
-      )}
-      <a
-        href={safeUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="text-xs text-blue-600 hover:text-blue-800"
-      >
-        {isPdf ? '📄 Ver PDF' : '🖼 Ver comprobante'}
-      </a>
-    </div>
+    <button
+      type="button"
+      onClick={open}
+      className="text-xs text-blue-600 hover:text-blue-800 underline"
+    >
+      {isPdf ? '📄 Ver PDF' : '🖼 Ver comprobante'}
+    </button>
   );
 };
 
