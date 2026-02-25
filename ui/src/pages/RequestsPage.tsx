@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { api } from '../lib/api';
 import { formatCurrencyAR } from '../lib/formatters';
+import type { ApiInvestor, ApiRequest } from '../types';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { DatePicker } from '../components/ui/DatePicker';
@@ -86,7 +87,7 @@ const AttachmentViewer = ({ url }: { url: string }) => {
 export const RequestsPage = () => {
   const [status, setStatus] = useState('');
   const [type, setType] = useState('');
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<{ data?: { requests?: ApiRequest[]; pendingCount?: number } } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -100,31 +101,30 @@ export const RequestsPage = () => {
     processed_at: '', // YYYY-MM-DD (optional, used when status=APPROVED/REJECTED)
   });
   const [submitting, setSubmitting] = useState(false);
-  const [investors, setInvestors] = useState<any[]>([]);
+  const [investors, setInvestors] = useState<ApiInvestor[]>([]);
 
   const params = useMemo(() => ({ status: status || undefined, type: type || undefined }), [status, type]);
 
-  const load = () => {
+  const load = useCallback(() => {
     setError(null);
     api
       .getAdminRequests(params)
-      .then((res) => setData(res))
-      .catch((e) => setError(e.message));
-  };
+      .then((res) => setData(res as { data?: { requests?: ApiRequest[]; pendingCount?: number } } | null))
+      .catch((e: unknown) => setError(e instanceof Error ? e.message : 'Error'));
+  }, [params]);
 
   useEffect(() => {
     load();
-    api.getAdminInvestors().then((res) => setInvestors(res?.data || [])).catch(() => {});
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status, type]);
+    api.getAdminInvestors().then((res) => setInvestors((res as { data?: ApiInvestor[] } | null)?.data ?? [])).catch(() => {});
+  }, [load]);
 
   const approve = async (id: string) => {
     try {
       setBusyId(id);
       await api.approveRequest(id);
       load();
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Error');
     } finally {
       setBusyId(null);
     }
@@ -135,8 +135,8 @@ export const RequestsPage = () => {
       setBusyId(id);
       await api.rejectRequest(id);
       load();
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Error');
     } finally {
       setBusyId(null);
     }
@@ -146,16 +146,19 @@ export const RequestsPage = () => {
     e.preventDefault();
     setSubmitting(true);
     try {
-      const payload: any = {
-        ...formData,
-        amount: Number(formData.amount),
+      const amountNum = Number(formData.amount);
+      const payload: Parameters<typeof api.createRequest>[0] = {
+        investor_id: formData.investor_id,
+        request_type: formData.request_type,
+        method: formData.method,
+        amount: amountNum,
+        status: formData.status,
       };
-
-      if (payload.processed_at) {
-        payload.requested_at = payload.processed_at;
+      if (formData.network) payload.network = formData.network;
+      if (formData.processed_at) {
+        payload.requested_at = formData.processed_at;
+        payload.processed_at = formData.processed_at;
       }
-      if (!payload.network) delete payload.network;
-      if (!payload.processed_at) delete payload.processed_at;
 
       // If admin selects APPROVED/REJECTED, backend will apply it immediately.
       await api.createRequest(payload);
@@ -163,8 +166,8 @@ export const RequestsPage = () => {
       setFormData({ investor_id: '', request_type: 'DEPOSIT', method: 'USDT', amount: '', network: '', status: 'PENDING', processed_at: '' });
       setShowForm(false);
       load();
-    } catch (err: any) {
-      alert(err.message || 'Error al guardar solicitud');
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Error al guardar solicitud');
     } finally {
       setSubmitting(false);
     }
@@ -178,8 +181,8 @@ export const RequestsPage = () => {
   if (error) return <div className="text-red-600">{error}</div>;
   if (!data) return <div className="text-gray-600">Cargando...</div>;
 
-  const requests = data.data.requests;
-  const pendingCount = data.data.pendingCount;
+  const requests = data.data?.requests ?? [];
+  const pendingCount = data.data?.pendingCount ?? 0;
 
   return (
     <div className="space-y-6">
@@ -213,7 +216,7 @@ export const RequestsPage = () => {
                   className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
                 >
                   <option value="">Seleccionar inversor</option>
-                  {investors.map((inv: any) => (
+                  {investors.map((inv) => (
                     <option key={inv.id} value={inv.id}>
                       {inv.name} ({inv.email})
                     </option>
@@ -344,13 +347,13 @@ export const RequestsPage = () => {
 
       {/* Mobile: cards */}
       <div className="grid gap-3 px-1 md:hidden">
-        {requests.map((r: any) => (
+        {requests.map((r) => (
           <div key={r.id} className="w-full overflow-hidden rounded-lg bg-white p-4 shadow">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold text-gray-900">{r.investor.name}</p>
                 <p className="mt-1 text-xs text-gray-500">
-                  {new Date(r.requestedAt).toLocaleDateString('es-AR', {
+                  {new Date(r.requestedAt ?? '').toLocaleDateString('es-AR', {
                     day: '2-digit',
                     month: '2-digit',
                     year: 'numeric',
@@ -429,10 +432,10 @@ export const RequestsPage = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {requests.map((r: any) => (
+              {requests.map((r) => (
                 <tr key={r.id} className="text-sm">
                   <td className="py-2">
-                    {new Date(r.requestedAt).toLocaleDateString('es-AR', {
+                    {new Date(r.requestedAt ?? '').toLocaleDateString('es-AR', {
                       day: '2-digit',
                       month: '2-digit',
                       year: 'numeric',

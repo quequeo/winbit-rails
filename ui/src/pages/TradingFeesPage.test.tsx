@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { TradingFeesPage } from './TradingFeesPage'
+import { TradingFeesPage, type InvestorSummary } from './TradingFeesPage'
 import { api } from '../lib/api'
 
 vi.mock('../lib/api', () => ({
@@ -54,7 +54,7 @@ describe('TradingFeesPage', () => {
       applied_fee_percentage: null,
       monthly_profits: [{ month: '2025-12', amount: 200 }],
     },
-  ] as any
+  ] as InvestorSummary[]
 
   it('loads and renders investors summary', async () => {
     vi.mocked(api.getTradingFeesSummary).mockResolvedValue(mockRows)

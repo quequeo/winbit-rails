@@ -4,6 +4,7 @@ import { api } from '../lib/api';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
+import type { ApiInvestor } from '../types';
 
 export const EditInvestorPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -11,7 +12,7 @@ export const EditInvestorPage = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [investor, setInvestor] = useState<any>(null);
+  const [investor, setInvestor] = useState<ApiInvestor | null>(null);
   const [form, setForm] = useState({
     email: '',
     name: '',
@@ -25,14 +26,15 @@ export const EditInvestorPage = () => {
     api
       .getAdminInvestors({})
       .then((res) => {
-        const inv = (res?.data || []).find((i: any) => String(i.id) === id);
+        const data = (res as { data?: ApiInvestor[] } | null)?.data;
+        const inv = data?.find((i) => String(i.id) === id);
         if (inv) {
           setInvestor(inv);
           setForm({
-            email: inv.email,
-            name: inv.name,
-            status: inv.status || 'ACTIVE',
-            tradingFeeFrequency: inv.tradingFeeFrequency || 'QUARTERLY',
+            email: inv.email ?? '',
+            name: inv.name ?? '',
+            status: (inv.status === 'INACTIVE' ? 'INACTIVE' : 'ACTIVE') as 'ACTIVE' | 'INACTIVE',
+            tradingFeeFrequency: (inv.tradingFeeFrequency ?? 'QUARTERLY') as 'MONTHLY' | 'QUARTERLY' | 'SEMESTRAL' | 'ANNUAL',
             tradingFeePercentage: String(inv.tradingFeePercentage ?? 30),
             newPassword: '',
           });
@@ -58,7 +60,7 @@ export const EditInvestorPage = () => {
         return;
       }
 
-      const body: any = {
+      const body: Parameters<typeof api.updateInvestor>[1] = {
         email: form.email,
         name: form.name,
         status: form.status,
@@ -68,8 +70,8 @@ export const EditInvestorPage = () => {
       if (form.newPassword) body.password = form.newPassword;
       await api.updateInvestor(id, body);
       navigate('/investors');
-    } catch (err: any) {
-      alert(err.message || 'Error al actualizar inversor');
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Error al actualizar inversor');
     } finally {
       setSubmitting(false);
     }

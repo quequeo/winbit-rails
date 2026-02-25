@@ -99,6 +99,31 @@ RSpec.describe InvestorRequest, type: :model do
       expect(request).to be_valid
     end
 
+    it 'rejects invalid network' do
+      request = InvestorRequest.new(
+        investor: investor,
+        request_type: 'DEPOSIT',
+        method: 'USDT',
+        amount: 1000,
+        network: 'INVALID_NET',
+        status: 'PENDING'
+      )
+      expect(request).not_to be_valid
+      expect(request.errors[:network]).to include('is invalid')
+    end
+
+    it 'allows blank network' do
+      request = InvestorRequest.new(
+        investor: investor,
+        request_type: 'DEPOSIT',
+        method: 'CASH_ARS',
+        amount: 1000,
+        network: nil,
+        status: 'PENDING'
+      )
+      expect(request).to be_valid
+    end
+
     it 'allows optional notes' do
       request = InvestorRequest.new(
         investor: investor,

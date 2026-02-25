@@ -8,8 +8,8 @@ describe('LoginPage', () => {
 
   beforeEach(() => {
     // Mock window.location
-    delete (window as any).location;
-    window.location = { ...originalLocation, search: '' } as any;
+    delete (window as unknown as { location?: Location }).location;
+    (window as unknown as { location: Location }).location = { ...originalLocation, search: '' } as Location;
   });
 
   afterEach(() => {
@@ -34,27 +34,27 @@ describe('LoginPage', () => {
   });
 
   it('shows unauthorized error message when error=unauthorized', () => {
-    window.location = { ...originalLocation, search: '?error=unauthorized' } as any;
+    (window as unknown as { location: Location }).location = { ...originalLocation, search: '?error=unauthorized' } as Location;
     render(<LoginPage />);
     expect(screen.getByText('Tu cuenta de Google no está autorizada como admin.')).toBeInTheDocument();
   });
 
   it('shows auth failed error message when error=auth_failed', () => {
-    window.location = { ...originalLocation, search: '?error=auth_failed' } as any;
+    (window as unknown as { location: Location }).location = { ...originalLocation, search: '?error=auth_failed' } as Location;
     render(<LoginPage />);
     expect(screen.getByText(/Falló el login con Google/)).toBeInTheDocument();
     expect(screen.getByText(/GOOGLE_CLIENT_ID\/SECRET/)).toBeInTheDocument();
   });
 
   it('does not show error message when no error param', () => {
-    window.location = { ...originalLocation, search: '' } as any;
+    (window as unknown as { location: Location }).location = { ...originalLocation, search: '' } as Location;
     render(<LoginPage />);
     expect(screen.queryByText(/Tu cuenta de Google no está autorizada/)).not.toBeInTheDocument();
     expect(screen.queryByText(/Falló el login con Google/)).not.toBeInTheDocument();
   });
 
   it('does not show error message for unknown error param', () => {
-    window.location = { ...originalLocation, search: '?error=unknown' } as any;
+    (window as unknown as { location: Location }).location = { ...originalLocation, search: '?error=unknown' } as Location;
     render(<LoginPage />);
     expect(screen.queryByText(/Tu cuenta de Google no está autorizada/)).not.toBeInTheDocument();
     expect(screen.queryByText(/Falló el login con Google/)).not.toBeInTheDocument();
@@ -82,7 +82,7 @@ describe('LoginPage', () => {
   });
 
   it('memoizes error message to avoid recalculation', () => {
-    window.location = { ...originalLocation, search: '?error=unauthorized' } as any;
+    (window as unknown as { location: Location }).location = { ...originalLocation, search: '?error=unauthorized' } as Location;
     const { rerender } = render(<LoginPage />);
     expect(screen.getByText('Tu cuenta de Google no está autorizada como admin.')).toBeInTheDocument();
 

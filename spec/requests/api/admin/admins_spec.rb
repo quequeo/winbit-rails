@@ -24,6 +24,17 @@ RSpec.describe 'Admin Admins API', type: :request do
   end
 
   describe 'POST /api/admin/admins' do
+    it 'returns forbidden when regular admin tries to create' do
+      login_as(admin, scope: :user)
+      post '/api/admin/admins', params: { email: 'new@test.com', role: 'ADMIN' }
+
+      expect(response).to have_http_status(:forbidden)
+      json = JSON.parse(response.body)
+      expect(json['error']).to include('Super Admins')
+
+      logout(:user)
+    end
+
     it 'creates a new admin with email only' do
       post '/api/admin/admins', params: {
         email: 'new@test.com',

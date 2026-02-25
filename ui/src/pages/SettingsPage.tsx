@@ -24,8 +24,8 @@ export const SettingsPage = () => {
       setNotificationsEnabled(data.investor_notifications_enabled || false);
       setWhitelist(data.investor_email_whitelist || []);
       setWhitelistInput((data.investor_email_whitelist || []).join(', '));
-    } catch (err: any) {
-      setError(err?.message || 'Error al cargar configuración');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Error al cargar configuración');
     } finally {
       setLoading(false);
     }
@@ -53,8 +53,8 @@ export const SettingsPage = () => {
 
       // Clear success message after 3 seconds
       setTimeout(() => setSuccess(null), 3000);
-    } catch (err: any) {
-      setError(err?.message || 'Error al guardar configuración');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Error al guardar configuración');
     } finally {
       setSaving(false);
     }
