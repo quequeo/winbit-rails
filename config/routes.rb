@@ -10,6 +10,7 @@ Rails.application.routes.draw do
       post 'auth/change_password', to: 'auth#change_password', format: false
 
       get 'investor/*email/history', to: 'investors#history', format: false
+      get 'investor/*email/withdrawal_fee_preview', to: 'investors#withdrawal_fee_preview', format: false
       get 'investor/*email', to: 'investors#show', format: false
       get 'wallets', to: 'wallets#index', format: false
       get 'deposit_options', to: 'deposit_options#index', format: false
@@ -20,6 +21,7 @@ Rails.application.routes.draw do
         post 'auth/change_password', to: 'auth#change_password', format: false
 
         get 'investor/*email/history', to: 'investors#history', format: false
+        get 'investor/*email/withdrawal_fee_preview', to: 'investors#withdrawal_fee_preview', format: false
         get 'investor/*email', to: 'investors#show', format: false
         get 'wallets', to: 'wallets#index', format: false
         get 'deposit_options', to: 'deposit_options#index', format: false
