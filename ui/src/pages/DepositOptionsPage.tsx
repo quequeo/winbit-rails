@@ -11,7 +11,6 @@ type DepositOption = {
   currency: string;
   details: Record<string, string>;
   active: boolean;
-  position: number;
   createdAt: string;
   updatedAt: string;
 };
@@ -69,7 +68,6 @@ type FormState = {
   label: string;
   currency: string;
   active: boolean;
-  position: number;
   details: Record<string, string>;
 };
 
@@ -78,7 +76,6 @@ const emptyForm = (cat = 'CASH_ARS'): FormState => ({
   label: '',
   currency: DEFAULT_CURRENCY[cat] || 'ARS',
   active: true,
-  position: 0,
   details: {},
 });
 
@@ -141,7 +138,6 @@ export const DepositOptionsPage = () => {
         category: formData.category,
         label: formData.label,
         currency: formData.currency,
-        position: formData.position,
         details: formData.details,
       });
       setFormData(emptyForm());
@@ -163,7 +159,6 @@ export const DepositOptionsPage = () => {
       label: opt.label,
       currency: opt.currency,
       active: opt.active,
-      position: opt.position,
       details: { ...opt.details },
     });
   };
@@ -178,7 +173,6 @@ export const DepositOptionsPage = () => {
         label: editForm.label,
         currency: editForm.currency,
         active: editForm.active,
-        position: editForm.position,
         details: editForm.details,
       });
       setEditingId(null);
@@ -323,7 +317,6 @@ export const DepositOptionsPage = () => {
                         </td>
                       ) : (
                         <>
-                          <td className="py-2 text-gray-500">{opt.position}</td>
                           <td className="py-2">
                             <span className="inline-flex rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700">
                               {categoryLabel(opt.category)}
@@ -463,15 +456,6 @@ function DepositOptionForm({
                 <option key={c} value={c}>{c}</option>
               ))}
             </select>
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Posición</label>
-            <Input
-              type="number"
-              min="0"
-              value={form.position}
-              onChange={(e) => setForm({ ...form, position: parseInt(e.target.value) || 0 })}
-            />
           </div>
           {allowActiveEdit && (
             <div>
