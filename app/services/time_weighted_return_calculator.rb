@@ -22,7 +22,8 @@ class TimeWeightedReturnCalculator
     keyword_init: true
   )
 
-  FLOW_EVENTS = %w[DEPOSIT WITHDRAWAL].freeze
+  FLOW_EVENTS = %w[DEPOSIT WITHDRAWAL REFERRAL_COMMISSION].freeze
+  INFLOW_EVENTS = %w[DEPOSIT REFERRAL_COMMISSION].freeze
 
   def self.for_investor(investor_id:, from:, to: Time.current)
     new(from: from, to: to).compute_for_investor(investor_id: investor_id)
@@ -84,7 +85,7 @@ class TimeWeightedReturnCalculator
         # Count flows only after we started (so the very first deposit that starts the strategy isn't counted)
         if effective_start_at
           amt = bd(h.amount).abs
-          net_flows += (h.event == 'DEPOSIT' ? amt : -amt)
+          net_flows += (INFLOW_EVENTS.include?(h.event) ? amt : -amt)
         end
 
         # Apply the flow and start next sub-period AFTER the flow
@@ -187,7 +188,7 @@ class TimeWeightedReturnCalculator
 
         if effective_start_at
           amt = bd(h.amount).abs
-          net_flows += (h.event == 'DEPOSIT' ? amt : -amt)
+          net_flows += (INFLOW_EVENTS.include?(h.event) ? amt : -amt)
         end
 
         # Apply this investor balance change (flow) into total

@@ -5,6 +5,26 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { DatePicker } from '../components/ui/DatePicker';
 
+const METHOD_LABELS: Record<string, string> = {
+  USDT: 'USDT',
+  USDC: 'USDC',
+  CASH: 'Efectivo',
+  CASH_ARS: 'Efectivo ARS',
+  CASH_USD: 'Efectivo USD',
+  LEMON_CASH: 'Lemon Cash',
+  TRANSFER_ARS: 'Transferencia ARS',
+  TRANSFER_USD: 'Transferencia USD',
+  BANK_ARS: 'Banco ARS',
+  BANK_USD: 'Banco USD',
+  SWIFT: 'SWIFT',
+  CRYPTO: 'Cripto',
+};
+
+const formatMethod = (method: string) => METHOD_LABELS[method] ?? method;
+
+const isImage = (url: string) => /\.(jpe?g|png|webp|gif)(\?|$)/i.test(url);
+const isPdf = (url: string) => /\.pdf(\?|$)/i.test(url);
+
 export const RequestsPage = () => {
   const [status, setStatus] = useState('');
   const [type, setType] = useState('');
@@ -302,27 +322,33 @@ export const RequestsPage = () => {
               >
                 {r.type === 'DEPOSIT' ? 'Depósito' : 'Retiro'}
               </span>
-              <span className="text-xs text-gray-600">{r.method}</span>
+              <span className="text-xs text-gray-600">{formatMethod(r.method)}</span>
               <span className="ml-auto font-mono text-sm font-semibold text-gray-900">
                 {formatCurrencyAR(Number(r.amount))}
               </span>
             </div>
 
-            {r.attachmentUrl && (
+            {r.type === 'WITHDRAWAL' ? null : r.attachmentUrl ? (
               <div className="mt-3">
-                <a
-                  href={r.attachmentUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                  </svg>
-                  Ver comprobante
-                </a>
+                {isImage(r.attachmentUrl) && (
+                  <a href={r.attachmentUrl} target="_blank" rel="noopener noreferrer">
+                    <img src={r.attachmentUrl} alt="Comprobante" className="max-h-24 rounded border border-gray-200 object-contain" />
+                  </a>
+                )}
+                {isPdf(r.attachmentUrl) && (
+                  <a href={r.attachmentUrl} target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800">
+                    📄 Ver PDF
+                  </a>
+                )}
+                {!isImage(r.attachmentUrl) && !isPdf(r.attachmentUrl) && (
+                  <a href={r.attachmentUrl} target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800">
+                    Ver comprobante
+                  </a>
+                )}
               </div>
-            )}
+            ) : null}
 
             {r.status === 'PENDING' && (
               <div className="mt-4 flex gap-2">
@@ -384,23 +410,33 @@ export const RequestsPage = () => {
                       {r.type === 'DEPOSIT' ? 'Depósito' : 'Retiro'}
                     </span>
                   </td>
-                  <td className="py-2">{r.method}</td>
+                  <td className="py-2">{formatMethod(r.method)}</td>
                   <td className="py-2 font-mono font-semibold">{formatCurrencyAR(Number(r.amount))}</td>
                   <td className="py-2">
-                    {r.attachmentUrl ? (
-                      <a
-                        href={r.attachmentUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800"
-                        title="Ver comprobante"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                      </a>
+                    {r.type === 'WITHDRAWAL' ? (
+                      <span className="text-gray-400 text-sm">N/A</span>
+                    ) : r.attachmentUrl ? (
+                      <div className="flex flex-col gap-1">
+                        {isImage(r.attachmentUrl) && (
+                          <a href={r.attachmentUrl} target="_blank" rel="noopener noreferrer">
+                            <img src={r.attachmentUrl} alt="Comprobante" className="max-h-16 max-w-[80px] rounded border border-gray-200 object-contain" />
+                          </a>
+                        )}
+                        {isPdf(r.attachmentUrl) && (
+                          <a href={r.attachmentUrl} target="_blank" rel="noopener noreferrer"
+                            className="text-xs text-blue-600 hover:text-blue-800">
+                            📄 Ver PDF
+                          </a>
+                        )}
+                        {!isImage(r.attachmentUrl) && !isPdf(r.attachmentUrl) && (
+                          <a href={r.attachmentUrl} target="_blank" rel="noopener noreferrer"
+                            className="text-xs text-blue-600 hover:text-blue-800">
+                            Ver comprobante
+                          </a>
+                        )}
+                      </div>
                     ) : (
-                      <span className="text-gray-400 text-sm">-</span>
+                      <span className="text-gray-400 text-sm">—</span>
                     )}
                   </td>
                   <td className="py-2">
