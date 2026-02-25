@@ -227,5 +227,80 @@ RSpec.describe Requests::Approve, type: :service do
         expect((withdrawal_history.amount.to_f + fee_history.amount.to_f.abs).round(2)).to eq(1000.0)
       end
     end
+
+    context 'with withdrawal and zero pending profit (break-even)' do
+      let!(:request) do
+        InvestorRequest.create!(
+          investor: investor,
+          request_type: 'WITHDRAWAL',
+          method: 'USDC',
+          amount: 1000,
+          status: 'PENDING',
+          requested_at: Time.current
+        )
+      end
+
+      before do
+        portfolio.update!(current_balance: 5000, total_invested: 5000)
+      end
+
+      it 'approves without charging any trading fee' do
+        service = described_class.new(request_id: request.id, approved_by: admin)
+
+        expect { service.call }.not_to change(TradingFee, :count)
+
+        request.reload
+        expect(request.status).to eq('APPROVED')
+
+        withdrawal_history = PortfolioHistory.where(investor: investor, event: 'WITHDRAWAL').order(date: :desc).first
+        fee_history = PortfolioHistory.where(investor: investor, event: 'TRADING_FEE').order(date: :desc).first
+
+        expect(withdrawal_history).to be_present
+        expect(withdrawal_history.amount.to_f).to eq(-1000.0)
+        expect(fee_history).to be_nil
+      end
+    end
+
+    context 'with withdrawal and negative pending profit (loss)' do
+      let!(:request) do
+        InvestorRequest.create!(
+          investor: investor,
+          request_type: 'WITHDRAWAL',
+          method: 'USDC',
+          amount: 1000,
+          status: 'PENDING',
+          requested_at: Time.current
+        )
+      end
+
+      before do
+        portfolio.update!(current_balance: 4500, total_invested: 5000)
+        PortfolioHistory.create!(
+          investor: investor,
+          event: 'OPERATING_RESULT',
+          amount: -500,
+          previous_balance: 5000,
+          new_balance: 4500,
+          status: 'COMPLETED',
+          date: 1.day.ago
+        )
+      end
+
+      it 'approves without charging any trading fee' do
+        service = described_class.new(request_id: request.id, approved_by: admin)
+
+        expect { service.call }.not_to change(TradingFee, :count)
+
+        request.reload
+        expect(request.status).to eq('APPROVED')
+
+        withdrawal_history = PortfolioHistory.where(investor: investor, event: 'WITHDRAWAL').order(date: :desc).first
+        fee_history = PortfolioHistory.where(investor: investor, event: 'TRADING_FEE').order(date: :desc).first
+
+        expect(withdrawal_history).to be_present
+        expect(withdrawal_history.amount.to_f).to eq(-1000.0)
+        expect(fee_history).to be_nil
+      end
+    end
   end
 end
