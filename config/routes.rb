@@ -121,6 +121,7 @@ Rails.application.routes.draw do
   get '*path', to: 'spa#index', constraints: lambda { |req|
     !req.path.start_with?('/api') &&
       !req.path.start_with?('/users') &&
-      !req.path.start_with?('/rails')
+      !req.path.start_with?('/rails') &&
+      !req.path.start_with?('/assets')
   }
 end

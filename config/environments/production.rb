@@ -17,8 +17,11 @@ Rails.application.configure do
   config.public_file_server.headers = { "cache-control" => "public, max-age=#{1.year.to_i}" }
 
   # Avoid caching HTML shell (SPA) while keeping assets cached.
-  # Without this, browsers/CDNs can keep an old `public/index.html` and hide new UI changes.
-  config.middleware.use Middleware::NoCacheHtml
+  # Inserted BEFORE ActionDispatch::Static so the middleware can intercept and override
+  # the Cache-Control header that the static file server adds to index.html.
+  # Using `use` (append) is ineffective because ActionDispatch::Static returns early
+  # without calling the rest of the chain.
+  config.middleware.insert_before ActionDispatch::Static, Middleware::NoCacheHtml
 
   # Enable serving of images, stylesheets, and JavaScripts from an asset server.
   # config.asset_host = "http://assets.example.com"
