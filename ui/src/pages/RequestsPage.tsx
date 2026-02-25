@@ -34,21 +34,52 @@ const AttachmentViewer = ({ url }: { url: string }) => {
 
   const safeUrl = ensureAltMedia(url);
   const isPdf = looksLikePdf(safeUrl);
+  const isDataUrl = safeUrl.startsWith('data:');
 
-  const open = (e: React.MouseEvent) => {
-    e.preventDefault();
+  const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    window.open(safeUrl, '_blank');
+    if (!isDataUrl) return;
+
+    // Browsers block navigation to data: URLs in new tabs for security reasons.
+    // Convert the data URL to a Blob URL so it can be opened normally.
+    e.preventDefault();
+    const [header, base64] = safeUrl.split(',');
+    const mimeMatch = header.match(/data:([^;]+)/);
+    const mimeType = mimeMatch ? mimeMatch[1] : 'application/octet-stream';
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    const blob = new Blob([bytes], { type: mimeType });
+    const blobUrl = URL.createObjectURL(blob);
+    window.open(blobUrl, '_blank');
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
   };
 
   return (
-    <button
-      type="button"
-      onClick={open}
-      className="text-xs text-blue-600 hover:text-blue-800 underline"
+    <a
+      href={isDataUrl ? '#' : safeUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      title={isPdf ? 'Ver PDF' : 'Ver comprobante'}
+      onClick={handleClick}
+      className="inline-flex items-center justify-center rounded-md p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-blue-600"
     >
-      {isPdf ? '📄 Ver PDF' : '🖼 Ver comprobante'}
-    </button>
+      {isPdf ? (
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+          <polyline points="14 2 14 8 20 8" />
+          <line x1="16" y1="13" x2="8" y2="13" />
+          <line x1="16" y1="17" x2="8" y2="17" />
+          <polyline points="10 9 9 9 8 9" />
+        </svg>
+      ) : (
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+          <circle cx="8.5" cy="8.5" r="1.5" />
+          <polyline points="21 15 16 10 5 21" />
+        </svg>
+      )}
+    </a>
   );
 };
 
