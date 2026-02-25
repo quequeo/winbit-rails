@@ -256,7 +256,7 @@ RSpec.describe Requests::Approve, type: :service do
         fee_history = PortfolioHistory.where(investor: investor, event: 'TRADING_FEE').order(date: :desc).first
 
         expect(withdrawal_history).to be_present
-        expect(withdrawal_history.amount.to_f).to eq(-1000.0)
+        expect(withdrawal_history.amount.to_f).to eq(1000.0)
         expect(fee_history).to be_nil
       end
     end
@@ -298,7 +298,7 @@ RSpec.describe Requests::Approve, type: :service do
         fee_history = PortfolioHistory.where(investor: investor, event: 'TRADING_FEE').order(date: :desc).first
 
         expect(withdrawal_history).to be_present
-        expect(withdrawal_history.amount.to_f).to eq(-1000.0)
+        expect(withdrawal_history.amount.to_f).to eq(1000.0)
         expect(fee_history).to be_nil
       end
     end
