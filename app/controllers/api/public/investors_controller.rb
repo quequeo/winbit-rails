@@ -98,7 +98,7 @@ module Api
           if h.event == 'TRADING_FEE'
             fee = find_trading_fee_for_history(fees, h)
             if fee
-              extra[:tradingFeePeriodLabel] = fee.source == 'WITHDRAWAL' ? 'Retiro' : quarter_label(fee.period_end)
+              extra[:tradingFeePeriodLabel] = fee.source == 'WITHDRAWAL' ? 'Retiro' : period_label(fee)
               extra[:tradingFeePeriodStart] = fee.period_start
               extra[:tradingFeePeriodEnd] = fee.period_end
               extra[:tradingFeePercentage] = fee.fee_percentage.to_f
@@ -110,7 +110,7 @@ module Api
           if h.event == 'TRADING_FEE_ADJUSTMENT'
             fee = find_trading_fee_for_adjustment(fees, h)
             if fee
-              extra[:tradingFeePeriodLabel] = quarter_label(fee.period_end)
+              extra[:tradingFeePeriodLabel] = period_label(fee)
               extra[:tradingFeePercentage] = fee.fee_percentage.to_f
             end
           end
@@ -122,25 +122,45 @@ module Api
           PublicPendingRequestHistoryItemSerializer.new(r).as_json
         }
 
-        combined = (histories + requests).sort_by { |item| item[:date] }.reverse
+        combined = (histories + requests).sort_by do |item|
+          d = item[:date]
+          t = d.respond_to?(:to_time) ? d.to_time : Time.zone.parse(d.to_s)
+          # Cuando retiro y comisión tienen la misma fecha, mostrar retiro antes que la comisión
+          sort_key = (item[:event] == 'TRADING_FEE' && item[:tradingFeeSource] == 'WITHDRAWAL') ? 1 : 0
+          [-t.to_f, sort_key]
+        end
 
         render json: { data: combined }
       end
 
       private
 
-      def quarter_label(date)
-        d = date.to_date
-        q = ((d.month - 1) / 3) + 1
-        "Q#{q} #{d.year}"
+      def period_label(fee)
+        start_d = fee.period_start.to_date
+        end_d = fee.period_end.to_date
+        if start_d.month == end_d.month && start_d.year == end_d.year
+          "#{end_d.year}-#{format('%02d', end_d.month)}"
+        else
+          q = ((end_d.month - 1) / 3) + 1
+          "Q#{q} #{end_d.year}"
+        end
       end
 
       def find_trading_fee_for_history(fees, history)
-        ts = history.date.to_time.to_i
+        ts = history.date.to_time
+        amount_abs = history.amount.to_d.abs
 
-        fees.find do |f|
-          (f.applied_at.to_i - ts).abs <= 600
+        # Prefer matching by amount: PH.amount = -fee_amount, so fee_amount should match history.amount.abs
+        # This avoids wrong matches when multiple fees exist in the same 10-min window (e.g. withdrawal + periodic)
+        by_amount = fees.select do |f|
+          (f.fee_amount.to_d - amount_abs).abs < BigDecimal('0.01') &&
+            (f.applied_at.to_i - ts.to_i).abs <= 600
         end
+
+        return by_amount.min_by { |f| (f.applied_at - ts).abs } if by_amount.any?
+
+        # Fallback: timestamp only (legacy or rounding edge cases)
+        fees.find { |f| (f.applied_at.to_i - ts.to_i).abs <= 600 }
       end
 
       def find_request_for_history(requests, history)

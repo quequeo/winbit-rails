@@ -154,6 +154,128 @@ RSpec.describe 'Public investors', type: :request do
     expect(fee_item['tradingFeeWithdrawalAmount']).to eq(15000.0)
   end
 
+  it 'GET /api/public/investor/:email/history returns YYYY-MM for single-month periodic fee' do
+    investor = Investor.create!(email: 'monthly-fee@example.com', name: 'Monthly', status: 'ACTIVE')
+    admin = User.create!(email: 'admin-monthly@example.com', name: 'Admin', role: 'ADMIN')
+
+    tf = TradingFee.create!(
+      investor: investor,
+      applied_by: admin,
+      period_start: Date.new(2026, 1, 1),
+      period_end: Date.new(2026, 1, 31),
+      profit_amount: 500,
+      fee_percentage: 25,
+      fee_amount: 125,
+      source: 'PERIODIC',
+      applied_at: Time.utc(2026, 1, 31, 18, 30, 0)
+    )
+
+    PortfolioHistory.create!(
+      investor_id: investor.id,
+      date: tf.applied_at,
+      event: 'TRADING_FEE',
+      amount: -tf.fee_amount.to_f,
+      previous_balance: 1000,
+      new_balance: 875,
+      status: 'COMPLETED'
+    )
+
+    get "/api/public/investor/#{CGI.escape(investor.email)}/history"
+
+    expect(response).to have_http_status(:ok)
+    fee_item = JSON.parse(response.body)['data'].find { |it| it['event'] == 'TRADING_FEE' }
+    expect(fee_item).to be_present
+    expect(fee_item['tradingFeePeriodLabel']).to eq('2026-01')
+  end
+
+  it 'GET /api/public/investor/:email/history orders withdrawal before its trading fee when same date' do
+    investor = Investor.create!(email: 'order-fee@example.com', name: 'Order', status: 'ACTIVE')
+    admin = User.create!(email: 'admin-order@example.com', name: 'Admin', role: 'ADMIN')
+    t = Time.utc(2026, 2, 25, 19, 54, 43)
+
+    req = InvestorRequest.create!(
+      investor: investor, request_type: 'WITHDRAWAL', amount: 2000,
+      method: 'USDT', status: 'APPROVED', requested_at: t, processed_at: t
+    )
+    tf = TradingFee.create!(
+      investor: investor, applied_by: admin,
+      period_start: t.to_date, period_end: t.to_date + 1.day,
+      profit_amount: 22.34, fee_percentage: 25, fee_amount: 5.59,
+      source: 'WITHDRAWAL', withdrawal_amount: 2000,
+      withdrawal_request_id: req.id, applied_at: t
+    )
+
+    PortfolioHistory.create!(
+      investor_id: investor.id, date: t, event: 'WITHDRAWAL',
+      amount: 2000, previous_balance: 35_552, new_balance: 33_552, status: 'COMPLETED'
+    )
+    PortfolioHistory.create!(
+      investor_id: investor.id, date: t, event: 'TRADING_FEE',
+      amount: -5.59, previous_balance: 33_552, new_balance: 33_546.41, status: 'COMPLETED'
+    )
+
+    get "/api/public/investor/#{CGI.escape(investor.email)}/history"
+
+    expect(response).to have_http_status(:ok)
+    data = JSON.parse(response.body)['data']
+    withdrawal_idx = data.index { |it| it['event'] == 'WITHDRAWAL' && it['amount'] == 2000 }
+    fee_idx = data.index { |it| it['event'] == 'TRADING_FEE' && it['amount'] == -5.59 }
+    expect(withdrawal_idx).to be < fee_idx
+  end
+
+  it 'GET /api/public/investor/:email/history matches each TRADING_FEE PH to correct fee by amount when multiple fees exist' do
+    investor = Investor.create!(email: 'multi-fee@example.com', name: 'Multi', status: 'ACTIVE')
+    admin = User.create!(email: 'admin3@example.com', name: 'Admin 3', role: 'ADMIN')
+    base_time = Time.utc(2026, 2, 25, 14, 0, 0)
+
+    req_500 = InvestorRequest.create!(
+      investor: investor, request_type: 'WITHDRAWAL', amount: 500,
+      method: 'USDT', status: 'APPROVED',
+      requested_at: base_time, processed_at: base_time
+    )
+    req_2000 = InvestorRequest.create!(
+      investor: investor, request_type: 'WITHDRAWAL', amount: 2000,
+      method: 'USDT', status: 'APPROVED',
+      requested_at: base_time + 2.minutes, processed_at: base_time + 2.minutes
+    )
+
+    tf_500 = TradingFee.create!(
+      investor: investor, applied_by: admin,
+      period_start: base_time.to_date, period_end: base_time.to_date + 1.day,
+      profit_amount: 22.4, fee_percentage: 25, fee_amount: 5.6,
+      source: 'WITHDRAWAL', withdrawal_amount: 500,
+      withdrawal_request_id: req_500.id, applied_at: base_time
+    )
+    tf_2000 = TradingFee.create!(
+      investor: investor, applied_by: admin,
+      period_start: (base_time + 2.minutes).to_date, period_end: (base_time + 2.minutes).to_date + 1.day,
+      profit_amount: 89.6, fee_percentage: 25, fee_amount: 22.4,
+      source: 'WITHDRAWAL', withdrawal_amount: 2000,
+      withdrawal_request_id: req_2000.id, applied_at: base_time + 2.minutes
+    )
+
+    PortfolioHistory.create!(
+      investor_id: investor.id, date: tf_2000.applied_at,
+      event: 'TRADING_FEE', amount: -22.4,
+      previous_balance: 5000, new_balance: 4977.6, status: 'COMPLETED'
+    )
+    PortfolioHistory.create!(
+      investor_id: investor.id, date: tf_500.applied_at,
+      event: 'TRADING_FEE', amount: -5.6,
+      previous_balance: 5500, new_balance: 5494.4, status: 'COMPLETED'
+    )
+
+    get "/api/public/investor/#{CGI.escape(investor.email)}/history"
+
+    expect(response).to have_http_status(:ok)
+    fee_items = JSON.parse(response.body)['data'].select { |it| it['event'] == 'TRADING_FEE' }
+    expect(fee_items.size).to eq(2)
+
+    by_amount = fee_items.index_by { |it| it['amount'] }
+    expect(by_amount[-22.4]['tradingFeeWithdrawalAmount']).to eq(2000.0)
+    expect(by_amount[-5.6]['tradingFeeWithdrawalAmount']).to eq(500.0)
+  end
+
   describe 'GET /api/public/investor/:email/withdrawal_fee_preview' do
     let!(:admin) { User.create!(email: 'adm@example.com', name: 'Admin', role: 'ADMIN') }
 
