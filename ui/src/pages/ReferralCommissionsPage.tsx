@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { api } from '../lib/api';
+import type { ApiInvestor } from '../types';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
@@ -40,9 +41,9 @@ export const ReferralCommissionsPage = () => {
   useEffect(() => {
     api
       .getAdminInvestors()
-      .then((res: any) => {
+      .then((res: { data?: ApiInvestor[] } | null) => {
         const list = Array.isArray(res?.data) ? res.data : [];
-        setInvestors(list.map((inv: any) => ({ id: inv.id, name: inv.name, email: inv.email })));
+        setInvestors(list.map((inv) => ({ id: inv.id, name: inv.name ?? '', email: inv.email ?? '' })));
       })
       .catch(() => {});
   }, []);
@@ -51,7 +52,7 @@ export const ReferralCommissionsPage = () => {
     setLoadingHistory(true);
     api
       .getReferralCommissions({ page: p })
-      .then((res: any) => {
+      .then((res: { data?: ReferralRow[]; pagination?: Pagination } | null) => {
         setRows(res?.data ?? []);
         setPagination(res?.pagination ?? null);
       })
@@ -92,8 +93,8 @@ export const ReferralCommissionsPage = () => {
       setInvestorId('');
       setPage(1);
       loadHistory(1);
-    } catch (err: any) {
-      setFlash({ type: 'error', message: err.message || 'Error al aplicar comisión por referido' });
+    } catch (err: unknown) {
+      setFlash({ type: 'error', message: err instanceof Error ? err.message : 'Error al aplicar comisión por referido' });
     } finally {
       setApplying(false);
     }

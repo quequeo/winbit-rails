@@ -104,8 +104,8 @@ export const DepositOptionsPage = () => {
       setError(null);
       const res = await api.getDepositOptions();
       setOptions((res as { data: DepositOption[] })?.data || []);
-    } catch (err: any) {
-      setError(err?.message || 'Error al cargar opciones');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Error al cargar opciones');
     } finally {
       setLoading(false);
     }
@@ -144,7 +144,7 @@ export const DepositOptionsPage = () => {
       setShowForm(false);
       showSuccess('Opción creada exitosamente');
       fetchOptions();
-    } catch (err: any) {
+    } catch (err: unknown) {
       const msg = tryParseError(err);
       setError(msg);
     } finally {
@@ -178,7 +178,7 @@ export const DepositOptionsPage = () => {
       setEditingId(null);
       showSuccess('Opción actualizada exitosamente');
       fetchOptions();
-    } catch (err: any) {
+    } catch (err: unknown) {
       const msg = tryParseError(err);
       setError(msg);
     } finally {
@@ -190,8 +190,8 @@ export const DepositOptionsPage = () => {
     try {
       await api.toggleDepositOption(opt.id);
       fetchOptions();
-    } catch (err: any) {
-      setError(err?.message || 'Error al cambiar estado');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Error al cambiar estado');
     }
   };
 
@@ -201,8 +201,8 @@ export const DepositOptionsPage = () => {
       await api.deleteDepositOption(deleteConfirm.option.id);
       showSuccess('Opción eliminada');
       fetchOptions();
-    } catch (err: any) {
-      setError(err?.message || 'Error al eliminar');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Error al eliminar');
     }
   };
 
@@ -578,11 +578,12 @@ function DetailsPreview({ details, category }: { details: Record<string, string>
   );
 }
 
-function tryParseError(err: any): string {
+function tryParseError(err: unknown): string {
+  const msg = err instanceof Error ? err.message : '';
   try {
-    const parsed = JSON.parse(err?.message || '{}');
-    return parsed?.error || err?.message || 'Error desconocido';
+    const parsed = JSON.parse(msg || '{}');
+    return parsed?.error || msg || 'Error desconocido';
   } catch {
-    return err?.message || 'Error desconocido';
+    return msg || 'Error desconocido';
   }
 }

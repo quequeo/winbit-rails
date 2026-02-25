@@ -5,6 +5,7 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { formatCurrencyAR } from '../lib/formatters';
+import type { ApiInvestor } from '../types';
 
 const frequencyLabel = (freq: string) => {
   if (freq === 'MONTHLY') return 'Mensual';
@@ -15,12 +16,12 @@ const frequencyLabel = (freq: string) => {
 
 export const InvestorsPage = () => {
   const navigate = useNavigate();
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<{ data?: ApiInvestor[] } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({ email: '', name: '', tradingFeePercentage: '30', password: '' });
   const [submitting, setSubmitting] = useState(false);
-  const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; investor: any | null }>({
+  const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; investor: ApiInvestor | null }>({
     isOpen: false,
     investor: null,
   });
@@ -56,14 +57,14 @@ export const InvestorsPage = () => {
       setFormData({ email: '', name: '', tradingFeePercentage: '30', password: '' });
       setShowForm(false);
       fetchInvestors();
-    } catch (err: any) {
-      alert(err.message || 'Error al crear inversor');
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Error al crear inversor');
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleDelete = (investor: any) => {
+  const handleDelete = (investor: ApiInvestor) => {
     setDeleteConfirm({ isOpen: true, investor });
   };
 
@@ -72,24 +73,24 @@ export const InvestorsPage = () => {
     try {
       await api.deleteInvestor(deleteConfirm.investor.id);
       fetchInvestors();
-    } catch (err: any) {
-      alert(err.message || 'Error al eliminar inversor');
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Error al eliminar inversor');
     }
   };
 
-  const handleToggleStatus = async (investor: any) => {
+  const handleToggleStatus = async (investor: ApiInvestor) => {
     try {
       await api.toggleInvestorStatus(investor.id);
       fetchInvestors();
-    } catch (err: any) {
-      alert(err.message || 'Error al cambiar status');
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Error al cambiar status');
     }
   };
 
   if (error) return <div className="text-red-600">{error}</div>;
   if (!data) return <div className="text-gray-600">Cargando...</div>;
 
-  const investors = (data?.data || []) as any[];
+  const investors: ApiInvestor[] = data?.data ?? [];
 
   return (
     <div className="space-y-6">
@@ -162,7 +163,7 @@ export const InvestorsPage = () => {
 
       {/* Mobile: cards */}
       <div className="grid gap-3 px-1 md:hidden">
-        {investors.map((inv: any) => (
+        {investors.map((inv) => (
           <div key={inv.id} className="w-full overflow-hidden rounded-lg bg-white p-4 shadow">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
@@ -196,12 +197,12 @@ export const InvestorsPage = () => {
               </div>
             </div>
             <div className="mt-2 flex items-center justify-between text-xs text-gray-500">
-              <span>Fee: {frequencyLabel(inv.tradingFeeFrequency)} ({inv.tradingFeePercentage ?? 30}%)</span>
+              <span>Fee: {frequencyLabel(inv.tradingFeeFrequency ?? 'QUARTERLY')} ({inv.tradingFeePercentage ?? 30}%)</span>
               <span>{inv.hasPassword ? '🔑 Pass' : 'Google'}</span>
             </div>
             <div className="mt-3 flex gap-2">
               <button
-                onClick={() => navigate(`/investors/${inv.id}/edit`)}
+                onClick={() => navigate(`/investors/${String(inv.id)}/edit`)}
                 className="rounded p-2 text-[#58b098] hover:bg-[#58b098]/10"
                 title="Editar"
               >
@@ -239,7 +240,7 @@ export const InvestorsPage = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {investors.map((inv: any) => (
+              {investors.map((inv) => (
                 <tr key={inv.id} className={`text-sm ${inv.status === 'INACTIVE' ? 'opacity-50' : ''}`}>
                   <td className="py-3 pr-4 font-medium">{inv.name}</td>
                   <td className="py-3 pr-4 text-gray-600">{inv.email}</td>
@@ -261,7 +262,7 @@ export const InvestorsPage = () => {
                   </td>
                   <td className="py-3 pr-4 text-center">
                     <span className="inline-flex rounded-full bg-purple-50 px-2 py-0.5 text-xs font-semibold text-purple-700">
-                      {frequencyLabel(inv.tradingFeeFrequency)} ({inv.tradingFeePercentage ?? 30}%)
+                      {frequencyLabel(inv.tradingFeeFrequency ?? 'QUARTERLY')} ({inv.tradingFeePercentage ?? 30}%)
                     </span>
                   </td>
                   <td className="py-3 pr-4 text-center">
@@ -276,7 +277,7 @@ export const InvestorsPage = () => {
                   <td className="py-3 text-right">
                     <div className="flex gap-1 justify-end">
                       <button
-                        onClick={() => navigate(`/investors/${inv.id}/edit`)}
+                        onClick={() => navigate(`/investors/${String(inv.id)}/edit`)}
                         className="rounded p-1.5 text-[#58b098] hover:bg-[#58b098]/10"
                         title="Editar"
                       >

@@ -4,16 +4,17 @@ import { api } from '../lib/api';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
+import type { ApiAdmin } from '../types';
 
 export const AdminsPage = () => {
   const navigate = useNavigate();
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<{ data?: ApiAdmin[] } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({ email: '', name: '', role: 'ADMIN' as 'ADMIN' | 'SUPERADMIN' });
   const [submitting, setSubmitting] = useState(false);
   const [loggedInEmail, setLoggedInEmail] = useState<string>('');
-  const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; admin: any | null }>({
+  const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; admin: ApiAdmin | null }>({
     isOpen: false,
     admin: null,
   });
@@ -44,14 +45,14 @@ export const AdminsPage = () => {
       setFormData({ email: '', name: '', role: 'ADMIN' });
       setShowForm(false);
       fetchAdmins();
-    } catch (err: any) {
-      alert(err.message || 'Error al crear admin');
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Error al crear admin');
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleDelete = (admin: any) => {
+  const handleDelete = (admin: ApiAdmin) => {
     if (admin.email === loggedInEmail) {
       alert('No puedes eliminar tu propia cuenta.');
       return;
@@ -64,15 +65,15 @@ export const AdminsPage = () => {
     try {
       await api.deleteAdmin(deleteConfirm.admin.id);
       fetchAdmins();
-    } catch (err: any) {
-      alert(err.message || 'Error al eliminar admin');
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Error al eliminar admin');
     }
   };
 
   if (error) return <div className="text-red-600">{error}</div>;
   if (!data) return <div className="text-gray-600">Cargando...</div>;
 
-  const admins = (data?.data || []) as any[];
+  const admins: ApiAdmin[] = data?.data ?? [];
 
   return (
     <div className="space-y-6">
@@ -136,7 +137,7 @@ export const AdminsPage = () => {
 
       {/* Mobile: cards */}
       <div className="grid gap-3 px-1 md:hidden">
-        {admins.map((a: any) => (
+        {admins.map((a) => (
           <div key={a.id} className="w-full overflow-hidden rounded-lg bg-white p-4 shadow">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
@@ -200,7 +201,7 @@ export const AdminsPage = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {admins.map((a: any) => (
+              {admins.map((a) => (
                 <tr key={a.id} className="text-sm">
                   <td className="py-2 font-medium">{a.email}</td>
                   <td className="py-2">{a.name || '-'}</td>

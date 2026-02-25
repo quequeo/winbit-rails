@@ -96,8 +96,8 @@ export const TradingFeesHistoryPage = () => {
             total_pages: 0,
           },
         );
-      } catch (err: any) {
-        setError(err.message || 'Error al cargar historial');
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'Error al cargar historial');
       } finally {
         setLoading(false);
       }

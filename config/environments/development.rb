@@ -26,11 +26,11 @@ Rails.application.configure do
   # Change to :null_store to avoid any caching.
   config.cache_store = :memory_store
 
-  # Don't care if the mailer can't send.
-  # Configure Action Mailer for development
-  config.action_mailer.delivery_method = :smtp
+  # In development, use :test to avoid Resend limits (free tier only allows sending to verified emails).
+  # Emails are accumulated in ActionMailer::Base.deliveries, not actually sent.
+  config.action_mailer.delivery_method = :test
   config.action_mailer.perform_deliveries = true
-  config.action_mailer.raise_delivery_errors = true
+  config.action_mailer.raise_delivery_errors = false
   config.action_mailer.default_options = { from: ENV.fetch('RESEND_FROM_EMAIL', 'onboarding@resend.dev') }
 
   # Make template changes take effect immediately.
@@ -39,16 +39,8 @@ Rails.application.configure do
   # Set localhost to be used by links generated in mailer templates.
   config.action_mailer.default_url_options = { host: "localhost", port: 3000, protocol: 'http' }
 
-  # Resend SMTP settings (same as production)
-  config.action_mailer.smtp_settings = {
-    address: 'smtp.resend.com',
-    port: 465,
-    domain: 'resend.com',
-    user_name: 'resend',
-    password: ENV.fetch('RESEND_API_KEY', ''),
-    authentication: :plain,
-    tls: true
-  }
+  # Resend SMTP (only used when delivery_method is :smtp)
+  # config.action_mailer.smtp_settings = { ... }
 
   # Print deprecation notices to the Rails logger.
   config.active_support.deprecation = :log

@@ -55,6 +55,17 @@ RSpec.describe 'Admin Investors API', type: :request do
       expect(json['data'].first['portfolio']['currentBalance']).to eq(1000.0)
       expect(json['data'].last['portfolio']['currentBalance']).to eq(100.0)
     end
+
+    it 'supports sorting by status' do
+      Investor.create!(email: 'active@test.com', name: 'Active', status: 'ACTIVE')
+      Investor.create!(email: 'inactive@test.com', name: 'Inactive', status: 'INACTIVE')
+
+      get '/api/admin/investors', params: { sort_by: 'status', sort_order: 'asc' }
+
+      expect(response).to have_http_status(:ok)
+      json = JSON.parse(response.body)
+      expect(json['data'].size).to be >= 2
+    end
   end
 
   describe 'POST /api/admin/investors' do
@@ -188,6 +199,68 @@ RSpec.describe 'Admin Investors API', type: :request do
     it 'returns error when investor not found' do
       post '/api/admin/investors/nonexistent/toggle_status'
       expect(response).to have_http_status(:not_found)
+    end
+  end
+
+  describe 'POST /api/admin/investors/:id/referral_commissions' do
+    let(:investor) { Investor.create!(email: 'ref@test.com', name: 'Ref Investor', status: 'ACTIVE') }
+    let!(:portfolio) { Portfolio.create!(investor: investor, current_balance: 500, total_invested: 500) }
+
+    it 'applies referral commission and returns new balance' do
+      post "/api/admin/investors/#{investor.id}/referral_commissions",
+           params: { amount: 50 }
+
+      expect(response).to have_http_status(:created)
+      json = JSON.parse(response.body)
+      expect(json['data']['current_balance']).to eq(550.0)
+      expect(json['data']['investor_id']).to eq(investor.id)
+
+      portfolio.reload
+      expect(portfolio.current_balance).to eq(550)
+    end
+
+    it 'returns unprocessable when applicator fails' do
+      post "/api/admin/investors/#{investor.id}/referral_commissions",
+           params: { amount: -10 }
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      json = JSON.parse(response.body)
+      expect(json['error']).to be_present
+    end
+
+    it 'returns error when amount is missing' do
+      post "/api/admin/investors/#{investor.id}/referral_commissions", params: {}
+
+      expect(response).to have_http_status(:bad_request)
+    end
+
+    it 'supports backfilling with applied_at when future history exists' do
+      PortfolioHistory.create!(
+        investor: investor,
+        date: 2.days.ago,
+        event: 'DEPOSIT',
+        amount: 200,
+        previous_balance: 0,
+        new_balance: 200,
+        status: 'COMPLETED'
+      )
+      PortfolioHistory.create!(
+        investor: investor,
+        date: 1.day.from_now,
+        event: 'WITHDRAWAL',
+        amount: 50,
+        previous_balance: 200,
+        new_balance: 150,
+        status: 'COMPLETED'
+      )
+      portfolio.update!(current_balance: 150)
+
+      post "/api/admin/investors/#{investor.id}/referral_commissions",
+           params: { amount: 25, applied_at: 1.day.ago.to_date.strftime('%Y-%m-%d') }
+
+      expect(response).to have_http_status(:created)
+      portfolio.reload
+      expect(portfolio.current_balance).to eq(175.0)
     end
   end
 

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { api } from '../lib/api';
+import type { ApiAdmin } from '../types';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 
@@ -54,7 +55,7 @@ export const EditAdminPage = () => {
     api
       .getAdminAdmins()
       .then((res) => {
-        const adm = (res?.data || []).find((a: any) => String(a.id) === id);
+        const adm = (res?.data as ApiAdmin[] | undefined)?.find((a) => String(a.id) === id);
         if (!adm) {
           setError('Admin no encontrado');
           return;
@@ -78,8 +79,8 @@ export const EditAdminPage = () => {
     try {
       await api.updateAdmin(id, form);
       navigate('/admins');
-    } catch (err: any) {
-      alert(err.message || 'Error al actualizar admin');
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Error al actualizar admin');
     } finally {
       setSubmitting(false);
     }

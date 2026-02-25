@@ -75,12 +75,15 @@ export const OperatingHistoryPage = () => {
     try {
       setLoadingHistory(true);
       setError(null);
-      const res: any = await api.getDailyOperatingResults({ page, per_page: historyPerPage });
-      setHistory((res?.data || []) as HistoryRow[]);
-      setHistoryMeta((res?.meta || null) as any);
+      const res = (await api.getDailyOperatingResults({ page, per_page: historyPerPage })) as {
+        data?: HistoryRow[];
+        meta?: { page: number; per_page: number; total: number; total_pages: number };
+      } | null;
+      setHistory(res?.data ?? []);
+      setHistoryMeta(res?.meta ?? null);
       setHistoryPage(page);
-    } catch (e: any) {
-      setError(e?.message || 'Error al cargar historial');
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Error al cargar historial');
     } finally {
       setLoadingHistory(false);
     }
@@ -89,8 +92,10 @@ export const OperatingHistoryPage = () => {
   const loadMonthly = async (offset: number) => {
     try {
       setLoadingMonthly(true);
-      const res: any = await api.getDailyOperatingMonthlySummary({ months: 12, offset });
-      setMonthlySummary((res?.data || []) as MonthlySummaryRow[]);
+      const res = (await api.getDailyOperatingMonthlySummary({ months: 12, offset })) as {
+        data?: MonthlySummaryRow[];
+      } | null;
+      setMonthlySummary(res?.data ?? []);
     } catch {
       // ignore
     } finally {
@@ -117,10 +122,12 @@ export const OperatingHistoryPage = () => {
       setDetailMonth(month);
       setDetailRows([]);
       setDetailLoading(true);
-      const res: any = await api.getDailyOperatingByMonth({ month });
-      setDetailRows((res?.data || []) as any);
-    } catch (e: any) {
-      setError(e?.message || 'Error al cargar detalle del mes');
+      const res = (await api.getDailyOperatingByMonth({ month })) as {
+        data?: { id: string; date: string; percent: number; notes?: string | null }[];
+      } | null;
+      setDetailRows(res?.data ?? []);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Error al cargar detalle del mes');
     } finally {
       setDetailLoading(false);
     }
@@ -129,7 +136,6 @@ export const OperatingHistoryPage = () => {
 useEffect(() => {
     void loadHistory(1);
     void loadMonthly(0);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const cards = useMemo(() => {

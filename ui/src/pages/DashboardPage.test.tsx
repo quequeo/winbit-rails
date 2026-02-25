@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { DashboardPage } from './DashboardPage';
 import { api } from '../lib/api';
 
@@ -106,6 +107,48 @@ describe('DashboardPage', () => {
     expect(screen.getAllByText(/\$0,00/).length).toBeGreaterThan(0);
     const zeroElements = screen.getAllByText('0');
     expect(zeroElements.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('calls API with days param when range selector changes', async () => {
+    const user = userEvent.setup();
+    vi.mocked(api.getAdminDashboard).mockResolvedValue({
+      data: {
+        investorCount: 10,
+        pendingRequestCount: 2,
+        totalAum: 50000,
+        aumSeries: [
+          { date: '2025-01-01', totalAum: 40000 },
+          { date: '2025-01-02', totalAum: 50000 },
+        ],
+      },
+    });
+
+    render(<DashboardPage />);
+
+    await waitFor(() => expect(screen.getByText('Dashboard')).toBeInTheDocument());
+    expect(api.getAdminDashboard).toHaveBeenCalledWith({ days: 90 });
+
+    await user.click(screen.getByRole('button', { name: '1 mes' }));
+    await waitFor(() => expect(api.getAdminDashboard).toHaveBeenCalledWith({ days: 30 }));
+  });
+
+  it('displays AUM chart when aumSeries is provided', async () => {
+    vi.mocked(api.getAdminDashboard).mockResolvedValue({
+      data: {
+        investorCount: 5,
+        pendingRequestCount: 1,
+        totalAum: 100000,
+        aumSeries: [
+          { date: '2025-01-01', totalAum: 90000 },
+          { date: '2025-01-08', totalAum: 100000 },
+        ],
+      },
+    });
+
+    render(<DashboardPage />);
+
+    await waitFor(() => expect(screen.getByText('Dashboard')).toBeInTheDocument());
+    expect(screen.getByRole('group', { name: 'Rango de tiempo del gráfico' })).toBeInTheDocument();
   });
 
   it('cleans up on unmount to prevent memory leaks', async () => {

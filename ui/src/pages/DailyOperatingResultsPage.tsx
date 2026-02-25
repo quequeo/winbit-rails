@@ -57,7 +57,7 @@ export const DailyOperatingResultsPage = () => {
     setLoadingHistory(true);
     api
       .getDailyOperatingResults({ page: p, per_page: 20 })
-      .then((res: any) => {
+      .then((res: { data?: HistoryRow[]; meta?: HistoryMeta } | null) => {
         setHistoryRows(res?.data ?? []);
         setHistoryMeta(res?.meta ?? null);
       })
@@ -81,8 +81,8 @@ export const DailyOperatingResultsPage = () => {
     setAlertOpen(true);
   };
 
-  const extractErrorMessage = (e: any, fallback: string) => {
-    const raw = e?.message || fallback;
+  const extractErrorMessage = (e: unknown, fallback: string) => {
+    const raw = (e instanceof Error ? e.message : null) ?? fallback;
     try {
       const parsed = JSON.parse(raw);
       if (parsed?.error) return String(parsed.error);
@@ -112,9 +112,9 @@ export const DailyOperatingResultsPage = () => {
     try {
       setLoadingPreview(true);
       setNotice(null);
-      const res: any = await api.previewDailyOperatingResult({ date, percent: parsedPercent, notes: notes || undefined });
+      const res = await api.previewDailyOperatingResult({ date, percent: parsedPercent, notes: notes || undefined });
       setPreview(res?.data as PreviewData);
-    } catch (e: any) {
+    } catch (e: unknown) {
       setPreview(null);
       showAlert('No se pudo previsualizar', extractErrorMessage(e, 'Error al previsualizar'));
     } finally {
@@ -138,7 +138,7 @@ export const DailyOperatingResultsPage = () => {
       setPreview(null);
       setHistoryPage(1);
       loadHistory(1);
-    } catch (e: any) {
+    } catch (e: unknown) {
       showAlert('No se pudo aplicar', extractErrorMessage(e, 'Error al aplicar'));
     } finally {
       setApplying(false);

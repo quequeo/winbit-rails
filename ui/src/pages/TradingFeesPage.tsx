@@ -3,7 +3,7 @@ import { api } from '../lib/api';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { Select } from '../components/ui/Select';
 
-type InvestorSummary = {
+export type InvestorSummary = {
   investor_id: string;
   investor_name: string;
   investor_email: string;
@@ -94,9 +94,9 @@ export const TradingFeesPage = () => {
         initialPercentages[inv.investor_id] = applied !== null ? String(applied) : String(investorDefault);
       });
       setPercentages(initialPercentages);
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (!opts?.suppressError) {
-        setError(err.message || 'Error al cargar inversores');
+        setError(err instanceof Error ? err.message : 'Error al cargar inversores');
       }
     } finally {
       setLoading(false);
@@ -196,8 +196,8 @@ export const TradingFeesPage = () => {
 
       setConfirmModal(response);
       setNotes('');
-    } catch (err: any) {
-      setFlash({ type: 'error', message: err.message || 'Error al calcular comisión' });
+    } catch (err: unknown) {
+      setFlash({ type: 'error', message: err instanceof Error ? err.message : 'Error al calcular comisión' });
     }
   };
 
@@ -219,8 +219,8 @@ export const TradingFeesPage = () => {
       setNotes('');
 
       await loadInvestorsSummary(undefined, undefined, { suppressError: true });
-    } catch (err: any) {
-      setFlash({ type: 'error', message: err.message || 'Error al aplicar comisión' });
+    } catch (err: unknown) {
+      setFlash({ type: 'error', message: err instanceof Error ? err.message : 'Error al aplicar comisión' });
     } finally {
       setApplying(false);
     }
@@ -267,8 +267,8 @@ export const TradingFeesPage = () => {
       setEditModal(null);
       setEditNotes('');
       await loadInvestorsSummary(undefined, undefined);
-    } catch (err: any) {
-      setFlash({ type: 'error', message: err.message || 'Error al actualizar comisión' });
+    } catch (err: unknown) {
+      setFlash({ type: 'error', message: err instanceof Error ? err.message : 'Error al actualizar comisión' });
     } finally {
       setApplying(false);
     }
@@ -287,8 +287,8 @@ export const TradingFeesPage = () => {
       setEditModal(null);
       setEditNotes('');
       await loadInvestorsSummary(undefined, undefined);
-    } catch (err: any) {
-      setFlash({ type: 'error', message: err.message || 'Error al eliminar comisión' });
+    } catch (err: unknown) {
+      setFlash({ type: 'error', message: err instanceof Error ? err.message : 'Error al eliminar comisión' });
     } finally {
       setApplying(false);
     }

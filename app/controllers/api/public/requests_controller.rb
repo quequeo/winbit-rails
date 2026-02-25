@@ -2,9 +2,11 @@ module Api
   module Public
     class RequestsController < BaseController
       def create
-        payload = request.request_parameters
+        # Support both wrapped (params['request']) and unwrapped params
+        raw = params['request'] || params
+        payload = raw.respond_to?(:to_unsafe_h) ? raw.to_unsafe_h : raw.to_h
 
-        email = payload['email'].to_s
+        email = payload['email'].to_s.strip
         type = payload['type'].to_s
         amount = payload['amount']
         method = payload['method'].to_s
@@ -13,8 +15,11 @@ module Api
         transaction_hash = payload['transactionHash']
         attachment_url = payload['attachmentUrl']
 
+        if email.blank?
+          return render_error('Email is required', status: :bad_request)
+        end
         unless email.match?(/\A[^@\s]+@[^@\s]+\z/)
-          return render_error('Invalid request data', status: :bad_request)
+          return render_error('Invalid email format', status: :bad_request)
         end
 
         investor = find_investor_by_email(email: email, includes: [:portfolio], message: 'Investor not found')

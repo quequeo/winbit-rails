@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { api } from '../lib/api';
 import { Select } from '../components/ui/Select';
 
@@ -16,7 +16,7 @@ type ActivityLog = {
     id: string;
     display: string;
   };
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
   created_at: string;
 };
 
@@ -35,29 +35,32 @@ export const ActivityLogsPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [filterAction, setFilterAction] = useState('');
 
-  const fetchLogs = async (page: number = 1) => {
+  const fetchLogs = useCallback(async (page: number = 1) => {
     try {
       setLoading(true);
       setError(null);
 
-      const params: any = { page, per_page: 20 };
+      const params: { page: number; per_page: number; filter_action?: string } = {
+        page,
+        per_page: 20,
+      };
       if (filterAction) params.filter_action = filterAction;
 
-      const res = await api.getActivityLogs(params);
-      setLogs(res?.data?.logs || []);
-      setPagination(res?.data?.pagination || null);
+      const res = (await api.getActivityLogs(params)) as { data?: { logs?: ActivityLog[]; pagination?: Pagination } } | null;
+      setLogs(res?.data?.logs ?? []);
+      setPagination(res?.data?.pagination ?? null);
       setCurrentPage(page);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('❌ Error fetching activity logs:', err);
-      setError(err?.message || 'Error al cargar actividad');
+      setError(err instanceof Error ? err.message : 'Error al cargar actividad');
     } finally {
       setLoading(false);
     }
-  };
+  }, [filterAction]);
 
   useEffect(() => {
-    fetchLogs(1);
-  }, [filterAction]);
+    void fetchLogs(1);
+  }, [fetchLogs]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
