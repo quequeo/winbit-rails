@@ -24,6 +24,56 @@ module Api
         }
       end
 
+      def withdrawal_fee_preview
+        email = CGI.unescape(params[:email].to_s)
+
+        investor = find_investor_by_email(email: email, includes: [:portfolio], message: 'Investor not found')
+        return unless investor
+        return unless require_active_investor!(investor, message: 'Investor is not active')
+
+        amount = BigDecimal(params[:amount].to_s)
+        if amount <= 0
+          render json: { error: 'El monto debe ser mayor a cero' }, status: :unprocessable_entity
+          return
+        end
+
+        portfolio = investor.portfolio
+        unless portfolio
+          render json: { error: 'Portfolio no encontrado' }, status: :not_found
+          return
+        end
+
+        current_balance = BigDecimal(portfolio.current_balance.to_s)
+        if amount > current_balance
+          render json: { error: 'El monto supera el saldo disponible' }, status: :unprocessable_entity
+          return
+        end
+
+        pending_profit = preview_pending_profit(investor)
+        fee_percentage = BigDecimal(investor.trading_fee_percentage.to_s)
+
+        realized_profit = BigDecimal('0')
+        fee_amount = BigDecimal('0')
+
+        if pending_profit.positive? && current_balance.positive?
+          realized_profit = (pending_profit * (amount / current_balance)).round(2, :half_up)
+          fee_amount = (realized_profit * (fee_percentage / 100)).round(2, :half_up)
+        end
+
+        render json: {
+          data: {
+            withdrawalAmount: amount.to_f,
+            feeAmount: fee_amount.to_f,
+            feePercentage: fee_percentage.to_f,
+            realizedProfit: realized_profit.to_f,
+            pendingProfit: pending_profit.to_f,
+            hasFee: fee_amount.positive?
+          }
+        }
+      rescue ArgumentError
+        render json: { error: 'Monto inválido' }, status: :unprocessable_entity
+      end
+
       def history
         email = CGI.unescape(params[:email].to_s)
 
@@ -32,9 +82,18 @@ module Api
         return unless require_active_investor!(investor, message: 'Investor is not active')
 
         fees = investor.trading_fees.order(applied_at: :desc).to_a
+        approved_requests = investor.investor_requests
+                                    .where(status: 'APPROVED')
+                                    .select(:id, :request_type, :method, :processed_at)
+                                    .to_a
 
         histories = investor.portfolio_histories.order(date: :desc).map { |h|
           extra = {}
+
+          if %w[WITHDRAWAL DEPOSIT].include?(h.event)
+            req = find_request_for_history(approved_requests, h)
+            extra[:method] = req&.method
+          end
 
           if h.event == 'TRADING_FEE'
             fee = find_trading_fee_for_history(fees, h)
@@ -84,12 +143,26 @@ module Api
         end
       end
 
+      def find_request_for_history(requests, history)
+        ts = history.date.to_time.to_i
+        requests.find { |r| r.request_type == history.event && (r.processed_at.to_i - ts).abs <= 600 }
+      end
+
       def find_trading_fee_for_adjustment(fees, history)
         ts = history.date.to_time.to_i
 
         fees.find do |f|
           (f.updated_at.to_i - ts).abs <= 600 || (f.voided_at && (f.voided_at.to_i - ts).abs <= 600)
         end
+      end
+
+      def preview_pending_profit(investor)
+        operating_profit = PortfolioHistory
+          .where(investor_id: investor.id, event: 'OPERATING_RESULT', status: 'COMPLETED')
+          .sum(:amount)
+        fee_profit = TradingFee.active.where(investor_id: investor.id).sum(:profit_amount)
+        pending = BigDecimal(operating_profit.to_s) - BigDecimal(fee_profit.to_s)
+        pending.positive? ? pending : BigDecimal('0')
       end
 
       def format_name(name)

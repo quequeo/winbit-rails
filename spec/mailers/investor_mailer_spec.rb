@@ -121,8 +121,8 @@ RSpec.describe InvestorMailer, type: :mailer do
       }
       mail_with_fee = described_class.withdrawal_approved(investor, withdrawal_request, fee_data)
 
-      expect(mail_with_fee.body.encoded).to match(/Trading Fee por retiro/)
-      expect(mail_with_fee.body.encoded).to match(/Monto neto transferido/)
+      expect(mail_with_fee.body.encoded).to match(/Comisión por retiro/)
+      expect(mail_with_fee.body.encoded).to match(/Total deducido de tu cuenta/)
     end
   end
 
