@@ -222,9 +222,11 @@ RSpec.describe Requests::Approve, type: :service do
 
         expect(withdrawal_history).to be_present
         expect(fee_history).to be_present
-        expect(withdrawal_history.amount.to_f).to be < 1000.0
+        # Investor receives full requested amount; fee is charged additionally
+        expect(withdrawal_history.amount.to_f).to eq(1000.0)
         expect(fee_history.amount.to_f).to be < 0
-        expect((withdrawal_history.amount.to_f + fee_history.amount.to_f.abs).round(2)).to eq(1000.0)
+        # Total deducted from portfolio = withdrawal + fee
+        expect(withdrawal_history.amount.to_f + fee_history.amount.to_f.abs).to be > 1000.0
       end
     end
 

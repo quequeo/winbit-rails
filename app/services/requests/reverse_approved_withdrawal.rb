@@ -14,8 +14,6 @@ module Requests
       requested_amount = BigDecimal(req.amount.to_s)
       fee = TradingFee.active.find_by(withdrawal_request_id: req.id, source: 'WITHDRAWAL')
       fee_amount = BigDecimal((fee&.fee_amount || 0).to_s)
-      net_withdrawal_amount = (requested_amount - fee_amount).round(2, :half_up)
-      raise StandardError, 'No se puede revertir: retiro neto inválido' if net_withdrawal_amount <= 0
 
       ApplicationRecord.transaction do
         running_balance = BigDecimal(portfolio.current_balance.to_s)
@@ -35,11 +33,11 @@ module Requests
           running_balance = fee_refund_new_balance
         end
 
-        deposit_new_balance = running_balance + net_withdrawal_amount
+        deposit_new_balance = running_balance + requested_amount
         PortfolioHistory.create!(
           investor: req.investor,
           event: 'DEPOSIT',
-          amount: net_withdrawal_amount,
+          amount: requested_amount,
           previous_balance: running_balance,
           new_balance: deposit_new_balance,
           status: 'COMPLETED',
@@ -47,8 +45,8 @@ module Requests
         )
 
         portfolio.update!(
-          current_balance: (BigDecimal(portfolio.current_balance.to_s) + requested_amount).to_f,
-          total_invested: (BigDecimal(portfolio.total_invested.to_s) + net_withdrawal_amount).to_f
+          current_balance: (BigDecimal(portfolio.current_balance.to_s) + requested_amount + fee_amount).to_f,
+          total_invested: (BigDecimal(portfolio.total_invested.to_s) + requested_amount).to_f
         )
       end
 

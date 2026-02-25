@@ -3,7 +3,10 @@ require 'rails_helper'
 RSpec.describe Requests::ReverseApprovedWithdrawal, type: :service do
   let!(:admin) { User.create!(email: 'admin-reverse@test.com', name: 'Admin', role: 'ADMIN') }
   let!(:investor) { Investor.create!(email: 'reverse-investor@test.com', name: 'Investor', status: 'ACTIVE') }
-  let!(:portfolio) { Portfolio.create!(investor: investor, current_balance: 4500, total_invested: 4027.27) }
+  # New model: investor receives full 1000, fee (27.27) is charged additionally.
+  # Balance after approval: 5500 - 1000 (withdrawal) - 27.27 (fee) = 4472.73
+  # total_invested after approval: 5000 - 1000 = 4000 (fee does not reduce total_invested)
+  let!(:portfolio) { Portfolio.create!(investor: investor, current_balance: 4472.73, total_invested: 4000) }
   let!(:request) do
     InvestorRequest.create!(
       investor: investor,
@@ -39,7 +42,9 @@ RSpec.describe Requests::ReverseApprovedWithdrawal, type: :service do
     portfolio.reload
     fee.reload
 
+    # current_balance restored: 4472.73 + 27.27 (fee refund) + 1000 (withdrawal reversal) = 5500
     expect(portfolio.current_balance.to_f.round(2)).to eq(5500.0)
+    # total_invested restored: 4000 + 1000 = 5000
     expect(portfolio.total_invested.to_f.round(2)).to eq(5000.0)
     expect(fee.voided_at).to be_present
     expect(fee.voided_by_id).to eq(admin.id)

@@ -96,9 +96,9 @@
     <% if @show_withdrawal_fee %>
       <div style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px; padding:16px; margin:20px 0;">
         <h3 style="margin-top:0; color:#111827;">Detalle del retiro</h3>
-        <p style="margin:8px 0;"><strong>Monto solicitado:</strong> <%= @amount %></p>
-        <p style="margin:8px 0;"><strong>Trading Fee por retiro:</strong> <%= @withdrawal_fee_amount %></p>
-        <p style="margin:8px 0;"><strong>Monto neto transferido:</strong> <%= @net_withdrawal_amount %></p>
+        <p style="margin:8px 0;"><strong>Monto enviado:</strong> <%= @amount %></p>
+        <p style="margin:8px 0;"><strong>Comisión por retiro:</strong> <%= @withdrawal_fee_amount %></p>
+        <p style="margin:8px 0; border-top:1px solid #e5e7eb; padding-top:8px;"><strong>Total deducido de tu cuenta:</strong> <%= @total_deducted %></p>
       </div>
     <% end %>
 

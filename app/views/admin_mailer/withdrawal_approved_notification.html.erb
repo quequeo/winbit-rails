@@ -21,13 +21,13 @@
     <p>Se aprobó un retiro del inversor <strong><%= @investor.name %></strong> (<%= @investor.email %>).</p>
 
     <div class="box">
-      <p style="margin:8px 0;"><strong>Monto solicitado:</strong> <%= @amount %></p>
+      <p style="margin:8px 0;"><strong>Monto enviado al inversor:</strong> <%= @amount %></p>
       <% if @show_withdrawal_fee %>
-        <p style="margin:8px 0;"><strong>Trading Fee por retiro:</strong> <%= @withdrawal_fee_amount %></p>
+        <p style="margin:8px 0;"><strong>Comisión por retiro:</strong> <%= @withdrawal_fee_amount %></p>
       <% else %>
-        <p style="margin:8px 0;"><strong>Trading Fee por retiro:</strong> $0,00</p>
+        <p style="margin:8px 0;"><strong>Comisión por retiro:</strong> $0,00</p>
       <% end %>
-      <p style="margin:8px 0;"><strong>Monto neto transferido:</strong> <%= @net_withdrawal_amount %></p>
+      <p style="margin:8px 0; border-top:1px solid #e5e7eb; padding-top:8px;"><strong>Total deducido de la cuenta:</strong> <%= @total_deducted %></p>
       <p style="margin:8px 0;"><strong>ID solicitud:</strong> #<%= @request.id %></p>
     </div>
 

@@ -23,7 +23,6 @@ module Requests
                         .exists?
 
       withdrawal_fee = nil
-      net_withdrawal_amount = requested_amount
 
       ActiveRecord::Base.transaction do
         req.update!(status: 'APPROVED', processed_at: processed_at)
@@ -48,8 +47,7 @@ module Requests
               processed_at: processed_at
             )
 
-            net_withdrawal_amount = withdrawal_fee[:net_withdrawal_amount]
-            previous_balance - requested_amount
+            previous_balance - requested_amount - withdrawal_fee[:fee_amount]
           end
 
           if req.request_type == 'DEPOSIT'
@@ -67,7 +65,7 @@ module Requests
               request: req,
               previous_balance: previous_balance,
               processed_at: processed_at,
-              net_withdrawal_amount: net_withdrawal_amount,
+              requested_amount: requested_amount,
               fee_amount: withdrawal_fee[:fee_amount]
             )
           end
@@ -88,8 +86,8 @@ module Requests
               processed_at: processed_at
             )
 
-            net_withdrawal_amount = withdrawal_fee[:net_withdrawal_amount]
-            previous_balance - requested_amount
+            fee_amount = withdrawal_fee[:fee_amount]
+            previous_balance - requested_amount - fee_amount
           end
 
           if req.request_type == 'DEPOSIT'
@@ -107,17 +105,18 @@ module Requests
               request: req,
               previous_balance: previous_balance,
               processed_at: processed_at,
-              net_withdrawal_amount: net_withdrawal_amount,
-              fee_amount: withdrawal_fee[:fee_amount]
+              requested_amount: requested_amount,
+              fee_amount: fee_amount
             )
           end
 
           # Keep totals consistent without requiring a full history replay.
+          # total_invested only tracks deposits/withdrawals; trading fees are a performance cost.
           new_total_invested =
             if req.request_type == 'DEPOSIT'
               BigDecimal(portfolio.total_invested.to_s) + requested_amount
             else
-              BigDecimal(portfolio.total_invested.to_s) - net_withdrawal_amount
+              BigDecimal(portfolio.total_invested.to_s) - requested_amount
             end
 
           portfolio.update!(
@@ -180,9 +179,8 @@ module Requests
         fee_amount = (realized_profit * (percentage / 100)).round(2, :half_up)
       end
 
-      net_withdrawal_amount = (requested_amount - fee_amount).round(2, :half_up)
-      if net_withdrawal_amount <= 0
-        raise StandardError, 'El retiro es inválido: el trading fee por retiro no puede dejar neto menor o igual a cero'
+      if requested_amount + fee_amount > previous_balance
+        raise StandardError, 'Balance insuficiente: el retiro más la comisión supera el saldo disponible'
       end
 
       trading_fee = nil
@@ -209,7 +207,6 @@ module Requests
         fee_percentage: percentage,
         pending_profit: pending_profit,
         requested_amount: requested_amount,
-        net_withdrawal_amount: net_withdrawal_amount,
         trading_fee_id: trading_fee&.id
       }
     end
@@ -226,12 +223,12 @@ module Requests
       pending.positive? ? pending : BigDecimal('0')
     end
 
-    def create_withdrawal_histories!(request:, previous_balance:, processed_at:, net_withdrawal_amount:, fee_amount:)
-      withdrawal_new_balance = previous_balance - net_withdrawal_amount
+    def create_withdrawal_histories!(request:, previous_balance:, processed_at:, requested_amount:, fee_amount:)
+      withdrawal_new_balance = previous_balance - requested_amount
       PortfolioHistory.create!(
         investor_id: request.investor_id,
         event: 'WITHDRAWAL',
-        amount: net_withdrawal_amount,
+        amount: requested_amount,
         previous_balance: previous_balance,
         new_balance: withdrawal_new_balance,
         status: 'COMPLETED',
