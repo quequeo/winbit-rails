@@ -81,7 +81,9 @@ RSpec.describe 'Admin requests', type: :request do
     portfolio.reload
 
     expect(req.status).to eq('APPROVED')
-    expect(portfolio.current_balance.to_f.round(2)).to eq(4500.0)
+    # New model: investor receives full 1000; fee 27.27 is charged additionally.
+    # new_balance = 5500 - 1000 - 27.27 = 4472.73
+    expect(portfolio.current_balance.to_f.round(2)).to eq(4472.73)
 
     fee = TradingFee.find_by(withdrawal_request_id: req.id)
     expect(fee).to be_present
@@ -91,7 +93,10 @@ RSpec.describe 'Admin requests', type: :request do
     fee_history = PortfolioHistory.where(investor_id: investor.id, event: 'TRADING_FEE').order(date: :desc).first
     expect(withdrawal_history).to be_present
     expect(fee_history).to be_present
-    expect((withdrawal_history.amount.to_f + fee_history.amount.to_f.abs).round(2)).to eq(1000.0)
+    # Investor receives full requested amount; fee is charged on top
+    expect(withdrawal_history.amount.to_f).to eq(1000.0)
+    expect(fee_history.amount.to_f).to be < 0
+    expect(withdrawal_history.amount.to_f + fee_history.amount.to_f.abs).to be > 1000.0
   end
 
   it 'POST /api/admin/requests uses provided past date for request and processing' do
@@ -118,7 +123,9 @@ RSpec.describe 'Admin requests', type: :request do
 
   it 'DELETE /api/admin/requests/:id reverses approved withdrawal and linked fee before deleting' do
     investor = Investor.create!(email: 'reverse-delete@example.com', name: 'rd', status: 'ACTIVE')
-    portfolio = Portfolio.create!(investor_id: investor.id, current_balance: 4500, total_invested: 4027.27)
+    # New model: after withdrawal of 1000 + fee 27.27, balance = 5500 - 1000 - 27.27 = 4472.73
+    # total_invested = 5000 - 1000 = 4000 (fee does not reduce total_invested)
+    portfolio = Portfolio.create!(investor_id: investor.id, current_balance: 4472.73, total_invested: 4000)
 
     req = InvestorRequest.create!(
       investor_id: investor.id,

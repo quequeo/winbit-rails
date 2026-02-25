@@ -115,8 +115,8 @@ RSpec.describe AdminMailer, type: :mailer do
     end
 
     it 'renders the body with withdrawal fee details' do
-      expect(mail.body.encoded).to match('Trading Fee por retiro')
-      expect(mail.body.encoded).to match('Monto neto transferido')
+      expect(mail.body.encoded).to match('Comisión por retiro')
+      expect(mail.body.encoded).to match('Total deducido de la cuenta')
       expect(mail.body.encoded).to match('ID solicitud')
     end
   end
