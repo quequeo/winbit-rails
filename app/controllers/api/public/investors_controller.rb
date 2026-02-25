@@ -42,8 +42,7 @@ module Api
               extra[:tradingFeePeriodLabel] = fee.source == 'WITHDRAWAL' ? 'Retiro' : quarter_label(fee.period_end)
               extra[:tradingFeePeriodStart] = fee.period_start
               extra[:tradingFeePeriodEnd] = fee.period_end
-              profit = fee.profit_amount.to_f
-              extra[:tradingFeePercentage] = profit.positive? ? (h.amount.to_f.abs / profit * 100).round(2) : fee.fee_percentage.to_f
+              extra[:tradingFeePercentage] = fee.fee_percentage.to_f
               extra[:tradingFeeSource] = fee.source
               extra[:tradingFeeWithdrawalAmount] = fee.withdrawal_amount.to_f if fee.source == 'WITHDRAWAL'
             end

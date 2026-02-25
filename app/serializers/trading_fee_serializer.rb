@@ -14,7 +14,7 @@ class TradingFeeSerializer
       period_start: fee.period_start,
       period_end: fee.period_end,
       profit_amount: fee.profit_amount,
-      fee_percentage: fee.fee_percentage,
+      fee_percentage: fee.fee_percentage.to_f,
       fee_amount: fee.fee_amount,
       source: fee.source,
       withdrawal_amount: fee.withdrawal_amount,
