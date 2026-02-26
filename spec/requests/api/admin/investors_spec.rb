@@ -66,6 +66,18 @@ RSpec.describe 'Admin Investors API', type: :request do
       json = JSON.parse(response.body)
       expect(json['data'].size).to be >= 2
     end
+
+    it 'supports sorting by created_at asc when sort_by is omitted' do
+      older = Investor.create!(email: 'older@test.com', name: 'Older', status: 'ACTIVE', created_at: 2.days.ago)
+      newer = Investor.create!(email: 'newer@test.com', name: 'Newer', status: 'ACTIVE', created_at: 1.day.ago)
+
+      get '/api/admin/investors', params: { sort_order: 'asc' }
+
+      expect(response).to have_http_status(:ok)
+      json = JSON.parse(response.body)
+      ids = json['data'].map { |it| it['id'] }
+      expect(ids.index(older.id)).to be < ids.index(newer.id)
+    end
   end
 
   describe 'POST /api/admin/investors' do

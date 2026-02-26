@@ -372,6 +372,18 @@ RSpec.describe 'Public investors', type: :request do
       expect(response).to have_http_status(:unprocessable_entity)
     end
 
+    it 'returns 404 when investor has no portfolio' do
+      inv = Investor.create!(email: 'noportfolio@example.com', name: 'np', status: 'ACTIVE')
+      get "/api/public/investor/#{CGI.escape(inv.email)}/withdrawal_fee_preview?amount=10"
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it 'returns 422 for invalid amount format' do
+      investor = build_investor(email: 'invalid-amount@example.com', balance: 1_000)
+      get "/api/public/investor/#{CGI.escape(investor.email)}/withdrawal_fee_preview?amount=abc"
+      expect(response).to have_http_status(:unprocessable_entity)
+    end
+
     it 'returns 404 for unknown investor' do
       get "/api/public/investor/#{CGI.escape('nobody@example.com')}/withdrawal_fee_preview?amount=100"
       expect(response).to have_http_status(:not_found)
@@ -382,5 +394,101 @@ RSpec.describe 'Public investors', type: :request do
       get "/api/public/investor/#{CGI.escape(inv.email)}/withdrawal_fee_preview?amount=100"
       expect(response).to have_http_status(:forbidden)
     end
+  end
+
+  it 'GET /api/public/investor/:email/history includes pending and rejected requests' do
+    investor = Investor.create!(email: 'pending-rejected@example.com', name: 'pr', status: 'ACTIVE')
+    InvestorRequest.create!(
+      investor: investor, request_type: 'DEPOSIT', amount: 100, method: 'USDT',
+      status: 'PENDING', requested_at: Time.current
+    )
+    InvestorRequest.create!(
+      investor: investor, request_type: 'WITHDRAWAL', amount: 50, method: 'USDT',
+      status: 'REJECTED', requested_at: Time.current - 1.hour
+    )
+
+    get "/api/public/investor/#{CGI.escape(investor.email)}/history"
+
+    expect(response).to have_http_status(:ok)
+    items = JSON.parse(response.body)['data']
+    statuses = items.map { |it| it['status'] }
+    expect(statuses).to include('PENDING', 'REJECTED')
+  end
+
+  it 'GET /api/public/investor/:email/history uses timestamp fallback for TRADING_FEE matching' do
+    investor = Investor.create!(email: 'fallback-fee@example.com', name: 'fb', status: 'ACTIVE')
+    admin = User.create!(email: 'admin-fallback@example.com', name: 'Admin', role: 'ADMIN')
+    t = Time.utc(2026, 2, 1, 18, 0, 0)
+
+    fee = TradingFee.create!(
+      investor: investor, applied_by: admin,
+      period_start: Date.new(2026, 1, 1), period_end: Date.new(2026, 1, 31),
+      profit_amount: 100, fee_percentage: 30, fee_amount: 30, applied_at: t
+    )
+
+    # Amount does not match fee_amount on purpose -> should fallback to timestamp-only matching
+    PortfolioHistory.create!(
+      investor_id: investor.id, date: t, event: 'TRADING_FEE',
+      amount: -29, previous_balance: 1000, new_balance: 971, status: 'COMPLETED'
+    )
+
+    get "/api/public/investor/#{CGI.escape(investor.email)}/history"
+
+    expect(response).to have_http_status(:ok)
+    fee_item = JSON.parse(response.body)['data'].find { |it| it['event'] == 'TRADING_FEE' }
+    expect(fee_item).to be_present
+    expect(fee_item['tradingFeePeriodLabel']).to eq('2026-01')
+    expect(fee_item['tradingFeePercentage']).to eq(30.0)
+    expect(fee.id).to be_present
+  end
+
+  it 'GET /api/public/investor/:email/history includes TRADING_FEE_ADJUSTMENT metadata by updated_at' do
+    investor = Investor.create!(email: 'adjust-updated@example.com', name: 'au', status: 'ACTIVE')
+    admin = User.create!(email: 'admin-adjust-updated@example.com', name: 'Admin', role: 'ADMIN')
+
+    fee = TradingFee.create!(
+      investor: investor, applied_by: admin,
+      period_start: Date.new(2026, 1, 1), period_end: Date.new(2026, 1, 31),
+      profit_amount: 100, fee_percentage: 25, fee_amount: 25, applied_at: Time.utc(2026, 1, 31, 18, 30, 0)
+    )
+    fee.update!(notes: 'touched')
+
+    PortfolioHistory.create!(
+      investor_id: investor.id, date: fee.updated_at, event: 'TRADING_FEE_ADJUSTMENT',
+      amount: 5, previous_balance: 1000, new_balance: 1005, status: 'COMPLETED'
+    )
+
+    get "/api/public/investor/#{CGI.escape(investor.email)}/history"
+
+    expect(response).to have_http_status(:ok)
+    adj_item = JSON.parse(response.body)['data'].find { |it| it['event'] == 'TRADING_FEE_ADJUSTMENT' }
+    expect(adj_item).to be_present
+    expect(adj_item['tradingFeePeriodLabel']).to eq('2026-01')
+    expect(adj_item['tradingFeePercentage']).to eq(25.0)
+  end
+
+  it 'GET /api/public/investor/:email/history includes TRADING_FEE_ADJUSTMENT metadata by voided_at' do
+    investor = Investor.create!(email: 'adjust-voided@example.com', name: 'av', status: 'ACTIVE')
+    admin = User.create!(email: 'admin-adjust-voided@example.com', name: 'Admin', role: 'ADMIN')
+
+    fee = TradingFee.create!(
+      investor: investor, applied_by: admin,
+      period_start: Date.new(2026, 1, 1), period_end: Date.new(2026, 1, 31),
+      profit_amount: 100, fee_percentage: 25, fee_amount: 25, applied_at: Time.utc(2026, 1, 31, 18, 30, 0)
+    )
+    fee.update!(voided_by: admin, voided_at: Time.current)
+
+    PortfolioHistory.create!(
+      investor_id: investor.id, date: fee.voided_at, event: 'TRADING_FEE_ADJUSTMENT',
+      amount: 25, previous_balance: 975, new_balance: 1000, status: 'COMPLETED'
+    )
+
+    get "/api/public/investor/#{CGI.escape(investor.email)}/history"
+
+    expect(response).to have_http_status(:ok)
+    adj_item = JSON.parse(response.body)['data'].find { |it| it['event'] == 'TRADING_FEE_ADJUSTMENT' }
+    expect(adj_item).to be_present
+    expect(adj_item['tradingFeePeriodLabel']).to eq('2026-01')
+    expect(adj_item['tradingFeePercentage']).to eq(25.0)
   end
 end

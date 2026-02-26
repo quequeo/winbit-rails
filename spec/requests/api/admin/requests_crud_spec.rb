@@ -121,14 +121,13 @@ RSpec.describe 'Admin Requests CRUD API', type: :request do
       )
     end
 
-    it 'updates request with valid params' do
+    it 'updates request fields but keeps existing status' do
       patch "/api/admin/requests/#{request_record.id}", params: {
         investor_id: investor.id,
         request_type: 'WITHDRAWAL',
         method: 'USDC',
         amount: 300,
         network: 'BEP20',
-        status: 'APPROVED'
       }
 
       expect(response).to have_http_status(:no_content)
@@ -138,7 +137,23 @@ RSpec.describe 'Admin Requests CRUD API', type: :request do
       expect(request_record.method).to eq('USDC')
       expect(request_record.amount).to eq(300)
       expect(request_record.network).to eq('BEP20')
-      expect(request_record.status).to eq('APPROVED')
+      expect(request_record.status).to eq('PENDING')
+    end
+
+    it 'rejects direct status changes via update' do
+      patch "/api/admin/requests/#{request_record.id}", params: {
+        investor_id: investor.id,
+        request_type: 'WITHDRAWAL',
+        method: 'USDC',
+        amount: 300,
+        network: 'BEP20',
+        status: 'APPROVED'
+      }
+
+      expect(response).to have_http_status(:unprocessable_entity)
+
+      request_record.reload
+      expect(request_record.status).to eq('PENDING')
     end
 
     it 'returns error when request not found' do

@@ -82,58 +82,79 @@ module Api
         return unless require_active_investor!(investor, message: 'Investor is not active')
 
         fees = investor.trading_fees.order(applied_at: :desc).to_a
-        approved_requests = investor.investor_requests
-                                    .where(status: 'APPROVED')
-                                    .select(:id, :request_type, :method, :processed_at)
-                                    .to_a
+        approved_requests = approved_requests_for(investor)
+        histories = serialized_histories(investor: investor, fees: fees, approved_requests: approved_requests)
+        pending_requests = serialized_pending_requests(investor)
 
-        histories = investor.portfolio_histories.order(date: :desc).map { |h|
-          extra = {}
+        render json: { data: sort_history_items(histories + pending_requests) }
+      end
 
-          if %w[WITHDRAWAL DEPOSIT].include?(h.event)
-            req = find_request_for_history(approved_requests, h)
-            extra[:method] = req&.method
+      private
+
+      def approved_requests_for(investor)
+        investor.investor_requests
+                .where(status: 'APPROVED')
+                .select(:id, :request_type, :method, :processed_at)
+                .to_a
+      end
+
+      def serialized_histories(investor:, fees:, approved_requests:)
+        investor.portfolio_histories.order(date: :desc).map do |history|
+          PublicPortfolioHistoryItemSerializer.new(history, extra: history_extra_data(
+            history: history,
+            fees: fees,
+            approved_requests: approved_requests
+          )).as_json
+        end
+      end
+
+      def serialized_pending_requests(investor)
+        investor.investor_requests
+                .where(status: ['PENDING', 'REJECTED'])
+                .order(requested_at: :desc)
+                .map { |request| PublicPendingRequestHistoryItemSerializer.new(request).as_json }
+      end
+
+      def history_extra_data(history:, fees:, approved_requests:)
+        extra = {}
+
+        if %w[WITHDRAWAL DEPOSIT].include?(history.event)
+          req = find_request_for_history(approved_requests, history)
+          extra[:method] = req&.method
+        end
+
+        if history.event == 'TRADING_FEE'
+          fee = find_trading_fee_for_history(fees, history)
+          if fee
+            extra[:tradingFeePeriodLabel] = fee.source == 'WITHDRAWAL' ? 'Retiro' : period_label(fee)
+            extra[:tradingFeePeriodStart] = fee.period_start
+            extra[:tradingFeePeriodEnd] = fee.period_end
+            extra[:tradingFeePercentage] = fee.fee_percentage.to_f
+            extra[:tradingFeeSource] = fee.source
+            extra[:tradingFeeWithdrawalAmount] = fee.withdrawal_amount.to_f if fee.source == 'WITHDRAWAL'
           end
+        end
 
-          if h.event == 'TRADING_FEE'
-            fee = find_trading_fee_for_history(fees, h)
-            if fee
-              extra[:tradingFeePeriodLabel] = fee.source == 'WITHDRAWAL' ? 'Retiro' : period_label(fee)
-              extra[:tradingFeePeriodStart] = fee.period_start
-              extra[:tradingFeePeriodEnd] = fee.period_end
-              extra[:tradingFeePercentage] = fee.fee_percentage.to_f
-              extra[:tradingFeeSource] = fee.source
-              extra[:tradingFeeWithdrawalAmount] = fee.withdrawal_amount.to_f if fee.source == 'WITHDRAWAL'
-            end
+        if history.event == 'TRADING_FEE_ADJUSTMENT'
+          fee = find_trading_fee_for_adjustment(fees, history)
+          if fee
+            extra[:tradingFeePeriodLabel] = period_label(fee)
+            extra[:tradingFeePercentage] = fee.fee_percentage.to_f
           end
+        end
 
-          if h.event == 'TRADING_FEE_ADJUSTMENT'
-            fee = find_trading_fee_for_adjustment(fees, h)
-            if fee
-              extra[:tradingFeePeriodLabel] = period_label(fee)
-              extra[:tradingFeePercentage] = fee.fee_percentage.to_f
-            end
-          end
+        extra
+      end
 
-          PublicPortfolioHistoryItemSerializer.new(h, extra: extra).as_json
-        }
-
-        requests = investor.investor_requests.where(status: ['PENDING', 'REJECTED']).order(requested_at: :desc).map { |r|
-          PublicPendingRequestHistoryItemSerializer.new(r).as_json
-        }
-
-        combined = (histories + requests).sort_by do |item|
+      def sort_history_items(items)
+        items.sort_by do |item|
           d = item[:date]
           t = d.respond_to?(:to_time) ? d.to_time : Time.zone.parse(d.to_s)
           # Cuando retiro y comisión tienen la misma fecha, mostrar retiro antes que la comisión
           sort_key = (item[:event] == 'TRADING_FEE' && item[:tradingFeeSource] == 'WITHDRAWAL') ? 1 : 0
           [-t.to_f, sort_key]
         end
-
-        render json: { data: combined }
       end
-
-      private
 
       def period_label(fee)
         start_d = fee.period_start.to_date

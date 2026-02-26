@@ -21,7 +21,7 @@ module Api
         when 'name'
           investors = investors.order(name: sort_order)
         else
-          investors = investors.order(created_at: :desc)
+          investors = investors.order(created_at: sort_order)
         end
 
         render json: {
@@ -58,10 +58,6 @@ module Api
         end
 
         render json: { data: { id: inv.id } }, status: :created
-      rescue ActiveRecord::RecordInvalid => e
-        render_error(e.record.errors.full_messages.join(', '), status: :bad_request)
-      rescue ActionController::ParameterMissing => e
-        render_error(e.message, status: :bad_request)
       end
 
       def update
@@ -74,10 +70,6 @@ module Api
         )
 
         head :no_content
-      rescue ActiveRecord::RecordInvalid => e
-        render_error(e.record.errors.full_messages.join(', '), status: :bad_request)
-      rescue ActionController::ParameterMissing => e
-        render_error(e.message, status: :bad_request)
       end
 
       def toggle_status
