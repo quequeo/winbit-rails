@@ -12,7 +12,7 @@ Backoffice administrativo de Winbit: API Rails + admin UI en `ui/`.
 ## URLs
 
 - Local API/UI: `http://localhost:3000`
-- Produccion: `https://winbit-rails-55a941b2fe50.herokuapp.com`
+- Produccion: `https://admin.winbit.com.ar`
 
 ## Setup local
 
@@ -31,7 +31,7 @@ RAILS_MASTER_KEY=...
 RESEND_API_KEY=...
 RESEND_FROM_EMAIL=...
 FRONTEND_URL=http://localhost:5173
-CORS_ORIGINS=http://localhost:5173,https://winbit-6579c.web.app
+CORS_ORIGINS=http://localhost:5173,https://app.winbit.com.ar
 APP_HOST=localhost:3000
 ```
 
