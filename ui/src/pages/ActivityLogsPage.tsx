@@ -93,6 +93,7 @@ export const ActivityLogsPage = () => {
   const VALUE_LABELS: Record<string, string> = {
     WITHDRAWAL: 'Retiro',
     DEPOSIT: 'Depósito',
+    TRANSFER_ARS: 'Transferencia ARS',
     BANK_ARS: 'Banco (ARS)',
     BANK_USD: 'Banco (USD)',
     CASH_ARS: 'Efectivo (ARS)',
