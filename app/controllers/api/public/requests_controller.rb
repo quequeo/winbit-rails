@@ -2,18 +2,16 @@ module Api
   module Public
     class RequestsController < BaseController
       def create
-        # Support both wrapped (params['request']) and unwrapped params
-        raw = params['request'] || params
-        payload = raw.respond_to?(:to_unsafe_h) ? raw.to_unsafe_h : raw.to_h
+        payload = request_params
 
-        email = payload['email'].to_s.strip
-        type = payload['type'].to_s
-        amount = payload['amount']
-        method = payload['method'].to_s
-        network = payload['network']
-        lemontag = payload['lemontag']
-        transaction_hash = payload['transactionHash']
-        attachment_url = payload['attachmentUrl']
+        email = payload[:email].to_s.strip
+        request_type = payload[:type].to_s
+        amount = payload[:amount]
+        method = payload[:method].to_s
+        network = payload[:network]
+        lemontag = payload[:lemontag]
+        transaction_hash = payload[:transactionHash]
+        attachment_url = payload[:attachmentUrl]
 
         if email.blank?
           return render_error('Email is required', status: :bad_request)
@@ -26,22 +24,17 @@ module Api
         return unless investor
         return unless require_active_investor!(investor, message: 'Investor is not active')
 
-        amount_num = begin
-          BigDecimal(amount.to_s)
-        rescue
-          nil
-        end
-
+        amount_num = BigDecimal(amount.to_s)
         if amount_num.nil? || amount_num <= 0
           return render_error('Invalid request data', status: :bad_request)
         end
 
         cash_methods = %w[CASH_ARS CASH_USD]
-        if type == 'DEPOSIT' && !cash_methods.include?(method) && attachment_url.blank?
+        if request_type == 'DEPOSIT' && !cash_methods.include?(method) && attachment_url.blank?
           return render_error('Attachment is required for non-cash deposits', status: :bad_request)
         end
 
-        if type == 'WITHDRAWAL'
+        if request_type == 'WITHDRAWAL'
           if investor.portfolio.nil?
             return render_error('No portfolio found', status: :bad_request)
           end
@@ -52,7 +45,7 @@ module Api
 
         req = InvestorRequest.new(
           investor_id: investor.id,
-          request_type: type,
+          request_type: request_type,
           amount: amount_num,
           method: method,
           network: network,
@@ -82,6 +75,22 @@ module Api
         render json: {
           data: PublicRequestSerializer.new(req).as_json
         }, status: :created
+      rescue ArgumentError, TypeError
+        render_error('Invalid request data', status: :bad_request)
+      end
+
+      private
+
+      def request_params
+        if params[:request].present?
+          params.require(:request).permit(
+            :email, :type, :amount, :method, :network, :lemontag, :transactionHash, :attachmentUrl
+          )
+        else
+          params.permit(
+            :email, :type, :amount, :method, :network, :lemontag, :transactionHash, :attachmentUrl
+          )
+        end
       end
     end
   end

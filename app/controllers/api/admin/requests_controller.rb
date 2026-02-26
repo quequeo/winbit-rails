@@ -32,10 +32,6 @@ module Api
         end
 
         render json: { data: { id: req.id } }, status: :created
-      rescue ActiveRecord::RecordInvalid => e
-        render_error(e.record.errors.full_messages.join(', '), status: :bad_request)
-      rescue ActionController::ParameterMissing => e
-        render_error(e.message, status: :bad_request)
       end
 
       def update
@@ -43,6 +39,12 @@ module Api
 
         investor = find_investor_by_id(id: permitted.fetch(:investor_id))
         return unless investor
+        if permitted.key?(:status) && permitted[:status].to_s != @request.status
+          return render_error(
+            'No se puede cambiar status desde update. Usar approve/reject.',
+            status: :unprocessable_entity
+          )
+        end
 
         @request.update!(
           investor_id: investor.id,
@@ -50,14 +52,10 @@ module Api
           method: permitted.fetch(:method),
           amount: permitted.fetch(:amount),
           network: permitted[:network].presence,
-          status: permitted[:status] || @request.status,
+          status: @request.status,
         )
 
         head :no_content
-      rescue ActiveRecord::RecordInvalid => e
-        render_error(e.record.errors.full_messages.join(', '), status: :bad_request)
-      rescue ActionController::ParameterMissing => e
-        render_error(e.message, status: :bad_request)
       end
 
       def destroy

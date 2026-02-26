@@ -24,6 +24,29 @@ RSpec.describe 'Public requests', type: :request do
     expect(json.dig('data', 'method')).to eq('USDT')
   end
 
+  it 'POST /api/public/requests accepts wrapped params under request key' do
+    investor = Investor.create!(email: 'wrapped@example.com', name: 'wrapped', status: 'ACTIVE')
+    Portfolio.create!(investor_id: investor.id, current_balance: 100, total_invested: 100)
+
+    post '/api/public/requests',
+         params: {
+           request: {
+             email: investor.email,
+             type: 'DEPOSIT',
+             amount: 50,
+             method: 'USDT',
+             network: 'TRC20',
+             transactionHash: '0xwrapped',
+             attachmentUrl: 'data:image/png;base64,wrapped'
+           }
+         },
+         as: :json
+
+    expect(response).to have_http_status(:created)
+    json = JSON.parse(response.body)
+    expect(json.dig('data', 'status')).to eq('PENDING')
+  end
+
   it 'POST /api/public/requests rejects non-cash deposit without attachment' do
     investor = Investor.create!(email: 'na@example.com', name: 'na', status: 'ACTIVE')
     Portfolio.create!(investor_id: investor.id, current_balance: 100, total_invested: 100)
@@ -144,6 +167,24 @@ RSpec.describe 'Public requests', type: :request do
     expect(json['error']).to eq('Invalid request data')
   end
 
+  it 'POST /api/public/requests returns 400 when amount raises parse error' do
+    investor = Investor.create!(email: 'argerr@example.com', name: 'argerr', status: 'ACTIVE')
+    Portfolio.create!(investor_id: investor.id, current_balance: 100, total_invested: 100)
+
+    post '/api/public/requests',
+         params: {
+           email: investor.email,
+           type: 'DEPOSIT',
+           amount: [],
+           method: 'CASH_ARS'
+         },
+         as: :json
+
+    expect(response).to have_http_status(:bad_request)
+    json = JSON.parse(response.body)
+    expect(json['error']).to eq('Invalid request data')
+  end
+
   it 'POST /api/public/requests validates withdrawal balance' do
     investor = Investor.create!(email: 'w@example.com', name: 'w', status: 'ACTIVE')
     Portfolio.create!(investor_id: investor.id, current_balance: 10, total_invested: 10)
@@ -161,5 +202,60 @@ RSpec.describe 'Public requests', type: :request do
     expect(response).to have_http_status(:bad_request)
     json = JSON.parse(response.body)
     expect(json['error']).to eq('Insufficient balance')
+  end
+
+  it 'POST /api/public/requests creates withdrawal request with valid balance' do
+    investor = Investor.create!(email: 'withdraw-ok@example.com', name: 'wok', status: 'ACTIVE')
+    Portfolio.create!(investor_id: investor.id, current_balance: 1000, total_invested: 1000)
+
+    post '/api/public/requests',
+         params: {
+           email: investor.email,
+           type: 'WITHDRAWAL',
+           amount: 50,
+           method: 'USDT',
+           network: 'TRC20'
+         },
+         as: :json
+
+    expect(response).to have_http_status(:created)
+    json = JSON.parse(response.body)
+    expect(json.dig('data', 'status')).to eq('PENDING')
+    expect(json.dig('data', 'type')).to eq('WITHDRAWAL')
+  end
+
+  it 'POST /api/public/requests continues when email notification fails' do
+    investor = Investor.create!(email: 'mailfail@example.com', name: 'mailfail', status: 'ACTIVE')
+    Portfolio.create!(investor_id: investor.id, current_balance: 100, total_invested: 100)
+    allow(InvestorMailer).to receive(:deposit_created).and_raise(StandardError, 'mailer failed')
+
+    post '/api/public/requests',
+         params: {
+           email: investor.email,
+           type: 'DEPOSIT',
+           amount: 50,
+           method: 'USDT',
+           network: 'TRC20',
+           attachmentUrl: 'data:image/png;base64,abc123'
+         },
+         as: :json
+
+    expect(response).to have_http_status(:created)
+  end
+
+  it 'POST /api/public/requests accepts unwrapped params without json wrapper' do
+    investor = Investor.create!(email: 'plain@example.com', name: 'plain', status: 'ACTIVE')
+    Portfolio.create!(investor_id: investor.id, current_balance: 100, total_invested: 100)
+
+    post '/api/public/requests', params: {
+      email: investor.email,
+      type: 'DEPOSIT',
+      amount: 50,
+      method: 'CASH_ARS'
+    }
+
+    expect(response).to have_http_status(:created)
+    json = JSON.parse(response.body)
+    expect(json.dig('data', 'status')).to eq('PENDING')
   end
 end

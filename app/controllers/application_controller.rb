@@ -1,4 +1,5 @@
 class ApplicationController < ActionController::API
+  include ErrorHandling
   include Paginatable
   include InvestorLookup
   include RecordLookup

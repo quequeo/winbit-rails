@@ -121,6 +121,112 @@ RSpec.describe 'Admin requests', type: :request do
     expect(req.processed_at.to_date).to eq(Date.new(2025, 1, 10))
   end
 
+  it 'POST /api/admin/requests supports status REJECTED on create' do
+    investor = Investor.create!(email: 'rej-create@example.com', name: 'rc', status: 'ACTIVE')
+    Portfolio.create!(investor_id: investor.id, current_balance: 100, total_invested: 100)
+
+    post '/api/admin/requests', params: {
+      investor_id: investor.id,
+      request_type: 'DEPOSIT',
+      method: 'USDT',
+      amount: 50,
+      status: 'REJECTED'
+    }
+
+    expect(response).to have_http_status(:created)
+    req_id = JSON.parse(response.body).dig('data', 'id')
+    req = InvestorRequest.find(req_id)
+    expect(req.status).to eq('REJECTED')
+    expect(req.processed_at).to be_present
+  end
+
+  it 'PATCH /api/admin/requests/:id does not allow changing status directly' do
+    investor = Investor.create!(email: 'upd@example.com', name: 'upd', status: 'ACTIVE')
+    Portfolio.create!(investor_id: investor.id, current_balance: 100, total_invested: 100)
+    req = InvestorRequest.create!(
+      investor_id: investor.id,
+      request_type: 'WITHDRAWAL',
+      amount: 10,
+      method: 'USDT',
+      status: 'PENDING',
+      requested_at: Time.current
+    )
+
+    patch "/api/admin/requests/#{req.id}", params: {
+      investor_id: investor.id,
+      request_type: 'WITHDRAWAL',
+      method: 'USDT',
+      amount: 10,
+      status: 'APPROVED'
+    }
+
+    expect(response).to have_http_status(:unprocessable_entity)
+    req.reload
+    expect(req.status).to eq('PENDING')
+  end
+
+  it 'PATCH /api/admin/requests/:id returns bad_request when required params are missing' do
+    investor = Investor.create!(email: 'missing-update@example.com', name: 'mu', status: 'ACTIVE')
+    req = InvestorRequest.create!(
+      investor_id: investor.id,
+      request_type: 'WITHDRAWAL',
+      amount: 10,
+      method: 'USDT',
+      status: 'PENDING',
+      requested_at: Time.current
+    )
+
+    patch "/api/admin/requests/#{req.id}", params: {
+      request_type: 'WITHDRAWAL',
+      method: 'USDT',
+      amount: 10
+    }
+
+    expect(response).to have_http_status(:bad_request)
+  end
+
+  it 'POST /api/admin/requests/:id/approve returns bad_request when service fails' do
+    investor = Investor.create!(email: 'approve-fail@example.com', name: 'af', status: 'ACTIVE')
+    req = InvestorRequest.create!(
+      investor_id: investor.id,
+      request_type: 'DEPOSIT',
+      amount: 10,
+      method: 'USDT',
+      status: 'PENDING',
+      requested_at: Time.current
+    )
+
+    service = instance_double(Requests::Approve)
+    allow(Requests::Approve).to receive(:new).and_return(service)
+    allow(service).to receive(:call).and_raise(StandardError, 'approve error')
+
+    post "/api/admin/requests/#{req.id}/approve"
+
+    expect(response).to have_http_status(:bad_request)
+    expect(JSON.parse(response.body)['error']).to include('approve error')
+  end
+
+  it 'POST /api/admin/requests/:id/reject returns bad_request when service fails' do
+    investor = Investor.create!(email: 'reject-fail@example.com', name: 'rf', status: 'ACTIVE')
+    req = InvestorRequest.create!(
+      investor_id: investor.id,
+      request_type: 'WITHDRAWAL',
+      amount: 10,
+      method: 'USDT',
+      status: 'PENDING',
+      requested_at: Time.current
+    )
+
+    service = instance_double(Requests::Reject)
+    allow(Requests::Reject).to receive(:new).and_return(service)
+    allow(service).to receive(:call).and_raise(StandardError, 'reject error')
+
+    post "/api/admin/requests/#{req.id}/reject"
+
+    expect(response).to have_http_status(:bad_request)
+    expect(JSON.parse(response.body)['error']).to include('reject error')
+  end
+
   it 'DELETE /api/admin/requests/:id reverses approved withdrawal and linked fee before deleting' do
     investor = Investor.create!(email: 'reverse-delete@example.com', name: 'rd', status: 'ACTIVE')
     # New model: after withdrawal of 1000 + fee 27.27, balance = 5500 - 1000 - 27.27 = 4472.73
@@ -161,5 +267,28 @@ RSpec.describe 'Admin requests', type: :request do
     fee.reload
     expect(portfolio.current_balance.to_f.round(2)).to eq(5500.0)
     expect(fee.voided_at).to be_present
+  end
+
+  it 'DELETE /api/admin/requests/:id returns bad_request when reverse fails' do
+    investor = Investor.create!(email: 'destroy-fail@example.com', name: 'df', status: 'ACTIVE')
+    Portfolio.create!(investor_id: investor.id, current_balance: 100, total_invested: 100)
+    req = InvestorRequest.create!(
+      investor_id: investor.id,
+      request_type: 'WITHDRAWAL',
+      amount: 10,
+      method: 'USDT',
+      status: 'APPROVED',
+      requested_at: Time.current,
+      processed_at: Time.current
+    )
+
+    service = instance_double(Requests::ReverseApprovedWithdrawal)
+    allow(Requests::ReverseApprovedWithdrawal).to receive(:new).and_return(service)
+    allow(service).to receive(:call).and_raise(StandardError, 'reverse error')
+
+    delete "/api/admin/requests/#{req.id}"
+
+    expect(response).to have_http_status(:bad_request)
+    expect(JSON.parse(response.body)['error']).to include('reverse error')
   end
 end
