@@ -227,7 +227,7 @@ RSpec.describe 'Admin requests', type: :request do
     expect(JSON.parse(response.body)['error']).to include('reject error')
   end
 
-  it 'DELETE /api/admin/requests/:id returns 422 for approved withdrawal (use reverse)' do
+  it 'DELETE /api/admin/requests/:id returns 422 for approved withdrawal' do
     investor = Investor.create!(email: 'reverse-delete@example.com', name: 'rd', status: 'ACTIVE')
     portfolio = Portfolio.create!(investor_id: investor.id, current_balance: 100, total_invested: 100)
     req = InvestorRequest.create!(
@@ -289,6 +289,54 @@ RSpec.describe 'Admin requests', type: :request do
 
     portfolio.reload
     expect(portfolio.current_balance.to_f.round(2)).to eq(5500.0)
+    expect(portfolio.total_invested.to_f.round(2)).to eq(5000.0)
+  end
+
+  it 'DELETE /api/admin/requests/:id returns 422 for approved deposit' do
+    investor = Investor.create!(email: 'delete-dep@example.com', name: 'dd', status: 'ACTIVE')
+    Portfolio.create!(investor_id: investor.id, current_balance: 100, total_invested: 100)
+    req = InvestorRequest.create!(
+      investor_id: investor.id,
+      request_type: 'DEPOSIT',
+      amount: 50,
+      method: 'USDT',
+      status: 'APPROVED',
+      requested_at: 2.days.ago,
+      processed_at: 1.day.ago
+    )
+
+    delete "/api/admin/requests/#{req.id}"
+
+    expect(response).to have_http_status(:unprocessable_entity)
+    expect(JSON.parse(response.body)['error']).to include('Revertir')
+    expect(InvestorRequest.find_by(id: req.id)).to be_present
+  end
+
+  it 'POST /api/admin/requests/:id/reverse reverts approved deposit and sets REVERSED' do
+    investor = Investor.create!(email: 'reverse-dep@example.com', name: 'rd', status: 'ACTIVE')
+    portfolio = Portfolio.create!(investor_id: investor.id, current_balance: 6000, total_invested: 6000)
+    PortfolioHistory.create!(investor: investor, event: 'DEPOSIT', amount: 5000, previous_balance: 0, new_balance: 5000, status: 'COMPLETED', date: 3.days.ago)
+    PortfolioHistory.create!(investor: investor, event: 'DEPOSIT', amount: 1000, previous_balance: 5000, new_balance: 6000, status: 'COMPLETED', date: 1.day.ago)
+    req = InvestorRequest.create!(
+      investor_id: investor.id,
+      request_type: 'DEPOSIT',
+      amount: 1000,
+      method: 'USDT',
+      status: 'APPROVED',
+      requested_at: 2.days.ago,
+      processed_at: 1.day.ago
+    )
+
+    post "/api/admin/requests/#{req.id}/reverse"
+
+    expect(response).to have_http_status(:no_content)
+    req.reload
+    expect(req.status).to eq('REVERSED')
+    expect(req.reversed_at).to be_present
+    expect(req.reversed_by_id).to be_present
+
+    portfolio.reload
+    expect(portfolio.current_balance.to_f.round(2)).to eq(5000.0)
     expect(portfolio.total_invested.to_f.round(2)).to eq(5000.0)
   end
 

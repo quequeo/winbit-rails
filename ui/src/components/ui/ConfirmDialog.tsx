@@ -51,7 +51,11 @@ export const ConfirmDialog = ({
 
           {/* Content */}
           <div className="px-6 py-4">
-            <p className="text-sm text-gray-700">{message}</p>
+            {typeof message === 'string' ? (
+              <p className="text-sm text-gray-700">{message}</p>
+            ) : (
+              <div className="text-sm text-gray-700">{message}</div>
+            )}
           </div>
 
           {/* Footer */}

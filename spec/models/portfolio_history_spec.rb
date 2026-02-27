@@ -5,7 +5,7 @@ RSpec.describe PortfolioHistory, type: :model do
 
   describe 'constants' do
     it 'defines valid EVENTS' do
-      expect(PortfolioHistory::EVENTS).to eq(%w[DEPOSIT WITHDRAWAL OPERATING_RESULT TRADING_FEE TRADING_FEE_ADJUSTMENT REFERRAL_COMMISSION])
+      expect(PortfolioHistory::EVENTS).to eq(%w[DEPOSIT WITHDRAWAL DEPOSIT_REVERSAL OPERATING_RESULT TRADING_FEE TRADING_FEE_ADJUSTMENT REFERRAL_COMMISSION])
     end
 
     it 'defines valid STATUSES' do

@@ -83,7 +83,13 @@ module Api
 
         fees = investor.trading_fees.order(applied_at: :desc).to_a
         approved_requests = approved_requests_for(investor)
-        histories = serialized_histories(investor: investor, fees: fees, approved_requests: approved_requests)
+        reversed_requests = reversed_requests_for(investor)
+        histories = serialized_histories(
+          investor: investor,
+          fees: fees,
+          approved_requests: approved_requests,
+          reversed_requests: reversed_requests
+        )
         pending_requests = serialized_pending_requests(investor)
 
         render json: { data: sort_history_items(histories + pending_requests) }
@@ -98,12 +104,20 @@ module Api
                 .to_a
       end
 
-      def serialized_histories(investor:, fees:, approved_requests:)
+      def reversed_requests_for(investor)
+        investor.investor_requests
+                .where(status: 'REVERSED', request_type: 'DEPOSIT')
+                .select(:id, :request_type, :method, :reversed_at, :amount)
+                .to_a
+      end
+
+      def serialized_histories(investor:, fees:, approved_requests:, reversed_requests: [])
         investor.portfolio_histories.order(date: :desc).map do |history|
           PublicPortfolioHistoryItemSerializer.new(history, extra: history_extra_data(
             history: history,
             fees: fees,
-            approved_requests: approved_requests
+            approved_requests: approved_requests,
+            reversed_requests: reversed_requests
           )).as_json
         end
       end
@@ -115,11 +129,16 @@ module Api
                 .map { |request| PublicPendingRequestHistoryItemSerializer.new(request).as_json }
       end
 
-      def history_extra_data(history:, fees:, approved_requests:)
+      def history_extra_data(history:, fees:, approved_requests:, reversed_requests: [])
         extra = {}
 
         if %w[WITHDRAWAL DEPOSIT].include?(history.event)
           req = find_request_for_history(approved_requests, history)
+          extra[:method] = req&.method
+        end
+
+        if history.event == 'DEPOSIT_REVERSAL'
+          req = find_reversed_deposit_for_history(reversed_requests, history)
           extra[:method] = req&.method
         end
 
@@ -187,6 +206,14 @@ module Api
       def find_request_for_history(requests, history)
         ts = history.date.to_time.to_i
         requests.find { |r| r.request_type == history.event && (r.processed_at.to_i - ts).abs <= 600 }
+      end
+
+      def find_reversed_deposit_for_history(reversed_requests, history)
+        ts = history.date.to_time.to_i
+        reversed_requests.find do |r|
+          (r.reversed_at.to_i - ts).abs <= 600 &&
+            (BigDecimal(r.amount.to_s) - BigDecimal(history.amount.to_s)).abs < BigDecimal('0.01')
+        end
       end
 
       def find_trading_fee_for_adjustment(fees, history)

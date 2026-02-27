@@ -12,6 +12,7 @@ vi.mock('../lib/api', () => ({
     createRequest: vi.fn(),
     approveRequest: vi.fn(),
     rejectRequest: vi.fn(),
+    reverseRequest: vi.fn(),
   },
 }));
 
@@ -272,4 +273,56 @@ describe('RequestsPage', () => {
     });
   });
 
+  describe('Revertir solicitud', () => {
+    it('shows confirmation modal and reverses on confirm', async () => {
+      vi.mocked(api.getAdminRequests).mockResolvedValue(mockRequests);
+      vi.mocked(api.reverseRequest).mockResolvedValue(null);
+
+      const user = userEvent.setup();
+      render(<RequestsPage />);
+
+      await waitFor(() => {
+        expect(api.getAdminRequests).toHaveBeenCalled();
+      });
+
+      const revertButtons = screen.getAllByRole('button', { name: /Revertir/i });
+      await user.click(revertButtons[0]);
+
+      expect(screen.getByText('Confirmar reversa de solicitud')).toBeInTheDocument();
+      expect(screen.getByText(/operación compleja y riesgosa/i)).toBeInTheDocument();
+      expect(screen.getByText(/debe evitarse siempre que sea posible/i)).toBeInTheDocument();
+
+      const confirmButton = screen.getByRole('button', { name: /Sí, revertir/i });
+      await user.click(confirmButton);
+
+      await waitFor(() => {
+        expect(api.reverseRequest).toHaveBeenCalledWith('2');
+      });
+    });
+
+    it('does not reverse when cancel is clicked', async () => {
+      vi.mocked(api.getAdminRequests).mockResolvedValue(mockRequests);
+
+      const user = userEvent.setup();
+      render(<RequestsPage />);
+
+      await waitFor(() => {
+        expect(api.getAdminRequests).toHaveBeenCalled();
+      });
+
+      const revertButtons = screen.getAllByRole('button', { name: /Revertir/i });
+      await user.click(revertButtons[0]);
+
+      expect(screen.getByText('Confirmar reversa de solicitud')).toBeInTheDocument();
+
+      const cancelButtons = screen.getAllByRole('button', { name: /Cancelar/i });
+      await user.click(cancelButtons[cancelButtons.length - 1]);
+
+      await waitFor(() => {
+        expect(screen.queryByText('Confirmar reversa de solicitud')).not.toBeInTheDocument();
+      });
+
+      expect(api.reverseRequest).not.toHaveBeenCalled();
+    });
+  });
 });
