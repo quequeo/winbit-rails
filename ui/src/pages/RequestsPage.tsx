@@ -549,9 +549,11 @@ export const RequestsPage = () => {
         message={
           reverseConfirm ? (
             <div className="space-y-3 text-sm">
-              <p className="font-semibold text-amber-800">
-                Esta es una operación compleja y riesgosa. Debe evitarse siempre que sea posible.
-              </p>
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+                <p className="font-semibold text-amber-800">
+                  Esta es una operación compleja y riesgosa. Debe evitarse siempre que sea posible.
+                </p>
+              </div>
               <p>
                 Estás a punto de revertir un{' '}
                 <strong>{reverseConfirm.type === 'DEPOSIT' ? 'depósito' : 'retiro'}</strong>{' '}
