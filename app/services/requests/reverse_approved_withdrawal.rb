@@ -48,8 +48,15 @@ module Requests
           current_balance: (BigDecimal(portfolio.current_balance.to_s) + requested_amount + fee_amount).to_f,
           total_invested: (BigDecimal(portfolio.total_invested.to_s) + requested_amount).to_f
         )
+
+        req.update!(
+          status: 'REVERSED',
+          reversed_at: Time.current,
+          reversed_by_id: @reversed_by.id
+        )
       end
 
+      PortfolioRecalculator.recalculate!(req.investor)
       true
     end
   end

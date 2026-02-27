@@ -77,6 +77,7 @@ export const api = {
   approveRequest: (id: string, body?: { processed_at?: string }) =>
     request(`${ADMIN_API_PREFIX}/requests/${id}/approve`, { method: 'POST', body: JSON.stringify(body || {}) }),
   rejectRequest: (id: string) => request(`${ADMIN_API_PREFIX}/requests/${id}/reject`, { method: 'POST' }),
+  reverseRequest: (id: string) => request(`${ADMIN_API_PREFIX}/requests/${id}/reverse`, { method: 'POST' }),
   getAdminAdmins: () => request(`${ADMIN_API_PREFIX}/admins`),
   createAdmin: (body: { email: string; name?: string; role: 'ADMIN' | 'SUPERADMIN' }) =>
     request(`${ADMIN_API_PREFIX}/admins`, { method: 'POST', body: JSON.stringify(body) }),

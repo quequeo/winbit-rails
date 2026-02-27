@@ -142,6 +142,18 @@ export const RequestsPage = () => {
     }
   };
 
+  const reverse = async (id: string) => {
+    try {
+      setBusyId(id);
+      await api.reverseRequest(id);
+      load();
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Error');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
@@ -340,6 +352,7 @@ export const RequestsPage = () => {
               <option value="PENDING">Pendientes</option>
               <option value="APPROVED">Aprobados</option>
               <option value="REJECTED">Rechazados</option>
+              <option value="REVERSED">Revertidos</option>
             </select>
           </div>
         </div>
@@ -368,10 +381,12 @@ export const RequestsPage = () => {
                     ? 'bg-yellow-100 text-yellow-800'
                     : r.status === 'APPROVED'
                       ? 'bg-green-100 text-green-800'
-                      : 'bg-red-100 text-red-800'
+                      : r.status === 'REVERSED'
+                        ? 'bg-gray-100 text-gray-700'
+                        : 'bg-red-100 text-red-800'
                 }`}
               >
-                {r.status === 'PENDING' ? 'Pendiente' : r.status === 'APPROVED' ? 'Aprobado' : 'Rechazado'}
+                {r.status === 'PENDING' ? 'Pendiente' : r.status === 'APPROVED' ? 'Aprobado' : r.status === 'REVERSED' ? 'Revertido' : 'Rechazado'}
               </span>
             </div>
 
@@ -408,6 +423,13 @@ export const RequestsPage = () => {
                   className="flex-1"
                 >
                   Rechazar
+                </Button>
+              </div>
+            )}
+            {r.status === 'APPROVED' && r.type === 'WITHDRAWAL' && (
+              <div className="mt-4">
+                <Button size="sm" variant="destructive" onClick={() => reverse(r.id)} disabled={busyId === r.id} className="w-full">
+                  Revertir
                 </Button>
               </div>
             )}
@@ -473,14 +495,18 @@ export const RequestsPage = () => {
                           ? 'bg-yellow-100 text-yellow-800'
                           : r.status === 'APPROVED'
                             ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
+                            : r.status === 'REVERSED'
+                              ? 'bg-gray-100 text-gray-700'
+                              : 'bg-red-100 text-red-800'
                       }`}
                     >
                       {r.status === 'PENDING'
                         ? 'Pendiente'
                         : r.status === 'APPROVED'
                           ? 'Aprobado'
-                          : 'Rechazado'}
+                          : r.status === 'REVERSED'
+                            ? 'Revertido'
+                            : 'Rechazado'}
                     </span>
                   </td>
                   <td className="py-2 text-right">
@@ -498,6 +524,11 @@ export const RequestsPage = () => {
                           Rechazar
                         </Button>
                       </div>
+                    )}
+                    {r.status === 'APPROVED' && r.type === 'WITHDRAWAL' && (
+                      <Button size="sm" variant="destructive" onClick={() => reverse(r.id)} disabled={busyId === r.id}>
+                        Revertir
+                      </Button>
                     )}
                   </td>
                 </tr>

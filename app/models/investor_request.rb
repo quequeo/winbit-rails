@@ -15,10 +15,11 @@ class InvestorRequest < ApplicationRecord
     TRANSFER_ARS
     CRYPTO
   ].freeze
-  STATUSES = %w[PENDING APPROVED REJECTED].freeze
+  STATUSES = %w[PENDING APPROVED REJECTED REVERSED].freeze
   NETWORKS = %w[TRC20 BEP20 ERC20 POLYGON].freeze
 
   belongs_to :investor
+  belongs_to :reversed_by, class_name: 'User', optional: true
 
   validates :request_type, presence: true, inclusion: { in: TYPES }
   validates :method, presence: true, inclusion: { in: METHODS }
