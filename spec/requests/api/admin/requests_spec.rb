@@ -227,12 +227,34 @@ RSpec.describe 'Admin requests', type: :request do
     expect(JSON.parse(response.body)['error']).to include('reject error')
   end
 
-  it 'DELETE /api/admin/requests/:id reverses approved withdrawal and linked fee before deleting' do
+  it 'DELETE /api/admin/requests/:id returns 422 for approved withdrawal (use reverse)' do
     investor = Investor.create!(email: 'reverse-delete@example.com', name: 'rd', status: 'ACTIVE')
-    # New model: after withdrawal of 1000 + fee 27.27, balance = 5500 - 1000 - 27.27 = 4472.73
-    # total_invested = 5000 - 1000 = 4000 (fee does not reduce total_invested)
-    portfolio = Portfolio.create!(investor_id: investor.id, current_balance: 4472.73, total_invested: 4000)
+    portfolio = Portfolio.create!(investor_id: investor.id, current_balance: 100, total_invested: 100)
+    req = InvestorRequest.create!(
+      investor_id: investor.id,
+      request_type: 'WITHDRAWAL',
+      amount: 10,
+      method: 'USDT',
+      status: 'APPROVED',
+      requested_at: 2.days.ago,
+      processed_at: 1.day.ago
+    )
 
+    delete "/api/admin/requests/#{req.id}"
+
+    expect(response).to have_http_status(:unprocessable_entity)
+    expect(JSON.parse(response.body)['error']).to include('Revertir')
+    expect(InvestorRequest.find_by(id: req.id)).to be_present
+  end
+
+  it 'POST /api/admin/requests/:id/reverse reverts approved withdrawal and sets REVERSED' do
+    investor = Investor.create!(email: 'reverse-post@example.com', name: 'rp', status: 'ACTIVE')
+    portfolio = Portfolio.create!(investor_id: investor.id, current_balance: 4472.73, total_invested: 4000)
+    # Simulate history: DEPOSIT 5000, OPERATING_RESULT 500 -> 5500; WITHDRAWAL 1000, TRADING_FEE 27.27 -> 4472.73
+    PortfolioHistory.create!(investor: investor, event: 'DEPOSIT', amount: 5000, previous_balance: 0, new_balance: 5000, status: 'COMPLETED', date: 3.days.ago)
+    PortfolioHistory.create!(investor: investor, event: 'OPERATING_RESULT', amount: 500, previous_balance: 5000, new_balance: 5500, status: 'COMPLETED', date: 2.days.ago)
+    PortfolioHistory.create!(investor: investor, event: 'WITHDRAWAL', amount: 1000, previous_balance: 5500, new_balance: 4500, status: 'COMPLETED', date: 1.day.ago)
+    PortfolioHistory.create!(investor: investor, event: 'TRADING_FEE', amount: -27.27, previous_balance: 4500, new_balance: 4472.73, status: 'COMPLETED', date: 1.day.ago)
     req = InvestorRequest.create!(
       investor_id: investor.id,
       request_type: 'WITHDRAWAL',
@@ -242,9 +264,8 @@ RSpec.describe 'Admin requests', type: :request do
       requested_at: 2.days.ago,
       processed_at: 1.day.ago
     )
-
     admin = User.find_by(email: 'admin@example.com')
-    fee = TradingFee.create!(
+    TradingFee.create!(
       investor: investor,
       applied_by: admin,
       period_start: Date.current,
@@ -258,19 +279,21 @@ RSpec.describe 'Admin requests', type: :request do
       applied_at: req.processed_at
     )
 
-    delete "/api/admin/requests/#{req.id}"
+    post "/api/admin/requests/#{req.id}/reverse"
 
     expect(response).to have_http_status(:no_content)
-    expect(InvestorRequest.find_by(id: req.id)).to be_nil
+    req.reload
+    expect(req.status).to eq('REVERSED')
+    expect(req.reversed_at).to be_present
+    expect(req.reversed_by_id).to eq(admin.id)
 
     portfolio.reload
-    fee.reload
     expect(portfolio.current_balance.to_f.round(2)).to eq(5500.0)
-    expect(fee.voided_at).to be_present
+    expect(portfolio.total_invested.to_f.round(2)).to eq(5000.0)
   end
 
-  it 'DELETE /api/admin/requests/:id returns bad_request when reverse fails' do
-    investor = Investor.create!(email: 'destroy-fail@example.com', name: 'df', status: 'ACTIVE')
+  it 'POST /api/admin/requests/:id/reverse returns bad_request when service fails' do
+    investor = Investor.create!(email: 'reverse-fail@example.com', name: 'rf', status: 'ACTIVE')
     Portfolio.create!(investor_id: investor.id, current_balance: 100, total_invested: 100)
     req = InvestorRequest.create!(
       investor_id: investor.id,
@@ -286,7 +309,7 @@ RSpec.describe 'Admin requests', type: :request do
     allow(Requests::ReverseApprovedWithdrawal).to receive(:new).and_return(service)
     allow(service).to receive(:call).and_raise(StandardError, 'reverse error')
 
-    delete "/api/admin/requests/#{req.id}"
+    post "/api/admin/requests/#{req.id}/reverse"
 
     expect(response).to have_http_status(:bad_request)
     expect(JSON.parse(response.body)['error']).to include('reverse error')

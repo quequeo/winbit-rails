@@ -6,6 +6,7 @@ class ActivityLog < ApplicationRecord
   ACTIONS = %w[
     approve_request
     reject_request
+    reverse_withdrawal
     create_request
     update_request
     delete_request
@@ -44,6 +45,7 @@ class ActivityLog < ApplicationRecord
   I18N_ACTIONS = {
     'approve_request' => 'Solicitud aprobada',
     'reject_request' => 'Solicitud rechazada',
+    'reverse_withdrawal' => 'Retiro revertido',
     'create_request' => 'Solicitud creada',
     'update_request' => 'Solicitud actualizada',
     'delete_request' => 'Solicitud eliminada',

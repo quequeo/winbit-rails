@@ -1,7 +1,7 @@
 module Api
   module Admin
     class RequestsController < BaseController
-      before_action :set_request, only: [:update, :destroy, :approve, :reject]
+      before_action :set_request, only: [:update, :destroy, :approve, :reject, :reverse]
 
       def create
         permitted = params.permit(:investor_id, :request_type, :method, :amount, :network, :status, :requested_at, :processed_at)
@@ -60,7 +60,7 @@ module Api
 
       def destroy
         if @request.status == 'APPROVED' && @request.request_type == 'WITHDRAWAL'
-          Requests::ReverseApprovedWithdrawal.new(request_id: @request.id, reversed_by: current_user).call
+          return render_error('Usar acción Revertir para retiros aprobados', status: :unprocessable_entity)
         end
 
         ActivityLogger.log(
@@ -74,6 +74,25 @@ module Api
           }
         )
         @request.destroy!
+        head :no_content
+      rescue StandardError => e
+        render_error(e.message, status: :bad_request)
+      end
+
+      def reverse
+        Requests::ReverseApprovedWithdrawal.new(request_id: @request.id, reversed_by: current_user).call
+
+        ActivityLogger.log(
+          user: current_user,
+          action: 'reverse_withdrawal',
+          target: @request,
+          metadata: {
+            request_type: @request.request_type,
+            amount: @request.amount.to_f,
+            investor_id: @request.investor_id
+          }
+        )
+
         head :no_content
       rescue StandardError => e
         render_error(e.message, status: :bad_request)
