@@ -62,6 +62,9 @@ module Api
         if @request.status == 'APPROVED' && @request.request_type == 'WITHDRAWAL'
           return render_error('Usar acción Revertir para retiros aprobados', status: :unprocessable_entity)
         end
+        if @request.status == 'APPROVED' && @request.request_type == 'DEPOSIT'
+          return render_error('Usar acción Revertir para depósitos aprobados', status: :unprocessable_entity)
+        end
 
         ActivityLogger.log(
           user: current_user,
@@ -80,11 +83,19 @@ module Api
       end
 
       def reverse
-        Requests::ReverseApprovedWithdrawal.new(request_id: @request.id, reversed_by: current_user).call
+        if @request.request_type == 'WITHDRAWAL'
+          Requests::ReverseApprovedWithdrawal.new(request_id: @request.id, reversed_by: current_user).call
+          action_log = 'reverse_withdrawal'
+        elsif @request.request_type == 'DEPOSIT'
+          Requests::ReverseApprovedDeposit.new(request_id: @request.id, reversed_by: current_user).call
+          action_log = 'reverse_deposit'
+        else
+          return render_error('Solo se pueden revertir depósitos o retiros aprobados', status: :unprocessable_entity)
+        end
 
         ActivityLogger.log(
           user: current_user,
-          action: 'reverse_withdrawal',
+          action: action_log,
           target: @request,
           metadata: {
             request_type: @request.request_type,

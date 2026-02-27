@@ -7,6 +7,7 @@ class ActivityLog < ApplicationRecord
     approve_request
     reject_request
     reverse_withdrawal
+    reverse_deposit
     create_request
     update_request
     delete_request
@@ -46,6 +47,7 @@ class ActivityLog < ApplicationRecord
     'approve_request' => 'Solicitud aprobada',
     'reject_request' => 'Solicitud rechazada',
     'reverse_withdrawal' => 'Retiro revertido',
+    'reverse_deposit' => 'Depósito revertido',
     'create_request' => 'Solicitud creada',
     'update_request' => 'Solicitud actualizada',
     'delete_request' => 'Solicitud eliminada',
