@@ -57,6 +57,15 @@ RSpec.describe 'Admin requests', type: :request do
     portfolio = Portfolio.create!(investor_id: investor.id, current_balance: 5500, total_invested: 5000)
     PortfolioHistory.create!(
       investor_id: investor.id,
+      event: 'DEPOSIT',
+      amount: 5000,
+      previous_balance: 0,
+      new_balance: 5000,
+      status: 'COMPLETED',
+      date: 10.days.ago
+    )
+    PortfolioHistory.create!(
+      investor_id: investor.id,
       event: 'OPERATING_RESULT',
       amount: 500,
       previous_balance: 5000,
@@ -81,13 +90,16 @@ RSpec.describe 'Admin requests', type: :request do
     portfolio.reload
 
     expect(req.status).to eq('APPROVED')
-    # New model: investor receives full 1000; fee 27.27 is charged additionally.
-    # new_balance = 5500 - 1000 - 27.27 = 4472.73
-    expect(portfolio.current_balance.to_f.round(2)).to eq(4472.73)
+    # Vpcust model: profit = 5500 - 0(vpcust) - 5000(deposit inflow) = 500
+    # fee = 30% of 500 = 150
+    # new_balance = 5500 - 1000 - 150 = 4350
+    expect(portfolio.current_balance.to_f.round(2)).to eq(4350.0)
 
     fee = TradingFee.find_by(withdrawal_request_id: req.id)
     expect(fee).to be_present
     expect(fee.source).to eq('WITHDRAWAL')
+    expect(fee.fee_amount.to_f).to eq(150.0)
+    expect(fee.profit_amount.to_f).to eq(500.0)
 
     withdrawal_history = PortfolioHistory.where(investor_id: investor.id, event: 'WITHDRAWAL').order(date: :desc).first
     fee_history = PortfolioHistory.where(investor_id: investor.id, event: 'TRADING_FEE').order(date: :desc).first

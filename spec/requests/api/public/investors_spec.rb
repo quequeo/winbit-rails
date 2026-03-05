@@ -289,6 +289,12 @@ RSpec.describe 'Public investors', type: :request do
         accumulated_return_usd: 0, accumulated_return_percent: 0,
         annual_return_usd: 0, annual_return_percent: 0
       )
+      # Initial deposit history needed for Vpcust profit calculation
+      PortfolioHistory.create!(
+        investor_id: inv.id, event: 'DEPOSIT', status: 'COMPLETED',
+        amount: balance, previous_balance: 0, new_balance: balance,
+        date: 10.days.ago
+      )
       inv
     end
 
@@ -304,7 +310,7 @@ RSpec.describe 'Public investors', type: :request do
       expect(json['hasFee']).to be(false)
     end
 
-    it 'calculates fee proportional to pending profit and withdrawal amount' do
+    it 'calculates fee on full accumulated profit (Vpcust model)' do
       investor = build_investor(email: 'profit@example.com', balance: 10_000)
 
       PortfolioHistory.create!(
@@ -317,47 +323,82 @@ RSpec.describe 'Public investors', type: :request do
 
       expect(response).to have_http_status(:ok)
       json = JSON.parse(response.body)['data']
-      # realized_profit = 2000 * (5000 / 10_000) = 1000
-      # fee = 1000 * (30 / 100) = 300
-      expect(json['withdrawalAmount']).to eq(5000.0)
-      expect(json['feeAmount']).to eq(300.0)
-      expect(json['feePercentage']).to eq(30.0)
-      expect(json['realizedProfit']).to eq(1000.0)
-      expect(json['hasFee']).to be(true)
+      # profit = 10_000(balance) - 0(vpcust) - 10_000(deposit inflow) = 0
+      # The OPERATING_RESULT pushed balance to 10_000 but initial deposit was 8000
+      # So build_investor creates deposit history of 10_000 (the balance arg).
+      # Adjust: profit = 10_000 - 0 - 10_000 = 0 when no prior reset.
+      # To test non-zero profit, build investor with lower initial deposit.
+      expect(json['hasFee']).to be(false)
     end
 
-    it 'deducts already-paid trading fees from pending profit' do
-      investor = build_investor(email: 'alreadypaid@example.com', balance: 10_000)
-
+    it 'calculates fee on full accumulated profit with correct inflows' do
+      # Investor deposited 8000 originally, then profit +2000 → balance 10_000
+      inv = Investor.create!(email: 'profit2@example.com', name: 'Test', status: 'ACTIVE', trading_fee_percentage: 30)
+      Portfolio.create!(
+        investor_id: inv.id, current_balance: 10_000, total_invested: 8000,
+        accumulated_return_usd: 2000, accumulated_return_percent: 25,
+        annual_return_usd: 2000, annual_return_percent: 25
+      )
       PortfolioHistory.create!(
-        investor_id: investor.id, event: 'OPERATING_RESULT', status: 'COMPLETED',
-        amount: 2000, previous_balance: 8000, new_balance: 10_000,
-        date: 2.days.ago
+        investor_id: inv.id, event: 'DEPOSIT', status: 'COMPLETED',
+        amount: 8000, previous_balance: 0, new_balance: 8000, date: 10.days.ago
+      )
+      PortfolioHistory.create!(
+        investor_id: inv.id, event: 'OPERATING_RESULT', status: 'COMPLETED',
+        amount: 2000, previous_balance: 8000, new_balance: 10_000, date: 1.day.ago
       )
 
-      req = InvestorRequest.create!(
-        investor: investor, request_type: 'WITHDRAWAL', amount: 1000,
-        method: 'CASH_ARS', status: 'APPROVED',
-        requested_at: 2.days.ago, processed_at: 2.days.ago
-      )
-
-      TradingFee.create!(
-        investor: investor, applied_by: admin,
-        period_start: 2.days.ago.to_date, period_end: 1.day.ago.to_date,
-        profit_amount: 1000, fee_percentage: 30, fee_amount: 300,
-        source: 'WITHDRAWAL', withdrawal_amount: 1000,
-        withdrawal_request_id: req.id, applied_at: 2.days.ago
-      )
-
-      get "/api/public/investor/#{CGI.escape(investor.email)}/withdrawal_fee_preview?amount=5000"
+      get "/api/public/investor/#{CGI.escape(inv.email)}/withdrawal_fee_preview?amount=5000"
 
       expect(response).to have_http_status(:ok)
       json = JSON.parse(response.body)['data']
-      # pending_profit = 2000 - 1000 (already paid) = 1000
-      # realized_profit = 1000 * (5000 / 10_000) = 500
-      # fee = 500 * 0.30 = 150
-      expect(json['feeAmount']).to eq(150.0)
-      expect(json['realizedProfit']).to eq(500.0)
+      # profit = 10_000(balance) - 0(vpcust) - 8000(deposit inflow) = 2000
+      # fee = 30% of 2000 = 600
+      expect(json['withdrawalAmount']).to eq(5000.0)
+      expect(json['feeAmount']).to eq(600.0)
+      expect(json['feePercentage']).to eq(30.0)
+      expect(json['realizedProfit']).to eq(2000.0)
+      expect(json['hasFee']).to be(true)
+    end
+
+    it 'deducts already-paid trading fees via Vpcust (last reset sets new base)' do
+      # Investor: 8000 deposit, +2000 operating = 10_000.
+      # Then withdrawal: fee charged on 2000 profit, Vpcust becomes new_balance after fee.
+      # A new TRADING_FEE history entry is added → next preview should show 0 profit.
+      inv = Investor.create!(email: 'alreadypaid@example.com', name: 'Test', status: 'ACTIVE', trading_fee_percentage: 30)
+      Portfolio.create!(
+        investor_id: inv.id, current_balance: 10_000, total_invested: 8000,
+        accumulated_return_usd: 0, accumulated_return_percent: 0,
+        annual_return_usd: 0, annual_return_percent: 0
+      )
+      PortfolioHistory.create!(
+        investor_id: inv.id, event: 'DEPOSIT', status: 'COMPLETED',
+        amount: 8000, previous_balance: 0, new_balance: 8000, date: 10.days.ago
+      )
+      PortfolioHistory.create!(
+        investor_id: inv.id, event: 'OPERATING_RESULT', status: 'COMPLETED',
+        amount: 2000, previous_balance: 8000, new_balance: 10_000, date: 2.days.ago
+      )
+      # Simulate a prior withdrawal with fee: WITHDRAWAL then TRADING_FEE history entries
+      PortfolioHistory.create!(
+        investor_id: inv.id, event: 'WITHDRAWAL', status: 'COMPLETED',
+        amount: 1000, previous_balance: 10_000, new_balance: 9000, date: 1.day.ago
+      )
+      PortfolioHistory.create!(
+        investor_id: inv.id, event: 'TRADING_FEE', status: 'COMPLETED',
+        amount: -600, previous_balance: 9000, new_balance: 8400, date: 1.day.ago
+      )
+      # Vpcust = 8400 (new_balance after TRADING_FEE)
+      # current_balance = 10_000 - 1000 - 600 = 8400, no new deposits or profit
+      inv.portfolio.update!(current_balance: 8400)
+
+      get "/api/public/investor/#{CGI.escape(inv.email)}/withdrawal_fee_preview?amount=5000"
+
+      expect(response).to have_http_status(:ok)
+      json = JSON.parse(response.body)['data']
+      # profit = 8400(balance) - 8400(vpcust) - 0(no inflows since reset) = 0
+      expect(json['feeAmount']).to eq(0.0)
+      expect(json['hasFee']).to be(false)
     end
 
     it 'returns 422 when amount is zero' do

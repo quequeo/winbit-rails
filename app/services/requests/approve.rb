@@ -167,15 +167,17 @@ module Requests
     end
 
     def calculate_and_apply_withdrawal_fee(request:, previous_balance:, requested_amount:, processed_at:)
-      pending_profit = pending_profit_until(investor: request.investor, as_of: processed_at)
+      pending_profit = pending_profit_until(investor: request.investor, as_of: processed_at, current_balance: previous_balance)
       fee_amount = BigDecimal('0')
       realized_profit = BigDecimal('0')
       percentage = BigDecimal(request.investor.trading_fee_percentage.to_s)
 
-      if pending_profit.positive? && previous_balance.positive?
+      if pending_profit.positive?
         raise StandardError, 'Usuario aprobador inválido para aplicar trading fee por retiro' if @approved_by.blank?
 
-        realized_profit = (pending_profit * (requested_amount / previous_balance)).round(2, :half_up)
+        # Fee is charged on the full accumulated profit (not proportional to withdrawal amount).
+        # The investor always receives the full requested amount; fee is an additional deduction.
+        realized_profit = pending_profit
         fee_amount = (realized_profit * (percentage / 100)).round(2, :half_up)
       end
 
@@ -211,15 +213,37 @@ module Requests
       }
     end
 
-    def pending_profit_until(investor:, as_of:)
-      operating_profit = PortfolioHistory.where(investor_id: investor.id, event: 'OPERATING_RESULT', status: 'COMPLETED')
-                                         .where('date <= ?', as_of)
-                                         .sum(:amount)
-      fee_profit = TradingFee.active.where(investor_id: investor.id)
-                                      .where('applied_at <= ?', as_of)
-                                      .sum(:profit_amount)
+    # Calculates accumulated profit since the last fee-reset event (last TRADING_FEE or WITHDRAWAL).
+    #
+    # Formula (Vpcust model):
+    #   profit = current_balance − Vpcust − inflows_since_last_reset
+    #
+    # Vpcust = new_balance of the most recent (TRADING_FEE or WITHDRAWAL) PortfolioHistory.
+    # Inflows = DEPOSIT + REFERRAL_COMMISSION events since that reset timestamp.
+    # If no reset event exists, Vpcust = 0 (measure from inception).
+    def pending_profit_until(investor:, as_of:, current_balance:)
+      last_reset = PortfolioHistory
+                     .where(investor_id: investor.id, event: %w[TRADING_FEE WITHDRAWAL], status: 'COMPLETED')
+                     .where('date <= ?', as_of)
+                     .order(date: :desc, created_at: :desc)
+                     .first
 
-      pending = BigDecimal(operating_profit.to_s) - BigDecimal(fee_profit.to_s)
+      vpcust = last_reset ? BigDecimal(last_reset.new_balance.to_s) : BigDecimal('0')
+      reset_at = last_reset&.date
+
+      inflows = if reset_at
+        PortfolioHistory
+          .where(investor_id: investor.id, event: %w[DEPOSIT REFERRAL_COMMISSION], status: 'COMPLETED')
+          .where('date > ? AND date <= ?', reset_at, as_of)
+          .sum(:amount)
+      else
+        PortfolioHistory
+          .where(investor_id: investor.id, event: %w[DEPOSIT REFERRAL_COMMISSION], status: 'COMPLETED')
+          .where('date <= ?', as_of)
+          .sum(:amount)
+      end
+
+      pending = BigDecimal(current_balance.to_s) - vpcust - BigDecimal(inflows.to_s)
       pending.positive? ? pending : BigDecimal('0')
     end
 
