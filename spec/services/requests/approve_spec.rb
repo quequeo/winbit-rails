@@ -8,7 +8,18 @@ RSpec.describe Requests::Approve, type: :service do
   let!(:investor) { Investor.create!(email: 'inv@test.com', name: 'Investor', status: 'ACTIVE') }
   let!(:portfolio) { Portfolio.create!(investor: investor, current_balance: 5000, total_invested: 5000) }
   let!(:admin) { User.create!(email: 'admin-approve@test.com', name: 'Admin', role: 'ADMIN') }
-
+  # Represents the initial deposit in portfolio history (required for Vpcust profit calculation)
+  let!(:initial_deposit_history) do
+    PortfolioHistory.create!(
+      investor: investor,
+      event: 'DEPOSIT',
+      amount: 5000,
+      previous_balance: 0,
+      new_balance: 5000,
+      status: 'COMPLETED',
+      date: 10.days.ago
+    )
+  end
   describe '#call' do
     context 'with a valid pending deposit request' do
       let!(:request) do
@@ -46,7 +57,7 @@ RSpec.describe Requests::Approve, type: :service do
           service.call
         }.to change(PortfolioHistory, :count).by(1)
 
-        history = PortfolioHistory.last
+        history = PortfolioHistory.where(event: 'DEPOSIT').order(created_at: :desc).first
         expect(history.investor_id).to eq(investor.id)
         expect(history.amount).to eq(1000.0)
         expect(history.event).to eq('DEPOSIT')
@@ -90,7 +101,7 @@ RSpec.describe Requests::Approve, type: :service do
           service.call
         }.to change(PortfolioHistory, :count).by(1)
 
-        history = PortfolioHistory.last
+        history = PortfolioHistory.where(event: 'WITHDRAWAL').last
         expect(history.investor_id).to eq(investor.id)
         expect(history.amount).to eq(1000.0)
         expect(history.event).to eq('WITHDRAWAL')
@@ -204,7 +215,7 @@ RSpec.describe Requests::Approve, type: :service do
         )
       end
 
-      it 'applies withdrawal trading fee and stores metadata' do
+      it 'applies withdrawal trading fee on full accumulated profit (Vpcust model)' do
         service = described_class.new(request_id: request.id, approved_by: admin)
 
         expect { service.call }.to change(TradingFee, :count).by(1)
@@ -217,6 +228,11 @@ RSpec.describe Requests::Approve, type: :service do
         expect(fee.withdrawal_request_id).to eq(request.id)
         expect(fee.withdrawal_amount.to_f).to eq(1000.0)
 
+        # profit = current_balance(5500) - vpcust(0, no prior reset) - inflows_since_inception(5000 deposit) = 500
+        # fee = 30% of 500 = 150
+        expect(fee.profit_amount.to_f).to eq(500.0)
+        expect(fee.fee_amount.to_f).to eq(150.0)
+
         withdrawal_history = PortfolioHistory.where(investor: investor, event: 'WITHDRAWAL').order(date: :desc).first
         fee_history = PortfolioHistory.where(investor: investor, event: 'TRADING_FEE').order(date: :desc).first
 
@@ -225,8 +241,84 @@ RSpec.describe Requests::Approve, type: :service do
         # Investor receives full requested amount; fee is charged additionally
         expect(withdrawal_history.amount.to_f).to eq(1000.0)
         expect(fee_history.amount.to_f).to be < 0
-        # Total deducted from portfolio = withdrawal + fee
-        expect(withdrawal_history.amount.to_f + fee_history.amount.to_f.abs).to be > 1000.0
+        # Total deducted = withdrawal(1000) + fee(150) = 1150
+        expect(withdrawal_history.amount.to_f + fee_history.amount.to_f.abs).to eq(1150.0)
+
+        portfolio.reload
+        expect(portfolio.current_balance.to_f).to eq(4350.0) # 5500 - 1000 - 150
+      end
+
+      it 'resets profit base (Vpcust) after fee so next withdrawal has no fee without new profit' do
+        service = described_class.new(request_id: request.id, approved_by: admin)
+        service.call
+
+        # Second withdrawal — no new operating result
+        request2 = InvestorRequest.create!(
+          investor: investor,
+          request_type: 'WITHDRAWAL',
+          method: 'USDC',
+          amount: 100,
+          status: 'PENDING',
+          requested_at: Time.current
+        )
+
+        expect {
+          described_class.new(request_id: request2.id, approved_by: admin).call
+        }.not_to change(TradingFee, :count)
+
+        portfolio.reload
+        expect(portfolio.current_balance.to_f).to eq(4250.0) # 4350 - 100
+      end
+    end
+
+    context 'with withdrawal after a deposit in the same period (Vpcust model: deposit is an inflow)' do
+      # Vpcust = 0 (no prior reset). Deposit 5000 + operating +500 = 5500.
+      # Then investor deposits 300 more → balance 5800.
+      # Profit = 5800 - 0(vpcust) - 5300(inflows: 5000 deposit + 300 deposit) = 500.
+      # Fee = 30% of 500 = 150.
+      before do
+        portfolio.update!(current_balance: 5800, total_invested: 5300)
+        PortfolioHistory.create!(
+          investor: investor,
+          event: 'OPERATING_RESULT',
+          amount: 500,
+          previous_balance: 5000,
+          new_balance: 5500,
+          status: 'COMPLETED',
+          date: 2.days.ago
+        )
+        PortfolioHistory.create!(
+          investor: investor,
+          event: 'DEPOSIT',
+          amount: 300,
+          previous_balance: 5500,
+          new_balance: 5800,
+          status: 'COMPLETED',
+          date: 1.day.ago
+        )
+      end
+
+      let!(:request) do
+        InvestorRequest.create!(
+          investor: investor,
+          request_type: 'WITHDRAWAL',
+          method: 'USDC',
+          amount: 500,
+          status: 'PENDING',
+          requested_at: Time.current
+        )
+      end
+
+      it 'excludes inflows from profit calculation' do
+        service = described_class.new(request_id: request.id, approved_by: admin)
+        expect { service.call }.to change(TradingFee, :count).by(1)
+
+        fee = TradingFee.last
+        expect(fee.profit_amount.to_f).to eq(500.0)
+        expect(fee.fee_amount.to_f).to eq(150.0)
+
+        portfolio.reload
+        expect(portfolio.current_balance.to_f).to eq(5150.0) # 5800 - 500 - 150
       end
     end
 
