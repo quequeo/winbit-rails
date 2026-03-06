@@ -151,6 +151,8 @@ export const ActivityLogsPage = () => {
             portal
             options={[
               { value: '', label: 'Todas las acciones' },
+              { value: 'create_request', label: 'Solicitud creada' },
+              { value: 'update_request', label: 'Solicitud actualizada' },
               { value: 'approve_request', label: 'Aprobar solicitud' },
               { value: 'reject_request', label: 'Rechazar solicitud' },
               { value: 'create_investor', label: 'Crear inversor' },
@@ -162,6 +164,7 @@ export const ActivityLogsPage = () => {
               { value: 'apply_trading_fee', label: 'Trading fee aplicado' },
               { value: 'update_trading_fee', label: 'Trading fee actualizado' },
               { value: 'void_trading_fee', label: 'Trading fee anulado' },
+              { value: 'apply_daily_operating_result', label: 'Operativa diaria aplicada' },
               { value: 'create_deposit_option', label: 'Opción depósito creada' },
               { value: 'update_deposit_option', label: 'Opción depósito actualizada' },
               { value: 'delete_deposit_option', label: 'Opción depósito eliminada' },

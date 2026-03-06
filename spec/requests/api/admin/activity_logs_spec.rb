@@ -53,12 +53,11 @@ RSpec.describe 'Admin Activity Logs API', type: :request do
     json = JSON.parse(response.body)
     displays = json['data']['logs'].map { |l| l.dig('target', 'display') }
 
-    # NOTE: activity_logs.target_id is bigint while many core models use string ids,
-    # so polymorphic targets may not resolve and the controller falls back to "Type #id".
-    expect(displays.join(' ')).to include('Inversor #')
-    expect(displays.join(' ')).to include('Portfolio #')
-    expect(displays.join(' ')).to include('Solicitud #')
-    expect(displays.join(' ')).to include('Admin #')
+    # Investor display uses email when target exists
+    expect(displays.join(' ')).to include('inv2@test.com')
+    expect(displays.join(' ')).to include('Portfolio de Inv2')
+    expect(displays.join(' ')).to include('DEPOSIT')
+    expect(displays.join(' ')).to include('Admin')
     expect(displays.join(' ')).to include('Notificaciones')
   end
 end

@@ -108,6 +108,12 @@ module Api
 
         if applicator.apply
           result = DailyOperatingResult.find_by!(date: date)
+          ActivityLogger.log(
+            user: current_user,
+            action: 'apply_daily_operating_result',
+            target: result,
+            metadata: { date: date.to_s, percent: percent.to_f }
+          )
           render json: { data: DailyOperatingResultSerializer.new(result).as_json }, status: :created
         else
           status = applicator.errors.any? { |e| e.include?('Ya existe') } ? :conflict : :unprocessable_content

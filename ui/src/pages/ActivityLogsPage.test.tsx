@@ -77,5 +77,166 @@ describe('ActivityLogsPage', () => {
 
     consoleSpy.mockRestore()
   })
+
+  it('formats amount/from/to as currency in metadata', async () => {
+    vi.mocked(api.getActivityLogs).mockResolvedValueOnce({
+      data: {
+        logs: [
+          {
+            id: 2,
+            action: 'approve_request',
+            action_description: 'Solicitud aprobada',
+            user: { id: 'u1', name: 'Admin', email: 'admin@test.com' },
+            target: { type: 'InvestorRequest', id: 'req1', display: 'DEPOSIT - $1.234,56' },
+            metadata: { amount: 1234.56, status: 'APPROVED' },
+            created_at: '2025-12-31T12:00:00Z',
+          },
+        ],
+        pagination: { page: 1, per_page: 20, total: 1, total_pages: 1 },
+      },
+    })
+
+    render(<ActivityLogsPage />)
+
+    await waitFor(() => {
+      expect(screen.getByText('Registro de Actividad')).toBeInTheDocument()
+    })
+
+    // formatValue formats amount as $X.XXX,XX (es-AR) - appears in metadata and target display
+    expect(screen.getAllByText(/\$1\.234,56/).length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Aprobado').length).toBeGreaterThan(0)
+  })
+
+  it('shows distribute_profit with purple badge', async () => {
+    vi.mocked(api.getActivityLogs).mockResolvedValueOnce({
+      data: {
+        logs: [
+          {
+            id: 3,
+            action: 'distribute_profit',
+            action_description: 'Ganancias distribuidas',
+            user: { id: 'u1', name: 'Admin', email: 'admin@test.com' },
+            target: { type: 'Portfolio', id: 'p1', display: 'Portfolio de X' },
+            metadata: {},
+            created_at: '2025-12-31T12:00:00Z',
+          },
+        ],
+        pagination: { page: 1, per_page: 20, total: 1, total_pages: 1 },
+      },
+    })
+
+    render(<ActivityLogsPage />)
+
+    await waitFor(() => {
+      expect(screen.getAllByText('Ganancias distribuidas').length).toBeGreaterThan(0)
+    })
+
+    const badges = screen.getAllByText('Ganancias distribuidas')
+    expect(badges[0].closest('span')).toHaveClass('bg-purple-100')
+  })
+
+  it('shows gray badge for unknown action', async () => {
+    vi.mocked(api.getActivityLogs).mockResolvedValueOnce({
+      data: {
+        logs: [
+          {
+            id: 4,
+            action: 'unknown_action',
+            action_description: 'Acción desconocida',
+            user: { id: 'u1', name: 'Admin', email: 'admin@test.com' },
+            target: { type: 'Investor', id: 'i1', display: 'test@test.com' },
+            metadata: {},
+            created_at: '2025-12-31T12:00:00Z',
+          },
+        ],
+        pagination: { page: 1, per_page: 20, total: 1, total_pages: 1 },
+      },
+    })
+
+    render(<ActivityLogsPage />)
+
+    await waitFor(() => {
+      expect(screen.getAllByText('Acción desconocida').length).toBeGreaterThan(0)
+    })
+
+    const badges = screen.getAllByText('Acción desconocida')
+    expect(badges[0].closest('span')).toHaveClass('bg-gray-100')
+  })
+
+  it('shows empty state when no logs', async () => {
+    vi.mocked(api.getActivityLogs).mockResolvedValueOnce({
+      data: { logs: [], pagination: { page: 1, per_page: 20, total: 0, total_pages: 1 } },
+    })
+
+    render(<ActivityLogsPage />)
+
+    await waitFor(() => {
+      expect(screen.getByText('Registro de Actividad')).toBeInTheDocument()
+    })
+
+    expect(screen.getAllByText('No hay actividad registrada').length).toBeGreaterThanOrEqual(1)
+  })
+
+  it('shows pagination and navigates with Anterior/Siguiente', async () => {
+    const user = userEvent.setup()
+    vi.mocked(api.getActivityLogs).mockImplementation(async (params) => {
+      const page = (params as { page?: number }).page ?? 1
+      if (page === 1) {
+        return {
+          data: {
+            logs: [
+              {
+                id: 1,
+                action: 'create_investor',
+                action_description: 'Crear inversor',
+                user: { id: 'u1', name: 'Admin', email: 'admin@test.com' },
+                target: { type: 'Investor', id: 'i1', display: 'a@test.com' },
+                metadata: {},
+                created_at: '2025-12-31T12:00:00Z',
+              },
+            ],
+            pagination: { page: 1, per_page: 20, total: 45, total_pages: 3 },
+          },
+        }
+      }
+      return {
+        data: {
+          logs: [
+            {
+              id: 2,
+              action: 'update_investor',
+              action_description: 'Inversor actualizado',
+              user: { id: 'u1', name: 'Admin', email: 'admin@test.com' },
+              target: { type: 'Investor', id: 'i2', display: 'b@test.com' },
+              metadata: {},
+              created_at: '2025-12-30T12:00:00Z',
+            },
+          ],
+          pagination: { page: 2, per_page: 20, total: 45, total_pages: 3 },
+        },
+      }
+    })
+
+    render(<ActivityLogsPage />)
+
+    await waitFor(() => {
+      expect(screen.getByText('Página 1 de 3 (45 registros)')).toBeInTheDocument()
+    })
+
+    await user.click(screen.getByRole('button', { name: 'Siguiente' }))
+
+    await waitFor(() => {
+      expect(api.getActivityLogs).toHaveBeenLastCalledWith(expect.objectContaining({ page: 2 }))
+    })
+    await waitFor(() => {
+      expect(screen.getAllByText('Inversor actualizado').length).toBeGreaterThan(0)
+    })
+
+    await user.click(screen.getByRole('button', { name: 'Anterior' }))
+
+    await waitFor(() => {
+      expect(api.getActivityLogs).toHaveBeenLastCalledWith(expect.objectContaining({ page: 1 }))
+    })
+  })
 })
 

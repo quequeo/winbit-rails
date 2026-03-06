@@ -9,13 +9,13 @@ RSpec.describe ActivityLogSerializer do
     described_class.new(log).as_json
   end
 
-  it 'serializes Investor target with name' do
+  it 'serializes Investor target with email (preferred over name)' do
     inv = Investor.create!(email: 'inv@test.com', name: 'Juan Pérez', status: 'ACTIVE')
     log = ActivityLog.create!(user: admin, target: inv, action: 'create_investor', metadata: {})
 
     result = serialize(log)
 
-    expect(result[:target][:display]).to eq('Juan Pérez')
+    expect(result[:target][:display]).to eq('inv@test.com')
   end
 
   it 'serializes Investor target without name (deleted)' do
@@ -26,7 +26,7 @@ RSpec.describe ActivityLogSerializer do
     log.reload
     result = serialize(log)
 
-    expect(result[:target][:display]).to match(/Inversor #\d+/)
+    expect(result[:target][:display]).to match(/\AInversor #.+\z/)
   end
 
   it 'serializes Portfolio target with investor' do
@@ -56,8 +56,8 @@ RSpec.describe ActivityLogSerializer do
     expect(result[:target][:display]).to eq('WITHDRAWAL - $500.0')
   end
 
-  it 'serializes TradingFee target' do
-    inv = Investor.create!(email: 'inv@test.com', name: 'Carlos', status: 'ACTIVE')
+  it 'serializes TradingFee target with investor email' do
+    inv = Investor.create!(email: 'carlos@test.com', name: 'Carlos', status: 'ACTIVE')
     fee = TradingFee.create!(
       investor: inv,
       applied_by: admin,
@@ -72,7 +72,7 @@ RSpec.describe ActivityLogSerializer do
 
     result = serialize(log)
 
-    expect(result[:target][:display]).to eq('Carlos — $30.0')
+    expect(result[:target][:display]).to eq('carlos@test.com — $30.0')
   end
 
   it 'serializes TradingFee target when fee is deleted' do
@@ -93,7 +93,21 @@ RSpec.describe ActivityLogSerializer do
     log.reload
     result = serialize(log)
 
-    expect(result[:target][:display]).to match(/Trading fee #\d+/)
+    expect(result[:target][:display]).to match(/\ATrading fee #.+\z/)
+  end
+
+  it 'serializes DailyOperatingResult target' do
+    res = DailyOperatingResult.create!(
+      date: Date.new(2025, 3, 6),
+      percent: 0.1,
+      applied_by: admin,
+      applied_at: Time.current
+    )
+    log = ActivityLog.create!(user: admin, target: res, action: 'apply_daily_operating_result', metadata: {})
+
+    result = serialize(log)
+
+    expect(result[:target][:display]).to eq('2025-03-06 — 0.1%')
   end
 
   it 'serializes DepositOption target' do

@@ -30,7 +30,8 @@ class ActivityLogSerializer
   def target_display
     case log.target_type
     when 'Investor'
-      log.target&.name || "Inversor ##{log.target_id}"
+      inv = log.target
+      inv ? (inv.email.presence || inv.name.presence || "Inversor ##{log.target_id}") : "Inversor ##{log.target_id}"
     when 'Portfolio'
       investor = log.target&.investor
       investor ? "Portfolio de #{investor.name}" : "Portfolio ##{log.target_id}"
@@ -40,11 +41,15 @@ class ActivityLogSerializer
     when 'TradingFee'
       fee = log.target
       if fee
-        investor_name = fee.investor&.name || "Inversor ##{fee.investor_id}"
+        inv = fee.investor
+        investor_name = inv ? (inv.email.presence || inv.name.presence || "Inversor ##{fee.investor_id}") : "Inversor ##{fee.investor_id}"
         "#{investor_name} — $#{fee.fee_amount}"
       else
         "Trading fee ##{log.target_id}"
       end
+    when 'DailyOperatingResult'
+      res = log.target
+      res ? "#{res.date} — #{res.percent}%" : "Operativa diaria ##{log.target_id}"
     when 'DepositOption'
       option = log.target
       option ? "#{option.category}: #{option.label}" : "Opción de depósito ##{log.target_id}"

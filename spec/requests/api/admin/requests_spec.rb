@@ -133,6 +133,28 @@ RSpec.describe 'Admin requests', type: :request do
     expect(req.processed_at.to_date).to eq(Date.new(2025, 1, 10))
   end
 
+  it 'POST /api/admin/requests logs create_request when status is PENDING' do
+    investor = Investor.create!(email: 'create-pending@example.com', name: 'cp', status: 'ACTIVE')
+    Portfolio.create!(investor_id: investor.id, current_balance: 100, total_invested: 100)
+
+    expect {
+      post '/api/admin/requests', params: {
+        investor_id: investor.id,
+        request_type: 'DEPOSIT',
+        method: 'USDT',
+        amount: 75,
+        status: 'PENDING'
+      }
+    }.to change(ActivityLog, :count).by(1)
+
+    expect(response).to have_http_status(:created)
+    log = ActivityLog.last
+    expect(log.action).to eq('create_request')
+    expect(log.target_type).to eq('InvestorRequest')
+    expect(log.metadata['request_type']).to eq('DEPOSIT')
+    expect(log.metadata['amount']).to eq(75.0)
+  end
+
   it 'POST /api/admin/requests supports status REJECTED on create' do
     investor = Investor.create!(email: 'rej-create@example.com', name: 'rc', status: 'ACTIVE')
     Portfolio.create!(investor_id: investor.id, current_balance: 100, total_invested: 100)
@@ -150,6 +172,39 @@ RSpec.describe 'Admin requests', type: :request do
     req = InvestorRequest.find(req_id)
     expect(req.status).to eq('REJECTED')
     expect(req.processed_at).to be_present
+  end
+
+  it 'PATCH /api/admin/requests/:id logs update_request on success' do
+    investor = Investor.create!(email: 'upd-log@example.com', name: 'ul', status: 'ACTIVE')
+    Portfolio.create!(investor_id: investor.id, current_balance: 100, total_invested: 100)
+    req = InvestorRequest.create!(
+      investor_id: investor.id,
+      request_type: 'DEPOSIT',
+      amount: 10,
+      method: 'USDT',
+      status: 'PENDING',
+      requested_at: Time.current
+    )
+
+    expect {
+      patch "/api/admin/requests/#{req.id}", params: {
+        investor_id: investor.id,
+        request_type: 'DEPOSIT',
+        method: 'CRYPTO',
+        amount: 25,
+        network: 'TRC20'
+      }
+    }.to change(ActivityLog, :count).by(1)
+
+    expect(response).to have_http_status(:no_content)
+    req.reload
+    expect(req.amount.to_f).to eq(25.0)
+    expect(req.method).to eq('CRYPTO')
+    expect(req.network).to eq('TRC20')
+    log = ActivityLog.last
+    expect(log.action).to eq('update_request')
+    expect(log.target_id).to eq(req.id.to_s)
+    expect(log.metadata['amount']).to eq(25.0)
   end
 
   it 'PATCH /api/admin/requests/:id does not allow changing status directly' do

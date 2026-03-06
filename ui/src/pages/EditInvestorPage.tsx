@@ -101,6 +101,10 @@ export const EditInvestorPage = () => {
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
             />
+            <p className="mt-1 text-xs text-amber-600">
+              Cambiar el email puede impedir que el inversor inicie sesión en la app (Firebase Auth usa el email). Solo
+              modificarlo si es necesario y coordinar con el inversor.
+            </p>
           </div>
 
           <div>
