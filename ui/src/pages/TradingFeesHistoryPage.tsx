@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../lib/api';
-import { formatCurrencyAR } from '../lib/formatters';
+import { formatCurrencyAR, formatDateAR } from '../lib/formatters';
 
 type TradingFeeHistoryRow = {
   id: string;
@@ -31,18 +31,7 @@ type TradingFeesHistoryResponse = {
   pagination: Pagination;
 };
 
-const formatDate = (value: string | null | undefined) => {
-  if (!value) return '—';
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return String(value);
-
-  const dd = String(d.getDate()).padStart(2, '0');
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const yyyy = String(d.getFullYear());
-  const hh = String(d.getHours()).padStart(2, '0');
-  const min = String(d.getMinutes()).padStart(2, '0');
-  return `${dd}/${mm}/${yyyy} ${hh}:${min}`;
-};
+const formatDate = (value: string | null | undefined) => formatDateAR(value);
 
 const formatPeriod = (start: string, ending: string) => {
   const fmt = (v: string) => {

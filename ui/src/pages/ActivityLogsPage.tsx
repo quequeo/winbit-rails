@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '../lib/api';
+import { formatDateAR } from '../lib/formatters';
 import { Select } from '../components/ui/Select';
 
 type ActivityLog = {
@@ -63,14 +64,7 @@ export const ActivityLogsPage = () => {
   }, [fetchLogs]);
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('es-AR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    }).format(date);
+    return formatDateAR(dateString);
   };
 
   const KEY_LABELS: Record<string, string> = {

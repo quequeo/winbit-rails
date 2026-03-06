@@ -170,8 +170,9 @@ module Api
         items.sort_by do |item|
           d = item[:date]
           t = d.respond_to?(:to_time) ? d.to_time : Time.zone.parse(d.to_s)
-          # Cuando retiro y comisión tienen la misma fecha, mostrar retiro antes que la comisión
-          sort_key = (item[:event] == 'TRADING_FEE' && item[:tradingFeeSource] == 'WITHDRAWAL') ? 1 : 0
+          # Cuando retiro y comisión tienen la misma fecha, mostrar comisión primero (sort_key 0)
+          # para que el Vpcust (saldo post-comisión) quede visualmente arriba del retiro.
+          sort_key = (item[:event] == 'TRADING_FEE' && item[:tradingFeeSource] == 'WITHDRAWAL') ? 0 : 1
           [-t.to_f, sort_key]
         end
       end

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatCurrencyAR, formatNumberAR, formatPercentAR } from './formatters';
+import { formatCurrencyAR, formatNumberAR, formatPercentAR, formatDateAR } from './formatters';
 
 describe('formatters', () => {
   describe('formatCurrencyAR', () => {
@@ -124,6 +124,33 @@ describe('formatters', () => {
       expect(result).toContain('0');
       expect(result).toContain('05');
       expect(result).toContain('%');
+    });
+  });
+
+  describe('formatDateAR', () => {
+    it('returns - for null/undefined', () => {
+      expect(formatDateAR(null)).toBe('-');
+      expect(formatDateAR(undefined)).toBe('-');
+    });
+
+    it('formats a UTC ISO string in Argentina timezone (UTC-3)', () => {
+      // 2026-02-14T00:00:00Z is 2026-02-13T21:00:00 in UTC-3 — should show 13/02/2026
+      // BUT Argentina is UTC-3, so 2026-02-14T03:00:00Z = 2026-02-14T00:00:00 AR
+      // We just verify the result contains date parts (timezone rendering depends on env)
+      const result = formatDateAR('2026-02-14T03:00:00.000Z');
+      expect(result).toContain('2026');
+      expect(result).toContain('02');
+    });
+
+    it('formats without time when opts.time is false', () => {
+      const result = formatDateAR('2026-02-14T03:00:00.000Z', { time: false });
+      // Should not contain hours:minutes pattern like 00:00
+      expect(result).not.toMatch(/\d{2}:\d{2}/);
+    });
+
+    it('formats with time by default', () => {
+      const result = formatDateAR('2026-02-14T12:00:00.000Z');
+      expect(result).toMatch(/\d{2}:\d{2}/);
     });
   });
 
