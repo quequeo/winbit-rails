@@ -25,10 +25,29 @@ module Api
 
         req.save!
 
-        if status_param == 'APPROVED'
+        if status_param == 'PENDING'
+          ActivityLogger.log(
+            user: current_user,
+            action: 'create_request',
+            target: req,
+            metadata: { request_type: req.request_type, amount: req.amount.to_f, method: req.method }
+          )
+        elsif status_param == 'APPROVED'
           Requests::Approve.new(request_id: req.id, processed_at: processed_at, approved_by: current_user).call
+          ActivityLogger.log(
+            user: current_user,
+            action: 'approve_request',
+            target: req.reload,
+            metadata: { request_type: req.request_type, amount: req.amount.to_f, method: req.method }
+          )
         elsif status_param == 'REJECTED'
           req.update!(status: 'REJECTED', processed_at: (processed_at.presence || Time.current))
+          ActivityLogger.log(
+            user: current_user,
+            action: 'reject_request',
+            target: req,
+            metadata: { request_type: req.request_type, amount: req.amount.to_f }
+          )
         end
 
         render json: { data: { id: req.id } }, status: :created
@@ -53,6 +72,17 @@ module Api
           amount: permitted.fetch(:amount),
           network: permitted[:network].presence,
           status: @request.status,
+        )
+
+        ActivityLogger.log(
+          user: current_user,
+          action: 'update_request',
+          target: @request,
+          metadata: {
+            request_type: @request.request_type,
+            amount: @request.amount.to_f,
+            method: @request.method,
+          }
         )
 
         head :no_content

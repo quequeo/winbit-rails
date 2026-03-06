@@ -10,14 +10,14 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_25_000000) do
+ActiveRecord::Schema[8.0].define(version: 2026_03_06_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
   create_table "activity_logs", force: :cascade do |t|
     t.string "user_id", null: false
     t.string "target_type", null: false
-    t.bigint "target_id", null: false
+    t.string "target_id", null: false
     t.string "action", limit: 30, null: false
     t.jsonb "metadata", default: {}
     t.datetime "created_at", precision: nil, null: false
