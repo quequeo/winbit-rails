@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { api } from '../lib/api';
-import { formatCurrencyAR } from '../lib/formatters';
+import { formatCurrencyAR, formatDateAR } from '../lib/formatters';
 import type { ApiInvestor, ApiRequest } from '../types';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -369,13 +369,7 @@ export const RequestsPage = () => {
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold text-gray-900">{r.investor.name}</p>
                 <p className="mt-1 text-xs text-gray-500">
-                  {new Date(r.requestedAt ?? '').toLocaleDateString('es-AR', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
+                  {formatDateAR(r.requestedAt)}
                 </p>
               </div>
               <span
@@ -460,13 +454,7 @@ export const RequestsPage = () => {
               {requests.map((r) => (
                 <tr key={r.id} className="text-sm">
                   <td className="py-2">
-                    {new Date(r.requestedAt ?? '').toLocaleDateString('es-AR', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
+                    {formatDateAR(r.requestedAt)}
                   </td>
                   <td className="py-2">
                     <p className="font-medium">{r.investor.name}</p>

@@ -41,3 +41,31 @@ export const formatPercentAR = (value: number): string => {
   const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
   return `${integerPart},${parts[1]}%`;
 };
+
+const AR_TZ = 'America/Argentina/Buenos_Aires';
+
+/**
+ * Formatea fecha en timezone de Argentina.
+ * Acepta ISO string, Date o null/undefined.
+ * Ejemplo: "13/02/2026, 19:00"
+ */
+export const formatDateAR = (
+  value: string | Date | null | undefined,
+  opts: { time?: boolean } = { time: true },
+): string => {
+  if (!value) return '-';
+  const d = typeof value === 'string' ? new Date(value) : value;
+  if (isNaN(d.getTime())) return '-';
+
+  const options: Intl.DateTimeFormatOptions = {
+    timeZone: AR_TZ,
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  };
+  if (opts.time !== false) {
+    options.hour = '2-digit';
+    options.minute = '2-digit';
+  }
+  return d.toLocaleDateString('es-AR', options);
+};

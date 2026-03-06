@@ -188,7 +188,7 @@ RSpec.describe 'Public investors', type: :request do
     expect(fee_item['tradingFeePeriodLabel']).to eq('2026-01')
   end
 
-  it 'GET /api/public/investor/:email/history orders withdrawal before its trading fee when same date' do
+  it 'GET /api/public/investor/:email/history orders trading fee before withdrawal when same date (Vpcust visible above retiro)' do
     investor = Investor.create!(email: 'order-fee@example.com', name: 'Order', status: 'ACTIVE')
     admin = User.create!(email: 'admin-order@example.com', name: 'Admin', role: 'ADMIN')
     t = Time.utc(2026, 2, 25, 19, 54, 43)
@@ -220,7 +220,9 @@ RSpec.describe 'Public investors', type: :request do
     data = JSON.parse(response.body)['data']
     withdrawal_idx = data.index { |it| it['event'] == 'WITHDRAWAL' && it['amount'] == 2000 }
     fee_idx = data.index { |it| it['event'] == 'TRADING_FEE' && it['amount'] == -5.59 }
-    expect(withdrawal_idx).to be < fee_idx
+    # Fee must appear before (lower index = higher in list) the withdrawal so
+    # the Vpcust (balance after fee) is visible above the retiro row.
+    expect(fee_idx).to be < withdrawal_idx
   end
 
   it 'GET /api/public/investor/:email/history matches each TRADING_FEE PH to correct fee by amount when multiple fees exist' do
