@@ -172,7 +172,7 @@ RSpec.describe 'Admin requests', type: :request do
       status: 'APPROVED'
     }
 
-    expect(response).to have_http_status(:unprocessable_entity)
+    expect(response).to have_http_status(:unprocessable_content)
     req.reload
     expect(req.status).to eq('PENDING')
   end
@@ -254,7 +254,7 @@ RSpec.describe 'Admin requests', type: :request do
 
     delete "/api/admin/requests/#{req.id}"
 
-    expect(response).to have_http_status(:unprocessable_entity)
+    expect(response).to have_http_status(:unprocessable_content)
     expect(JSON.parse(response.body)['error']).to include('Revertir')
     expect(InvestorRequest.find_by(id: req.id)).to be_present
   end
@@ -319,7 +319,7 @@ RSpec.describe 'Admin requests', type: :request do
 
     delete "/api/admin/requests/#{req.id}"
 
-    expect(response).to have_http_status(:unprocessable_entity)
+    expect(response).to have_http_status(:unprocessable_content)
     expect(JSON.parse(response.body)['error']).to include('Revertir')
     expect(InvestorRequest.find_by(id: req.id)).to be_present
   end

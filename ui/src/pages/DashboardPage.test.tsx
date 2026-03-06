@@ -132,6 +132,46 @@ describe('DashboardPage', () => {
     await waitFor(() => expect(api.getAdminDashboard).toHaveBeenCalledWith({ days: 30 }));
   });
 
+  it('calls API with days 0 when Todo range is selected', async () => {
+    const user = userEvent.setup();
+    vi.mocked(api.getAdminDashboard).mockResolvedValue({
+      data: {
+        investorCount: 10,
+        pendingRequestCount: 2,
+        totalAum: 50000,
+        aumSeries: [{ date: '2024-01-01', totalAum: 40000 }],
+      },
+    });
+
+    render(<DashboardPage />);
+
+    await waitFor(() => expect(screen.getByText('Dashboard')).toBeInTheDocument());
+    await user.click(screen.getByRole('button', { name: 'Todo' }));
+    await waitFor(() => expect(api.getAdminDashboard).toHaveBeenCalledWith({ days: 0 }));
+  });
+
+  it('displays strategy return YTD and all-time when provided', async () => {
+    vi.mocked(api.getAdminDashboard).mockResolvedValue({
+      data: {
+        investorCount: 5,
+        pendingRequestCount: 1,
+        totalAum: 100000,
+        strategyReturnYtdUsd: 5000,
+        strategyReturnYtdPercent: 5.25,
+        strategyReturnAllUsd: 12000,
+        strategyReturnAllPercent: -2.5,
+      },
+    });
+
+    render(<DashboardPage />);
+
+    await waitFor(() => expect(screen.getByText('Dashboard')).toBeInTheDocument());
+    expect(screen.getByText(/\$5\.000,00/)).toBeInTheDocument();
+    expect(screen.getByText(/\+5[.,]25%/)).toBeInTheDocument();
+    expect(screen.getByText(/\$12\.000,00/)).toBeInTheDocument();
+    expect(screen.getByText(/-2[.,]50%/)).toBeInTheDocument();
+  });
+
   it('displays AUM chart when aumSeries is provided', async () => {
     vi.mocked(api.getAdminDashboard).mockResolvedValue({
       data: {

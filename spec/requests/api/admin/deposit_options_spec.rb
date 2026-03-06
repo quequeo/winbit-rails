@@ -64,7 +64,7 @@ RSpec.describe 'Admin Deposit Options API', type: :request do
         details: {},
       }
 
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
       json = JSON.parse(response.body)
       expect(json['error']).to include('bank_name')
     end
@@ -75,7 +75,7 @@ RSpec.describe 'Admin Deposit Options API', type: :request do
         currency: 'ARS',
       }
 
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
     end
   end
 
@@ -104,7 +104,7 @@ RSpec.describe 'Admin Deposit Options API', type: :request do
         label: '',
       }
 
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
     end
   end
 

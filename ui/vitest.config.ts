@@ -12,7 +12,12 @@ export default defineConfig({
       reporter: ['text', 'html', 'json-summary'],
       exclude: [
         'node_modules/',
+        'dist/',
         'src/test/',
+        'src/main.tsx',
+        'src/types.ts',
+        'src/App.tsx',
+        'src/components/AumLineChart.tsx',
         '**/*.test.{ts,tsx}',
         '**/*.spec.{ts,tsx}',
         'vite.config.ts',

@@ -8,9 +8,15 @@ Si algo no está claro o hay más de una opción válida, el agente DEBE pregunt
 
 ## 0.1) Archivos raíz del repositorio
 
-- `README.md` — Setup, uso, API reference y troubleshooting. NO se edita sin autorización.
-- `FORMULAS.md` — Documentación de fórmulas financieras (TWR, etc.). NO se edita sin autorización.
+- `README.md` — Setup, uso y troubleshooting. NO se edita sin autorización.
+- `API.md` — Documentación de endpoints (API pública y admin). Consultar y mantener actualizado cuando cambien rutas.
+- `FORMULAS.md` — Documentación de fórmulas financieras (TWR, operativa diaria, balance, total invertido). NO se edita sin autorización.
+- `CST_FEE_LOGIC.md` — Lógica de cobro de comisión por retiro (CST, Vpcust, rentabilidad, fee sobre ganancia acumulada). Consultar y mantener actualizado cuando cambie la lógica de fees.
+- `NEGOCIO_MOVIMIENTOS.md` — Lógica de negocio de depósitos, retiros, operativa diaria y comisión por referido. Referencias a CST y fórmulas.
 - `AGENTS.md` — Este archivo. Convenciones y reglas operativas.
+
+**Workspace raíz** (carpeta padre):
+- `../PREGUNTAS_CST.md` — Preguntas y respuestas confirmadas sobre CST con el dueño. Complementa `CST_FEE_LOGIC.md`.
 
 ## 1) Stack y versiones
 

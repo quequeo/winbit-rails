@@ -20,7 +20,7 @@ describe('OperativaHubPage', () => {
     vi.mocked(api.getDailyOperatingMonthlySummary).mockResolvedValue({ data: [] } as { data?: unknown[] });
   });
 
-  it('renders tabs', () => {
+  it('renders tabs', async () => {
     render(
       <MemoryRouter>
         <OperativaHubPage />
@@ -29,6 +29,8 @@ describe('OperativaHubPage', () => {
 
     expect(screen.getByRole('button', { name: 'Operativa Diaria' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Historial de Operativas' })).toBeInTheDocument();
+
+    await waitFor(() => expect(api.getDailyOperatingResults).toHaveBeenCalled());
   });
 
   it('switches to historial tab', async () => {

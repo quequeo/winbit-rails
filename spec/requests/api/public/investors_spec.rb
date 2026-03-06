@@ -406,13 +406,13 @@ RSpec.describe 'Public investors', type: :request do
     it 'returns 422 when amount is zero' do
       investor = build_investor(email: 'zero@example.com', balance: 10_000)
       get "/api/public/investor/#{CGI.escape(investor.email)}/withdrawal_fee_preview?amount=0"
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
     end
 
     it 'returns 422 when amount exceeds balance' do
       investor = build_investor(email: 'exceed@example.com', balance: 1_000)
       get "/api/public/investor/#{CGI.escape(investor.email)}/withdrawal_fee_preview?amount=99999"
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
     end
 
     it 'returns 404 when investor has no portfolio' do
@@ -424,7 +424,7 @@ RSpec.describe 'Public investors', type: :request do
     it 'returns 422 for invalid amount format' do
       investor = build_investor(email: 'invalid-amount@example.com', balance: 1_000)
       get "/api/public/investor/#{CGI.escape(investor.email)}/withdrawal_fee_preview?amount=abc"
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
     end
 
     it 'returns 404 for unknown investor' do

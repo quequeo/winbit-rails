@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { RequestsPage } from './RequestsPage';
 import { api } from '../lib/api';
@@ -49,6 +49,28 @@ describe('RequestsPage', () => {
           status: 'APPROVED',
           requestedAt: '2024-01-02T15:00:00Z',
           processedAt: '2024-01-03T10:00:00Z',
+        },
+        {
+          id: '3',
+          investor: { id: '1', name: 'Investor One' },
+          type: 'DEPOSIT',
+          method: 'USDT',
+          amount: 500,
+          network: 'TRC20',
+          status: 'REVERSED',
+          requestedAt: '2024-01-03T10:00:00Z',
+          processedAt: '2024-01-04T10:00:00Z',
+          attachmentUrl: 'https://firebasestorage.googleapis.com/v1/b/bucket/o/file.pdf',
+        },
+        {
+          id: '4',
+          investor: { id: '2', name: 'Investor Two' },
+          type: 'WITHDRAWAL',
+          method: 'BANK_USD',
+          amount: 200,
+          network: null,
+          status: 'REJECTED',
+          requestedAt: '2024-01-05T10:00:00Z',
         },
       ],
       pendingCount: 1,
@@ -162,7 +184,7 @@ describe('RequestsPage', () => {
       vi.mocked(api.getAdminRequests).mockResolvedValue(mockRequests);
       vi.mocked(api.createRequest).mockResolvedValue({ data: { id: '3' } });
 
-      const user = userEvent.setup();
+      const user = userEvent.setup({ delay: null });
       render(<RequestsPage />);
 
       await waitFor(() => {
@@ -209,9 +231,7 @@ describe('RequestsPage', () => {
 
       render(<RequestsPage />);
 
-      await waitFor(() => {
-        expect(api.getAdminRequests).toHaveBeenCalled();
-      });
+      await waitFor(() => expect(api.getAdminRequests).toHaveBeenCalled());
 
       const addButton = await screen.findByRole('button', { name: /Agregar Solicitud/i });
       await user.click(addButton);
@@ -225,9 +245,28 @@ describe('RequestsPage', () => {
       const submitButton = screen.getByRole('button', { name: /Crear Solicitud/i });
       await user.click(submitButton);
 
-      await waitFor(() => {
-        expect(alertSpy).toHaveBeenCalledWith('Create failed');
-      });
+      await waitFor(() => expect(alertSpy).toHaveBeenCalledWith('Create failed'));
+
+      alertSpy.mockRestore();
+    });
+
+    it('shows generic alert when create rejects with non-Error', async () => {
+      vi.mocked(api.getAdminRequests).mockResolvedValue(mockRequests);
+      vi.mocked(api.createRequest).mockRejectedValue('string error');
+
+      const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
+      const user = userEvent.setup();
+
+      render(<RequestsPage />);
+
+      await waitFor(() => expect(api.getAdminRequests).toHaveBeenCalled());
+
+      await user.click(screen.getByRole('button', { name: /Agregar Solicitud/i }));
+      await user.selectOptions(screen.getByLabelText(/Inversor/i), '1');
+      await user.type(screen.getByPlaceholderText('1000'), '1000');
+      await user.click(screen.getByRole('button', { name: /Crear Solicitud/i }));
+
+      await waitFor(() => expect(alertSpy).toHaveBeenCalledWith('Error al guardar solicitud'));
 
       alertSpy.mockRestore();
     });
@@ -323,6 +362,130 @@ describe('RequestsPage', () => {
       });
 
       expect(api.reverseRequest).not.toHaveBeenCalled();
+    });
+
+    it('shows error when reverse fails', async () => {
+      vi.mocked(api.getAdminRequests).mockResolvedValue(mockRequests);
+      vi.mocked(api.reverseRequest).mockRejectedValue(new Error('Reverse failed'));
+
+      const user = userEvent.setup();
+      render(<RequestsPage />);
+
+      await waitFor(() => expect(api.getAdminRequests).toHaveBeenCalled());
+
+      const revertButtons = screen.getAllByRole('button', { name: /Revertir/i });
+      await user.click(revertButtons[0]);
+      await user.click(screen.getByRole('button', { name: /Sí, revertir/i }));
+
+      await waitFor(() => expect(screen.getByText('Reverse failed')).toBeInTheDocument());
+    });
+  });
+
+  describe('Errores approve/reject', () => {
+    it('shows error when approve fails', async () => {
+      vi.mocked(api.getAdminRequests).mockResolvedValue(mockRequests);
+      vi.mocked(api.approveRequest).mockRejectedValue(new Error('Approve failed'));
+
+      const user = userEvent.setup();
+      render(<RequestsPage />);
+
+      await waitFor(() => expect(api.getAdminRequests).toHaveBeenCalled());
+
+      const approveButtons = screen.getAllByRole('button', { name: /Aprobar/i });
+      await user.click(approveButtons[0]);
+
+      await waitFor(() => expect(screen.getByText('Approve failed')).toBeInTheDocument());
+    });
+
+    it('shows error when reject fails', async () => {
+      vi.mocked(api.getAdminRequests).mockResolvedValue(mockRequests);
+      vi.mocked(api.rejectRequest).mockRejectedValue(new Error('Reject failed'));
+
+      const user = userEvent.setup();
+      render(<RequestsPage />);
+
+      await waitFor(() => expect(api.getAdminRequests).toHaveBeenCalled());
+
+      const rejectButtons = screen.getAllByRole('button', { name: /Rechazar/i });
+      await user.click(rejectButtons[0]);
+
+      await waitFor(() => expect(screen.getByText('Reject failed')).toBeInTheDocument());
+    });
+  });
+
+  describe('Form cancel', () => {
+    it('closes and resets form when Cancelar is clicked', async () => {
+      vi.mocked(api.getAdminRequests).mockResolvedValue(mockRequests);
+
+      const user = userEvent.setup();
+      render(<RequestsPage />);
+
+      await waitFor(() => expect(api.getAdminRequests).toHaveBeenCalled());
+
+      await user.click(screen.getByRole('button', { name: /Agregar Solicitud/i }));
+      expect(screen.getByText('Nueva Solicitud')).toBeInTheDocument();
+
+      const form = screen.getByRole('button', { name: /Crear Solicitud/i }).closest('form')!;
+      const cancelInForm = within(form).getByRole('button', { name: 'Cancelar' });
+      await user.click(cancelInForm);
+
+      await waitFor(() => expect(screen.queryByText('Nueva Solicitud')).not.toBeInTheDocument());
+    });
+  });
+
+  describe('AttachmentViewer', () => {
+    it('renders attachment link for deposit with PDF', async () => {
+      vi.mocked(api.getAdminRequests).mockResolvedValue(mockRequests);
+
+      render(<RequestsPage />);
+
+      await waitFor(() => expect(screen.getAllByTitle('Ver PDF').length).toBeGreaterThan(0));
+
+      const pdfLinks = screen.getAllByTitle('Ver PDF');
+      expect(pdfLinks.length).toBeGreaterThan(0);
+    });
+
+    it('opens data URL as blob in new tab on click', async () => {
+      const requestsWithDataUrl = {
+        data: {
+          requests: [
+            {
+              id: '1',
+              investor: { id: '1', name: 'Investor One' },
+              type: 'DEPOSIT',
+              method: 'USDT',
+              amount: 1000,
+              network: 'TRC20',
+              status: 'PENDING',
+              requestedAt: '2024-01-01T10:00:00Z',
+              attachmentUrl: 'data:application/pdf;base64,JVBGRi0xLjM=',
+            },
+          ],
+          pendingCount: 1,
+        },
+      };
+      vi.mocked(api.getAdminRequests).mockResolvedValue(requestsWithDataUrl);
+
+      const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+      const createObjectURLStub = vi.fn(() => 'blob:mock-url');
+      const revokeObjectURLStub = vi.fn();
+      vi.stubGlobal('URL', {
+        ...URL,
+        createObjectURL: createObjectURLStub,
+        revokeObjectURL: revokeObjectURLStub,
+      });
+
+      const user = userEvent.setup();
+      render(<RequestsPage />);
+
+      await waitFor(() => expect(screen.getAllByTitle(/Ver (PDF|comprobante)/).length).toBeGreaterThan(0));
+
+      const links = screen.getAllByTitle(/Ver (PDF|comprobante)/);
+      await user.click(links[0]);
+
+      expect(openSpy).toHaveBeenCalledWith('blob:mock-url', '_blank');
+      openSpy.mockRestore();
+      vi.unstubAllGlobals();
     });
   });
 });
