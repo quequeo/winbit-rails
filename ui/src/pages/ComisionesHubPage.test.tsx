@@ -26,7 +26,7 @@ describe('ComisionesHubPage', () => {
     vi.mocked(api.getTradingFees).mockResolvedValue({ data: [] } as { data?: unknown[] });
   });
 
-  it('renders tabs', () => {
+  it('renders tabs', async () => {
     render(
       <MemoryRouter>
         <ComisionesHubPage />
@@ -36,6 +36,8 @@ describe('ComisionesHubPage', () => {
     expect(screen.getByRole('button', { name: 'Comisiones por período' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Comisiones por referido' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Historial de Comisiones' })).toBeInTheDocument();
+
+    await waitFor(() => expect(api.getTradingFeesSummary).toHaveBeenCalled());
   });
 
   it('switches to referido tab', async () => {

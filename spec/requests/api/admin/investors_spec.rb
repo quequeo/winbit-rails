@@ -235,7 +235,7 @@ RSpec.describe 'Admin Investors API', type: :request do
       post "/api/admin/investors/#{investor.id}/referral_commissions",
            params: { amount: -10 }
 
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
       json = JSON.parse(response.body)
       expect(json['error']).to be_present
     end

@@ -25,7 +25,7 @@ module Api
           )
           render json: { data: DepositOptionSerializer.new(option).as_json }, status: :created
         else
-          render_error(option.errors.full_messages.join(", "), status: :unprocessable_entity)
+          render_error(option.errors.full_messages.join(", "), status: :unprocessable_content)
         end
       end
 
@@ -40,7 +40,7 @@ module Api
           )
           render json: { data: DepositOptionSerializer.new(@deposit_option).as_json }
         else
-          render_error(@deposit_option.errors.full_messages.join(", "), status: :unprocessable_entity)
+          render_error(@deposit_option.errors.full_messages.join(", "), status: :unprocessable_content)
         end
       end
 

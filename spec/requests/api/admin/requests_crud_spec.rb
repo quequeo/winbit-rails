@@ -150,7 +150,7 @@ RSpec.describe 'Admin Requests CRUD API', type: :request do
         status: 'APPROVED'
       }
 
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
 
       request_record.reload
       expect(request_record.status).to eq('PENDING')

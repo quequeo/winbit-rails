@@ -97,12 +97,35 @@ describe('DepositOptionsPage', () => {
 
       render(<DepositOptionsPage />);
 
-      await waitFor(() => {
-        expect(api.getDepositOptions).toHaveBeenCalled();
-      });
+      await waitFor(() => expect(api.getDepositOptions).toHaveBeenCalled());
 
       expect(screen.getAllByText('Activo').length).toBeGreaterThan(0);
       expect(screen.getAllByText('Inactivo').length).toBeGreaterThan(0);
+    });
+
+    it('shows "Sin detalles" when option has no detail fields', async () => {
+      const optionsWithEmptyDetails = {
+        data: [
+          {
+            id: '1',
+            category: 'BANK_ARS',
+            label: 'Banco Test',
+            currency: 'ARS',
+            details: {},
+            active: true,
+            position: 1,
+            createdAt: '2024-01-01T10:00:00Z',
+            updatedAt: '2024-01-01T10:00:00Z',
+          },
+        ],
+      };
+      vi.mocked(api.getDepositOptions).mockResolvedValue(optionsWithEmptyDetails);
+
+      render(<DepositOptionsPage />);
+
+      await waitFor(() => expect(api.getDepositOptions).toHaveBeenCalled());
+
+      expect(screen.getAllByText('Sin detalles').length).toBeGreaterThan(0);
     });
   });
 
@@ -129,9 +152,7 @@ describe('DepositOptionsPage', () => {
       const user = userEvent.setup();
       render(<DepositOptionsPage />);
 
-      await waitFor(() => {
-        expect(api.getDepositOptions).toHaveBeenCalled();
-      });
+      await waitFor(() => expect(api.getDepositOptions).toHaveBeenCalled());
 
       const addButton = await screen.findByRole('button', { name: /Nueva opción/i });
       await user.click(addButton);
@@ -142,9 +163,39 @@ describe('DepositOptionsPage', () => {
       const submitButton = screen.getByRole('button', { name: /Crear/i });
       await user.click(submitButton);
 
-      await waitFor(() => {
-        expect(api.createDepositOption).toHaveBeenCalled();
-      });
+      await waitFor(() => expect(api.createDepositOption).toHaveBeenCalled());
+    });
+
+    it('shows error when create fails', async () => {
+      vi.mocked(api.getDepositOptions).mockResolvedValue(mockOptions);
+      vi.mocked(api.createDepositOption).mockRejectedValue(new Error('{"error":"Create failed"}'));
+
+      const user = userEvent.setup();
+      render(<DepositOptionsPage />);
+
+      await waitFor(() => expect(api.getDepositOptions).toHaveBeenCalled());
+
+      await user.click(screen.getByRole('button', { name: /Nueva opción/i }));
+      await user.type(screen.getByPlaceholderText('Ej: Banco Galicia - Pesos'), 'Test');
+      await user.click(screen.getByRole('button', { name: /Crear/i }));
+
+      await waitFor(() => expect(screen.getByText('Create failed')).toBeInTheDocument());
+    });
+
+    it('shows generic error when create rejects with non-JSON message', async () => {
+      vi.mocked(api.getDepositOptions).mockResolvedValue(mockOptions);
+      vi.mocked(api.createDepositOption).mockRejectedValue(new Error('plain text error'));
+
+      const user = userEvent.setup();
+      render(<DepositOptionsPage />);
+
+      await waitFor(() => expect(api.getDepositOptions).toHaveBeenCalled());
+
+      await user.click(screen.getByRole('button', { name: /Nueva opción/i }));
+      await user.type(screen.getByPlaceholderText('Ej: Banco Galicia - Pesos'), 'Test');
+      await user.click(screen.getByRole('button', { name: /Crear/i }));
+
+      await waitFor(() => expect(screen.getByText('plain text error')).toBeInTheDocument());
     });
   });
 
@@ -156,16 +207,26 @@ describe('DepositOptionsPage', () => {
       const user = userEvent.setup();
       render(<DepositOptionsPage />);
 
-      await waitFor(() => {
-        expect(api.getDepositOptions).toHaveBeenCalled();
-      });
+      await waitFor(() => expect(api.getDepositOptions).toHaveBeenCalled());
 
       const activeButtons = screen.getAllByText('Activo');
       await user.click(activeButtons[0]);
 
-      await waitFor(() => {
-        expect(api.toggleDepositOption).toHaveBeenCalledWith('1');
-      });
+      await waitFor(() => expect(api.toggleDepositOption).toHaveBeenCalledWith('1'));
+    });
+
+    it('shows error when toggle fails', async () => {
+      vi.mocked(api.getDepositOptions).mockResolvedValue(mockOptions);
+      vi.mocked(api.toggleDepositOption).mockRejectedValue(new Error('Toggle failed'));
+
+      const user = userEvent.setup();
+      render(<DepositOptionsPage />);
+
+      await waitFor(() => expect(api.getDepositOptions).toHaveBeenCalled());
+
+      await user.click(screen.getAllByText('Activo')[0]);
+
+      await waitFor(() => expect(screen.getByText('Toggle failed')).toBeInTheDocument());
     });
   });
 
@@ -177,23 +238,32 @@ describe('DepositOptionsPage', () => {
       const user = userEvent.setup();
       render(<DepositOptionsPage />);
 
-      await waitFor(() => {
-        expect(api.getDepositOptions).toHaveBeenCalled();
-      });
+      await waitFor(() => expect(api.getDepositOptions).toHaveBeenCalled());
 
       const deleteButtons = screen.getAllByTitle('Eliminar');
       await user.click(deleteButtons[0]);
 
-      await waitFor(() => {
-        expect(screen.getByText('Eliminar opción de depósito')).toBeInTheDocument();
-      });
+      await waitFor(() => expect(screen.getByText('Eliminar opción de depósito')).toBeInTheDocument());
 
       const confirmButtons = screen.getAllByRole('button', { name: 'Eliminar' });
       await user.click(confirmButtons[confirmButtons.length - 1]);
 
-      await waitFor(() => {
-        expect(api.deleteDepositOption).toHaveBeenCalledWith('1');
-      });
+      await waitFor(() => expect(api.deleteDepositOption).toHaveBeenCalledWith('1'));
+    });
+
+    it('shows error when delete fails', async () => {
+      vi.mocked(api.getDepositOptions).mockResolvedValue(mockOptions);
+      vi.mocked(api.deleteDepositOption).mockRejectedValue(new Error('Delete failed'));
+
+      const user = userEvent.setup();
+      render(<DepositOptionsPage />);
+
+      await waitFor(() => expect(api.getDepositOptions).toHaveBeenCalled());
+
+      await user.click(screen.getAllByTitle('Eliminar')[0]);
+      await user.click(screen.getAllByRole('button', { name: 'Eliminar' }).pop()!);
+
+      await waitFor(() => expect(screen.getByText('Delete failed')).toBeInTheDocument());
     });
   });
 
@@ -248,9 +318,7 @@ describe('DepositOptionsPage', () => {
       const user = userEvent.setup();
       render(<DepositOptionsPage />);
 
-      await waitFor(() => {
-        expect(api.getDepositOptions).toHaveBeenCalled();
-      });
+      await waitFor(() => expect(api.getDepositOptions).toHaveBeenCalled());
 
       const editButtons = screen.getAllByTitle('Editar');
       await user.click(editButtons[0]);
@@ -262,12 +330,24 @@ describe('DepositOptionsPage', () => {
       const saveButtons = screen.getAllByRole('button', { name: /Guardar/i });
       await user.click(saveButtons[0]);
 
-      await waitFor(() => {
-        expect(api.updateDepositOption).toHaveBeenCalledWith(
-          '1',
-          expect.objectContaining({ active: false }),
-        );
-      });
+      await waitFor(() =>
+        expect(api.updateDepositOption).toHaveBeenCalledWith('1', expect.objectContaining({ active: false })),
+      );
+    });
+
+    it('shows error when update fails', async () => {
+      vi.mocked(api.getDepositOptions).mockResolvedValue(mockOptions);
+      vi.mocked(api.updateDepositOption).mockRejectedValue(new Error('Update failed'));
+
+      const user = userEvent.setup();
+      render(<DepositOptionsPage />);
+
+      await waitFor(() => expect(api.getDepositOptions).toHaveBeenCalled());
+
+      await user.click(screen.getAllByTitle('Editar')[0]);
+      await user.click(screen.getAllByRole('button', { name: /Guardar/i })[0]);
+
+      await waitFor(() => expect(screen.getByText('Update failed')).toBeInTheDocument());
     });
   });
 

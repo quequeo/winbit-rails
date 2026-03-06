@@ -58,7 +58,7 @@ module Api
       def by_month
         month = params[:month].to_s.strip
         unless month.match?(/^\d{4}-\d{2}$/)
-          render_error('Mes inválido. Usar formato YYYY-MM', status: :unprocessable_entity)
+          render_error('Mes inválido. Usar formato YYYY-MM', status: :unprocessable_content)
           return
         end
 
@@ -71,7 +71,7 @@ module Api
           data: results.map { |r| DailyOperatingResultByMonthItemSerializer.new(r).as_json }
         }
       rescue ArgumentError
-        render_error('Mes inválido. Usar formato YYYY-MM', status: :unprocessable_entity)
+        render_error('Mes inválido. Usar formato YYYY-MM', status: :unprocessable_content)
       end
 
 
@@ -88,7 +88,7 @@ module Api
 
         data = applicator.preview
         if data.nil?
-          render_error(applicator.errors.join(', '), status: :unprocessable_entity)
+          render_error(applicator.errors.join(', '), status: :unprocessable_content)
           return
         end
 
@@ -110,7 +110,7 @@ module Api
           result = DailyOperatingResult.find_by!(date: date)
           render json: { data: DailyOperatingResultSerializer.new(result).as_json }, status: :created
         else
-          status = applicator.errors.any? { |e| e.include?('Ya existe') } ? :conflict : :unprocessable_entity
+          status = applicator.errors.any? { |e| e.include?('Ya existe') } ? :conflict : :unprocessable_content
           render_error(applicator.errors.join(', '), status: status)
         end
       end

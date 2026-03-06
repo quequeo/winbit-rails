@@ -39,7 +39,7 @@ module Api
         return render_error('Contraseña actual incorrecta', status: :unauthorized) unless investor.authenticate(current_password)
 
         if new_password.length < 6
-          return render_error('La nueva contraseña debe tener al menos 6 caracteres', status: :unprocessable_entity)
+          return render_error('La nueva contraseña debe tener al menos 6 caracteres', status: :unprocessable_content)
         end
 
         investor.update!(password: new_password)

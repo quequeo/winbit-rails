@@ -125,7 +125,7 @@ module Api
             }
           }, status: :created
         else
-          render_error(applicator.errors.join(', '), status: :unprocessable_entity)
+          render_error(applicator.errors.join(', '), status: :unprocessable_content)
         end
       rescue ActionController::ParameterMissing => e
         render_error(e.message, status: :bad_request)

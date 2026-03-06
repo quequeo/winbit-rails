@@ -64,5 +64,18 @@ describe('ActivityLogsPage', () => {
       expect(api.getActivityLogs).toHaveBeenLastCalledWith(expect.objectContaining({ filter_action: 'create_investor' }))
     })
   })
+
+  it('shows error when fetch fails', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    vi.mocked(api.getActivityLogs).mockRejectedValue(new Error('Network error'))
+
+    render(<ActivityLogsPage />)
+
+    await waitFor(() => {
+      expect(screen.getByText('Network error')).toBeInTheDocument()
+    })
+
+    consoleSpy.mockRestore()
+  })
 })
 

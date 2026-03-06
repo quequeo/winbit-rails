@@ -42,7 +42,7 @@ module Api
         if permitted.key?(:status) && permitted[:status].to_s != @request.status
           return render_error(
             'No se puede cambiar status desde update. Usar approve/reject.',
-            status: :unprocessable_entity
+            status: :unprocessable_content
           )
         end
 
@@ -60,10 +60,10 @@ module Api
 
       def destroy
         if @request.status == 'APPROVED' && @request.request_type == 'WITHDRAWAL'
-          return render_error('Usar acción Revertir para retiros aprobados', status: :unprocessable_entity)
+          return render_error('Usar acción Revertir para retiros aprobados', status: :unprocessable_content)
         end
         if @request.status == 'APPROVED' && @request.request_type == 'DEPOSIT'
-          return render_error('Usar acción Revertir para depósitos aprobados', status: :unprocessable_entity)
+          return render_error('Usar acción Revertir para depósitos aprobados', status: :unprocessable_content)
         end
 
         ActivityLogger.log(
@@ -90,7 +90,7 @@ module Api
           Requests::ReverseApprovedDeposit.new(request_id: @request.id, reversed_by: current_user).call
           action_log = 'reverse_deposit'
         else
-          return render_error('Solo se pueden revertir depósitos o retiros aprobados', status: :unprocessable_entity)
+          return render_error('Solo se pueden revertir depósitos o retiros aprobados', status: :unprocessable_content)
         end
 
         ActivityLogger.log(

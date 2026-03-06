@@ -57,7 +57,7 @@ module Api
               period_start: start_date,
               period_end: end_date,
               profit_amount: 0
-            }, status: :unprocessable_entity
+            }, status: :unprocessable_content
             return
           end
 
@@ -107,7 +107,7 @@ module Api
             period_start: result[:period_start],
             period_end: result[:period_end],
             profit_amount: 0
-          }, status: :unprocessable_entity
+          }, status: :unprocessable_content
           return
         end
 
@@ -132,7 +132,7 @@ module Api
         fee_percentage = params[:fee_percentage].present? ? params[:fee_percentage].to_f : @investor.trading_fee_percentage.to_f
 
         if fee_percentage <= 0 || fee_percentage > 100
-          render_error('El porcentaje debe estar entre 0 y 100', status: :unprocessable_entity)
+          render_error('El porcentaje debe estar entre 0 y 100', status: :unprocessable_content)
           return
         end
 
@@ -173,7 +173,7 @@ module Api
 
             render json: TradingFeeSerializer.new(fee).as_json, status: :created
           else
-            render_error(applicator.errors.join(', '), status: :unprocessable_entity)
+            render_error(applicator.errors.join(', '), status: :unprocessable_content)
           end
           return
         end
@@ -208,7 +208,7 @@ module Api
 
           render json: TradingFeeSerializer.new(fee).as_json, status: :created
         else
-          render_error(applicator.errors.join(', '), status: :unprocessable_entity)
+          render_error(applicator.errors.join(', '), status: :unprocessable_content)
         end
       end
 
@@ -219,7 +219,7 @@ module Api
         notes = params[:notes]
 
         if fee_percentage.blank? || fee_percentage <= 0 || fee_percentage > 100
-          render_error('El porcentaje debe estar entre 0 y 100', status: :unprocessable_entity)
+          render_error('El porcentaje debe estar entre 0 y 100', status: :unprocessable_content)
           return
         end
 
@@ -227,7 +227,7 @@ module Api
         investor = fee.investor
         portfolio = investor.portfolio
         unless portfolio
-          render_error('Portfolio no encontrado', status: :unprocessable_entity)
+          render_error('Portfolio no encontrado', status: :unprocessable_content)
           return
         end
 
@@ -278,9 +278,9 @@ module Api
 
         render json: TradingFeeSerializer.new(fee.reload).as_json, status: :ok
       rescue ActiveRecord::RecordInvalid => e
-        render_error(e.message, status: :unprocessable_entity)
+        render_error(e.message, status: :unprocessable_content)
       rescue StandardError => e
-        render_error("Error updating trading fee: #{e.message}", status: :unprocessable_entity)
+        render_error("Error updating trading fee: #{e.message}", status: :unprocessable_content)
       end
 
       def destroy
@@ -295,7 +295,7 @@ module Api
         investor = fee.investor
         portfolio = investor.portfolio
         unless portfolio
-          render_error('Portfolio no encontrado', status: :unprocessable_entity)
+          render_error('Portfolio no encontrado', status: :unprocessable_content)
           return
         end
 
@@ -332,9 +332,9 @@ module Api
 
         render json: TradingFeeSerializer.new(fee.reload).as_json, status: :ok
       rescue ActiveRecord::RecordInvalid => e
-        render_error(e.message, status: :unprocessable_entity)
+        render_error(e.message, status: :unprocessable_content)
       rescue StandardError => e
-        render_error("Error voiding trading fee: #{e.message}", status: :unprocessable_entity)
+        render_error("Error voiding trading fee: #{e.message}", status: :unprocessable_content)
       end
 
       def investors_summary
@@ -424,14 +424,14 @@ module Api
           expected_start = start_date.beginning_of_month.to_date
           expected_end = start_date.end_of_month.to_date
           if start_date != expected_start || end_date != expected_end
-            render_error('Este inversor está configurado como MONTHLY: el período debe ser un mes calendario completo', status: :unprocessable_entity)
+            render_error('Este inversor está configurado como MONTHLY: el período debe ser un mes calendario completo', status: :unprocessable_content)
             return false
           end
         when 'QUARTERLY'
           expected_start = start_date.beginning_of_quarter.to_date
           expected_end = start_date.end_of_quarter.to_date
           if start_date != expected_start || end_date != expected_end
-            render_error('Este inversor está configurado como QUARTERLY: el período debe ser un trimestre completo', status: :unprocessable_entity)
+            render_error('Este inversor está configurado como QUARTERLY: el período debe ser un trimestre completo', status: :unprocessable_content)
             return false
           end
         when 'SEMESTRAL'
@@ -440,14 +440,14 @@ module Api
             [Date.new(start_date.year, 7, 1), Date.new(start_date.year, 12, 31)]
           ]
           unless valid_semesters.any? { |s, e| start_date == s && end_date == e }
-            render_error('Este inversor está configurado como SEMESTRAL: el período debe ser un semestre completo (Ene-Jun o Jul-Dic)', status: :unprocessable_entity)
+            render_error('Este inversor está configurado como SEMESTRAL: el período debe ser un semestre completo (Ene-Jun o Jul-Dic)', status: :unprocessable_content)
             return false
           end
         when 'ANNUAL'
           expected_start = start_date.beginning_of_year.to_date
           expected_end = start_date.end_of_year.to_date
           if start_date != expected_start || end_date != expected_end
-            render_error('Este inversor está configurado como ANNUAL: el período debe ser un año calendario completo', status: :unprocessable_entity)
+            render_error('Este inversor está configurado como ANNUAL: el período debe ser un año calendario completo', status: :unprocessable_content)
             return false
           end
         end

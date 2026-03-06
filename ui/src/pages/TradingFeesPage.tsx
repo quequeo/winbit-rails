@@ -467,9 +467,7 @@ export const TradingFeesPage = () => {
                       value={
                         isApplied && appliedPct !== null
                           ? String(appliedPct)
-                          : rawPct !== undefined
-                            ? rawPct
-                            : '30'
+                          : (rawPct ?? '30')
                       }
                       onChange={(e) => handlePercentageChange(investor.investor_id, e.target.value)}
                       onWheel={(e) => {
@@ -639,9 +637,7 @@ export const TradingFeesPage = () => {
                       value={
                         isApplied && appliedPct !== null
                           ? String(appliedPct)
-                          : rawPct !== undefined
-                            ? rawPct
-                            : '30'
+                          : (rawPct ?? '30')
                       }
                       onChange={(e) => handlePercentageChange(investor.investor_id, e.target.value)}
                       onWheel={(e) => {

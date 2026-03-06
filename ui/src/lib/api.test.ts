@@ -446,5 +446,423 @@ describe('api', () => {
         }),
       );
     });
+
+    it('should toggle investor status', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: new Headers({ 'content-type': 'application/json' }),
+        text: async () => JSON.stringify({ data: {} }),
+      });
+
+      await api.toggleInvestorStatus('1');
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/admin/v1/investors/1/toggle_status'),
+        expect.objectContaining({ method: 'POST' }),
+      );
+    });
+
+    it('should apply referral commission', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 201,
+        headers: new Headers({ 'content-type': 'application/json' }),
+        text: async () => JSON.stringify({ data: {} }),
+      });
+
+      await api.applyReferralCommission('inv-1', { amount: 100 });
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/admin/v1/investors/inv-1/referral_commissions'),
+        expect.objectContaining({
+          method: 'POST',
+          body: JSON.stringify({ amount: 100 }),
+        }),
+      );
+    });
+  });
+
+  describe('getAdminDashboard', () => {
+    it('should include days param when provided', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: new Headers({ 'content-type': 'application/json' }),
+        text: async () => JSON.stringify({ data: {} }),
+      });
+
+      await api.getAdminDashboard({ days: 30 });
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('days=30'),
+        expect.any(Object),
+      );
+    });
+  });
+
+  describe('Settings', () => {
+    it('should fetch admin settings', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: new Headers({ 'content-type': 'application/json' }),
+        text: async () => JSON.stringify({ data: {} }),
+      });
+
+      await api.getAdminSettings();
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/admin/v1/settings'),
+        expect.any(Object),
+      );
+    });
+
+    it('should update admin settings', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: new Headers({ 'content-type': 'application/json' }),
+        text: async () => JSON.stringify({ data: {} }),
+      });
+
+      await api.updateAdminSettings({ investor_notifications_enabled: true });
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/admin/v1/settings'),
+        expect.objectContaining({
+          method: 'PATCH',
+          body: JSON.stringify({ investor_notifications_enabled: true }),
+        }),
+      );
+    });
+  });
+
+  describe('Activity logs', () => {
+    it('should fetch with pagination and filters', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: new Headers({ 'content-type': 'application/json' }),
+        text: async () => JSON.stringify({ data: { logs: [] } }),
+      });
+
+      await api.getActivityLogs({ page: 2, per_page: 50, filter_action: 'create_investor' });
+      const url = mockFetch.mock.calls[0][0];
+      expect(url).toContain('page=2');
+      expect(url).toContain('per_page=50');
+      expect(url).toContain('filter_action=create_investor');
+    });
+  });
+
+  describe('reverseRequest', () => {
+    it('should reverse a request', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: new Headers({ 'content-type': 'application/json' }),
+        text: async () => JSON.stringify({ data: {} }),
+      });
+
+      await api.reverseRequest('1');
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/admin/v1/requests/1/reverse'),
+        expect.objectContaining({ method: 'POST' }),
+      );
+    });
+  });
+
+  describe('Daily operating', () => {
+    it('getDailyOperatingMonthlySummary with params', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: new Headers({ 'content-type': 'application/json' }),
+        text: async () => JSON.stringify({ data: [] }),
+      });
+
+      await api.getDailyOperatingMonthlySummary({ months: 6, offset: 1 });
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('months=6'),
+        expect.any(Object),
+      );
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('offset=1'),
+        expect.any(Object),
+      );
+    });
+
+    it('getDailyOperatingByMonth', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: new Headers({ 'content-type': 'application/json' }),
+        text: async () => JSON.stringify({ data: [] }),
+      });
+
+      await api.getDailyOperatingByMonth({ month: '2025-01' });
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('month=2025-01'),
+        expect.any(Object),
+      );
+    });
+
+    it('previewDailyOperatingResult', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: new Headers({ 'content-type': 'application/json' }),
+        text: async () => JSON.stringify({ data: {} }),
+      });
+
+      await api.previewDailyOperatingResult({ date: '2025-01-15', percent: 1.5, notes: 'Test' });
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('date=2025-01-15'),
+        expect.any(Object),
+      );
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('percent=1.5'),
+        expect.any(Object),
+      );
+    });
+
+    it('createDailyOperatingResult', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 201,
+        headers: new Headers({ 'content-type': 'application/json' }),
+        text: async () => JSON.stringify({ data: {} }),
+      });
+
+      await api.createDailyOperatingResult({ date: '2025-01-15', percent: 1.5 });
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/admin/v1/daily_operating_results'),
+        expect.objectContaining({
+          method: 'POST',
+          body: JSON.stringify({ date: '2025-01-15', percent: 1.5 }),
+        }),
+      );
+    });
+  });
+
+  describe('Trading fees', () => {
+    it('getTradingFees with params', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: new Headers({ 'content-type': 'application/json' }),
+        text: async () => JSON.stringify({ data: [] }),
+      });
+
+      await api.getTradingFees({ investor_id: 'inv-1', include_voided: true, page: 2 });
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('investor_id=inv-1'),
+        expect.any(Object),
+      );
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('include_voided=true'),
+        expect.any(Object),
+      );
+    });
+
+    it('getTradingFeesSummary with period', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: new Headers({ 'content-type': 'application/json' }),
+        text: async () => JSON.stringify([]),
+      });
+
+      await api.getTradingFeesSummary({ period_start: '2025-01-01', period_end: '2025-12-31' });
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('period_start=2025-01-01'),
+        expect.any(Object),
+      );
+    });
+
+    it('calculateTradingFee', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: new Headers({ 'content-type': 'application/json' }),
+        text: async () => JSON.stringify({ profit_amount: 100 }),
+      });
+
+      await api.calculateTradingFee({
+        investor_id: 'inv-1',
+        fee_percentage: 30,
+        period_start: '2025-01-01',
+        period_end: '2025-12-31',
+      });
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('investor_id=inv-1'),
+        expect.any(Object),
+      );
+    });
+
+    it('applyTradingFee', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 201,
+        headers: new Headers({ 'content-type': 'application/json' }),
+        text: async () => JSON.stringify({ data: {} }),
+      });
+
+      await api.applyTradingFee({ investor_id: 'inv-1', fee_percentage: 30, notes: 'Q4' });
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/admin/v1/trading_fees'),
+        expect.objectContaining({
+          method: 'POST',
+          body: JSON.stringify({ investor_id: 'inv-1', fee_percentage: 30, notes: 'Q4' }),
+        }),
+      );
+    });
+
+    it('updateTradingFee', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: new Headers({ 'content-type': 'application/json' }),
+        text: async () => JSON.stringify({ data: {} }),
+      });
+
+      await api.updateTradingFee('fee-1', { fee_percentage: 25, notes: 'Adjusted' });
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/admin/v1/trading_fees/fee-1'),
+        expect.objectContaining({
+          method: 'PATCH',
+          body: JSON.stringify({ fee_percentage: 25, notes: 'Adjusted' }),
+        }),
+      );
+    });
+
+    it('deleteTradingFee', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: new Headers({ 'content-type': 'application/json' }),
+        text: async () => JSON.stringify({ data: {} }),
+      });
+
+      await api.deleteTradingFee('fee-1');
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/admin/v1/trading_fees/fee-1'),
+        expect.objectContaining({ method: 'DELETE' }),
+      );
+    });
+  });
+
+  describe('Deposit options', () => {
+    it('getDepositOptions', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: new Headers({ 'content-type': 'application/json' }),
+        text: async () => JSON.stringify({ data: [] }),
+      });
+
+      await api.getDepositOptions();
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/admin/v1/deposit_options'),
+        expect.any(Object),
+      );
+    });
+
+    it('createDepositOption', async () => {
+      const body = { category: 'CRYPTO', label: 'USDT', currency: 'USDT', details: { address: '0x' } };
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 201,
+        headers: new Headers({ 'content-type': 'application/json' }),
+        text: async () => JSON.stringify({ data: {} }),
+      });
+
+      await api.createDepositOption(body);
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/admin/v1/deposit_options'),
+        expect.objectContaining({
+          method: 'POST',
+          body: JSON.stringify(body),
+        }),
+      );
+    });
+
+    it('updateDepositOption', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: new Headers({ 'content-type': 'application/json' }),
+        text: async () => JSON.stringify({ data: {} }),
+      });
+
+      await api.updateDepositOption('opt-1', { active: false });
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/admin/v1/deposit_options/opt-1'),
+        expect.objectContaining({
+          method: 'PATCH',
+          body: JSON.stringify({ active: false }),
+        }),
+      );
+    });
+
+    it('deleteDepositOption', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 204,
+        headers: new Headers(),
+      });
+
+      await api.deleteDepositOption('opt-1');
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/admin/v1/deposit_options/opt-1'),
+        expect.objectContaining({ method: 'DELETE' }),
+      );
+    });
+
+    it('toggleDepositOption', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: new Headers({ 'content-type': 'application/json' }),
+        text: async () => JSON.stringify({ data: {} }),
+      });
+
+      await api.toggleDepositOption('opt-1');
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/admin/v1/deposit_options/opt-1/toggle_active'),
+        expect.objectContaining({ method: 'POST' }),
+      );
+    });
+  });
+
+  describe('adminLogin', () => {
+    it('should POST credentials', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: new Headers({ 'content-type': 'application/json' }),
+        text: async () => JSON.stringify({ data: { email: 'admin@test.com' } }),
+      });
+
+      await api.adminLogin('admin@test.com', 'secret');
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/admin/v1/auth/login'),
+        expect.objectContaining({
+          method: 'POST',
+          body: JSON.stringify({ email: 'admin@test.com', password: 'secret' }),
+        }),
+      );
+    });
+  });
+
+  describe('adminLogout', () => {
+    it('should DELETE to users/sign_out', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 204,
+        headers: new Headers(),
+      });
+
+      await api.adminLogout();
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringMatching(/users\/sign_out/),
+        expect.objectContaining({ method: 'DELETE' }),
+      );
+    });
   });
 });

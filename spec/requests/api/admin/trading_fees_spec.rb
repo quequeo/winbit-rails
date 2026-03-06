@@ -214,6 +214,110 @@ RSpec.describe 'Admin Trading Fees API', type: :request do
       expect(json['data'].map { |row| row['id'] }).not_to include(stale_fee.id)
     end
 
+    it 'filters by investor_id when present' do
+      inv1 = create_investor_with_portfolio(email: 'filter1@test.com')
+      inv2 = create_investor_with_portfolio(email: 'filter2@test.com')
+
+      fee1 = TradingFee.create!(
+        investor: inv1,
+        applied_by: admin,
+        period_start: Date.new(2025, 10, 1),
+        period_end: Date.new(2025, 12, 31),
+        profit_amount: 100,
+        fee_percentage: 30,
+        fee_amount: 30,
+        applied_at: Time.zone.parse('2025-12-31 19:00:00')
+      )
+      PortfolioHistory.create!(
+        investor: inv1,
+        event: 'TRADING_FEE',
+        amount: -30,
+        previous_balance: 1000,
+        new_balance: 970,
+        status: 'COMPLETED',
+        date: Time.zone.parse('2025-12-31 19:00:05')
+      )
+
+      fee2 = TradingFee.create!(
+        investor: inv2,
+        applied_by: admin,
+        period_start: Date.new(2025, 10, 1),
+        period_end: Date.new(2025, 12, 31),
+        profit_amount: 200,
+        fee_percentage: 30,
+        fee_amount: 60,
+        applied_at: Time.zone.parse('2025-12-31 19:01:00')
+      )
+      PortfolioHistory.create!(
+        investor: inv2,
+        event: 'TRADING_FEE',
+        amount: -60,
+        previous_balance: 1000,
+        new_balance: 940,
+        status: 'COMPLETED',
+        date: Time.zone.parse('2025-12-31 19:01:05')
+      )
+
+      get '/api/admin/trading_fees', params: { investor_id: inv1.id }
+
+      expect(response).to have_http_status(:ok)
+      json = JSON.parse(response.body)
+      expect(json['data'].map { |r| r['id'] }).to contain_exactly(fee1.id)
+    end
+
+    it 'filters by period_start and period_end when present' do
+      inv = create_investor_with_portfolio(email: 'period_filter@test.com')
+
+      fee_q4 = TradingFee.create!(
+        investor: inv,
+        applied_by: admin,
+        period_start: Date.new(2025, 10, 1),
+        period_end: Date.new(2025, 12, 31),
+        profit_amount: 100,
+        fee_percentage: 30,
+        fee_amount: 30,
+        applied_at: Time.zone.parse('2025-12-31 19:00:00')
+      )
+      PortfolioHistory.create!(
+        investor: inv,
+        event: 'TRADING_FEE',
+        amount: -30,
+        previous_balance: 1000,
+        new_balance: 970,
+        status: 'COMPLETED',
+        date: Time.zone.parse('2025-12-31 19:00:05')
+      )
+
+      fee_q1 = TradingFee.create!(
+        investor: inv,
+        applied_by: admin,
+        period_start: Date.new(2025, 1, 1),
+        period_end: Date.new(2025, 3, 31),
+        profit_amount: 50,
+        fee_percentage: 30,
+        fee_amount: 15,
+        applied_at: Time.zone.parse('2025-03-31 19:00:00')
+      )
+      PortfolioHistory.create!(
+        investor: inv,
+        event: 'TRADING_FEE',
+        amount: -15,
+        previous_balance: 970,
+        new_balance: 955,
+        status: 'COMPLETED',
+        date: Time.zone.parse('2025-03-31 19:00:05')
+      )
+
+      get '/api/admin/trading_fees', params: {
+        period_start: '2025-10-01',
+        period_end: '2025-12-31',
+      }
+
+      expect(response).to have_http_status(:ok)
+      json = JSON.parse(response.body)
+      expect(json['data'].map { |r| r['id'] }).to contain_exactly(fee_q4.id)
+    end
+
     it 'clamps per_page to 25 max' do
       investor = create_investor_with_portfolio(email: 'paging_limit@test.com')
 
@@ -368,6 +472,54 @@ RSpec.describe 'Admin Trading Fees API', type: :request do
       json = JSON.parse(response.body)
       expect(json['error']).to include('MONTHLY')
     end
+
+    it 'returns 422 when investor is SEMESTRAL but period is not a full semester' do
+      inv = create_investor_with_portfolio(email: 'inv_semestral@test.com')
+      inv.update!(trading_fee_frequency: 'SEMESTRAL')
+
+      get '/api/admin/trading_fees/calculate', params: {
+        investor_id: inv.id,
+        period_start: '2025-10-01',
+        period_end: '2025-12-31',
+        fee_percentage: 30,
+      }
+
+      expect(response).to have_http_status(:unprocessable_content)
+      json = JSON.parse(response.body)
+      expect(json['error']).to include('SEMESTRAL')
+    end
+
+    it 'returns 422 when investor is QUARTERLY but period is not a full quarter' do
+      inv = create_investor_with_portfolio(email: 'inv_quarterly@test.com')
+      inv.update!(trading_fee_frequency: 'QUARTERLY')
+
+      get '/api/admin/trading_fees/calculate', params: {
+        investor_id: inv.id,
+        period_start: '2025-10-01',
+        period_end: '2025-11-30',
+        fee_percentage: 30,
+      }
+
+      expect(response).to have_http_status(:unprocessable_content)
+      json = JSON.parse(response.body)
+      expect(json['error']).to include('QUARTERLY')
+    end
+
+    it 'returns preview when no period params (uses calculator)' do
+      inv = create_investor_with_portfolio(email: 'inv_calc@test.com')
+      inv.portfolio.update!(current_balance: 1100, total_invested: 1000)
+
+      add_history(inv: inv, event: 'DEPOSIT', amount: 1000, date: Time.zone.local(2025, 10, 1, 19, 0, 0), prev: 0, newb: 1000)
+      add_history(inv: inv, event: 'OPERATING_RESULT', amount: 100, date: Time.zone.local(2025, 11, 10, 17, 0, 0), prev: 1000, newb: 1100)
+
+      get '/api/admin/trading_fees/calculate', params: { investor_id: inv.id }
+
+      expect(response).to have_http_status(:ok)
+      json = JSON.parse(response.body)
+      expect(json['profit_amount']).to be > 0
+      expect(json['period_start']).to be_present
+      expect(json['period_end']).to be_present
+    end
   end
 
   describe 'POST /api/admin/trading_fees' do
@@ -408,6 +560,56 @@ RSpec.describe 'Admin Trading Fees API', type: :request do
       }
 
       expect(response).to have_http_status(:unprocessable_content)
+    end
+
+    it 'returns 422 when fee_percentage > 100' do
+      inv = create_investor_with_portfolio(email: 'inv_pct@test.com')
+      inv.portfolio.update!(current_balance: 1100, total_invested: 1000)
+
+      add_history(inv: inv, event: 'DEPOSIT', amount: 1000, date: Time.zone.local(2025, 10, 1, 19, 0, 0), prev: 0, newb: 1000)
+      add_history(inv: inv, event: 'OPERATING_RESULT', amount: 100, date: Time.zone.local(2025, 11, 10, 17, 0, 0), prev: 1000, newb: 1100)
+
+      post '/api/admin/trading_fees', params: {
+        investor_id: inv.id,
+        period_start: '2025-10-01',
+        period_end: '2025-12-31',
+        fee_percentage: 101,
+      }
+
+      expect(response).to have_http_status(:unprocessable_content)
+      json = JSON.parse(response.body)
+      expect(json['error']).to include('porcentaje')
+    end
+
+    it 'returns 422 when applicator fails (no profits)' do
+      inv = create_investor_with_portfolio(email: 'inv_noprofit@test.com')
+
+      post '/api/admin/trading_fees', params: {
+        investor_id: inv.id,
+        period_start: '2025-10-01',
+        period_end: '2025-12-31',
+        fee_percentage: 30,
+      }
+
+      expect(response).to have_http_status(:unprocessable_content)
+    end
+
+    it 'creates fee without period params using calculator' do
+      inv = create_investor_with_portfolio(email: 'inv_auto@test.com')
+      inv.portfolio.update!(current_balance: 1100, total_invested: 1000)
+
+      add_history(inv: inv, event: 'DEPOSIT', amount: 1000, date: Time.zone.local(2025, 10, 1, 19, 0, 0), prev: 0, newb: 1000)
+      add_history(inv: inv, event: 'OPERATING_RESULT', amount: 100, date: Time.zone.local(2025, 11, 10, 17, 0, 0), prev: 1000, newb: 1100)
+
+      post '/api/admin/trading_fees', params: {
+        investor_id: inv.id,
+        fee_percentage: 30,
+      }
+
+      expect(response).to have_http_status(:created)
+      json = JSON.parse(response.body)
+      expect(json['investor_id']).to eq(inv.id)
+      expect(json['fee_amount'].to_f).to eq(30.0)
     end
   end
 
@@ -483,6 +685,19 @@ RSpec.describe 'Admin Trading Fees API', type: :request do
       expect(row['monthly_profits']).to be_an(Array)
       months = row['monthly_profits'].map { |m| m['month'] }
       expect(months).to include('2025-10', '2025-11', '2025-12')
+    end
+
+    it 'returns summary without period params using calculator' do
+      inv = create_investor_with_portfolio(email: 'sum_noperiod@test.com')
+
+      add_history(inv: inv, event: 'DEPOSIT', amount: 1000, date: Time.zone.local(2025, 10, 2, 19, 0, 0), prev: 0, newb: 1000)
+      add_history(inv: inv, event: 'OPERATING_RESULT', amount: 50, date: Time.zone.local(2025, 11, 10, 17, 0, 0), prev: 1000, newb: 1050)
+
+      get '/api/admin/trading_fees/investors_summary'
+
+      expect(response).to have_http_status(:ok)
+      json = JSON.parse(response.body)
+      expect(json).to be_an(Array)
     end
 
     it 'does not mark stale fee as already applied when history was deleted' do

@@ -33,7 +33,7 @@ module Api
 
         amount = BigDecimal(params[:amount].to_s)
         if amount <= 0
-          render json: { error: 'El monto debe ser mayor a cero' }, status: :unprocessable_entity
+          render json: { error: 'El monto debe ser mayor a cero' }, status: :unprocessable_content
           return
         end
 
@@ -45,7 +45,7 @@ module Api
 
         current_balance = BigDecimal(portfolio.current_balance.to_s)
         if amount > current_balance
-          render json: { error: 'El monto supera el saldo disponible' }, status: :unprocessable_entity
+          render json: { error: 'El monto supera el saldo disponible' }, status: :unprocessable_content
           return
         end
 
@@ -72,7 +72,7 @@ module Api
           }
         }
       rescue ArgumentError
-        render json: { error: 'Monto inválido' }, status: :unprocessable_entity
+        render json: { error: 'Monto inválido' }, status: :unprocessable_content
       end
 
       def history
