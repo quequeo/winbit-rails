@@ -223,7 +223,7 @@ describe('InvestorsPage', () => {
       renderWithRouter(<InvestorsPage />);
 
       await waitFor(() => {
-        expect(api.getAdminInvestors).toHaveBeenCalled();
+        expect(screen.getAllByTitle('Eliminar').length).toBeGreaterThan(0);
       });
 
       const deleteButtons = screen.getAllByTitle('Eliminar');
