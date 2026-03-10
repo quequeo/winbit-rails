@@ -14,6 +14,7 @@ RSpec.describe ReferralCommissionApplicator do
 
       expect(applicator.apply).to be true
       expect(inv.portfolio.reload.current_balance).to eq(150)
+      expect(inv.portfolio.total_invested).to eq(150)
       expect(PortfolioHistory.where(investor: inv, event: 'REFERRAL_COMMISSION').count).to eq(1)
     end
 
@@ -43,7 +44,9 @@ RSpec.describe ReferralCommissionApplicator do
       applicator = described_class.new(inv, amount: 50, applied_by: admin, applied_at: 2.days.ago)
 
       expect(applicator.apply).to be true
-      expect(inv.portfolio.reload.current_balance).to eq(250)
+      inv.portfolio.reload
+      expect(inv.portfolio.current_balance).to eq(250)
+      expect(inv.portfolio.total_invested).to eq(150)
     end
 
     it 'fails when investor is blank' do

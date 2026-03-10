@@ -69,7 +69,10 @@ class ReferralCommissionApplicator
           date: applied_at
         )
 
-        portfolio.update!(current_balance: new_balance.to_f)
+        portfolio.update!(
+          current_balance: new_balance.to_f,
+          total_invested: (bd(portfolio.total_invested) + bd(amount)).round(2, :half_up).to_f
+        )
       end
     end
 
