@@ -137,9 +137,10 @@ RSpec.describe 'Reverse consistency', type: :integration do
     deposits_sum = PortfolioHistory.where(investor_id: investor.id, status: 'COMPLETED', event: 'DEPOSIT').sum(:amount)
     deposit_rev_sum = PortfolioHistory.where(investor_id: investor.id, status: 'COMPLETED', event: 'DEPOSIT_REVERSAL').sum(:amount)
     withdrawals_sum = PortfolioHistory.where(investor_id: investor.id, status: 'COMPLETED', event: 'WITHDRAWAL').sum(:amount)
-    expected_total = deposits_sum - deposit_rev_sum - withdrawals_sum
+    referral_sum = PortfolioHistory.where(investor_id: investor.id, status: 'COMPLETED', event: 'REFERRAL_COMMISSION').sum(:amount)
+    expected_total = deposits_sum + referral_sum - deposit_rev_sum - withdrawals_sum
     expect(portfolio.total_invested.to_f.round(2)).to eq(expected_total.to_f.round(2)),
-      "total_invested=#{portfolio.total_invested} expected=#{expected_total} (deposits=#{deposits_sum} rev=#{deposit_rev_sum} wd=#{withdrawals_sum})"
+      "total_invested=#{portfolio.total_invested} expected=#{expected_total} (deposits=#{deposits_sum} referral=#{referral_sum} rev=#{deposit_rev_sum} wd=#{withdrawals_sum})"
   end
 
   it 'reverting deposit leaves portfolio consistent' do

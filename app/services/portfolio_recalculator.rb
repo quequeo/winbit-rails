@@ -33,7 +33,8 @@ class PortfolioRecalculator
     deposits_sum = PortfolioHistory.where(investor_id: investor.id, status: 'COMPLETED', event: 'DEPOSIT').sum(:amount)
     deposit_reversals_sum = PortfolioHistory.where(investor_id: investor.id, status: 'COMPLETED', event: 'DEPOSIT_REVERSAL').sum(:amount)
     withdrawals_sum = PortfolioHistory.where(investor_id: investor.id, status: 'COMPLETED', event: 'WITHDRAWAL').sum(:amount)
-    total_invested = (BigDecimal(deposits_sum.to_s) - BigDecimal(deposit_reversals_sum.to_s) - BigDecimal(withdrawals_sum.to_s)).round(2, :half_up)
+    referral_sum = PortfolioHistory.where(investor_id: investor.id, status: 'COMPLETED', event: 'REFERRAL_COMMISSION').sum(:amount)
+    total_invested = (BigDecimal(deposits_sum.to_s) + BigDecimal(referral_sum.to_s) - BigDecimal(deposit_reversals_sum.to_s) - BigDecimal(withdrawals_sum.to_s)).round(2, :half_up)
 
     acc_usd = (running - total_invested).round(2, :half_up)
     acc_pct = total_invested.positive? ? ((acc_usd / total_invested) * 100).round(4, :half_up) : BigDecimal('0')
