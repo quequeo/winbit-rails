@@ -9,6 +9,8 @@ vi.mock('../lib/api', () => ({
     previewDailyOperatingResult: vi.fn(),
     createDailyOperatingResult: vi.fn(),
     getDailyOperatingResults: vi.fn().mockResolvedValue({ data: [], meta: { page: 1, per_page: 20, total: 0, total_pages: 0 } }),
+    editPreviewDailyOperatingResult: vi.fn(),
+    updateDailyOperatingResult: vi.fn(),
   },
 }))
 
@@ -256,6 +258,113 @@ describe('DailyOperatingResultsPage', () => {
     await waitFor(() => expect(screen.getByText('Admin')).toBeInTheDocument())
     expect(screen.queryByRole('button', { name: 'Anterior' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Siguiente' })).not.toBeInTheDocument()
+  })
+
+  it('shows edit button only for today rows', async () => {
+    const today = new Date()
+    const todayISO = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+
+    vi.mocked(api.getDailyOperatingResults).mockResolvedValue({
+      data: [
+        { id: '1', date: todayISO, percent: 0.5, applied_by: { name: 'Admin' } },
+        { id: '2', date: '2025-01-01', percent: 0.3, applied_by: { name: 'Admin' } },
+      ],
+      meta: { page: 1, per_page: 20, total: 2, total_pages: 1 },
+    } as never)
+
+    render(<DailyOperatingResultsPage />)
+
+    await waitFor(() => expect(screen.getAllByText('Admin').length).toBeGreaterThan(0))
+
+    const editButtons = screen.getAllByRole('button', { name: 'Editar' })
+    expect(editButtons).toHaveLength(1)
+  })
+
+  it('opens edit modal and runs edit preview', async () => {
+    const user = userEvent.setup()
+    const today = new Date()
+    const todayISO = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+
+    vi.mocked(api.getDailyOperatingResults).mockResolvedValue({
+      data: [{ id: 'abc', date: todayISO, percent: 1.0, applied_by: { name: 'Admin' } }],
+      meta: { page: 1, per_page: 20, total: 1, total_pages: 1 },
+    } as never)
+
+    vi.mocked(api.editPreviewDailyOperatingResult).mockResolvedValueOnce({
+      data: {
+        date: todayISO,
+        old_percent: 1.0,
+        new_percent: 2.0,
+        investors_count: 1,
+        total_old_delta: 10.0,
+        total_new_delta: 20.0,
+        total_difference: 10.0,
+        investors: [{ investor_id: '1', investor_name: 'Inv', investor_email: 'inv@test.com', old_delta: 10.0, new_delta: 20.0, difference: 10.0 }],
+      },
+    })
+
+    render(<DailyOperatingResultsPage />)
+
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Editar' })).toBeInTheDocument())
+    await user.click(screen.getByRole('button', { name: 'Editar' }))
+
+    await waitFor(() => expect(screen.getByText('Editar operativa diaria')).toBeInTheDocument())
+
+    const editPercentInput = screen.getAllByPlaceholderText('Ej: 0,10')[1]
+    await user.clear(editPercentInput)
+    await user.type(editPercentInput, '2,00')
+    await user.click(screen.getByRole('button', { name: /Previsualizar cambio/i }))
+
+    await waitFor(() => {
+      expect(api.editPreviewDailyOperatingResult).toHaveBeenCalledWith('abc', { percent: 2 })
+    })
+
+    expect(screen.getByText('Aplicar cambio')).toBeInTheDocument()
+  })
+
+  it('applies edit after confirmation', async () => {
+    const user = userEvent.setup()
+    const today = new Date()
+    const todayISO = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+
+    vi.mocked(api.getDailyOperatingResults).mockResolvedValue({
+      data: [{ id: 'abc', date: todayISO, percent: 1.0, applied_by: { name: 'Admin' } }],
+      meta: { page: 1, per_page: 20, total: 1, total_pages: 1 },
+    } as never)
+
+    vi.mocked(api.editPreviewDailyOperatingResult).mockResolvedValueOnce({
+      data: {
+        date: todayISO,
+        old_percent: 1.0,
+        new_percent: 0.5,
+        investors_count: 1,
+        total_old_delta: 10.0,
+        total_new_delta: 5.0,
+        total_difference: -5.0,
+        investors: [{ investor_id: '1', investor_name: 'Inv', investor_email: 'inv@test.com', old_delta: 10.0, new_delta: 5.0, difference: -5.0 }],
+      },
+    })
+    vi.mocked(api.updateDailyOperatingResult).mockResolvedValueOnce({})
+
+    render(<DailyOperatingResultsPage />)
+
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Editar' })).toBeInTheDocument())
+    await user.click(screen.getByRole('button', { name: 'Editar' }))
+
+    const editPercentInput = screen.getAllByPlaceholderText('Ej: 0,10')[1]
+    await user.clear(editPercentInput)
+    await user.type(editPercentInput, '0,50')
+    await user.click(screen.getByRole('button', { name: /Previsualizar cambio/i }))
+
+    await waitFor(() => expect(screen.getByText('Aplicar cambio')).toBeInTheDocument())
+    await user.click(screen.getByText('Aplicar cambio'))
+
+    await waitFor(() => expect(screen.getByText(/Confirmar edición de operativa/i)).toBeInTheDocument())
+    await user.click(screen.getByRole('button', { name: /Confirmar edición/i }))
+
+    await waitFor(() => {
+      expect(api.updateDailyOperatingResult).toHaveBeenCalledWith('abc', expect.objectContaining({ percent: 0.5 }))
+    })
   })
 })
 

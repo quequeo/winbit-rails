@@ -150,6 +150,13 @@ export const api = {
   },
   createDailyOperatingResult: (body: { date: string; percent: number; notes?: string }) =>
     request(`${ADMIN_API_PREFIX}/daily_operating_results`, { method: 'POST', body: JSON.stringify(body) }),
+  editPreviewDailyOperatingResult: (id: string, params: { percent: number }) => {
+    const qs = new URLSearchParams();
+    qs.set('percent', params.percent.toString());
+    return request(`${ADMIN_API_PREFIX}/daily_operating_results/${id}/edit_preview?${qs.toString()}`);
+  },
+  updateDailyOperatingResult: (id: string, body: { percent: number; notes?: string }) =>
+    request(`${ADMIN_API_PREFIX}/daily_operating_results/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
   // Trading Fees
   getTradingFees: (params?: { investor_id?: string; include_voided?: boolean; page?: number; per_page?: number }) => {
     const qs = new URLSearchParams();

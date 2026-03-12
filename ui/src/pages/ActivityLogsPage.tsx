@@ -165,6 +165,7 @@ export const ActivityLogsPage = () => {
               { value: 'update_trading_fee', label: 'Trading fee actualizado' },
               { value: 'void_trading_fee', label: 'Trading fee anulado' },
               { value: 'apply_daily_operating_result', label: 'Operativa diaria aplicada' },
+              { value: 'edit_daily_operating_result', label: 'Operativa diaria editada' },
               { value: 'create_deposit_option', label: 'Opción depósito creada' },
               { value: 'update_deposit_option', label: 'Opción depósito actualizada' },
               { value: 'delete_deposit_option', label: 'Opción depósito eliminada' },

@@ -64,6 +64,8 @@ Rails.application.routes.draw do
       get 'daily_operating_results/monthly_summary', to: 'daily_operating_results#monthly_summary', format: false
       get 'daily_operating_results/by_month', to: 'daily_operating_results#by_month', format: false
       post 'daily_operating_results', to: 'daily_operating_results#create', format: false
+      patch 'daily_operating_results/:id', to: 'daily_operating_results#update', format: false
+      get 'daily_operating_results/:id/edit_preview', to: 'daily_operating_results#edit_preview', format: false
 
       get 'trading_fees', to: 'trading_fees#index', format: false
       post 'trading_fees', to: 'trading_fees#create', format: false
@@ -107,6 +109,8 @@ Rails.application.routes.draw do
         get 'daily_operating_results/monthly_summary', to: 'daily_operating_results#monthly_summary', format: false
         get 'daily_operating_results/by_month', to: 'daily_operating_results#by_month', format: false
         post 'daily_operating_results', to: 'daily_operating_results#create', format: false
+      patch 'daily_operating_results/:id', to: 'daily_operating_results#update', format: false
+      get 'daily_operating_results/:id/edit_preview', to: 'daily_operating_results#edit_preview', format: false
 
         get 'trading_fees', to: 'trading_fees#index', format: false
         post 'trading_fees', to: 'trading_fees#create', format: false
