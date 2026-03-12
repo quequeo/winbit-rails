@@ -26,6 +26,7 @@ class ActivityLog < ApplicationRecord
     update_trading_fee
     void_trading_fee
     apply_daily_operating_result
+    edit_daily_operating_result
     create_deposit_option
     update_deposit_option
     delete_deposit_option
@@ -67,6 +68,7 @@ class ActivityLog < ApplicationRecord
     'update_trading_fee' => 'Trading fee actualizado',
     'void_trading_fee' => 'Trading fee anulado',
     'apply_daily_operating_result' => 'Operativa diaria aplicada',
+    'edit_daily_operating_result' => 'Operativa diaria editada',
     'create_deposit_option' => 'Opción de depósito creada',
     'update_deposit_option' => 'Opción de depósito actualizada',
     'delete_deposit_option' => 'Opción de depósito eliminada',

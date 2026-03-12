@@ -1,7 +1,7 @@
 module Api
   module Admin
     class DailyOperatingResultsController < BaseController
-      before_action :require_superadmin!, only: [:create]
+      before_action :require_superadmin!, only: [:create, :update]
 
       def index
         scope = DailyOperatingResult.includes(:applied_by).order(date: :desc)
@@ -118,6 +118,42 @@ module Api
         else
           status = applicator.errors.any? { |e| e.include?('Ya existe') } ? :conflict : :unprocessable_content
           render_error(applicator.errors.join(', '), status: status)
+        end
+      end
+
+      def edit_preview
+        result = DailyOperatingResult.find(params[:id])
+        new_percent = params[:percent]
+
+        editor = DailyOperatingResultEditor.new(
+          result: result,
+          new_percent: new_percent,
+          edited_by: current_user
+        )
+
+        data = editor.preview
+        if data.nil?
+          render_error(editor.errors.join(', '), status: :unprocessable_content)
+          return
+        end
+
+        render json: { data: data }
+      end
+
+      def update
+        result = DailyOperatingResult.find(params[:id])
+
+        editor = DailyOperatingResultEditor.new(
+          result: result,
+          new_percent: params[:percent],
+          edited_by: current_user,
+          notes: params.key?(:notes) ? params[:notes] : nil
+        )
+
+        if editor.apply
+          render json: { data: DailyOperatingResultSerializer.new(result.reload).as_json }
+        else
+          render_error(editor.errors.join(', '), status: :unprocessable_content)
         end
       end
 

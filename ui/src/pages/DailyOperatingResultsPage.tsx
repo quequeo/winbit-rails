@@ -25,6 +25,26 @@ type PreviewData = {
   investors: PreviewRow[];
 };
 
+type EditPreviewInvestorRow = {
+  investor_id: string;
+  investor_name: string;
+  investor_email: string;
+  old_delta: number;
+  new_delta: number;
+  difference: number;
+};
+
+type EditPreviewData = {
+  date: string;
+  old_percent: number;
+  new_percent: number;
+  investors_count: number;
+  total_old_delta: number;
+  total_new_delta: number;
+  total_difference: number;
+  investors: EditPreviewInvestorRow[];
+};
+
 const todayISO = () => {
   const d = new Date();
   const yyyy = d.getFullYear();
@@ -52,6 +72,14 @@ export const DailyOperatingResultsPage = () => {
   const [historyMeta, setHistoryMeta] = useState<HistoryMeta | null>(null);
   const [historyPage, setHistoryPage] = useState(1);
   const [loadingHistory, setLoadingHistory] = useState(true);
+
+  const [editRow, setEditRow] = useState<HistoryRow | null>(null);
+  const [editPercent, setEditPercent] = useState<string>('');
+  const [editNotes, setEditNotes] = useState<string>('');
+  const [editPreview, setEditPreview] = useState<EditPreviewData | null>(null);
+  const [loadingEditPreview, setLoadingEditPreview] = useState(false);
+  const [editConfirmOpen, setEditConfirmOpen] = useState(false);
+  const [editApplying, setEditApplying] = useState(false);
 
   const loadHistory = useCallback((p: number) => {
     setLoadingHistory(true);
@@ -150,6 +178,63 @@ export const DailyOperatingResultsPage = () => {
     return [...preview.investors].sort((a, b) => (a.investor_name < b.investor_name ? -1 : 1));
   }, [preview]);
   const canApplyPreview = !!preview && preview.investors_count > 0;
+
+  const openEdit = (row: HistoryRow) => {
+    setEditRow(row);
+    setEditPercent(row.percent.toFixed(2).replace('.', ','));
+    setEditNotes('');
+    setEditPreview(null);
+    setEditConfirmOpen(false);
+  };
+
+  const closeEdit = () => {
+    setEditRow(null);
+    setEditPreview(null);
+    setEditConfirmOpen(false);
+  };
+
+  const editParsedPercent = useMemo(() => {
+    const cleaned = editPercent.replace(/%/g, '').trim();
+    if (!cleaned) return null;
+    const normalized = cleaned.replace(/\./g, '').replace(/,/g, '.');
+    const n = Number(normalized);
+    return Number.isFinite(n) ? n : null;
+  }, [editPercent]);
+
+  const runEditPreview = async () => {
+    if (!editRow || editParsedPercent === null) {
+      showAlert('Porcentaje inválido', 'Ingresá un porcentaje válido.');
+      return;
+    }
+    try {
+      setLoadingEditPreview(true);
+      const res = await api.editPreviewDailyOperatingResult(editRow.id, { percent: editParsedPercent });
+      setEditPreview(res?.data as EditPreviewData);
+    } catch (e: unknown) {
+      setEditPreview(null);
+      showAlert('No se pudo previsualizar', extractErrorMessage(e, 'Error al previsualizar edición'));
+    } finally {
+      setLoadingEditPreview(false);
+    }
+  };
+
+  const applyEdit = async () => {
+    if (!editRow || editParsedPercent === null) return;
+    try {
+      setEditApplying(true);
+      await api.updateDailyOperatingResult(editRow.id, { percent: editParsedPercent, notes: editNotes || undefined });
+      setNotice({ type: 'success', message: 'Operativa diaria editada correctamente.' });
+      closeEdit();
+      setHistoryPage(1);
+      loadHistory(1);
+    } catch (e: unknown) {
+      showAlert('No se pudo editar', extractErrorMessage(e, 'Error al editar'));
+    } finally {
+      setEditApplying(false);
+    }
+  };
+
+  const isToday = (dateStr: string) => dateStr === todayISO();
 
   return (
     <div className="space-y-6">
@@ -291,6 +376,7 @@ export const DailyOperatingResultsPage = () => {
                     <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Fecha</th>
                     <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-600">Rendimiento</th>
                     <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Aplicado por</th>
+                    <th className="px-5 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-600">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 bg-white">
@@ -298,6 +384,7 @@ export const DailyOperatingResultsPage = () => {
                     const d = new Date(row.date);
                     const dateStr = d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
                     const isPos = row.percent >= 0;
+                    const editable = isToday(row.date);
                     return (
                       <tr key={row.id} className="hover:bg-gray-50">
                         <td className="px-5 py-3 text-sm text-gray-700">{dateStr}</td>
@@ -305,6 +392,20 @@ export const DailyOperatingResultsPage = () => {
                           {isPos ? '+' : ''}{row.percent.toFixed(2).replace('.', ',')}%
                         </td>
                         <td className="px-5 py-3 text-sm text-gray-500">{row.applied_by?.name ?? '—'}</td>
+                        <td className="px-5 py-3 text-center">
+                          {editable ? (
+                            <button
+                              type="button"
+                              onClick={() => openEdit(row)}
+                              className="inline-flex items-center rounded-md border border-gray-300 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                              title="Editar operativa"
+                            >
+                              Editar
+                            </button>
+                          ) : (
+                            <span className="text-xs text-gray-400">—</span>
+                          )}
+                        </td>
                       </tr>
                     );
                   })}
@@ -372,12 +473,126 @@ export const DailyOperatingResultsPage = () => {
       <ConfirmDialog
         isOpen={confirmOpen}
         title="Aplicar operativa diaria"
-        message="Esta acción impactará en el capital actual de todos los inversores activos con capital. No se puede editar luego."
+        message="Esta acción impactará en el capital actual de todos los inversores activos con capital."
         confirmText={applying ? 'Aplicando…' : 'Confirmar y aplicar'}
         cancelText="Cancelar"
         confirmVariant="primary"
         onConfirm={() => void apply()}
         onClose={() => setConfirmOpen(false)}
+      />
+
+      {editRow ? (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="fixed inset-0 bg-black/15 transition-opacity" onClick={closeEdit} />
+          <div className="flex min-h-full items-center justify-center p-4">
+            <div className="relative w-full max-w-2xl overflow-hidden rounded-lg bg-white shadow-xl">
+              <div className="border-b border-gray-200 px-6 py-4">
+                <h3 className="text-lg font-semibold text-gray-900">Editar operativa diaria</h3>
+                <p className="mt-1 text-sm text-gray-600">
+                  Fecha: <span className="font-semibold">{editRow.date}</span> — Porcentaje actual: <span className="font-semibold">{editRow.percent.toFixed(2).replace('.', ',')}%</span>
+                </p>
+              </div>
+              <div className="px-6 py-4 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Nuevo porcentaje (%)</label>
+                    <Input
+                      type="text"
+                      value={editPercent}
+                      onChange={(e) => setEditPercent(e.target.value)}
+                      placeholder="Ej: 0,10"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Notas (opcional)</label>
+                    <Input
+                      type="text"
+                      value={editNotes}
+                      onChange={(e) => setEditNotes(e.target.value)}
+                      placeholder=""
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-3 justify-end">
+                  <Button type="button" variant="outline" onClick={() => void runEditPreview()} disabled={loadingEditPreview}>
+                    {loadingEditPreview ? 'Previsualizando…' : 'Previsualizar cambio'}
+                  </Button>
+                </div>
+
+                {editPreview ? (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                        <div className="text-xs uppercase text-gray-500">Delta anterior total</div>
+                        <div className="mt-1 text-sm font-semibold text-gray-900">USD {formatNumberAR(editPreview.total_old_delta)}</div>
+                      </div>
+                      <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                        <div className="text-xs uppercase text-gray-500">Delta nuevo total</div>
+                        <div className="mt-1 text-sm font-semibold text-gray-900">USD {formatNumberAR(editPreview.total_new_delta)}</div>
+                      </div>
+                      <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                        <div className="text-xs uppercase text-gray-500">Diferencia total</div>
+                        <div className={`mt-1 text-sm font-semibold ${editPreview.total_difference >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+                          USD {formatNumberAR(editPreview.total_difference)}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="overflow-hidden rounded-xl border border-gray-200 max-h-64 overflow-y-auto">
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50 sticky top-0">
+                          <tr>
+                            <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-700">Inversor</th>
+                            <th className="px-3 py-2 text-right text-xs font-medium uppercase text-gray-700">Delta anterior</th>
+                            <th className="px-3 py-2 text-right text-xs font-medium uppercase text-gray-700">Delta nuevo</th>
+                            <th className="px-3 py-2 text-right text-xs font-medium uppercase text-gray-700">Diferencia</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200 bg-white">
+                          {editPreview.investors.map((r) => (
+                            <tr key={r.investor_id} className="hover:bg-gray-50">
+                              <td className="px-3 py-2 text-sm text-gray-900">
+                                <div className="font-medium">{r.investor_name}</div>
+                                <div className="text-xs text-gray-500">{r.investor_email}</div>
+                              </td>
+                              <td className="px-3 py-2 text-right text-sm text-gray-900">USD {formatNumberAR(r.old_delta)}</td>
+                              <td className="px-3 py-2 text-right text-sm text-gray-900">USD {formatNumberAR(r.new_delta)}</td>
+                              <td className={`px-3 py-2 text-right text-sm font-medium ${r.difference >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+                                USD {formatNumberAR(r.difference)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+              <div className="flex justify-end gap-3 border-t border-gray-200 px-6 py-4">
+                <Button type="button" variant="outline" onClick={closeEdit}>
+                  Cancelar
+                </Button>
+                {editPreview ? (
+                  <Button type="button" onClick={() => setEditConfirmOpen(true)}>
+                    Aplicar cambio
+                  </Button>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      <ConfirmDialog
+        isOpen={editConfirmOpen}
+        title="Confirmar edición de operativa"
+        message={`Se cambiará el porcentaje de ${editRow?.percent.toFixed(2).replace('.', ',')}% a ${editParsedPercent?.toFixed(2).replace('.', ',')}%. Se recalculará el capital de ${editPreview?.investors_count ?? 0} inversor(es).`}
+        confirmText={editApplying ? 'Aplicando…' : 'Confirmar edición'}
+        cancelText="Cancelar"
+        confirmVariant="primary"
+        onConfirm={() => void applyEdit()}
+        onClose={() => setEditConfirmOpen(false)}
       />
     </div>
   );

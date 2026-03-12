@@ -178,4 +178,87 @@ RSpec.describe 'Admin Daily Operating Results API', type: :request do
       expect(DailyOperatingResult.find_by(date: future_date)).to be_nil
     end
   end
+
+  describe 'GET /api/admin/daily_operating_results/:id/edit_preview' do
+    it 'returns preview data for an editable result' do
+      today = Date.current
+      at_time = Time.zone.local(today.year, today.month, today.day, 17, 0, 0)
+      create_investor_with_balance(balance: 1000, at_time: at_time)
+
+      applicator = DailyOperatingResultApplicator.new(date: today, percent: 1.0, applied_by: admin)
+      applicator.apply
+      result = DailyOperatingResult.find_by!(date: today)
+
+      get "/api/admin/daily_operating_results/#{result.id}/edit_preview", params: { percent: 2.0 }
+
+      expect(response).to have_http_status(:ok)
+      json = JSON.parse(response.body)
+      expect(json['data']['old_percent']).to eq(1.0)
+      expect(json['data']['new_percent']).to eq(2.0)
+      expect(json['data']['investors_count']).to eq(1)
+    end
+
+    it 'returns 422 when editing a past date' do
+      past_date = Date.current - 1.day
+      result = DailyOperatingResult.create!(date: past_date, percent: 1.0, applied_by: admin, applied_at: Time.current)
+
+      get "/api/admin/daily_operating_results/#{result.id}/edit_preview", params: { percent: 2.0 }
+
+      expect(response).to have_http_status(:unprocessable_content)
+      json = JSON.parse(response.body)
+      expect(json['error']).to include('día actual')
+    end
+  end
+
+  describe 'PATCH /api/admin/daily_operating_results/:id' do
+    it 'updates the percent and recalculates portfolios' do
+      today = Date.current
+      at_time = Time.zone.local(today.year, today.month, today.day, 17, 0, 0)
+      inv = create_investor_with_balance(balance: 1000, at_time: at_time)
+
+      applicator = DailyOperatingResultApplicator.new(date: today, percent: 1.0, applied_by: admin)
+      applicator.apply
+
+      result = DailyOperatingResult.find_by!(date: today)
+
+      patch "/api/admin/daily_operating_results/#{result.id}", params: { percent: 2.0 }
+
+      expect(response).to have_http_status(:ok)
+      json = JSON.parse(response.body)
+      expect(json['data']['percent']).to eq(2.0)
+
+      inv.reload
+      expect(inv.portfolio.current_balance).to eq(1020.0)
+    end
+
+    it 'returns 422 when editing a past date' do
+      past_date = Date.current - 1.day
+      at_time = Time.zone.local(past_date.year, past_date.month, past_date.day, 17, 0, 0)
+      create_investor_with_balance(balance: 1000, at_time: at_time)
+
+      applicator = DailyOperatingResultApplicator.new(date: past_date, percent: 1.0, applied_by: admin)
+      applicator.apply
+
+      result = DailyOperatingResult.find_by!(date: past_date)
+
+      patch "/api/admin/daily_operating_results/#{result.id}", params: { percent: 2.0 }
+
+      expect(response).to have_http_status(:unprocessable_content)
+      json = JSON.parse(response.body)
+      expect(json['error']).to include('día actual')
+    end
+
+    it 'requires superadmin' do
+      regular = User.create!(email: 'regular@test.com', name: 'Regular', role: 'ADMIN', provider: 'google_oauth2', uid: '99999')
+      logout(:user)
+      login_as(regular, scope: :user)
+
+      today = Date.current
+      result = DailyOperatingResult.create!(date: today, percent: 1.0, applied_by: admin, applied_at: Time.current)
+
+      patch "/api/admin/daily_operating_results/#{result.id}", params: { percent: 2.0 }
+
+      expect(response).to have_http_status(:forbidden)
+    end
+  end
 end
