@@ -100,15 +100,15 @@ export const InvestorsPage = () => {
     }
   };
 
-  if (error) return <div className="text-red-600">{error}</div>;
-  if (!data) return <div className="text-gray-600">Cargando...</div>;
+  if (error) return <div className="text-error">{error}</div>;
+  if (!data) return <div className="text-t-muted">Cargando...</div>;
 
   const investors: ApiInvestor[] = data?.data ?? [];
 
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-2 md:gap-4">
-        <h1 className="text-3xl font-bold text-gray-900">Inversores</h1>
+        <h1 className="text-3xl font-bold text-t-primary">Inversores</h1>
         <Button
           onClick={() => setShowForm(!showForm)}
           className="shrink-0 text-xs md:text-sm px-2 py-1.5 md:px-4 md:py-2"
@@ -118,13 +118,13 @@ export const InvestorsPage = () => {
       </div>
 
       {showForm && (
-        <div className="rounded-lg bg-white p-6 shadow">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+        <div className="rounded-lg bg-dark-card p-6">
+          <h2 className="text-lg font-semibold text-t-primary mb-4">
             Nuevo Inversor
           </h2>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-t-muted mb-1">
                 Email *
               </label>
               <Input
@@ -138,7 +138,7 @@ export const InvestorsPage = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-t-muted mb-1">
                 Nombre *
               </label>
               <Input
@@ -152,7 +152,7 @@ export const InvestorsPage = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-t-muted mb-1">
                 Trading fee (%)
               </label>
               <Input
@@ -169,12 +169,12 @@ export const InvestorsPage = () => {
                 }
                 placeholder="30"
               />
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-t-dim">
                 Default 30%. Podés editarlo por inversor.
               </p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-t-muted mb-1">
                 Contraseña
               </label>
               <Input
@@ -186,7 +186,7 @@ export const InvestorsPage = () => {
                 placeholder="Mínimo 6 caracteres"
                 minLength={6}
               />
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-t-dim">
                 Opcional. Si no se establece, el inversor solo podrá acceder con
                 Google.
               </p>
@@ -198,7 +198,7 @@ export const InvestorsPage = () => {
               <Button
                 type="button"
                 onClick={() => setShowForm(false)}
-                className="bg-gray-500 hover:bg-gray-600"
+                className="bg-dark-section hover:bg-primary-dim"
               >
                 Cancelar
               </Button>
@@ -212,14 +212,14 @@ export const InvestorsPage = () => {
         {investors.map((inv) => (
           <div
             key={inv.id}
-            className="w-full overflow-hidden rounded-lg bg-white p-4 shadow"
+            className="w-full overflow-hidden rounded-lg bg-dark-card p-4"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-gray-900">
+                <p className="truncate text-sm font-semibold text-t-primary">
                   {inv.name}
                 </p>
-                <p className="truncate mt-1 text-sm text-gray-600">
+                <p className="truncate mt-1 text-sm text-t-muted">
                   {inv.email}
                 </p>
               </div>
@@ -227,8 +227,8 @@ export const InvestorsPage = () => {
                 onClick={() => handleToggleStatus(inv)}
                 className={`shrink-0 inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold cursor-pointer ${
                   inv.status === "ACTIVE"
-                    ? "bg-green-50 text-green-700 hover:bg-green-100"
-                    : "bg-red-50 text-red-700 hover:bg-red-100"
+                    ? "bg-success/15 text-success"
+                    : "bg-error/15 text-error"
                 }`}
                 title={inv.status === "ACTIVE" ? "Desactivar" : "Activar"}
               >
@@ -237,19 +237,19 @@ export const InvestorsPage = () => {
             </div>
             <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
               <div>
-                <p className="text-xs text-gray-500">Capital Actual</p>
-                <p className="mt-1 font-mono font-semibold text-gray-900">
+                <p className="text-xs text-t-dim">Capital Actual</p>
+                <p className="mt-1 font-mono font-semibold text-t-primary">
                   {formatCurrencyAR(inv.portfolio?.currentBalance ?? 0)}
                 </p>
               </div>
               <div>
-                <p className="text-xs text-gray-500">Total Invertido</p>
-                <p className="mt-1 font-mono font-semibold text-gray-900">
+                <p className="text-xs text-t-dim">Total Invertido</p>
+                <p className="mt-1 font-mono font-semibold text-t-primary">
                   {formatCurrencyAR(inv.portfolio?.totalInvested ?? 0)}
                 </p>
               </div>
             </div>
-            <div className="mt-2 flex items-center justify-between text-xs text-gray-500">
+            <div className="mt-2 flex items-center justify-between text-xs text-t-dim">
               <span>
                 Fee: {frequencyLabel(inv.tradingFeeFrequency ?? "QUARTERLY")} (
                 {inv.tradingFeePercentage ?? 30}%)
@@ -259,7 +259,7 @@ export const InvestorsPage = () => {
             <div className="mt-3 flex gap-2">
               <button
                 onClick={() => navigate(`/investors/${String(inv.id)}/edit`)}
-                className="rounded p-2 text-[#58b098] hover:bg-[#58b098]/10"
+                className="rounded p-2 text-primary hover:bg-primary-dim"
                 title="Editar"
               >
                 <svg
@@ -278,7 +278,7 @@ export const InvestorsPage = () => {
               </button>
               <button
                 onClick={() => handleDelete(inv)}
-                className="p-2 text-red-600 hover:bg-red-50 rounded"
+                className="p-2 text-error hover:bg-error/15 rounded"
                 title="Eliminar"
               >
                 <svg
@@ -301,11 +301,11 @@ export const InvestorsPage = () => {
       </div>
 
       {/* Desktop/tablet: table */}
-      <div className="hidden md:block rounded-lg bg-white p-6 shadow">
+      <div className="hidden md:block rounded-lg bg-dark-card p-6">
         <div className="overflow-x-auto">
           <table className="min-w-full">
             <thead>
-              <tr className="text-left text-sm text-gray-500 border-b border-gray-200">
+              <tr className="text-left text-sm text-t-dim border-b border-b-default">
                 <th className="pb-3 pr-4">Nombre</th>
                 <th className="pb-3 pr-4">Email</th>
                 <th className="pb-3 pr-4 text-center">Status</th>
@@ -315,21 +315,21 @@ export const InvestorsPage = () => {
                 <th className="pb-3 text-right">Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-b-default">
               {investors.map((inv) => (
                 <tr
                   key={inv.id}
                   className={`text-sm ${inv.status === "INACTIVE" ? "opacity-50" : ""}`}
                 >
                   <td className="py-3 pr-4 font-medium">{inv.name}</td>
-                  <td className="py-3 pr-4 text-gray-600">{inv.email}</td>
+                  <td className="py-3 pr-4 text-t-muted">{inv.email}</td>
                   <td className="py-3 pr-4 text-center">
                     <button
                       onClick={() => handleToggleStatus(inv)}
                       className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold cursor-pointer transition-colors ${
                         inv.status === "ACTIVE"
-                          ? "bg-green-50 text-green-700 hover:bg-green-100"
-                          : "bg-red-50 text-red-700 hover:bg-red-100"
+                          ? "bg-success/15 text-success"
+                          : "bg-error/15 text-error"
                       }`}
                       title={
                         inv.status === "ACTIVE"
@@ -340,11 +340,11 @@ export const InvestorsPage = () => {
                       {inv.status === "ACTIVE" ? "Activo" : "Inactivo"}
                     </button>
                   </td>
-                  <td className="py-3 pr-4 text-right font-mono text-gray-900">
+                  <td className="py-3 pr-4 text-right font-mono text-t-primary">
                     {formatCurrencyAR(inv.portfolio?.currentBalance ?? 0)}
                   </td>
                   <td className="py-3 pr-4 text-center">
-                    <span className="inline-flex rounded-full bg-purple-50 px-2 py-0.5 text-xs font-semibold text-purple-700">
+                    <span className="inline-flex rounded-full bg-info/15 px-2 py-0.5 text-xs font-semibold text-info">
                       {frequencyLabel(inv.tradingFeeFrequency ?? "QUARTERLY")} (
                       {inv.tradingFeePercentage ?? 30}%)
                     </span>
@@ -352,13 +352,13 @@ export const InvestorsPage = () => {
                   <td className="py-3 pr-4 text-center">
                     {inv.hasPassword ? (
                       <span
-                        className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700"
+                        className="inline-flex items-center gap-1 rounded-full bg-info/15 px-2 py-0.5 text-xs font-semibold text-info"
                         title="Contraseña configurada"
                       >
                         🔑
                       </span>
                     ) : (
-                      <span className="text-xs text-gray-400">Google</span>
+                      <span className="text-xs text-t-dim">Google</span>
                     )}
                   </td>
                   <td className="py-3 text-right">
@@ -367,7 +367,7 @@ export const InvestorsPage = () => {
                         onClick={() =>
                           navigate(`/investors/${String(inv.id)}/edit`)
                         }
-                        className="rounded p-1.5 text-[#58b098] hover:bg-[#58b098]/10"
+                        className="rounded p-1.5 text-primary hover:bg-primary-dim"
                         title="Editar"
                       >
                         <svg
@@ -386,7 +386,7 @@ export const InvestorsPage = () => {
                       </button>
                       <button
                         onClick={() => handleDelete(inv)}
-                        className="p-1.5 text-red-600 hover:bg-red-50 rounded"
+                        className="p-1.5 text-error hover:bg-error/15 rounded"
                         title="Eliminar"
                       >
                         <svg
@@ -426,7 +426,7 @@ export const InvestorsPage = () => {
               </span>
               ?
               <br />
-              <span className="text-red-600">
+              <span className="text-error">
                 Esta acción no se puede deshacer.
               </span>
             </>

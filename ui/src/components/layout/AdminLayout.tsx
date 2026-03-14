@@ -3,7 +3,7 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { api } from "../../lib/api";
 
 const linkBase =
-  "border-b-2 border-transparent px-1 py-4 text-sm font-medium text-gray-700 hover:border-[#58b098] hover:text-[#58b098]";
+  "border-b-2 border-transparent px-1 py-4 text-sm font-medium text-t-muted hover:border-primary hover:text-primary";
 
 type AdminSession = {
   data: {
@@ -54,18 +54,18 @@ export const AdminLayout = () => {
   };
 
   if (isCheckingSession)
-    return <div className="p-6 text-gray-600">Cargando...</div>;
-  if (error) return <div className="p-6 text-red-600">{error}</div>;
+    return <div className="p-6 text-t-muted">Cargando...</div>;
+  if (error) return <div className="p-6 text-error">{error}</div>;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow">
+    <div className="min-h-screen bg-dark-bg">
+      <header className="bg-dark-card border-b border-b-default">
         <div className="flex items-center justify-between px-4 py-4 md:px-6">
           <div>
-            <h1 className="text-2xl font-bold text-[#58b098]">
+            <h1 className="text-2xl font-bold text-primary">
               Winbit Admin v1.0.0
             </h1>
-            <p className="text-sm text-gray-600">{sessionEmail || "—"}</p>
+            <p className="text-sm text-t-muted">{sessionEmail || "—"}</p>
           </div>
 
           <div className="flex items-center gap-2">
@@ -73,7 +73,7 @@ export const AdminLayout = () => {
             <button
               type="button"
               onClick={onLogout}
-              className="hidden md:inline-flex rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              className="hidden md:inline-flex rounded-lg border border-b-default bg-dark-section px-3 py-2 text-sm font-medium text-t-muted hover:bg-primary-dim"
               aria-label="Cerrar sesión"
               title="Cerrar sesión"
             >
@@ -83,7 +83,7 @@ export const AdminLayout = () => {
             {/* Mobile hamburger (right) */}
             <button
               type="button"
-              className="md:hidden inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white p-2 text-gray-700 hover:bg-gray-50"
+              className="md:hidden inline-flex items-center justify-center rounded-lg border border-b-default bg-dark-section p-2 text-t-muted hover:bg-primary-dim"
               aria-label="Abrir menú"
               onClick={() => setMobileMenuOpen((v) => !v)}
             >
@@ -100,13 +100,13 @@ export const AdminLayout = () => {
         </div>
 
         {/* Desktop nav */}
-        <nav className="hidden md:block border-t border-gray-200 bg-white px-6">
+        <nav className="hidden md:block border-t border-b-default bg-dark-card px-6">
           <div className="flex space-x-8">
             <NavLink
               to="/dashboard"
               className={({ isActive }) =>
                 isActive
-                  ? `${linkBase} border-[#58b098] text-[#58b098]`
+                  ? `${linkBase} border-primary text-primary`
                   : linkBase
               }
             >
@@ -116,7 +116,7 @@ export const AdminLayout = () => {
               to="/investors"
               className={({ isActive }) =>
                 isActive
-                  ? `${linkBase} border-[#58b098] text-[#58b098]`
+                  ? `${linkBase} border-primary text-primary`
                   : linkBase
               }
             >
@@ -126,7 +126,7 @@ export const AdminLayout = () => {
               to="/requests"
               className={({ isActive }) =>
                 isActive
-                  ? `${linkBase} border-[#58b098] text-[#58b098]`
+                  ? `${linkBase} border-primary text-primary`
                   : linkBase
               }
             >
@@ -136,7 +136,7 @@ export const AdminLayout = () => {
               to="/operativa"
               className={({ isActive }) =>
                 isActive
-                  ? `${linkBase} border-[#58b098] text-[#58b098]`
+                  ? `${linkBase} border-primary text-primary`
                   : linkBase
               }
             >
@@ -146,7 +146,7 @@ export const AdminLayout = () => {
               to="/trading-fees"
               className={({ isActive }) =>
                 isActive
-                  ? `${linkBase} border-[#58b098] text-[#58b098]`
+                  ? `${linkBase} border-primary text-primary`
                   : linkBase
               }
             >
@@ -156,7 +156,7 @@ export const AdminLayout = () => {
               to="/admins"
               className={({ isActive }) =>
                 isActive
-                  ? `${linkBase} border-[#58b098] text-[#58b098]`
+                  ? `${linkBase} border-primary text-primary`
                   : linkBase
               }
             >
@@ -166,7 +166,7 @@ export const AdminLayout = () => {
               to="/activity"
               className={({ isActive }) =>
                 isActive
-                  ? `${linkBase} border-[#58b098] text-[#58b098]`
+                  ? `${linkBase} border-primary text-primary`
                   : linkBase
               }
             >
@@ -177,15 +177,15 @@ export const AdminLayout = () => {
 
         {/* Mobile menu */}
         {mobileMenuOpen ? (
-          <nav className="md:hidden border-t border-gray-200 bg-white px-4 py-3">
+          <nav className="md:hidden border-t border-b-default bg-dark-card px-4 py-3">
             <div className="flex flex-col gap-2">
               <NavLink
                 to="/dashboard"
                 onClick={() => setMobileMenuOpen(false)}
                 className={({ isActive }) =>
                   isActive
-                    ? "rounded-lg bg-[#58b098]/10 px-3 py-2 text-sm font-medium text-[#58b098]"
-                    : "rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                    ? "rounded-lg bg-primary-dim px-3 py-2 text-sm font-medium text-primary"
+                    : "rounded-lg px-3 py-2 text-sm font-medium text-t-muted hover:bg-primary-dim"
                 }
               >
                 Dashboard
@@ -195,8 +195,8 @@ export const AdminLayout = () => {
                 onClick={() => setMobileMenuOpen(false)}
                 className={({ isActive }) =>
                   isActive
-                    ? "rounded-lg bg-[#58b098]/10 px-3 py-2 text-sm font-medium text-[#58b098]"
-                    : "rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                    ? "rounded-lg bg-primary-dim px-3 py-2 text-sm font-medium text-primary"
+                    : "rounded-lg px-3 py-2 text-sm font-medium text-t-muted hover:bg-primary-dim"
                 }
               >
                 Inversores
@@ -206,8 +206,8 @@ export const AdminLayout = () => {
                 onClick={() => setMobileMenuOpen(false)}
                 className={({ isActive }) =>
                   isActive
-                    ? "rounded-lg bg-[#58b098]/10 px-3 py-2 text-sm font-medium text-[#58b098]"
-                    : "rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                    ? "rounded-lg bg-primary-dim px-3 py-2 text-sm font-medium text-primary"
+                    : "rounded-lg px-3 py-2 text-sm font-medium text-t-muted hover:bg-primary-dim"
                 }
               >
                 Solicitudes
@@ -217,8 +217,8 @@ export const AdminLayout = () => {
                 onClick={() => setMobileMenuOpen(false)}
                 className={({ isActive }) =>
                   isActive
-                    ? "rounded-lg bg-[#58b098]/10 px-3 py-2 text-sm font-medium text-[#58b098]"
-                    : "rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                    ? "rounded-lg bg-primary-dim px-3 py-2 text-sm font-medium text-primary"
+                    : "rounded-lg px-3 py-2 text-sm font-medium text-t-muted hover:bg-primary-dim"
                 }
               >
                 Operativa
@@ -228,8 +228,8 @@ export const AdminLayout = () => {
                 onClick={() => setMobileMenuOpen(false)}
                 className={({ isActive }) =>
                   isActive
-                    ? "rounded-lg bg-[#58b098]/10 px-3 py-2 text-sm font-medium text-[#58b098]"
-                    : "rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                    ? "rounded-lg bg-primary-dim px-3 py-2 text-sm font-medium text-primary"
+                    : "rounded-lg px-3 py-2 text-sm font-medium text-t-muted hover:bg-primary-dim"
                 }
               >
                 Comisiones
@@ -239,8 +239,8 @@ export const AdminLayout = () => {
                 onClick={() => setMobileMenuOpen(false)}
                 className={({ isActive }) =>
                   isActive
-                    ? "rounded-lg bg-[#58b098]/10 px-3 py-2 text-sm font-medium text-[#58b098]"
-                    : "rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                    ? "rounded-lg bg-primary-dim px-3 py-2 text-sm font-medium text-primary"
+                    : "rounded-lg px-3 py-2 text-sm font-medium text-t-muted hover:bg-primary-dim"
                 }
               >
                 Admins
@@ -250,19 +250,19 @@ export const AdminLayout = () => {
                 onClick={() => setMobileMenuOpen(false)}
                 className={({ isActive }) =>
                   isActive
-                    ? "rounded-lg bg-[#58b098]/10 px-3 py-2 text-sm font-medium text-[#58b098]"
-                    : "rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                    ? "rounded-lg bg-primary-dim px-3 py-2 text-sm font-medium text-primary"
+                    : "rounded-lg px-3 py-2 text-sm font-medium text-t-muted hover:bg-primary-dim"
                 }
               >
                 Actividad
               </NavLink>
 
-              <div className="my-1 h-px bg-gray-200" />
+              <div className="my-1 h-px bg-b-default" />
 
               <button
                 type="button"
                 onClick={onLogout}
-                className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-left text-sm font-medium text-gray-700 hover:bg-gray-50"
+                className="rounded-lg border border-b-default bg-dark-section px-3 py-2 text-left text-sm font-medium text-t-muted hover:bg-primary-dim"
               >
                 Cerrar sesión
               </button>

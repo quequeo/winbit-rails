@@ -702,7 +702,7 @@ describe("TradingFeesPage", () => {
         screen.getByText("Detalle de rentabilidad mensual"),
       ).toBeInTheDocument(),
     );
-    expect(screen.getAllByText("-$45,00").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("-$45.00").length).toBeGreaterThan(0);
   });
 
   it("uses desktop delete action with applied fee id and shows zero total in detail modal", async () => {
@@ -754,6 +754,6 @@ describe("TradingFeesPage", () => {
         screen.getByText("Detalle de rentabilidad mensual"),
       ).toBeInTheDocument(),
     );
-    expect(screen.getAllByText("$0,00").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("$0.00").length).toBeGreaterThan(0);
   });
 });

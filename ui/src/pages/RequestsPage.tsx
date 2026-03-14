@@ -64,7 +64,7 @@ const AttachmentViewer = ({ url }: { url: string }) => {
       rel="noopener noreferrer"
       title={isPdf ? "Ver PDF" : "Ver comprobante"}
       onClick={handleClick}
-      className="inline-flex items-center justify-center rounded-md p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-blue-600"
+      className="inline-flex items-center justify-center rounded-md p-1.5 text-t-dim transition-colors hover:bg-primary-dim hover:text-info"
     >
       {isPdf ? (
         <svg
@@ -245,8 +245,8 @@ export const RequestsPage = () => {
     });
   };
 
-  if (error) return <div className="text-red-600">{error}</div>;
-  if (!data) return <div className="text-gray-600">Cargando...</div>;
+  if (error) return <div className="text-error">{error}</div>;
+  if (!data) return <div className="text-t-muted">Cargando...</div>;
 
   const requests = data.data?.requests ?? [];
   const pendingCount = data.data?.pendingCount ?? 0;
@@ -255,8 +255,8 @@ export const RequestsPage = () => {
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-2 md:gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Solicitudes</h1>
-          <p className="mt-1 text-sm text-gray-600">
+          <h1 className="text-3xl font-bold text-t-primary">Solicitudes</h1>
+          <p className="mt-1 text-sm text-t-muted">
             {pendingCount} solicitud{pendingCount !== 1 ? "es" : ""} pendiente
             {pendingCount !== 1 ? "s" : ""}
           </p>
@@ -270,8 +270,8 @@ export const RequestsPage = () => {
       </div>
 
       {showForm && (
-        <div className="rounded-lg bg-white p-6 shadow">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+        <div className="rounded-lg bg-dark-card p-6">
+          <h2 className="text-lg font-semibold text-t-primary mb-4">
             Nueva Solicitud
           </h2>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -279,7 +279,7 @@ export const RequestsPage = () => {
               <div>
                 <label
                   htmlFor="request-investor"
-                  className="block text-sm font-medium text-gray-700 mb-1"
+                  className="block text-sm font-medium text-t-muted mb-1"
                 >
                   Inversor *
                 </label>
@@ -290,7 +290,7 @@ export const RequestsPage = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, investor_id: e.target.value })
                   }
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
+                  className="w-full rounded-lg border border-b-default px-3 py-2 focus:border-primary focus:outline-none"
                 >
                   <option value="">Seleccionar inversor</option>
                   {investors.map((inv) => (
@@ -303,7 +303,7 @@ export const RequestsPage = () => {
               <div>
                 <label
                   htmlFor="request-type"
-                  className="block text-sm font-medium text-gray-700 mb-1"
+                  className="block text-sm font-medium text-t-muted mb-1"
                 >
                   Tipo *
                 </label>
@@ -314,14 +314,14 @@ export const RequestsPage = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, request_type: e.target.value })
                   }
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
+                  className="w-full rounded-lg border border-b-default px-3 py-2 focus:border-primary focus:outline-none"
                 >
                   <option value="DEPOSIT">Depósito</option>
                   <option value="WITHDRAWAL">Retiro</option>
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-t-muted mb-1">
                   Método *
                 </label>
                 <select
@@ -330,7 +330,7 @@ export const RequestsPage = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, method: e.target.value })
                   }
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
+                  className="w-full rounded-lg border border-b-default px-3 py-2 focus:border-primary focus:outline-none"
                 >
                   <option value="USDT">USDT</option>
                   <option value="USDC">USDC</option>
@@ -340,7 +340,7 @@ export const RequestsPage = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-t-muted mb-1">
                   Monto *
                 </label>
                 <Input
@@ -356,7 +356,7 @@ export const RequestsPage = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-t-muted mb-1">
                   Red (opcional)
                 </label>
                 <select
@@ -364,7 +364,7 @@ export const RequestsPage = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, network: e.target.value })
                   }
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
+                  className="w-full rounded-lg border border-b-default px-3 py-2 focus:border-primary focus:outline-none"
                 >
                   <option value="">Sin red</option>
                   <option value="TRC20">TRC20</option>
@@ -374,7 +374,7 @@ export const RequestsPage = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-t-muted mb-1">
                   Estado *
                 </label>
                 <select
@@ -383,7 +383,7 @@ export const RequestsPage = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, status: e.target.value })
                   }
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
+                  className="w-full rounded-lg border border-b-default px-3 py-2 focus:border-primary focus:outline-none"
                 >
                   <option value="PENDING">Pendiente</option>
                   <option value="APPROVED">Aprobado</option>
@@ -391,7 +391,7 @@ export const RequestsPage = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-t-muted mb-1">
                   Fecha (opcional)
                 </label>
                 <DatePicker
@@ -400,7 +400,7 @@ export const RequestsPage = () => {
                     setFormData({ ...formData, processed_at: iso })
                   }
                 />
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-t-dim">
                   Si elegís estado <b>Aprobado</b> o <b>Rechazado</b>, esta
                   fecha se usa para procesar el movimiento (y recalcular
                   balances).
@@ -414,7 +414,7 @@ export const RequestsPage = () => {
               <Button
                 type="button"
                 onClick={cancelForm}
-                className="bg-gray-500 hover:bg-gray-600"
+                className="bg-dark-section hover:bg-primary-dim"
               >
                 Cancelar
               </Button>
@@ -423,18 +423,18 @@ export const RequestsPage = () => {
         </div>
       )}
 
-      <div className="rounded-lg bg-white p-6 shadow">
+      <div className="rounded-lg bg-dark-card p-6">
         <div className="flex gap-4">
           <div>
             <label
               htmlFor="filter-type"
-              className="mb-2 block text-sm font-medium text-gray-700"
+              className="mb-2 block text-sm font-medium text-t-muted"
             >
               Tipo
             </label>
             <select
               id="filter-type"
-              className="rounded-md border border-gray-300 px-3 py-2"
+              className="rounded-md border border-b-default px-3 py-2"
               value={type}
               onChange={(e) => setType(e.target.value)}
             >
@@ -446,13 +446,13 @@ export const RequestsPage = () => {
           <div>
             <label
               htmlFor="filter-status"
-              className="mb-2 block text-sm font-medium text-gray-700"
+              className="mb-2 block text-sm font-medium text-t-muted"
             >
               Estado
             </label>
             <select
               id="filter-status"
-              className="rounded-md border border-gray-300 px-3 py-2"
+              className="rounded-md border border-b-default px-3 py-2"
               value={status}
               onChange={(e) => setStatus(e.target.value)}
             >
@@ -471,26 +471,26 @@ export const RequestsPage = () => {
         {requests.map((r) => (
           <div
             key={r.id}
-            className="w-full overflow-hidden rounded-lg bg-white p-4 shadow"
+            className="w-full overflow-hidden rounded-lg bg-dark-card p-4"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-gray-900">
+                <p className="truncate text-sm font-semibold text-t-primary">
                   {r.investor.name}
                 </p>
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-t-dim">
                   {formatDateAR(r.requestedAt)}
                 </p>
               </div>
               <span
                 className={`shrink-0 inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
                   r.status === "PENDING"
-                    ? "bg-yellow-100 text-yellow-800"
+                    ? "bg-warning/15 text-warning"
                     : r.status === "APPROVED"
-                      ? "bg-green-100 text-green-800"
+                      ? "bg-success/15 text-success"
                       : r.status === "REVERSED"
-                        ? "bg-gray-100 text-gray-700"
-                        : "bg-red-100 text-red-800"
+                        ? "bg-dark-section text-t-muted"
+                        : "bg-error/15 text-error"
                 }`}
               >
                 {r.status === "PENDING"
@@ -507,16 +507,16 @@ export const RequestsPage = () => {
               <span
                 className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
                   r.type === "DEPOSIT"
-                    ? "bg-blue-100 text-blue-800"
-                    : "bg-purple-100 text-purple-800"
+                    ? "bg-info/15 text-info"
+                    : "bg-info/15 text-info"
                 }`}
               >
                 {r.type === "DEPOSIT" ? "Depósito" : "Retiro"}
               </span>
-              <span className="text-xs text-gray-600">
+              <span className="text-xs text-t-muted">
                 {formatMethod(r.method)}
               </span>
-              <span className="ml-auto font-mono text-sm font-semibold text-gray-900">
+              <span className="ml-auto font-mono text-sm font-semibold text-t-primary">
                 {formatCurrencyAR(Number(r.amount))}
               </span>
             </div>
@@ -567,11 +567,11 @@ export const RequestsPage = () => {
       </div>
 
       {/* Desktop/tablet: table */}
-      <div className="hidden md:block rounded-lg bg-white p-6 shadow">
+      <div className="hidden md:block rounded-lg bg-dark-card p-6">
         <div className="overflow-x-auto">
           <table className="min-w-full">
             <thead>
-              <tr className="text-left text-sm text-gray-500">
+              <tr className="text-left text-sm text-t-dim">
                 <th className="py-2">Fecha</th>
                 <th className="py-2">Inversor</th>
                 <th className="py-2">Tipo</th>
@@ -582,7 +582,7 @@ export const RequestsPage = () => {
                 <th className="py-2 text-right">Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-b-default">
               {requests.map((r) => (
                 <tr key={r.id} className="text-sm">
                   <td className="py-2">{formatDateAR(r.requestedAt)}</td>
@@ -593,8 +593,8 @@ export const RequestsPage = () => {
                     <span
                       className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
                         r.type === "DEPOSIT"
-                          ? "bg-blue-100 text-blue-800"
-                          : "bg-purple-100 text-purple-800"
+                          ? "bg-info/15 text-info"
+                          : "bg-info/15 text-info"
                       }`}
                     >
                       {r.type === "DEPOSIT" ? "Depósito" : "Retiro"}
@@ -606,23 +606,23 @@ export const RequestsPage = () => {
                   </td>
                   <td className="py-2">
                     {r.type === "WITHDRAWAL" ? (
-                      <span className="text-gray-400 text-sm">N/A</span>
+                      <span className="text-t-dim text-sm">N/A</span>
                     ) : r.attachmentUrl ? (
                       <AttachmentViewer url={r.attachmentUrl} />
                     ) : (
-                      <span className="text-gray-400 text-sm">—</span>
+                      <span className="text-t-dim text-sm">—</span>
                     )}
                   </td>
                   <td className="py-2">
                     <span
                       className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
                         r.status === "PENDING"
-                          ? "bg-yellow-100 text-yellow-800"
+                          ? "bg-warning/15 text-warning"
                           : r.status === "APPROVED"
-                            ? "bg-green-100 text-green-800"
+                            ? "bg-success/15 text-success"
                             : r.status === "REVERSED"
-                              ? "bg-gray-100 text-gray-700"
-                              : "bg-red-100 text-red-800"
+                              ? "bg-dark-section text-t-muted"
+                              : "bg-error/15 text-error"
                       }`}
                     >
                       {r.status === "PENDING"
@@ -681,8 +681,8 @@ export const RequestsPage = () => {
         message={
           reverseConfirm ? (
             <div className="space-y-3 text-sm">
-              <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
-                <p className="font-semibold text-amber-800">
+              <div className="rounded-lg border border-b-accent bg-warning/15 p-3">
+                <p className="font-semibold text-warning">
                   Esta es una operación compleja y riesgosa. Debe evitarse
                   siempre que sea posible.
                 </p>
@@ -698,12 +698,12 @@ export const RequestsPage = () => {
                 </strong>{" "}
                 para <strong>{reverseConfirm.investor.name}</strong>.
               </p>
-              <p className="text-gray-600">
+              <p className="text-t-muted">
                 La reversa modificará balances, historial de portfolio y total
                 invertido. Los datos se conservarán en el sistema con estado
                 “Revertido”.
               </p>
-              <p className="font-semibold text-amber-800">
+              <p className="font-semibold text-warning">
                 ¿Estás seguro de que deseas continuar?
               </p>
             </div>

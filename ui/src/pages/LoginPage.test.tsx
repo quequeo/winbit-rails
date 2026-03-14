@@ -102,18 +102,18 @@ describe("LoginPage", () => {
     const mainDiv = container.querySelector(".min-h-screen");
     expect(mainDiv).toBeInTheDocument();
     expect(mainDiv).toHaveClass(
-      "bg-gray-50",
+      "bg-dark-bg",
       "flex",
       "items-center",
       "justify-center",
     );
   });
 
-  it("renders card with shadow", () => {
+  it("renders card with dark theme", () => {
     const { container } = render(<LoginPage />);
-    const card = container.querySelector(".shadow");
+    const card = container.querySelector(".bg-dark-card");
     expect(card).toBeInTheDocument();
-    expect(card).toHaveClass("bg-white", "rounded-xl");
+    expect(card).toHaveClass("bg-dark-card", "rounded-xl");
   });
 
   it("memoizes error message to avoid recalculation", () => {

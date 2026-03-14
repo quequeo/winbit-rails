@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { api } from "../lib/api";
 import { ConfirmDialog } from "../components/ui/ConfirmDialog";
 import { Select } from "../components/ui/Select";
-import { formatDateAR } from "../lib/formatters";
+import { formatDateAR, formatCurrencyAR } from "../lib/formatters";
 
 export type InvestorSummary = {
   investor_id: string;
@@ -135,15 +135,6 @@ export const TradingFeesPage = () => {
     setPercentages((prev) => ({ ...prev, [investorId]: value }));
   };
 
-  const formatCurrency = (amount: number) => {
-    const num = Math.abs(amount);
-    const formatted = num.toFixed(2);
-    const parts = formatted.split(".");
-    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-    const result = `$${parts[0]},${parts[1]}`;
-    return amount < 0 ? `-${result}` : result;
-  };
-
   const formatMonthLabel = (month: string) => {
     // month: YYYY-MM
     const m = String(month || "").match(/^(\d{4})-(\d{2})$/);
@@ -151,18 +142,18 @@ export const TradingFeesPage = () => {
     const year = m[1];
     const mm = parseInt(m[2], 10);
     const names = [
-      "Ene",
+      "Jan",
       "Feb",
       "Mar",
-      "Abr",
+      "Apr",
       "May",
       "Jun",
       "Jul",
-      "Ago",
+      "Aug",
       "Sep",
       "Oct",
       "Nov",
-      "Dic",
+      "Dec",
     ];
     const name = names[mm - 1] || m[2];
     return `${name} ${year}`;
@@ -197,18 +188,18 @@ export const TradingFeesPage = () => {
       const year = m[1];
       const mm = parseInt(m[2], 10);
       const names = [
-        "Ene",
+        "Jan",
         "Feb",
         "Mar",
-        "Abr",
+        "Apr",
         "May",
         "Jun",
         "Jul",
-        "Ago",
+        "Aug",
         "Sep",
         "Oct",
         "Nov",
-        "Dic",
+        "Dec",
       ];
       return `${names[mm - 1] || m[2]} ${year}`;
     }
@@ -410,25 +401,25 @@ export const TradingFeesPage = () => {
   }, [filteredInvestors, page, pageSize]);
 
   if (loading) {
-    return <div className="p-6 text-gray-600">Cargando...</div>;
+    return <div className="p-6 text-t-muted">Cargando...</div>;
   }
 
   if (error) {
-    return <div className="p-6 text-red-600">{error}</div>;
+    return <div className="p-6 text-error">{error}</div>;
   }
 
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Comisiones</h1>
-        <p className="mt-1 text-sm text-gray-600">
+        <h1 className="text-2xl font-bold text-t-primary">Comisiones</h1>
+        <p className="mt-1 text-sm text-t-muted">
           Aplicar Trading Fees por período (mensual, trimestral, semestral o
           anual según inversor).
         </p>
 
         <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
           <div className="flex flex-1 flex-col gap-1 min-w-[240px]">
-            <label className="text-sm font-medium text-gray-700">
+            <label className="text-sm font-medium text-t-muted">
               Inversor
             </label>
             <div className="flex items-center gap-2">
@@ -437,13 +428,13 @@ export const TradingFeesPage = () => {
                 value={investorFilter}
                 onChange={(e) => setInvestorFilter(e.target.value)}
                 placeholder="Buscar por nombre o email..."
-                className="h-10 w-full rounded border border-gray-300 bg-white px-3 text-sm"
+                className="h-10 w-full rounded border border-b-default bg-dark-card px-3 text-sm"
               />
               {investorFilter ? (
                 <button
                   type="button"
                   onClick={() => setInvestorFilter("")}
-                  className="h-10 rounded border border-gray-300 bg-white px-3 text-sm text-gray-700 hover:bg-gray-50"
+                  className="h-10 rounded border border-b-default bg-dark-card px-3 text-sm text-t-muted hover:bg-dark-section"
                 >
                   Limpiar
                 </button>
@@ -458,8 +449,8 @@ export const TradingFeesPage = () => {
             className={
               `mt-4 mb-4 rounded-lg border px-4 py-3 text-sm ` +
               (flash.type === "success"
-                ? "border-green-200 bg-green-50 text-green-800"
-                : "border-red-200 bg-red-50 text-red-800")
+                ? "border-b-default bg-success/15 text-success"
+                : "border-b-default bg-error/15 text-error")
             }
           >
             <div className="flex items-start justify-between gap-3">
@@ -467,7 +458,7 @@ export const TradingFeesPage = () => {
               <button
                 type="button"
                 onClick={() => setFlash(null)}
-                className="rounded px-2 py-1 text-xs font-medium hover:bg-black/5"
+                className="rounded px-2 py-1 text-xs font-medium hover:bg-primary-dim"
               >
                 Cerrar
               </button>
@@ -503,14 +494,14 @@ export const TradingFeesPage = () => {
           return (
             <div
               key={investor.investor_id}
-              className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm"
+              className="rounded-lg border border-b-default bg-dark-card p-4 "
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <div className="truncate text-sm font-semibold text-gray-900">
+                  <div className="truncate text-sm font-semibold text-t-primary">
                     {investor.investor_name}
                   </div>
-                  <div className="truncate text-xs text-gray-500">
+                  <div className="truncate text-xs text-t-dim">
                     {investor.investor_email}
                   </div>
                 </div>
@@ -527,28 +518,28 @@ export const TradingFeesPage = () => {
 
               <div className="mt-3 grid grid-cols-2 gap-3">
                 <div>
-                  <div className="text-[11px] font-medium uppercase tracking-wide text-gray-500">
+                  <div className="text-[11px] font-medium uppercase tracking-wide text-t-dim">
                     Período
                   </div>
-                  <div className="mt-1 text-sm font-medium text-gray-900">
+                  <div className="mt-1 text-sm font-medium text-t-primary">
                     {formatPeriodLabel(investor)}
                   </div>
-                  <div className="mt-0.5 text-xs text-gray-500">
+                  <div className="mt-0.5 text-xs text-t-dim">
                     {formatDate(investor.period_start)} al{" "}
                     {formatDate(investor.period_end)}
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-[11px] font-medium uppercase tracking-wide text-gray-500">
+                  <div className="text-[11px] font-medium uppercase tracking-wide text-t-dim">
                     Rendimientos
                   </div>
                   <div className="mt-1">
                     {investor.has_profit ? (
-                      <span className="text-sm font-semibold text-green-600">
-                        {formatCurrency(investor.profit_amount)}
+                      <span className="text-sm font-semibold text-success">
+                        {formatCurrencyAR(investor.profit_amount)}
                       </span>
                     ) : (
-                      <span className="text-sm text-gray-400">
+                      <span className="text-sm text-t-dim">
                         Sin ganancias
                       </span>
                     )}
@@ -557,14 +548,14 @@ export const TradingFeesPage = () => {
                   investor.monthly_profits.length > 0 ? (
                     <button
                       type="button"
-                      className="mt-1 inline-flex items-center justify-end gap-1 text-xs text-gray-500 hover:text-gray-700"
+                      className="mt-1 inline-flex items-center justify-end gap-1 text-xs text-t-dim hover:text-t-muted"
                       onClick={() => setDetailModal(investor)}
                     >
                       <span>Detalle</span>
                       <svg
                         aria-hidden
                         viewBox="0 0 24 24"
-                        className="h-4 w-4 text-gray-500"
+                        className="h-4 w-4 text-t-dim"
                         fill="none"
                         stroke="currentColor"
                         strokeWidth="2"
@@ -581,7 +572,7 @@ export const TradingFeesPage = () => {
 
               <div className="mt-3 grid grid-cols-2 items-center gap-3">
                 <div>
-                  <div className="text-[11px] font-medium uppercase tracking-wide text-gray-500">
+                  <div className="text-[11px] font-medium uppercase tracking-wide text-t-dim">
                     Porcentaje
                   </div>
                   <div className="mt-1 flex items-center gap-2">
@@ -605,13 +596,13 @@ export const TradingFeesPage = () => {
                         e.currentTarget.blur();
                       }}
                       disabled={!investor.has_profit || isApplied}
-                      className="h-9 w-20 rounded border border-gray-300 px-2 text-sm disabled:bg-gray-100"
+                      className="h-9 w-20 rounded border border-b-default px-2 text-sm disabled:bg-dark-section"
                     />
-                    <span className="text-sm font-medium text-gray-700">%</span>
+                    <span className="text-sm font-medium text-t-muted">%</span>
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-[11px] font-medium uppercase tracking-wide text-gray-500">
+                  <div className="text-[11px] font-medium uppercase tracking-wide text-t-dim">
                     Comisión
                   </div>
                   <div className="mt-2">
@@ -619,10 +610,10 @@ export const TradingFeesPage = () => {
                       <span className="text-sm font-semibold text-purple-600">
                         {shownFeeAmount === null
                           ? "—"
-                          : formatCurrency(shownFeeAmount)}
+                          : formatCurrencyAR(shownFeeAmount)}
                       </span>
                     ) : (
-                      <span className="text-sm text-gray-400">—</span>
+                      <span className="text-sm text-t-dim">—</span>
                     )}
                   </div>
                 </div>
@@ -635,7 +626,7 @@ export const TradingFeesPage = () => {
                       type="button"
                       title="Editar"
                       onClick={() => handleEditClick(investor)}
-                      className="rounded border border-gray-300 bg-white p-2 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                      className="rounded border border-b-default bg-dark-card p-2 text-t-muted hover:bg-dark-section disabled:opacity-50"
                       disabled={applying}
                     >
                       <svg
@@ -672,7 +663,7 @@ export const TradingFeesPage = () => {
                           investor.period_end,
                         );
                       }}
-                      className="rounded border border-red-200 bg-white p-2 text-red-600 hover:bg-red-50 disabled:opacity-50"
+                      className="rounded border border-b-default bg-dark-card p-2 text-error hover:bg-error/15 disabled:opacity-50"
                       disabled={applying}
                     >
                       <svg
@@ -699,7 +690,7 @@ export const TradingFeesPage = () => {
                     Aplicar
                   </button>
                 ) : (
-                  <span className="text-xs text-gray-500">No corresponde</span>
+                  <span className="text-xs text-t-dim">No corresponde</span>
                 )}
               </div>
             </div>
@@ -708,31 +699,31 @@ export const TradingFeesPage = () => {
       </div>
 
       {/* Desktop: table */}
-      <div className="hidden md:block overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+      <div className="hidden md:block overflow-x-auto rounded-lg border border-b-default bg-dark-card ">
+        <table className="min-w-full divide-y divide-b-default">
+          <thead className="bg-dark-section">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-t-muted">
                 Inversor
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-t-muted">
                 Período
               </th>
-              <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-700">
+              <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-t-muted">
                 Rendimientos
               </th>
-              <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-700">
+              <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider text-t-muted">
                 %
               </th>
-              <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-700">
+              <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-t-muted">
                 Comisión
               </th>
-              <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-700">
+              <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider text-t-muted">
                 Acción
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200 bg-white">
+          <tbody className="divide-y divide-b-default bg-dark-card">
             {visibleInvestors.map((investor) => {
               const isApplied = !!investor.already_applied;
               const appliedPct =
@@ -757,12 +748,12 @@ export const TradingFeesPage = () => {
                   : feeAmount;
 
               return (
-                <tr key={investor.investor_id} className="hover:bg-gray-50">
+                <tr key={investor.investor_id} className="hover:bg-dark-section">
                   <td className="px-6 py-4">
-                    <div className="text-sm font-medium text-gray-900">
+                    <div className="text-sm font-medium text-t-primary">
                       {investor.investor_name}
                     </div>
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-t-dim">
                       {investor.investor_email}
                     </div>
                     <div className="mt-1">
@@ -777,11 +768,11 @@ export const TradingFeesPage = () => {
                       </span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-900">
+                  <td className="px-6 py-4 text-sm text-t-primary">
                     <div className="font-medium">
                       {formatPeriodLabel(investor)}
                     </div>
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-t-dim">
                       {formatDate(investor.period_start)} al{" "}
                       {formatDate(investor.period_end)}
                     </div>
@@ -789,25 +780,25 @@ export const TradingFeesPage = () => {
                   <td className="px-6 py-4 text-right text-sm">
                     <div className="flex flex-col items-end gap-1">
                       {investor.has_profit ? (
-                        <span className="font-semibold text-green-600">
-                          {formatCurrency(investor.profit_amount)}
+                        <span className="font-semibold text-success">
+                          {formatCurrencyAR(investor.profit_amount)}
                         </span>
                       ) : (
-                        <span className="text-gray-400">Sin ganancias</span>
+                        <span className="text-t-dim">Sin ganancias</span>
                       )}
 
                       {Array.isArray(investor.monthly_profits) &&
                       investor.monthly_profits.length > 0 ? (
                         <button
                           type="button"
-                          className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700"
+                          className="inline-flex items-center gap-1 text-xs text-t-dim hover:text-t-muted"
                           onClick={() => setDetailModal(investor)}
                         >
                           <span>Detalle</span>
                           <svg
                             aria-hidden
                             viewBox="0 0 24 24"
-                            className="h-4 w-4 text-gray-500"
+                            className="h-4 w-4 text-t-dim"
                             fill="none"
                             stroke="currentColor"
                             strokeWidth="2"
@@ -843,7 +834,7 @@ export const TradingFeesPage = () => {
                         e.currentTarget.blur();
                       }}
                       disabled={!investor.has_profit || isApplied}
-                      className="w-20 rounded border border-gray-300 px-2 py-1 text-center text-sm disabled:bg-gray-100"
+                      className="w-20 rounded border border-b-default px-2 py-1 text-center text-sm disabled:bg-dark-section"
                     />
                   </td>
                   <td className="px-6 py-4 text-right">
@@ -851,10 +842,10 @@ export const TradingFeesPage = () => {
                       <span className="font-semibold text-purple-600">
                         {shownFeeAmount === null
                           ? "—"
-                          : formatCurrency(shownFeeAmount)}
+                          : formatCurrencyAR(shownFeeAmount)}
                       </span>
                     ) : (
-                      <span className="text-gray-400">—</span>
+                      <span className="text-t-dim">—</span>
                     )}
                   </td>
                   <td className="px-6 py-4 text-center">
@@ -864,7 +855,7 @@ export const TradingFeesPage = () => {
                           type="button"
                           title="Editar"
                           onClick={() => handleEditClick(investor)}
-                          className="rounded border border-gray-300 bg-white p-2 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                          className="rounded border border-b-default bg-dark-card p-2 text-t-muted hover:bg-dark-section disabled:opacity-50"
                           disabled={applying}
                         >
                           <svg
@@ -901,7 +892,7 @@ export const TradingFeesPage = () => {
                               investor.period_end,
                             );
                           }}
-                          className="rounded border border-red-200 bg-white p-2 text-red-600 hover:bg-red-50 disabled:opacity-50"
+                          className="rounded border border-b-default bg-dark-card p-2 text-error hover:bg-error/15 disabled:opacity-50"
                           disabled={applying}
                         >
                           <svg
@@ -928,7 +919,7 @@ export const TradingFeesPage = () => {
                         Aplicar
                       </button>
                     ) : (
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-t-dim">
                         No corresponde
                       </span>
                     )}
@@ -941,7 +932,7 @@ export const TradingFeesPage = () => {
       </div>
 
       <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-2 text-sm text-gray-600">
+        <div className="flex items-center gap-2 text-sm text-t-muted">
           <span>Filas por página:</span>
           <Select
             portal
@@ -960,19 +951,19 @@ export const TradingFeesPage = () => {
         <div className="flex items-center justify-between gap-3">
           <button
             type="button"
-            className="rounded border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+            className="rounded border border-b-default bg-dark-card px-3 py-2 text-sm text-t-muted hover:bg-dark-section disabled:opacity-50"
             disabled={page <= 1}
             onClick={() => setPage((p) => Math.max(1, p - 1))}
           >
             Anterior
           </button>
-          <div className="text-sm text-gray-700">
+          <div className="text-sm text-t-muted">
             Página <span className="font-semibold">{page}</span> de{" "}
             <span className="font-semibold">{totalPages}</span>
           </div>
           <button
             type="button"
-            className="rounded border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+            className="rounded border border-b-default bg-dark-card px-3 py-2 text-sm text-t-muted hover:bg-dark-section disabled:opacity-50"
             disabled={page >= totalPages}
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
           >
@@ -983,13 +974,13 @@ export const TradingFeesPage = () => {
 
       {detailModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/15 p-4">
-          <div className="w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl">
-            <div className="flex items-start justify-between border-b border-gray-100 px-5 py-4">
+          <div className="w-full max-w-lg overflow-hidden rounded-2xl bg-dark-card shadow-2xl">
+            <div className="flex items-start justify-between border-b border-b-default px-5 py-4">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">
+                <h3 className="text-lg font-semibold text-t-primary">
                   Detalle de rentabilidad mensual
                 </h3>
-                <p className="mt-0.5 text-sm text-gray-600">
+                <p className="mt-0.5 text-sm text-t-muted">
                   {detailModal.investor_name} ·{" "}
                   {formatDate(detailModal.period_start)} al{" "}
                   {formatDate(detailModal.period_end)}
@@ -998,56 +989,56 @@ export const TradingFeesPage = () => {
               <button
                 type="button"
                 onClick={() => setDetailModal(null)}
-                className="rounded-lg px-3 py-1 text-sm font-medium text-gray-600 hover:bg-gray-50"
+                className="rounded-lg px-3 py-1 text-sm font-medium text-t-muted hover:bg-dark-section"
               >
                 Cerrar
               </button>
             </div>
 
             <div className="px-5 py-4">
-              <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+              <div className="rounded-xl border border-b-default bg-dark-section p-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">
+                  <span className="text-sm font-medium text-t-muted">
                     Total período
                   </span>
                   <span
                     className={
                       (detailModal.profit_amount ?? 0) > 0
-                        ? "text-sm font-semibold text-green-700"
+                        ? "text-sm font-semibold text-success"
                         : (detailModal.profit_amount ?? 0) < 0
-                          ? "text-sm font-semibold text-red-700"
-                          : "text-sm font-semibold text-gray-700"
+                          ? "text-sm font-semibold text-error"
+                          : "text-sm font-semibold text-t-muted"
                     }
                   >
-                    {formatCurrency(detailModal.profit_amount ?? 0)}
+                    {formatCurrencyAR(detailModal.profit_amount ?? 0)}
                   </span>
                 </div>
               </div>
 
-              <div className="mt-4 overflow-hidden rounded-xl border border-gray-200">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-white">
+              <div className="mt-4 overflow-hidden rounded-xl border border-b-default">
+                <table className="min-w-full divide-y divide-b-default">
+                  <thead className="bg-dark-card">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-t-dim">
                         Mes
                       </th>
-                      <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
+                      <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-t-dim">
                         Rendimiento
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-100 bg-white">
+                  <tbody className="divide-y divide-b-default bg-dark-card">
                     {(detailModal.monthly_profits || []).map((mp) => {
                       const amt = Number(mp.amount) || 0;
                       const cls =
                         amt > 0
-                          ? "text-green-700"
+                          ? "text-success"
                           : amt < 0
-                            ? "text-red-700"
-                            : "text-gray-500";
+                            ? "text-error"
+                            : "text-t-dim";
                       return (
                         <tr key={mp.month}>
-                          <td className="px-4 py-3 text-sm text-gray-900">
+                          <td className="px-4 py-3 text-sm text-t-primary">
                             {formatMonthLabel(mp.month)}
                           </td>
                           <td
@@ -1056,7 +1047,7 @@ export const TradingFeesPage = () => {
                               cls
                             }
                           >
-                            {formatCurrency(amt)}
+                            {formatCurrencyAR(amt)}
                           </td>
                         </tr>
                       );
@@ -1065,7 +1056,7 @@ export const TradingFeesPage = () => {
                 </table>
               </div>
 
-              <div className="mt-4 text-xs text-gray-500">
+              <div className="mt-4 text-xs text-t-dim">
                 Nota: el total del período es la suma de los meses (puede
                 incluir meses negativos).
               </div>
@@ -1076,71 +1067,71 @@ export const TradingFeesPage = () => {
 
       {confirmModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/15 p-4">
-          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-            <h2 className="mb-4 text-xl font-bold text-gray-900">
+          <div className="w-full max-w-md rounded-lg bg-dark-card p-6 shadow-xl">
+            <h2 className="mb-4 text-xl font-bold text-t-primary">
               ¿Aplicar comisión?
             </h2>
 
             <div className="mb-4 space-y-2 rounded-lg bg-purple-50 p-4">
               <div className="flex justify-between">
-                <span className="text-sm text-gray-600">Inversor:</span>
+                <span className="text-sm text-t-muted">Inversor:</span>
                 <span className="text-sm font-semibold">
                   {confirmModal.investor_name}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm text-gray-600">Período:</span>
+                <span className="text-sm text-t-muted">Período:</span>
                 <span className="text-sm">
                   {formatDate(confirmModal.period_start)} -{" "}
                   {formatDate(confirmModal.period_end)}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm text-gray-600">Ganancias:</span>
-                <span className="text-sm font-semibold text-green-600">
-                  {formatCurrency(confirmModal.profit_amount)}
+                <span className="text-sm text-t-muted">Ganancias:</span>
+                <span className="text-sm font-semibold text-success">
+                  {formatCurrencyAR(confirmModal.profit_amount)}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm text-gray-600">Porcentaje:</span>
+                <span className="text-sm text-t-muted">Porcentaje:</span>
                 <span className="text-sm font-semibold">
                   {confirmModal.fee_percentage}%
                 </span>
               </div>
               <div className="flex justify-between border-t border-purple-200 pt-2">
-                <span className="text-sm text-gray-600">
+                <span className="text-sm text-t-muted">
                   Comisión a cobrar:
                 </span>
                 <span className="text-lg font-bold text-purple-600">
-                  {formatCurrency(confirmModal.fee_amount)}
+                  {formatCurrencyAR(confirmModal.fee_amount)}
                 </span>
               </div>
             </div>
 
             <div className="mb-4 space-y-2">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Capital actual:</span>
+                <span className="text-t-muted">Capital actual:</span>
                 <span className="font-semibold">
-                  {formatCurrency(confirmModal.current_balance)}
+                  {formatCurrencyAR(confirmModal.current_balance)}
                 </span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Después de comisión:</span>
-                <span className="font-semibold text-green-600">
-                  {formatCurrency(confirmModal.balance_after_fee)}
+                <span className="text-t-muted">Después de comisión:</span>
+                <span className="font-semibold text-success">
+                  {formatCurrencyAR(confirmModal.balance_after_fee)}
                 </span>
               </div>
             </div>
 
             <div className="mb-4">
-              <label className="mb-1 block text-sm font-medium text-gray-700">
+              <label className="mb-1 block text-sm font-medium text-t-muted">
                 Notas (opcional):
               </label>
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 rows={3}
-                className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
+                className="w-full rounded border border-b-default px-3 py-2 text-sm"
                 placeholder="Agregar notas..."
               />
             </div>
@@ -1149,7 +1140,7 @@ export const TradingFeesPage = () => {
               <button
                 onClick={() => setConfirmModal(null)}
                 disabled={applying}
-                className="flex-1 rounded border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                className="flex-1 rounded border border-b-default bg-dark-card px-4 py-2 text-sm font-medium text-t-muted hover:bg-dark-section disabled:opacity-50"
               >
                 Cancelar
               </button>
@@ -1167,8 +1158,8 @@ export const TradingFeesPage = () => {
 
       {editModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/15 p-4">
-          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-            <h2 className="mb-4 text-xl font-bold text-gray-900">
+          <div className="w-full max-w-md rounded-lg bg-dark-card p-6 shadow-xl">
+            <h2 className="mb-4 text-xl font-bold text-t-primary">
               Editar comisión aplicada
             </h2>
 
@@ -1188,36 +1179,36 @@ export const TradingFeesPage = () => {
                 <>
                   <div className="mb-4 space-y-2 rounded-lg bg-purple-50 p-4">
                     <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Inversor:</span>
+                      <span className="text-sm text-t-muted">Inversor:</span>
                       <span className="text-sm font-semibold">
                         {editModal.investor_name}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Período:</span>
+                      <span className="text-sm text-t-muted">Período:</span>
                       <span className="text-sm">
                         {formatDate(editModal.period_start)} -{" "}
                         {formatDate(editModal.period_end)}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Ganancias:</span>
-                      <span className="text-sm font-semibold text-green-700">
-                        {formatCurrency(editModal.profit_amount)}
+                      <span className="text-sm text-t-muted">Ganancias:</span>
+                      <span className="text-sm font-semibold text-success">
+                        {formatCurrencyAR(editModal.profit_amount)}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">
+                      <span className="text-sm text-t-muted">
                         Comisión actual:
                       </span>
-                      <span className="text-sm font-semibold text-gray-900">
-                        {formatCurrency(currentFee)}
+                      <span className="text-sm font-semibold text-t-primary">
+                        {formatCurrencyAR(currentFee)}
                       </span>
                     </div>
                   </div>
 
                   <div className="mb-4">
-                    <label className="mb-1 block text-sm font-medium text-gray-700">
+                    <label className="mb-1 block text-sm font-medium text-t-muted">
                       Nuevo porcentaje
                     </label>
                     <input
@@ -1231,43 +1222,43 @@ export const TradingFeesPage = () => {
                         // Prevent mouse wheel from changing number inputs (common UX bug on desktop trackpads/mice)
                         e.currentTarget.blur();
                       }}
-                      className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
+                      className="w-full rounded border border-b-default px-3 py-2 text-sm"
                     />
-                    <div className="mt-2 text-sm text-gray-700">
+                    <div className="mt-2 text-sm text-t-muted">
                       Nuevo monto:{" "}
                       <span className="font-semibold">
-                        {nextFeeNum === null ? "—" : formatCurrency(nextFeeNum)}
+                        {nextFeeNum === null ? "—" : formatCurrencyAR(nextFeeNum)}
                       </span>
                     </div>
-                    <div className="mt-1 text-sm text-gray-700">
+                    <div className="mt-1 text-sm text-t-muted">
                       Diferencia:{" "}
                       <span className="font-semibold">
-                        {delta === null ? "—" : formatCurrency(delta)}
+                        {delta === null ? "—" : formatCurrencyAR(delta)}
                       </span>
                     </div>
-                    <div className="mt-1 text-sm text-gray-700">
+                    <div className="mt-1 text-sm text-t-muted">
                       Balance después del ajuste:{" "}
                       <span className="font-semibold">
                         {balanceAfter === null
                           ? "—"
-                          : formatCurrency(balanceAfter)}
+                          : formatCurrencyAR(balanceAfter)}
                       </span>
                     </div>
-                    <p className="mt-2 text-xs text-gray-500">
+                    <p className="mt-2 text-xs text-t-dim">
                       Esto no reescribe historia: crea un ajuste contable por la
                       diferencia y actualiza el balance actual.
                     </p>
                   </div>
 
                   <div className="mb-4">
-                    <label className="mb-1 block text-sm font-medium text-gray-700">
+                    <label className="mb-1 block text-sm font-medium text-t-muted">
                       Notas (opcional)
                     </label>
                     <textarea
                       value={editNotes}
                       onChange={(e) => setEditNotes(e.target.value)}
                       rows={3}
-                      className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
+                      className="w-full rounded border border-b-default px-3 py-2 text-sm"
                       placeholder="Agregar notas..."
                     />
                   </div>
@@ -1276,7 +1267,7 @@ export const TradingFeesPage = () => {
                     <button
                       onClick={() => setEditModal(null)}
                       disabled={applying}
-                      className="flex-1 rounded border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                      className="flex-1 rounded border border-b-default bg-dark-card px-4 py-2 text-sm font-medium text-t-muted hover:bg-dark-section disabled:opacity-50"
                     >
                       Cancelar
                     </button>
@@ -1291,7 +1282,7 @@ export const TradingFeesPage = () => {
                         )
                       }
                       disabled={applying}
-                      className="rounded bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                      className="rounded bg-error px-4 py-2 text-sm font-medium text-white hover:bg-error/80 disabled:opacity-50"
                     >
                       Eliminar
                     </button>
@@ -1328,12 +1319,12 @@ export const TradingFeesPage = () => {
             ¿Querés eliminar (anular) la comisión de{" "}
             <span className="font-semibold">{deleteConfirm.investorName}</span>?
             <br />
-            <span className="text-gray-600">
+            <span className="text-t-muted">
               Período: {formatDate(deleteConfirm.periodStart)} -{" "}
               {formatDate(deleteConfirm.periodEnd)}
             </span>
             <br />
-            <span className="text-gray-600">
+            <span className="text-t-muted">
               Esto devolverá el monto al balance del inversor.
             </span>
           </>

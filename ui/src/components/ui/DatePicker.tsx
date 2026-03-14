@@ -72,7 +72,7 @@ export const DatePicker = ({
           disabled={disabled}
           className="cursor-pointer pr-10"
         />
-        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-t-dim">
           <svg
             viewBox="0 0 24 24"
             fill="none"
@@ -91,7 +91,7 @@ export const DatePicker = ({
       </button>
 
       {open ? (
-        <div className="absolute z-50 mt-2 w-[320px] rounded-lg border border-gray-200 bg-white p-3 shadow-lg">
+        <div className="absolute z-50 mt-2 w-[320px] rounded-lg border border-b-default bg-dark-card p-3 shadow-lg">
           <DayPicker
             mode="single"
             selected={selected}
@@ -100,19 +100,19 @@ export const DatePicker = ({
             showOutsideDays
             classNames={{
               caption: "flex items-center justify-between mb-3",
-              caption_label: "text-sm font-semibold text-gray-900",
+              caption_label: "text-sm font-semibold text-t-primary",
               nav: "flex items-center gap-2",
               nav_button:
-                "inline-flex h-8 w-8 items-center justify-center rounded-md border border-gray-200 text-gray-700 hover:bg-gray-50",
+                "inline-flex h-8 w-8 items-center justify-center rounded-md border border-b-default text-t-muted hover:bg-primary-dim",
               table: "w-full border-collapse",
               head_row: "flex",
-              head_cell: "w-10 text-center text-xs text-gray-500 font-medium",
+              head_cell: "w-10 text-center text-xs text-t-dim font-medium",
               row: "flex w-full mt-1",
               cell: "w-10 h-10 text-center",
-              day: "h-10 w-10 rounded-md text-sm hover:bg-gray-100",
-              day_selected: "bg-[#58b098] text-white hover:bg-[#4a9d84]",
-              day_today: "border border-[#58b098]",
-              day_outside: "text-gray-300",
+              day: "h-10 w-10 rounded-md text-sm hover:bg-primary-dim",
+              day_selected: "bg-primary text-white hover:bg-primary/80",
+              day_today: "border border-primary",
+              day_outside: "text-t-dim",
             }}
           />
         </div>

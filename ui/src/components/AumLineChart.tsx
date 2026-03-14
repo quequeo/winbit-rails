@@ -141,8 +141,8 @@ export const AumLineChart = ({ series }: { series: AumPoint[] }) => {
       >
         <defs>
           <linearGradient id="aumArea" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#60a5fa" stopOpacity="0.28" />
-            <stop offset="100%" stopColor="#60a5fa" stopOpacity="0.02" />
+            <stop offset="0%" stopColor="#65a7a5" stopOpacity="0.28" />
+            <stop offset="100%" stopColor="#65a7a5" stopOpacity="0.02" />
           </linearGradient>
         </defs>
 
@@ -157,11 +157,11 @@ export const AumLineChart = ({ series }: { series: AumPoint[] }) => {
                 y1={y}
                 x2={width - padX}
                 y2={y}
-                stroke="#e5e7eb"
+                stroke="rgba(255,255,255,0.08)"
                 strokeWidth="1"
                 opacity="0.6"
               />
-              <text x={6} y={y + 3} fontSize="10" fill="#6b7280">
+              <text x={6} y={y + 3} fontSize="10" fill="#888888">
                 {formatTick(v)}
               </text>
             </g>
@@ -173,7 +173,7 @@ export const AumLineChart = ({ series }: { series: AumPoint[] }) => {
           y1={height - padY}
           x2={width - padX}
           y2={height - padY}
-          stroke="#e5e7eb"
+          stroke="rgba(255,255,255,0.08)"
           strokeWidth="1"
         />
 
@@ -181,7 +181,7 @@ export const AumLineChart = ({ series }: { series: AumPoint[] }) => {
         <polyline
           points={line}
           fill="none"
-          stroke="#2563eb"
+          stroke="#65a7a5"
           strokeWidth="2"
           strokeLinejoin="round"
           strokeLinecap="round"
@@ -204,7 +204,7 @@ export const AumLineChart = ({ series }: { series: AumPoint[] }) => {
             cx={hoveredPoint.x}
             cy={hoveredPoint.y}
             r="5"
-            fill="#1e40af"
+            fill="#65a7a5"
             style={{ transition: "r 0.2s, fill 0.2s" }}
           />
         )}
@@ -215,7 +215,7 @@ export const AumLineChart = ({ series }: { series: AumPoint[] }) => {
             y1={padY}
             x2={hoveredPoint.x}
             y2={height - padY}
-            stroke="#94a3b8"
+            stroke="#65a7a5"
             strokeWidth="1"
             strokeDasharray="4,4"
             opacity="0.5"
@@ -233,13 +233,13 @@ export const AumLineChart = ({ series }: { series: AumPoint[] }) => {
           }}
         >
           <div className="font-semibold">{formatDate(hoveredPoint.date)}</div>
-          <div className="text-blue-300 mt-1">
+          <div className="text-primary mt-1">
             {formatCurrencyAR(hoveredPoint.totalAum)}
           </div>
         </div>
       )}
 
-      <div className="mt-2 flex items-center justify-between text-xs text-gray-500">
+      <div className="mt-2 flex items-center justify-between text-xs text-t-dim">
         <span>{formatDate(series[0]?.date || "")}</span>
         <span>{formatDate(series[series.length - 1]?.date || "")}</span>
       </div>

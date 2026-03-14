@@ -122,123 +122,123 @@ export const TradingFeesHistoryPage = () => {
     });
   }, [rows, search, status]);
 
-  if (loading) return <div className="p-6 text-gray-600">Cargando...</div>;
-  if (error) return <div className="p-6 text-red-600">{error}</div>;
+  if (loading) return <div className="p-6 text-t-muted">Cargando...</div>;
+  if (error) return <div className="p-6 text-error">{error}</div>;
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">
+        <h1 className="text-2xl font-bold text-t-primary">
           Historial de Trading Fees
         </h1>
-        <p className="mt-1 text-sm text-gray-600">
+        <p className="mt-1 text-sm text-t-muted">
           Histórico de comisiones cobradas por Winbit (incluye anuladas).
         </p>
       </div>
 
-      <div className="rounded-lg bg-white p-4 shadow">
+      <div className="rounded-lg bg-dark-card p-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar por inversor o email..."
-            className="h-10 rounded border border-gray-300 bg-white px-3 text-sm"
+            className="h-10 rounded border border-b-default bg-dark-card px-3 text-sm"
           />
           <select
             value={status}
             onChange={(e) =>
               setStatus(e.target.value as "ALL" | "ACTIVE" | "VOIDED")
             }
-            className="h-10 rounded border border-gray-300 bg-white px-3 text-sm"
+            className="h-10 rounded border border-b-default bg-dark-card px-3 text-sm"
           >
             <option value="ALL">Todos</option>
             <option value="ACTIVE">Cobradas</option>
             <option value="VOIDED">Anuladas</option>
           </select>
-          <div className="flex items-center text-sm text-gray-600">
+          <div className="flex items-center text-sm text-t-muted">
             Resultados en página: {filtered.length} de {rows.length} (total:{" "}
             {pagination.total})
           </div>
         </div>
       </div>
 
-      <div className="hidden md:block overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+      <div className="hidden md:block overflow-x-auto rounded-lg border border-b-default bg-dark-card-sm">
+        <table className="min-w-full divide-y divide-b-default">
+          <thead className="bg-dark-section">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">
+              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-t-muted">
                 Fecha
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">
+              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-t-muted">
                 Inversor
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">
+              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-t-muted">
                 Tipo
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">
+              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-t-muted">
                 Período / Retiro
               </th>
-              <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-700">
+              <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-t-muted">
                 Profit
               </th>
-              <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-700">
+              <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-t-muted">
                 %
               </th>
-              <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-700">
+              <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-t-muted">
                 Fee cobrada
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">
+              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-t-muted">
                 Aplicado por
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">
+              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-t-muted">
                 Estado
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200 bg-white">
+          <tbody className="divide-y divide-b-default bg-dark-card">
             {filtered.map((row) => {
               const isVoided = !!row.voided_at;
               return (
-                <tr key={row.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 text-sm text-gray-900">
+                <tr key={row.id} className="hover:bg-dark-section">
+                  <td className="px-4 py-3 text-sm text-t-primary">
                     {formatDate(row.applied_at)}
                   </td>
                   <td className="px-4 py-3 text-sm">
-                    <div className="font-medium text-gray-900">
+                    <div className="font-medium text-t-primary">
                       {row.investor_name}
                     </div>
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-t-dim">
                       {row.investor_email}
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-700">
+                  <td className="px-4 py-3 text-sm text-t-muted">
                     {feeLabel(row)}
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-700">
+                  <td className="px-4 py-3 text-sm text-t-muted">
                     {row.source === "WITHDRAWAL"
                       ? `Retiro: ${formatCurrencyAR(Number(row.withdrawal_amount || 0))}`
                       : formatPeriod(row.period_start, row.period_end)}
                   </td>
-                  <td className="px-4 py-3 text-right text-sm text-gray-900">
+                  <td className="px-4 py-3 text-right text-sm text-t-primary">
                     {formatCurrencyAR(row.profit_amount)}
                   </td>
-                  <td className="px-4 py-3 text-right text-sm text-gray-900">
+                  <td className="px-4 py-3 text-right text-sm text-t-primary">
                     {row.fee_percentage}%
                   </td>
                   <td className="px-4 py-3 text-right text-sm font-semibold text-purple-700">
                     {formatCurrencyAR(row.fee_amount)}
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-700">
+                  <td className="px-4 py-3 text-sm text-t-muted">
                     {row.applied_by_name}
                   </td>
                   <td className="px-4 py-3 text-sm">
                     {isVoided ? (
-                      <span className="inline-flex rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-800">
+                      <span className="inline-flex rounded-full bg-error/15 px-2 py-0.5 text-xs font-semibold text-error">
                         Anulada ({formatDate(row.voided_at)})
                       </span>
                     ) : (
-                      <span className="inline-flex rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-800">
+                      <span className="inline-flex rounded-full bg-success/15 px-2 py-0.5 text-xs font-semibold text-success">
                         Cobrada
                       </span>
                     )}
@@ -256,50 +256,50 @@ export const TradingFeesHistoryPage = () => {
           return (
             <div
               key={row.id}
-              className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm"
+              className="rounded-lg border border-b-default bg-dark-card p-4-sm"
             >
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <div className="text-sm font-semibold text-gray-900">
+                  <div className="text-sm font-semibold text-t-primary">
                     {row.investor_name}
                   </div>
-                  <div className="text-xs text-gray-500">
+                  <div className="text-xs text-t-dim">
                     {row.investor_email}
                   </div>
                 </div>
                 {isVoided ? (
-                  <span className="inline-flex rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-800">
+                  <span className="inline-flex rounded-full bg-error/15 px-2 py-0.5 text-xs font-semibold text-error">
                     Anulada
                   </span>
                 ) : (
-                  <span className="inline-flex rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-800">
+                  <span className="inline-flex rounded-full bg-success/15 px-2 py-0.5 text-xs font-semibold text-success">
                     Cobrada
                   </span>
                 )}
               </div>
-              <div className="mt-2 text-xs text-gray-600">
+              <div className="mt-2 text-xs text-t-muted">
                 Aplicada: {formatDate(row.applied_at)}
               </div>
               {isVoided ? (
-                <div className="text-xs text-red-600">
+                <div className="text-xs text-error">
                   Anulada: {formatDate(row.voided_at)}
                 </div>
               ) : null}
-              <div className="mt-2 text-sm text-gray-700">
+              <div className="mt-2 text-sm text-t-muted">
                 Tipo: {feeLabel(row)}
               </div>
-              <div className="mt-1 text-sm text-gray-700">
+              <div className="mt-1 text-sm text-t-muted">
                 {row.source === "WITHDRAWAL"
                   ? `Retiro: ${formatCurrencyAR(Number(row.withdrawal_amount || 0))}`
                   : `Período: ${formatPeriod(row.period_start, row.period_end)}`}
               </div>
-              <div className="mt-1 text-sm text-gray-700">
+              <div className="mt-1 text-sm text-t-muted">
                 Profit: {formatCurrencyAR(row.profit_amount)}
               </div>
-              <div className="mt-1 text-sm text-gray-700">
+              <div className="mt-1 text-sm text-t-muted">
                 Fee: {row.fee_percentage}% · {formatCurrencyAR(row.fee_amount)}
               </div>
-              <div className="mt-1 text-xs text-gray-500">
+              <div className="mt-1 text-xs text-t-dim">
                 Aplicado por: {row.applied_by_name}
               </div>
             </div>
@@ -312,11 +312,11 @@ export const TradingFeesHistoryPage = () => {
           type="button"
           onClick={() => setPage((prev) => Math.max(1, prev - 1))}
           disabled={pagination.page <= 1}
-          className="rounded border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded border border-b-default bg-dark-card px-3 py-2 text-sm text-t-muted disabled:cursor-not-allowed disabled:opacity-50"
         >
           Anterior
         </button>
-        <div className="text-sm text-gray-600">
+        <div className="text-sm text-t-muted">
           Página {pagination.total_pages === 0 ? 0 : pagination.page} de{" "}
           {pagination.total_pages}
         </div>
@@ -327,7 +327,7 @@ export const TradingFeesHistoryPage = () => {
             pagination.total_pages === 0 ||
             pagination.page >= pagination.total_pages
           }
-          className="rounded border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded border border-b-default bg-dark-card px-3 py-2 text-sm text-t-muted disabled:cursor-not-allowed disabled:opacity-50"
         >
           Siguiente
         </button>

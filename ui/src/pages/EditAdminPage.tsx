@@ -20,7 +20,7 @@ const WinbitCheckbox = ({
         onChange={(e) => onChange(e.target.checked)}
         className="peer sr-only"
       />
-      <span className="h-4 w-4 rounded border border-gray-300 bg-white peer-checked:border-[#58b098] peer-checked:bg-[#58b098] peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#58b098]/40" />
+      <span className="h-4 w-4 rounded border border-b-default bg-dark-card peer-checked:border-primary peer-checked:bg-primary peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/40" />
       <svg
         aria-hidden
         viewBox="0 0 20 20"
@@ -88,15 +88,15 @@ export const EditAdminPage = () => {
     }
   };
 
-  if (loading) return <div className="text-gray-600">Cargando...</div>;
-  if (error) return <div className="text-red-600">{error}</div>;
+  if (loading) return <div className="text-t-muted">Cargando...</div>;
+  if (error) return <div className="text-error">{error}</div>;
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
         <button
           onClick={() => navigate("/admins")}
-          className="text-gray-500 hover:text-gray-700"
+          className="text-t-dim hover:text-t-muted"
         >
           <svg
             className="w-5 h-5"
@@ -112,13 +112,13 @@ export const EditAdminPage = () => {
             />
           </svg>
         </button>
-        <h1 className="text-2xl font-bold text-gray-900">Editar Admin</h1>
+        <h1 className="text-2xl font-bold text-t-primary">Editar Admin</h1>
       </div>
 
-      <div className="rounded-lg bg-white p-6 shadow">
+      <div className="rounded-lg bg-dark-card p-6">
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-t-muted mb-1">
               Email *
             </label>
             <Input
@@ -130,7 +130,7 @@ export const EditAdminPage = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-t-muted mb-1">
               Nombre
             </label>
             <Input
@@ -143,7 +143,7 @@ export const EditAdminPage = () => {
           <div>
             <label
               htmlFor="admin-edit-role"
-              className="block text-sm font-medium text-gray-700 mb-1"
+              className="block text-sm font-medium text-t-muted mb-1"
             >
               Rol *
             </label>
@@ -157,18 +157,18 @@ export const EditAdminPage = () => {
                   role: e.target.value as "ADMIN" | "SUPERADMIN",
                 })
               }
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
+              className="w-full rounded-lg border border-b-default px-3 py-2 focus:border-primary focus:outline-none"
             >
               <option value="ADMIN">Admin</option>
               <option value="SUPERADMIN">Super Admin</option>
             </select>
           </div>
 
-          <div className="rounded-lg border border-gray-200 p-4">
-            <p className="text-sm font-semibold text-gray-900">
+          <div className="rounded-lg border border-b-default p-4">
+            <p className="text-sm font-semibold text-t-primary">
               Notificaciones
             </p>
-            <p className="mt-1 text-xs text-gray-500">
+            <p className="mt-1 text-xs text-t-dim">
               Actualmente hay 2 tipos configurables por admin.
             </p>
             <div className="mt-3 space-y-2">
@@ -179,7 +179,7 @@ export const EditAdminPage = () => {
                     setForm({ ...form, notify_deposit_created: next })
                   }
                 />
-                <span className="text-gray-700">
+                <span className="text-t-muted">
                   Nueva solicitud de depósito
                 </span>
               </label>
@@ -190,7 +190,7 @@ export const EditAdminPage = () => {
                     setForm({ ...form, notify_withdrawal_created: next })
                   }
                 />
-                <span className="text-gray-700">Nueva solicitud de retiro</span>
+                <span className="text-t-muted">Nueva solicitud de retiro</span>
               </label>
             </div>
           </div>
@@ -202,7 +202,7 @@ export const EditAdminPage = () => {
             <Button
               type="button"
               onClick={() => navigate("/admins")}
-              className="bg-gray-500 hover:bg-gray-600"
+              className="bg-dark-section hover:bg-primary-dim"
             >
               Cancelar
             </Button>
