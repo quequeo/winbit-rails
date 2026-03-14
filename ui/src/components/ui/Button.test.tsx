@@ -1,10 +1,11 @@
-import { render, screen } from '@testing-library/react';
-import { Button } from './Button';
+import { render, screen } from "@testing-library/react";
+import { Button } from "./Button";
 
-describe('Button', () => {
-  it('renders children', () => {
+describe("Button", () => {
+  it("renders children", () => {
     render(<Button>Click me</Button>);
-    expect(screen.getByRole('button', { name: 'Click me' })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Click me" }),
+    ).toBeInTheDocument();
   });
 });
-

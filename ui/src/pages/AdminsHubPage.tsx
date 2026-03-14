@@ -1,19 +1,19 @@
-import { useSearchParams } from 'react-router-dom';
-import { AdminsPage } from './AdminsPage';
-import { SettingsPage } from './SettingsPage';
-import { DepositOptionsPage } from './DepositOptionsPage';
+import { useSearchParams } from "react-router-dom";
+import { AdminsPage } from "./AdminsPage";
+import { SettingsPage } from "./SettingsPage";
+import { DepositOptionsPage } from "./DepositOptionsPage";
 
-type Tab = 'usuarios' | 'configuracion' | 'depositos';
+type Tab = "usuarios" | "configuracion" | "depositos";
 
 const TABS: { id: Tab; label: string }[] = [
-  { id: 'usuarios', label: 'Usuarios' },
-  { id: 'configuracion', label: 'Configuración' },
-  { id: 'depositos', label: 'Métodos de Depósito' },
+  { id: "usuarios", label: "Usuarios" },
+  { id: "configuracion", label: "Configuración" },
+  { id: "depositos", label: "Métodos de Depósito" },
 ];
 
 export const AdminsHubPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = (searchParams.get('tab') as Tab) || 'usuarios';
+  const activeTab = (searchParams.get("tab") as Tab) || "usuarios";
 
   const setTab = (tab: Tab) => {
     setSearchParams({ tab }, { replace: true });
@@ -30,8 +30,8 @@ export const AdminsHubPage = () => {
               onClick={() => setTab(tab.id)}
               className={
                 activeTab === tab.id
-                  ? 'border-b-2 border-[#58b098] pb-3 text-sm font-semibold text-[#58b098]'
-                  : 'border-b-2 border-transparent pb-3 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                  ? "border-b-2 border-[#58b098] pb-3 text-sm font-semibold text-[#58b098]"
+                  : "border-b-2 border-transparent pb-3 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700"
               }
             >
               {tab.label}
@@ -40,9 +40,9 @@ export const AdminsHubPage = () => {
         </nav>
       </div>
 
-      {activeTab === 'usuarios' && <AdminsPage />}
-      {activeTab === 'configuracion' && <SettingsPage />}
-      {activeTab === 'depositos' && <DepositOptionsPage />}
+      {activeTab === "usuarios" && <AdminsPage />}
+      {activeTab === "configuracion" && <SettingsPage />}
+      {activeTab === "depositos" && <DepositOptionsPage />}
     </div>
   );
 };

@@ -1,13 +1,14 @@
-import { useEffect, useMemo, useState } from 'react';
-import { api } from '../lib/api';
-import { ConfirmDialog } from '../components/ui/ConfirmDialog';
-import { Select } from '../components/ui/Select';
+import { useEffect, useMemo, useState } from "react";
+import { api } from "../lib/api";
+import { ConfirmDialog } from "../components/ui/ConfirmDialog";
+import { Select } from "../components/ui/Select";
+import { formatDateAR } from "../lib/formatters";
 
 export type InvestorSummary = {
   investor_id: string;
   investor_name: string;
   investor_email: string;
-  trading_fee_frequency?: 'MONTHLY' | 'QUARTERLY' | 'SEMESTRAL' | 'ANNUAL';
+  trading_fee_frequency?: "MONTHLY" | "QUARTERLY" | "SEMESTRAL" | "ANNUAL";
   investor_trading_fee_percentage?: number;
   current_balance: number;
   period_start: string;
@@ -48,16 +49,20 @@ type TradingFeeEdit = {
 export const TradingFeesPage = () => {
   const [investors, setInvestors] = useState<InvestorSummary[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [percentages, setPercentages] = useState<Record<string, string>>({});
-  const [confirmModal, setConfirmModal] = useState<TradingFeeCalculation | null>(null);
+  const [confirmModal, setConfirmModal] =
+    useState<TradingFeeCalculation | null>(null);
   const [editModal, setEditModal] = useState<TradingFeeEdit | null>(null);
   const [applying, setApplying] = useState(false);
-  const [notes, setNotes] = useState('');
-  const [editNotes, setEditNotes] = useState('');
-  const [editPercentage, setEditPercentage] = useState('30');
-  const [investorFilter, setInvestorFilter] = useState('');
-  const [flash, setFlash] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [notes, setNotes] = useState("");
+  const [editNotes, setEditNotes] = useState("");
+  const [editPercentage, setEditPercentage] = useState("30");
+  const [investorFilter, setInvestorFilter] = useState("");
+  const [flash, setFlash] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
   const [detailModal, setDetailModal] = useState<InvestorSummary | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{
     open: boolean;
@@ -65,9 +70,16 @@ export const TradingFeesPage = () => {
     investorName: string;
     periodStart: string;
     periodEnd: string;
-  }>({ open: false, feeId: null, investorName: '', periodStart: '', periodEnd: '' });
+  }>({
+    open: false,
+    feeId: null,
+    investorName: "",
+    periodStart: "",
+    periodEnd: "",
+  });
   const PAGE_SIZE_OPTIONS = [10, 20, 50] as const;
-  const [pageSize, setPageSize] = useState<(typeof PAGE_SIZE_OPTIONS)[number]>(20);
+  const [pageSize, setPageSize] =
+    useState<(typeof PAGE_SIZE_OPTIONS)[number]>(20);
   const [page, setPage] = useState(1);
 
   useEffect(() => {
@@ -80,23 +92,39 @@ export const TradingFeesPage = () => {
     return () => clearTimeout(t);
   }, [flash]);
 
-  const loadInvestorsSummary = async (period_start?: string, period_end?: string, opts?: { suppressError?: boolean }) => {
+  const loadInvestorsSummary = async (
+    period_start?: string,
+    period_end?: string,
+    opts?: { suppressError?: boolean },
+  ) => {
     try {
       setLoading(true);
-      setError('');
-      const response = (await api.getTradingFeesSummary({ period_start, period_end })) as InvestorSummary[];
+      setError("");
+      const response = (await api.getTradingFeesSummary({
+        period_start,
+        period_end,
+      })) as InvestorSummary[];
       setInvestors(response);
 
       const initialPercentages: Record<string, string> = {};
       response.forEach((inv) => {
-        const applied = typeof inv.applied_fee_percentage === 'number' ? inv.applied_fee_percentage : null;
-        const investorDefault = typeof inv.investor_trading_fee_percentage === 'number' ? inv.investor_trading_fee_percentage : 30;
-        initialPercentages[inv.investor_id] = applied !== null ? String(applied) : String(investorDefault);
+        const applied =
+          typeof inv.applied_fee_percentage === "number"
+            ? inv.applied_fee_percentage
+            : null;
+        const investorDefault =
+          typeof inv.investor_trading_fee_percentage === "number"
+            ? inv.investor_trading_fee_percentage
+            : 30;
+        initialPercentages[inv.investor_id] =
+          applied !== null ? String(applied) : String(investorDefault);
       });
       setPercentages(initialPercentages);
     } catch (err: unknown) {
       if (!opts?.suppressError) {
-        setError(err instanceof Error ? err.message : 'Error al cargar inversores');
+        setError(
+          err instanceof Error ? err.message : "Error al cargar inversores",
+        );
       }
     } finally {
       setLoading(false);
@@ -110,25 +138,38 @@ export const TradingFeesPage = () => {
   const formatCurrency = (amount: number) => {
     const num = Math.abs(amount);
     const formatted = num.toFixed(2);
-    const parts = formatted.split('.');
-    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    const parts = formatted.split(".");
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ".");
     const result = `$${parts[0]},${parts[1]}`;
     return amount < 0 ? `-${result}` : result;
   };
 
   const formatMonthLabel = (month: string) => {
     // month: YYYY-MM
-    const m = String(month || '').match(/^(\d{4})-(\d{2})$/);
+    const m = String(month || "").match(/^(\d{4})-(\d{2})$/);
     if (!m) return month;
     const year = m[1];
     const mm = parseInt(m[2], 10);
-    const names = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+    const names = [
+      "Ene",
+      "Feb",
+      "Mar",
+      "Abr",
+      "May",
+      "Jun",
+      "Jul",
+      "Ago",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dic",
+    ];
     const name = names[mm - 1] || m[2];
     return `${name} ${year}`;
   };
 
   const formatQuarterLabel = (periodStart: string) => {
-    const s = String(periodStart || '').trim();
+    const s = String(periodStart || "").trim();
     const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
     if (!m) return s;
     const year = parseInt(m[1], 10);
@@ -138,51 +179,53 @@ export const TradingFeesPage = () => {
   };
 
   const formatPeriodLabel = (inv: InvestorSummary) => {
-    if (inv.trading_fee_frequency === 'ANNUAL') {
-      const y = String(inv.period_start || '').slice(0, 4);
-      return y ? `Año ${y}` : 'Año';
+    if (inv.trading_fee_frequency === "ANNUAL") {
+      const y = String(inv.period_start || "").slice(0, 4);
+      return y ? `Año ${y}` : "Año";
     }
-    if (inv.trading_fee_frequency === 'SEMESTRAL') {
-      const startMonth = String(inv.period_start || '').slice(5, 7);
-      const y = String(inv.period_start || '').slice(0, 4);
-      if (startMonth === '01') return `1er Semestre ${y}`;
-      if (startMonth === '07') return `2do Semestre ${y}`;
-      return y ? `Semestre ${y}` : 'Semestre';
+    if (inv.trading_fee_frequency === "SEMESTRAL") {
+      const startMonth = String(inv.period_start || "").slice(5, 7);
+      const y = String(inv.period_start || "").slice(0, 4);
+      if (startMonth === "01") return `1er Semestre ${y}`;
+      if (startMonth === "07") return `2do Semestre ${y}`;
+      return y ? `Semestre ${y}` : "Semestre";
     }
-    if (inv.trading_fee_frequency === 'MONTHLY') {
-      const s = String(inv.period_start || '').trim();
+    if (inv.trading_fee_frequency === "MONTHLY") {
+      const s = String(inv.period_start || "").trim();
       const m = s.match(/^(\d{4})-(\d{2})-\d{2}$/);
-      if (!m) return 'Mes';
+      if (!m) return "Mes";
       const year = m[1];
       const mm = parseInt(m[2], 10);
-      const names = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+      const names = [
+        "Ene",
+        "Feb",
+        "Mar",
+        "Abr",
+        "May",
+        "Jun",
+        "Jul",
+        "Ago",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dic",
+      ];
       return `${names[mm - 1] || m[2]} ${year}`;
     }
     return formatQuarterLabel(inv.period_start);
   };
 
-  const formatDate = (dateStr: string) => {
-    const s = String(dateStr || '').trim();
-
-    // Backend usually sends Date as YYYY-MM-DD. Parsing with new Date() shifts by timezone (-03 => previous day).
-    const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-    if (m) {
-      const [, yyyy, mm, dd] = m;
-      return `${dd}/${mm}/${yyyy}`;
-    }
-
-    const d = new Date(s);
-    const dd = String(d.getUTCDate()).padStart(2, '0');
-    const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
-    const yyyy = String(d.getUTCFullYear());
-    return `${dd}/${mm}/${yyyy}`;
-  };
+  const formatDate = (dateStr: string) =>
+    formatDateAR(dateStr, { time: false });
 
   const handleApplyClick = async (investor: InvestorSummary) => {
-    const percentage = parseFloat(percentages[investor.investor_id] || '30');
+    const percentage = parseFloat(percentages[investor.investor_id] || "30");
 
     if (Number.isNaN(percentage) || percentage <= 0 || percentage > 100) {
-      setFlash({ type: 'error', message: 'El porcentaje debe estar entre 0 y 100' });
+      setFlash({
+        type: "error",
+        message: "El porcentaje debe estar entre 0 y 100",
+      });
       return;
     }
 
@@ -195,9 +238,13 @@ export const TradingFeesPage = () => {
       })) as TradingFeeCalculation;
 
       setConfirmModal(response);
-      setNotes('');
+      setNotes("");
     } catch (err: unknown) {
-      setFlash({ type: 'error', message: err instanceof Error ? err.message : 'Error al calcular comisión' });
+      setFlash({
+        type: "error",
+        message:
+          err instanceof Error ? err.message : "Error al calcular comisión",
+      });
     }
   };
 
@@ -214,13 +261,17 @@ export const TradingFeesPage = () => {
         period_end: confirmModal.period_end,
       });
 
-      setFlash({ type: 'success', message: 'Comisión aplicada exitosamente' });
+      setFlash({ type: "success", message: "Comisión aplicada exitosamente" });
       setConfirmModal(null);
-      setNotes('');
+      setNotes("");
 
       await loadInvestorsSummary(undefined, undefined, { suppressError: true });
     } catch (err: unknown) {
-      setFlash({ type: 'error', message: err instanceof Error ? err.message : 'Error al aplicar comisión' });
+      setFlash({
+        type: "error",
+        message:
+          err instanceof Error ? err.message : "Error al aplicar comisión",
+      });
     } finally {
       setApplying(false);
     }
@@ -228,13 +279,22 @@ export const TradingFeesPage = () => {
 
   const handleEditClick = (investor: InvestorSummary) => {
     if (!investor.applied_fee_id) {
-      setFlash({ type: 'error', message: 'No se encontró el ID de la comisión aplicada' });
+      setFlash({
+        type: "error",
+        message: "No se encontró el ID de la comisión aplicada",
+      });
       return;
     }
-    const pct = typeof investor.applied_fee_percentage === 'number' ? investor.applied_fee_percentage : 30;
-    const feeAmt = typeof investor.applied_fee_amount === 'number' ? investor.applied_fee_amount : 0;
+    const pct =
+      typeof investor.applied_fee_percentage === "number"
+        ? investor.applied_fee_percentage
+        : 30;
+    const feeAmt =
+      typeof investor.applied_fee_amount === "number"
+        ? investor.applied_fee_amount
+        : 0;
     setEditPercentage(String(pct));
-    setEditNotes('');
+    setEditNotes("");
     setEditModal({
       applied_fee_id: investor.applied_fee_id,
       investor_id: investor.investor_id,
@@ -251,9 +311,12 @@ export const TradingFeesPage = () => {
   const handleConfirmEdit = async () => {
     if (!editModal) return;
 
-    const nextPct = parseFloat(editPercentage || '');
+    const nextPct = parseFloat(editPercentage || "");
     if (Number.isNaN(nextPct) || nextPct <= 0 || nextPct > 100) {
-      setFlash({ type: 'error', message: 'El porcentaje debe estar entre 0 y 100' });
+      setFlash({
+        type: "error",
+        message: "El porcentaje debe estar entre 0 y 100",
+      });
       return;
     }
 
@@ -263,19 +326,37 @@ export const TradingFeesPage = () => {
         fee_percentage: nextPct,
         notes: editNotes || undefined,
       });
-      setFlash({ type: 'success', message: 'Comisión actualizada exitosamente' });
+      setFlash({
+        type: "success",
+        message: "Comisión actualizada exitosamente",
+      });
       setEditModal(null);
-      setEditNotes('');
+      setEditNotes("");
       await loadInvestorsSummary(undefined, undefined);
     } catch (err: unknown) {
-      setFlash({ type: 'error', message: err instanceof Error ? err.message : 'Error al actualizar comisión' });
+      setFlash({
+        type: "error",
+        message:
+          err instanceof Error ? err.message : "Error al actualizar comisión",
+      });
     } finally {
       setApplying(false);
     }
   };
 
-  const requestDeleteFee = (feeId: string, investorName: string, periodStart: string, periodEnd: string) => {
-    setDeleteConfirm({ open: true, feeId, investorName, periodStart, periodEnd });
+  const requestDeleteFee = (
+    feeId: string,
+    investorName: string,
+    periodStart: string,
+    periodEnd: string,
+  ) => {
+    setDeleteConfirm({
+      open: true,
+      feeId,
+      investorName,
+      periodStart,
+      periodEnd,
+    });
   };
 
   const confirmDeleteFee = async () => {
@@ -283,12 +364,19 @@ export const TradingFeesPage = () => {
     try {
       setApplying(true);
       await api.deleteTradingFee(deleteConfirm.feeId);
-      setFlash({ type: 'success', message: 'Comisión eliminada (anulada) exitosamente' });
+      setFlash({
+        type: "success",
+        message: "Comisión eliminada (anulada) exitosamente",
+      });
       setEditModal(null);
-      setEditNotes('');
+      setEditNotes("");
       await loadInvestorsSummary(undefined, undefined);
     } catch (err: unknown) {
-      setFlash({ type: 'error', message: err instanceof Error ? err.message : 'Error al eliminar comisión' });
+      setFlash({
+        type: "error",
+        message:
+          err instanceof Error ? err.message : "Error al eliminar comisión",
+      });
     } finally {
       setApplying(false);
     }
@@ -298,8 +386,8 @@ export const TradingFeesPage = () => {
     const q = investorFilter.trim().toLowerCase();
     if (!q) return investors;
     return investors.filter((inv) => {
-      const name = String(inv.investor_name || '').toLowerCase();
-      const email = String(inv.investor_email || '').toLowerCase();
+      const name = String(inv.investor_name || "").toLowerCase();
+      const email = String(inv.investor_email || "").toLowerCase();
       return name.includes(q) || email.includes(q);
     });
   }, [investors, investorFilter]);
@@ -308,7 +396,10 @@ export const TradingFeesPage = () => {
     setPage(1);
   }, [investorFilter, pageSize, investors.length]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredInvestors.length / pageSize));
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredInvestors.length / pageSize),
+  );
   useEffect(() => {
     if (page > totalPages) setPage(totalPages);
   }, [page, totalPages]);
@@ -330,11 +421,16 @@ export const TradingFeesPage = () => {
     <div>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Comisiones</h1>
-        <p className="mt-1 text-sm text-gray-600">Aplicar Trading Fees por período (mensual, trimestral, semestral o anual según inversor).</p>
+        <p className="mt-1 text-sm text-gray-600">
+          Aplicar Trading Fees por período (mensual, trimestral, semestral o
+          anual según inversor).
+        </p>
 
         <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
           <div className="flex flex-1 flex-col gap-1 min-w-[240px]">
-            <label className="text-sm font-medium text-gray-700">Inversor</label>
+            <label className="text-sm font-medium text-gray-700">
+              Inversor
+            </label>
             <div className="flex items-center gap-2">
               <input
                 type="text"
@@ -346,7 +442,7 @@ export const TradingFeesPage = () => {
               {investorFilter ? (
                 <button
                   type="button"
-                  onClick={() => setInvestorFilter('')}
+                  onClick={() => setInvestorFilter("")}
                   className="h-10 rounded border border-gray-300 bg-white px-3 text-sm text-gray-700 hover:bg-gray-50"
                 >
                   Limpiar
@@ -356,81 +452,109 @@ export const TradingFeesPage = () => {
           </div>
         </div>
 
-      {flash ? (
-        <div
-          data-testid="flash"
-          className={
-            `mt-4 mb-4 rounded-lg border px-4 py-3 text-sm ` +
-            (flash.type === 'success'
-              ? 'border-green-200 bg-green-50 text-green-800'
-              : 'border-red-200 bg-red-50 text-red-800')
-          }
-        >
-          <div className="flex items-start justify-between gap-3">
-            <span className="leading-5">{flash.message}</span>
-            <button
-              type="button"
-              onClick={() => setFlash(null)}
-              className="rounded px-2 py-1 text-xs font-medium hover:bg-black/5"
-            >
-              Cerrar
-            </button>
+        {flash ? (
+          <div
+            data-testid="flash"
+            className={
+              `mt-4 mb-4 rounded-lg border px-4 py-3 text-sm ` +
+              (flash.type === "success"
+                ? "border-green-200 bg-green-50 text-green-800"
+                : "border-red-200 bg-red-50 text-red-800")
+            }
+          >
+            <div className="flex items-start justify-between gap-3">
+              <span className="leading-5">{flash.message}</span>
+              <button
+                type="button"
+                onClick={() => setFlash(null)}
+                className="rounded px-2 py-1 text-xs font-medium hover:bg-black/5"
+              >
+                Cerrar
+              </button>
+            </div>
           </div>
-        </div>
-      ) : null}
-
+        ) : null}
       </div>
       {/* Mobile: cards */}
       <div className="grid gap-3 md:hidden">
         {visibleInvestors.map((investor) => {
           const isApplied = !!investor.already_applied;
-          const appliedPct = typeof investor.applied_fee_percentage === 'number' ? investor.applied_fee_percentage : null;
+          const appliedPct =
+            typeof investor.applied_fee_percentage === "number"
+              ? investor.applied_fee_percentage
+              : null;
           const rawPct = percentages[investor.investor_id];
-          const pct = isApplied && appliedPct !== null ? appliedPct : rawPct === '' ? null : parseFloat(rawPct ?? '30');
+          const pct =
+            isApplied && appliedPct !== null
+              ? appliedPct
+              : rawPct === ""
+                ? null
+                : parseFloat(rawPct ?? "30");
           const pctIsValid = pct !== null && Number.isFinite(pct);
           const feeAmount =
-            investor.has_profit && pctIsValid ? investor.profit_amount * (pct! / 100) : null;
+            investor.has_profit && pctIsValid
+              ? investor.profit_amount * (pct! / 100)
+              : null;
           const shownFeeAmount =
-            isApplied && typeof investor.applied_fee_amount === 'number'
+            isApplied && typeof investor.applied_fee_amount === "number"
               ? investor.applied_fee_amount
               : feeAmount;
 
           return (
-            <div key={investor.investor_id} className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+            <div
+              key={investor.investor_id}
+              className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm"
+            >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <div className="truncate text-sm font-semibold text-gray-900">{investor.investor_name}</div>
-                  <div className="truncate text-xs text-gray-500">{investor.investor_email}</div>
+                  <div className="truncate text-sm font-semibold text-gray-900">
+                    {investor.investor_name}
+                  </div>
+                  <div className="truncate text-xs text-gray-500">
+                    {investor.investor_email}
+                  </div>
                 </div>
                 <span className="shrink-0 inline-flex rounded-full bg-purple-50 px-2 py-0.5 text-[11px] font-semibold text-purple-800">
-                  {investor.trading_fee_frequency === 'ANNUAL'
-                    ? 'Anual'
-                    : investor.trading_fee_frequency === 'SEMESTRAL'
-                      ? 'Semestral'
-                      : investor.trading_fee_frequency === 'MONTHLY'
-                        ? 'Mensual'
-                        : 'Trimestral'}
+                  {investor.trading_fee_frequency === "ANNUAL"
+                    ? "Anual"
+                    : investor.trading_fee_frequency === "SEMESTRAL"
+                      ? "Semestral"
+                      : investor.trading_fee_frequency === "MONTHLY"
+                        ? "Mensual"
+                        : "Trimestral"}
                 </span>
               </div>
 
               <div className="mt-3 grid grid-cols-2 gap-3">
                 <div>
-                  <div className="text-[11px] font-medium uppercase tracking-wide text-gray-500">Período</div>
-                  <div className="mt-1 text-sm font-medium text-gray-900">{formatPeriodLabel(investor)}</div>
+                  <div className="text-[11px] font-medium uppercase tracking-wide text-gray-500">
+                    Período
+                  </div>
+                  <div className="mt-1 text-sm font-medium text-gray-900">
+                    {formatPeriodLabel(investor)}
+                  </div>
                   <div className="mt-0.5 text-xs text-gray-500">
-                    {formatDate(investor.period_start)} al {formatDate(investor.period_end)}
+                    {formatDate(investor.period_start)} al{" "}
+                    {formatDate(investor.period_end)}
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-[11px] font-medium uppercase tracking-wide text-gray-500">Rendimientos</div>
+                  <div className="text-[11px] font-medium uppercase tracking-wide text-gray-500">
+                    Rendimientos
+                  </div>
                   <div className="mt-1">
                     {investor.has_profit ? (
-                      <span className="text-sm font-semibold text-green-600">{formatCurrency(investor.profit_amount)}</span>
+                      <span className="text-sm font-semibold text-green-600">
+                        {formatCurrency(investor.profit_amount)}
+                      </span>
                     ) : (
-                      <span className="text-sm text-gray-400">Sin ganancias</span>
+                      <span className="text-sm text-gray-400">
+                        Sin ganancias
+                      </span>
                     )}
                   </div>
-                  {Array.isArray(investor.monthly_profits) && investor.monthly_profits.length > 0 ? (
+                  {Array.isArray(investor.monthly_profits) &&
+                  investor.monthly_profits.length > 0 ? (
                     <button
                       type="button"
                       className="mt-1 inline-flex items-center justify-end gap-1 text-xs text-gray-500 hover:text-gray-700"
@@ -457,7 +581,9 @@ export const TradingFeesPage = () => {
 
               <div className="mt-3 grid grid-cols-2 items-center gap-3">
                 <div>
-                  <div className="text-[11px] font-medium uppercase tracking-wide text-gray-500">Porcentaje</div>
+                  <div className="text-[11px] font-medium uppercase tracking-wide text-gray-500">
+                    Porcentaje
+                  </div>
                   <div className="mt-1 flex items-center gap-2">
                     <input
                       type="number"
@@ -467,9 +593,14 @@ export const TradingFeesPage = () => {
                       value={
                         isApplied && appliedPct !== null
                           ? String(appliedPct)
-                          : (rawPct ?? '30')
+                          : (rawPct ?? "30")
                       }
-                      onChange={(e) => handlePercentageChange(investor.investor_id, e.target.value)}
+                      onChange={(e) =>
+                        handlePercentageChange(
+                          investor.investor_id,
+                          e.target.value,
+                        )
+                      }
                       onWheel={(e) => {
                         e.currentTarget.blur();
                       }}
@@ -480,11 +611,15 @@ export const TradingFeesPage = () => {
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-[11px] font-medium uppercase tracking-wide text-gray-500">Comisión</div>
+                  <div className="text-[11px] font-medium uppercase tracking-wide text-gray-500">
+                    Comisión
+                  </div>
                   <div className="mt-2">
                     {investor.has_profit ? (
                       <span className="text-sm font-semibold text-purple-600">
-                        {shownFeeAmount === null ? '—' : formatCurrency(shownFeeAmount)}
+                        {shownFeeAmount === null
+                          ? "—"
+                          : formatCurrency(shownFeeAmount)}
                       </span>
                     ) : (
                       <span className="text-sm text-gray-400">—</span>
@@ -503,7 +638,14 @@ export const TradingFeesPage = () => {
                       className="rounded border border-gray-300 bg-white p-2 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
                       disabled={applying}
                     >
-                      <svg aria-hidden viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+                      <svg
+                        aria-hidden
+                        viewBox="0 0 24 24"
+                        className="h-4 w-4"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
                         <path
                           strokeLinecap="round"
                           strokeLinejoin="round"
@@ -516,15 +658,31 @@ export const TradingFeesPage = () => {
                       title="Eliminar"
                       onClick={() => {
                         if (!investor.applied_fee_id) {
-                          setFlash({ type: 'error', message: 'No se encontró el ID de la comisión aplicada' });
+                          setFlash({
+                            type: "error",
+                            message:
+                              "No se encontró el ID de la comisión aplicada",
+                          });
                           return;
                         }
-                        requestDeleteFee(investor.applied_fee_id, investor.investor_name, investor.period_start, investor.period_end);
+                        requestDeleteFee(
+                          investor.applied_fee_id,
+                          investor.investor_name,
+                          investor.period_start,
+                          investor.period_end,
+                        );
                       }}
                       className="rounded border border-red-200 bg-white p-2 text-red-600 hover:bg-red-50 disabled:opacity-50"
                       disabled={applying}
                     >
-                      <svg aria-hidden viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+                      <svg
+                        aria-hidden
+                        viewBox="0 0 24 24"
+                        className="h-4 w-4"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
                         <path
                           strokeLinecap="round"
                           strokeLinejoin="round"
@@ -554,57 +712,92 @@ export const TradingFeesPage = () => {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">Inversor</th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">Período</th>
-              <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-700">Rendimientos</th>
-              <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-700">%</th>
-              <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-700">Comisión</th>
-              <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-700">Acción</th>
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">
+                Inversor
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">
+                Período
+              </th>
+              <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-700">
+                Rendimientos
+              </th>
+              <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-700">
+                %
+              </th>
+              <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-700">
+                Comisión
+              </th>
+              <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-700">
+                Acción
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 bg-white">
             {visibleInvestors.map((investor) => {
               const isApplied = !!investor.already_applied;
-              const appliedPct = typeof investor.applied_fee_percentage === 'number' ? investor.applied_fee_percentage : null;
+              const appliedPct =
+                typeof investor.applied_fee_percentage === "number"
+                  ? investor.applied_fee_percentage
+                  : null;
               const rawPct = percentages[investor.investor_id];
-              const pct = isApplied && appliedPct !== null ? appliedPct : rawPct === '' ? null : parseFloat(rawPct ?? '30');
+              const pct =
+                isApplied && appliedPct !== null
+                  ? appliedPct
+                  : rawPct === ""
+                    ? null
+                    : parseFloat(rawPct ?? "30");
               const pctIsValid = pct !== null && Number.isFinite(pct);
-              const feeAmount = investor.has_profit && pctIsValid ? investor.profit_amount * (pct! / 100) : null;
+              const feeAmount =
+                investor.has_profit && pctIsValid
+                  ? investor.profit_amount * (pct! / 100)
+                  : null;
               const shownFeeAmount =
-                isApplied && typeof investor.applied_fee_amount === 'number'
+                isApplied && typeof investor.applied_fee_amount === "number"
                   ? investor.applied_fee_amount
                   : feeAmount;
 
               return (
                 <tr key={investor.investor_id} className="hover:bg-gray-50">
                   <td className="px-6 py-4">
-                    <div className="text-sm font-medium text-gray-900">{investor.investor_name}</div>
-                    <div className="text-xs text-gray-500">{investor.investor_email}</div>
+                    <div className="text-sm font-medium text-gray-900">
+                      {investor.investor_name}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {investor.investor_email}
+                    </div>
                     <div className="mt-1">
                       <span className="inline-flex rounded-full bg-purple-50 px-2 py-0.5 text-[11px] font-semibold text-purple-800">
-                        {investor.trading_fee_frequency === 'ANNUAL'
-                          ? 'Anual'
-                          : investor.trading_fee_frequency === 'SEMESTRAL'
-                            ? 'Semestral'
-                            : investor.trading_fee_frequency === 'MONTHLY'
-                              ? 'Mensual'
-                              : 'Trimestral'}
+                        {investor.trading_fee_frequency === "ANNUAL"
+                          ? "Anual"
+                          : investor.trading_fee_frequency === "SEMESTRAL"
+                            ? "Semestral"
+                            : investor.trading_fee_frequency === "MONTHLY"
+                              ? "Mensual"
+                              : "Trimestral"}
                       </span>
                     </div>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-900">
-                    <div className="font-medium">{formatPeriodLabel(investor)}</div>
-                    <div className="text-xs text-gray-500">{formatDate(investor.period_start)} al {formatDate(investor.period_end)}</div>
+                    <div className="font-medium">
+                      {formatPeriodLabel(investor)}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {formatDate(investor.period_start)} al{" "}
+                      {formatDate(investor.period_end)}
+                    </div>
                   </td>
                   <td className="px-6 py-4 text-right text-sm">
                     <div className="flex flex-col items-end gap-1">
                       {investor.has_profit ? (
-                        <span className="font-semibold text-green-600">{formatCurrency(investor.profit_amount)}</span>
+                        <span className="font-semibold text-green-600">
+                          {formatCurrency(investor.profit_amount)}
+                        </span>
                       ) : (
                         <span className="text-gray-400">Sin ganancias</span>
                       )}
 
-                      {Array.isArray(investor.monthly_profits) && investor.monthly_profits.length > 0 ? (
+                      {Array.isArray(investor.monthly_profits) &&
+                      investor.monthly_profits.length > 0 ? (
                         <button
                           type="button"
                           className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700"
@@ -637,9 +830,14 @@ export const TradingFeesPage = () => {
                       value={
                         isApplied && appliedPct !== null
                           ? String(appliedPct)
-                          : (rawPct ?? '30')
+                          : (rawPct ?? "30")
                       }
-                      onChange={(e) => handlePercentageChange(investor.investor_id, e.target.value)}
+                      onChange={(e) =>
+                        handlePercentageChange(
+                          investor.investor_id,
+                          e.target.value,
+                        )
+                      }
                       onWheel={(e) => {
                         // Prevent mouse wheel from changing number inputs (common UX bug on desktop trackpads/mice)
                         e.currentTarget.blur();
@@ -651,7 +849,9 @@ export const TradingFeesPage = () => {
                   <td className="px-6 py-4 text-right">
                     {investor.has_profit ? (
                       <span className="font-semibold text-purple-600">
-                        {shownFeeAmount === null ? '—' : formatCurrency(shownFeeAmount)}
+                        {shownFeeAmount === null
+                          ? "—"
+                          : formatCurrency(shownFeeAmount)}
                       </span>
                     ) : (
                       <span className="text-gray-400">—</span>
@@ -667,7 +867,14 @@ export const TradingFeesPage = () => {
                           className="rounded border border-gray-300 bg-white p-2 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
                           disabled={applying}
                         >
-                          <svg aria-hidden viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+                          <svg
+                            aria-hidden
+                            viewBox="0 0 24 24"
+                            className="h-4 w-4"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                          >
                             <path
                               strokeLinecap="round"
                               strokeLinejoin="round"
@@ -680,7 +887,11 @@ export const TradingFeesPage = () => {
                           title="Eliminar"
                           onClick={() => {
                             if (!investor.applied_fee_id) {
-                              setFlash({ type: 'error', message: 'No se encontró el ID de la comisión aplicada' });
+                              setFlash({
+                                type: "error",
+                                message:
+                                  "No se encontró el ID de la comisión aplicada",
+                              });
                               return;
                             }
                             requestDeleteFee(
@@ -693,7 +904,14 @@ export const TradingFeesPage = () => {
                           className="rounded border border-red-200 bg-white p-2 text-red-600 hover:bg-red-50 disabled:opacity-50"
                           disabled={applying}
                         >
-                          <svg aria-hidden viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+                          <svg
+                            aria-hidden
+                            viewBox="0 0 24 24"
+                            className="h-4 w-4"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                          >
                             <path
                               strokeLinecap="round"
                               strokeLinejoin="round"
@@ -710,7 +928,9 @@ export const TradingFeesPage = () => {
                         Aplicar
                       </button>
                     ) : (
-                      <span className="text-xs text-gray-500">No corresponde</span>
+                      <span className="text-xs text-gray-500">
+                        No corresponde
+                      </span>
                     )}
                   </td>
                 </tr>
@@ -727,8 +947,13 @@ export const TradingFeesPage = () => {
             portal
             className="w-24"
             value={String(pageSize)}
-            onChange={(v) => setPageSize(parseInt(v, 10) as (typeof PAGE_SIZE_OPTIONS)[number])}
-            options={PAGE_SIZE_OPTIONS.map((n) => ({ value: String(n), label: String(n) }))}
+            onChange={(v) =>
+              setPageSize(parseInt(v, 10) as (typeof PAGE_SIZE_OPTIONS)[number])
+            }
+            options={PAGE_SIZE_OPTIONS.map((n) => ({
+              value: String(n),
+              label: String(n),
+            }))}
           />
         </div>
 
@@ -742,7 +967,8 @@ export const TradingFeesPage = () => {
             Anterior
           </button>
           <div className="text-sm text-gray-700">
-            Página <span className="font-semibold">{page}</span> de <span className="font-semibold">{totalPages}</span>
+            Página <span className="font-semibold">{page}</span> de{" "}
+            <span className="font-semibold">{totalPages}</span>
           </div>
           <button
             type="button"
@@ -760,9 +986,13 @@ export const TradingFeesPage = () => {
           <div className="w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl">
             <div className="flex items-start justify-between border-b border-gray-100 px-5 py-4">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">Detalle de rentabilidad mensual</h3>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Detalle de rentabilidad mensual
+                </h3>
                 <p className="mt-0.5 text-sm text-gray-600">
-                  {detailModal.investor_name} · {formatDate(detailModal.period_start)} al {formatDate(detailModal.period_end)}
+                  {detailModal.investor_name} ·{" "}
+                  {formatDate(detailModal.period_start)} al{" "}
+                  {formatDate(detailModal.period_end)}
                 </p>
               </div>
               <button
@@ -777,14 +1007,16 @@ export const TradingFeesPage = () => {
             <div className="px-5 py-4">
               <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">Total período</span>
+                  <span className="text-sm font-medium text-gray-700">
+                    Total período
+                  </span>
                   <span
                     className={
                       (detailModal.profit_amount ?? 0) > 0
-                        ? 'text-sm font-semibold text-green-700'
+                        ? "text-sm font-semibold text-green-700"
                         : (detailModal.profit_amount ?? 0) < 0
-                          ? 'text-sm font-semibold text-red-700'
-                          : 'text-sm font-semibold text-gray-700'
+                          ? "text-sm font-semibold text-red-700"
+                          : "text-sm font-semibold text-gray-700"
                     }
                   >
                     {formatCurrency(detailModal.profit_amount ?? 0)}
@@ -796,18 +1028,36 @@ export const TradingFeesPage = () => {
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-white">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Mes</th>
-                      <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Rendimiento</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                        Mes
+                      </th>
+                      <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
+                        Rendimiento
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100 bg-white">
                     {(detailModal.monthly_profits || []).map((mp) => {
                       const amt = Number(mp.amount) || 0;
-                      const cls = amt > 0 ? 'text-green-700' : amt < 0 ? 'text-red-700' : 'text-gray-500';
+                      const cls =
+                        amt > 0
+                          ? "text-green-700"
+                          : amt < 0
+                            ? "text-red-700"
+                            : "text-gray-500";
                       return (
                         <tr key={mp.month}>
-                          <td className="px-4 py-3 text-sm text-gray-900">{formatMonthLabel(mp.month)}</td>
-                          <td className={"px-4 py-3 text-right text-sm font-semibold " + cls}>{formatCurrency(amt)}</td>
+                          <td className="px-4 py-3 text-sm text-gray-900">
+                            {formatMonthLabel(mp.month)}
+                          </td>
+                          <td
+                            className={
+                              "px-4 py-3 text-right text-sm font-semibold " +
+                              cls
+                            }
+                          >
+                            {formatCurrency(amt)}
+                          </td>
                         </tr>
                       );
                     })}
@@ -816,7 +1066,8 @@ export const TradingFeesPage = () => {
               </div>
 
               <div className="mt-4 text-xs text-gray-500">
-                Nota: el total del período es la suma de los meses (puede incluir meses negativos).
+                Nota: el total del período es la suma de los meses (puede
+                incluir meses negativos).
               </div>
             </div>
           </div>
@@ -826,46 +1077,65 @@ export const TradingFeesPage = () => {
       {confirmModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/15 p-4">
           <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-            <h2 className="mb-4 text-xl font-bold text-gray-900">¿Aplicar comisión?</h2>
+            <h2 className="mb-4 text-xl font-bold text-gray-900">
+              ¿Aplicar comisión?
+            </h2>
 
             <div className="mb-4 space-y-2 rounded-lg bg-purple-50 p-4">
               <div className="flex justify-between">
                 <span className="text-sm text-gray-600">Inversor:</span>
-                <span className="text-sm font-semibold">{confirmModal.investor_name}</span>
+                <span className="text-sm font-semibold">
+                  {confirmModal.investor_name}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-sm text-gray-600">Período:</span>
                 <span className="text-sm">
-                  {formatDate(confirmModal.period_start)} - {formatDate(confirmModal.period_end)}
+                  {formatDate(confirmModal.period_start)} -{" "}
+                  {formatDate(confirmModal.period_end)}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-sm text-gray-600">Ganancias:</span>
-                <span className="text-sm font-semibold text-green-600">{formatCurrency(confirmModal.profit_amount)}</span>
+                <span className="text-sm font-semibold text-green-600">
+                  {formatCurrency(confirmModal.profit_amount)}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-sm text-gray-600">Porcentaje:</span>
-                <span className="text-sm font-semibold">{confirmModal.fee_percentage}%</span>
+                <span className="text-sm font-semibold">
+                  {confirmModal.fee_percentage}%
+                </span>
               </div>
               <div className="flex justify-between border-t border-purple-200 pt-2">
-                <span className="text-sm text-gray-600">Comisión a cobrar:</span>
-                <span className="text-lg font-bold text-purple-600">{formatCurrency(confirmModal.fee_amount)}</span>
+                <span className="text-sm text-gray-600">
+                  Comisión a cobrar:
+                </span>
+                <span className="text-lg font-bold text-purple-600">
+                  {formatCurrency(confirmModal.fee_amount)}
+                </span>
               </div>
             </div>
 
             <div className="mb-4 space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Capital actual:</span>
-                <span className="font-semibold">{formatCurrency(confirmModal.current_balance)}</span>
+                <span className="font-semibold">
+                  {formatCurrency(confirmModal.current_balance)}
+                </span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Después de comisión:</span>
-                <span className="font-semibold text-green-600">{formatCurrency(confirmModal.balance_after_fee)}</span>
+                <span className="font-semibold text-green-600">
+                  {formatCurrency(confirmModal.balance_after_fee)}
+                </span>
               </div>
             </div>
 
             <div className="mb-4">
-              <label className="mb-1 block text-sm font-medium text-gray-700">Notas (opcional):</label>
+              <label className="mb-1 block text-sm font-medium text-gray-700">
+                Notas (opcional):
+              </label>
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
@@ -888,7 +1158,7 @@ export const TradingFeesPage = () => {
                 disabled={applying}
                 className="flex-1 rounded bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 disabled:opacity-50"
               >
-                {applying ? 'Aplicando...' : 'Confirmar y Aplicar'}
+                {applying ? "Aplicando..." : "Confirmar y Aplicar"}
               </button>
             </div>
           </div>
@@ -898,41 +1168,58 @@ export const TradingFeesPage = () => {
       {editModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/15 p-4">
           <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-            <h2 className="mb-4 text-xl font-bold text-gray-900">Editar comisión aplicada</h2>
+            <h2 className="mb-4 text-xl font-bold text-gray-900">
+              Editar comisión aplicada
+            </h2>
 
             {(() => {
               const currentFee = editModal.fee_amount;
-              const nextPct = parseFloat(editPercentage || '');
-              const nextFee = Number.isNaN(nextPct) ? null : (editModal.profit_amount * (nextPct / 100)).toFixed(2);
+              const nextPct = parseFloat(editPercentage || "");
+              const nextFee = Number.isNaN(nextPct)
+                ? null
+                : (editModal.profit_amount * (nextPct / 100)).toFixed(2);
               const nextFeeNum = nextFee === null ? null : Number(nextFee);
-              const delta = nextFeeNum === null ? null : (nextFeeNum - currentFee);
-              const balanceAfter = delta === null ? null : (editModal.current_balance - delta);
+              const delta =
+                nextFeeNum === null ? null : nextFeeNum - currentFee;
+              const balanceAfter =
+                delta === null ? null : editModal.current_balance - delta;
 
               return (
                 <>
                   <div className="mb-4 space-y-2 rounded-lg bg-purple-50 p-4">
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-600">Inversor:</span>
-                      <span className="text-sm font-semibold">{editModal.investor_name}</span>
+                      <span className="text-sm font-semibold">
+                        {editModal.investor_name}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-600">Período:</span>
                       <span className="text-sm">
-                        {formatDate(editModal.period_start)} - {formatDate(editModal.period_end)}
+                        {formatDate(editModal.period_start)} -{" "}
+                        {formatDate(editModal.period_end)}
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-600">Ganancias:</span>
-                      <span className="text-sm font-semibold text-green-700">{formatCurrency(editModal.profit_amount)}</span>
+                      <span className="text-sm font-semibold text-green-700">
+                        {formatCurrency(editModal.profit_amount)}
+                      </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Comisión actual:</span>
-                      <span className="text-sm font-semibold text-gray-900">{formatCurrency(currentFee)}</span>
+                      <span className="text-sm text-gray-600">
+                        Comisión actual:
+                      </span>
+                      <span className="text-sm font-semibold text-gray-900">
+                        {formatCurrency(currentFee)}
+                      </span>
                     </div>
                   </div>
 
                   <div className="mb-4">
-                    <label className="mb-1 block text-sm font-medium text-gray-700">Nuevo porcentaje</label>
+                    <label className="mb-1 block text-sm font-medium text-gray-700">
+                      Nuevo porcentaje
+                    </label>
                     <input
                       type="number"
                       min="0"
@@ -947,22 +1234,35 @@ export const TradingFeesPage = () => {
                       className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
                     />
                     <div className="mt-2 text-sm text-gray-700">
-                      Nuevo monto: <span className="font-semibold">{nextFeeNum === null ? '—' : formatCurrency(nextFeeNum)}</span>
+                      Nuevo monto:{" "}
+                      <span className="font-semibold">
+                        {nextFeeNum === null ? "—" : formatCurrency(nextFeeNum)}
+                      </span>
                     </div>
                     <div className="mt-1 text-sm text-gray-700">
-                      Diferencia: <span className="font-semibold">{delta === null ? '—' : formatCurrency(delta)}</span>
+                      Diferencia:{" "}
+                      <span className="font-semibold">
+                        {delta === null ? "—" : formatCurrency(delta)}
+                      </span>
                     </div>
                     <div className="mt-1 text-sm text-gray-700">
-                      Balance después del ajuste:{' '}
-                      <span className="font-semibold">{balanceAfter === null ? '—' : formatCurrency(balanceAfter)}</span>
+                      Balance después del ajuste:{" "}
+                      <span className="font-semibold">
+                        {balanceAfter === null
+                          ? "—"
+                          : formatCurrency(balanceAfter)}
+                      </span>
                     </div>
                     <p className="mt-2 text-xs text-gray-500">
-                      Esto no reescribe historia: crea un ajuste contable por la diferencia y actualiza el balance actual.
+                      Esto no reescribe historia: crea un ajuste contable por la
+                      diferencia y actualiza el balance actual.
                     </p>
                   </div>
 
                   <div className="mb-4">
-                    <label className="mb-1 block text-sm font-medium text-gray-700">Notas (opcional)</label>
+                    <label className="mb-1 block text-sm font-medium text-gray-700">
+                      Notas (opcional)
+                    </label>
                     <textarea
                       value={editNotes}
                       onChange={(e) => setEditNotes(e.target.value)}
@@ -983,7 +1283,12 @@ export const TradingFeesPage = () => {
                     <button
                       type="button"
                       onClick={() =>
-                        requestDeleteFee(editModal.applied_fee_id, editModal.investor_name, editModal.period_start, editModal.period_end)
+                        requestDeleteFee(
+                          editModal.applied_fee_id,
+                          editModal.investor_name,
+                          editModal.period_start,
+                          editModal.period_end,
+                        )
                       }
                       disabled={applying}
                       className="rounded bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
@@ -995,7 +1300,7 @@ export const TradingFeesPage = () => {
                       disabled={applying}
                       className="flex-1 rounded bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 disabled:opacity-50"
                     >
-                      {applying ? 'Guardando...' : 'Guardar'}
+                      {applying ? "Guardando..." : "Guardar"}
                     </button>
                   </div>
                 </>
@@ -1007,18 +1312,30 @@ export const TradingFeesPage = () => {
 
       <ConfirmDialog
         isOpen={deleteConfirm.open}
-        onClose={() => setDeleteConfirm({ open: false, feeId: null, investorName: '', periodStart: '', periodEnd: '' })}
+        onClose={() =>
+          setDeleteConfirm({
+            open: false,
+            feeId: null,
+            investorName: "",
+            periodStart: "",
+            periodEnd: "",
+          })
+        }
         onConfirm={() => void confirmDeleteFee()}
         title="Eliminar comisión aplicada"
         message={
           <>
-            ¿Querés eliminar (anular) la comisión de <span className="font-semibold">{deleteConfirm.investorName}</span>?
+            ¿Querés eliminar (anular) la comisión de{" "}
+            <span className="font-semibold">{deleteConfirm.investorName}</span>?
             <br />
             <span className="text-gray-600">
-              Período: {formatDate(deleteConfirm.periodStart)} - {formatDate(deleteConfirm.periodEnd)}
+              Período: {formatDate(deleteConfirm.periodStart)} -{" "}
+              {formatDate(deleteConfirm.periodEnd)}
             </span>
             <br />
-            <span className="text-gray-600">Esto devolverá el monto al balance del inversor.</span>
+            <span className="text-gray-600">
+              Esto devolverá el monto al balance del inversor.
+            </span>
           </>
         }
         confirmText="Eliminar"

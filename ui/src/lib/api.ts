@@ -1,26 +1,29 @@
-const DEFAULT_BASE_URL = import.meta.env.PROD ? '' : 'http://localhost:3000';
+const DEFAULT_BASE_URL = import.meta.env.PROD ? "" : "http://localhost:3000";
 
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || DEFAULT_BASE_URL;
-const ADMIN_API_PREFIX = '/api/admin/v1';
+export const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || DEFAULT_BASE_URL;
+const ADMIN_API_PREFIX = "/api/admin/v1";
 
 async function request(path: string, options?: RequestInit) {
   const res = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
-    credentials: 'include',
+    credentials: "include",
     headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
+      Accept: "application/json",
+      "Content-Type": "application/json",
       ...(options?.headers || {}),
     },
   });
 
   if (!res.ok) {
     // Devise returns 401/403 when not authenticated/authorized.
-    if (res.status === 401) throw new Error('Unauthorized');
-    if (res.status === 403) throw new Error('Forbidden');
+    if (res.status === 401) throw new Error("Unauthorized");
+    if (res.status === 403) throw new Error("Forbidden");
 
-    const contentType = res.headers.get('content-type') || '';
-    const body = contentType.includes('application/json') ? JSON.stringify(await res.json()) : await res.text();
+    const contentType = res.headers.get("content-type") || "";
+    const body = contentType.includes("application/json")
+      ? JSON.stringify(await res.json())
+      : await res.text();
     throw new Error(body || `Request failed: ${res.status}`);
   }
 
@@ -28,8 +31,8 @@ async function request(path: string, options?: RequestInit) {
     return null;
   }
 
-  const contentType = res.headers.get('content-type') || '';
-  if (!contentType.includes('application/json')) {
+  const contentType = res.headers.get("content-type") || "";
+  if (!contentType.includes("application/json")) {
     const text = await res.text();
     return text ? { data: text } : null;
   }
@@ -42,157 +45,332 @@ async function request(path: string, options?: RequestInit) {
 export const api = {
   adminLogin: (email: string, password: string) =>
     request(`${ADMIN_API_PREFIX}/auth/login`, {
-      method: 'POST',
+      method: "POST",
       body: JSON.stringify({ email, password }),
     }),
   adminLogout: () =>
-    request(`${API_BASE_URL}/users/sign_out`, { method: 'DELETE' }),
+    request(`${API_BASE_URL}/users/sign_out`, { method: "DELETE" }),
   getAdminSession: () => request(`${ADMIN_API_PREFIX}/session`),
   getAdminDashboard: (params?: { days?: number }) => {
     const qs = new URLSearchParams();
-    if (params?.days !== undefined) qs.set('days', params.days.toString());
-    const suffix = qs.toString() ? `?${qs.toString()}` : '';
+    if (params?.days !== undefined) qs.set("days", params.days.toString());
+    const suffix = qs.toString() ? `?${qs.toString()}` : "";
     return request(`${ADMIN_API_PREFIX}/dashboard${suffix}`);
   },
   getAdminInvestors: (params?: { sort_by?: string; sort_order?: string }) => {
     const qs = new URLSearchParams();
-    if (params?.sort_by) qs.set('sort_by', params.sort_by);
-    if (params?.sort_order) qs.set('sort_order', params.sort_order);
-    const suffix = qs.toString() ? `?${qs.toString()}` : '';
+    if (params?.sort_by) qs.set("sort_by", params.sort_by);
+    if (params?.sort_order) qs.set("sort_order", params.sort_order);
+    const suffix = qs.toString() ? `?${qs.toString()}` : "";
     return request(`${ADMIN_API_PREFIX}/investors${suffix}`);
   },
-  signOut: () => request('/users/sign_out', { method: 'DELETE' }),
+  signOut: () => request("/users/sign_out", { method: "DELETE" }),
   getAdminRequests: (params?: { status?: string; type?: string }) => {
     const qs = new URLSearchParams();
-    if (params?.status) qs.set('status', params.status);
-    if (params?.type) qs.set('type', params.type);
-    const suffix = qs.toString() ? `?${qs.toString()}` : '';
+    if (params?.status) qs.set("status", params.status);
+    if (params?.type) qs.set("type", params.type);
+    const suffix = qs.toString() ? `?${qs.toString()}` : "";
     return request(`${ADMIN_API_PREFIX}/requests${suffix}`);
   },
-  createRequest: (body: { investor_id: string; request_type: string; method: string; amount: number; network?: string; status?: string; requested_at?: string; processed_at?: string }) =>
-    request(`${ADMIN_API_PREFIX}/requests`, { method: 'POST', body: JSON.stringify(body) }),
-  updateRequest: (id: string, body: { investor_id: string; request_type: string; method: string; amount: number; network?: string; status?: string }) =>
-    request(`${ADMIN_API_PREFIX}/requests/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
-  deleteRequest: (id: string) => request(`${ADMIN_API_PREFIX}/requests/${id}`, { method: 'DELETE' }),
+  createRequest: (body: {
+    investor_id: string;
+    request_type: string;
+    method: string;
+    amount: number;
+    network?: string;
+    status?: string;
+    requested_at?: string;
+    processed_at?: string;
+  }) =>
+    request(`${ADMIN_API_PREFIX}/requests`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  updateRequest: (
+    id: string,
+    body: {
+      investor_id: string;
+      request_type: string;
+      method: string;
+      amount: number;
+      network?: string;
+      status?: string;
+    },
+  ) =>
+    request(`${ADMIN_API_PREFIX}/requests/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+  deleteRequest: (id: string) =>
+    request(`${ADMIN_API_PREFIX}/requests/${id}`, { method: "DELETE" }),
   approveRequest: (id: string, body?: { processed_at?: string }) =>
-    request(`${ADMIN_API_PREFIX}/requests/${id}/approve`, { method: 'POST', body: JSON.stringify(body || {}) }),
-  rejectRequest: (id: string) => request(`${ADMIN_API_PREFIX}/requests/${id}/reject`, { method: 'POST' }),
-  reverseRequest: (id: string) => request(`${ADMIN_API_PREFIX}/requests/${id}/reverse`, { method: 'POST' }),
+    request(`${ADMIN_API_PREFIX}/requests/${id}/approve`, {
+      method: "POST",
+      body: JSON.stringify(body || {}),
+    }),
+  rejectRequest: (id: string) =>
+    request(`${ADMIN_API_PREFIX}/requests/${id}/reject`, { method: "POST" }),
+  reverseRequest: (id: string) =>
+    request(`${ADMIN_API_PREFIX}/requests/${id}/reverse`, { method: "POST" }),
   getAdminAdmins: () => request(`${ADMIN_API_PREFIX}/admins`),
-  createAdmin: (body: { email: string; name?: string; role: 'ADMIN' | 'SUPERADMIN' }) =>
-    request(`${ADMIN_API_PREFIX}/admins`, { method: 'POST', body: JSON.stringify(body) }),
+  createAdmin: (body: {
+    email: string;
+    name?: string;
+    role: "ADMIN" | "SUPERADMIN";
+  }) =>
+    request(`${ADMIN_API_PREFIX}/admins`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
   updateAdmin: (
     id: string,
     body: {
       email: string;
       name?: string;
-      role: 'ADMIN' | 'SUPERADMIN';
+      role: "ADMIN" | "SUPERADMIN";
       notify_deposit_created?: boolean;
       notify_withdrawal_created?: boolean;
     },
   ) =>
-    request(`${ADMIN_API_PREFIX}/admins/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
-  deleteAdmin: (id: string) => request(`${ADMIN_API_PREFIX}/admins/${id}`, { method: 'DELETE' }),
-  createInvestor: (body: { email: string; name: string; trading_fee_percentage?: number; password?: string }) =>
-    request(`${ADMIN_API_PREFIX}/investors`, { method: 'POST', body: JSON.stringify(body) }),
-  updateInvestor: (id: string, body: { email: string; name: string; status?: 'ACTIVE' | 'INACTIVE'; trading_fee_frequency?: 'MONTHLY' | 'QUARTERLY' | 'SEMESTRAL' | 'ANNUAL'; trading_fee_percentage?: number; password?: string }) =>
-    request(`${ADMIN_API_PREFIX}/investors/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
-  deleteInvestor: (id: string) => request(`${ADMIN_API_PREFIX}/investors/${id}`, { method: 'DELETE' }),
-  toggleInvestorStatus: (id: string) => request(`${ADMIN_API_PREFIX}/investors/${id}/toggle_status`, { method: 'POST' }),
+    request(`${ADMIN_API_PREFIX}/admins/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+  deleteAdmin: (id: string) =>
+    request(`${ADMIN_API_PREFIX}/admins/${id}`, { method: "DELETE" }),
+  createInvestor: (body: {
+    email: string;
+    name: string;
+    trading_fee_percentage?: number;
+    password?: string;
+  }) =>
+    request(`${ADMIN_API_PREFIX}/investors`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  updateInvestor: (
+    id: string,
+    body: {
+      email: string;
+      name: string;
+      status?: "ACTIVE" | "INACTIVE";
+      trading_fee_frequency?: "MONTHLY" | "QUARTERLY" | "SEMESTRAL" | "ANNUAL";
+      trading_fee_percentage?: number;
+      password?: string;
+    },
+  ) =>
+    request(`${ADMIN_API_PREFIX}/investors/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+  deleteInvestor: (id: string) =>
+    request(`${ADMIN_API_PREFIX}/investors/${id}`, { method: "DELETE" }),
+  toggleInvestorStatus: (id: string) =>
+    request(`${ADMIN_API_PREFIX}/investors/${id}/toggle_status`, {
+      method: "POST",
+    }),
   applyReferralCommission: (
     investorId: string,
-    body: { amount: number; applied_at?: string }
-  ) => request(`${ADMIN_API_PREFIX}/investors/${investorId}/referral_commissions`, { method: 'POST', body: JSON.stringify(body) }),
+    body: { amount: number; applied_at?: string },
+  ) =>
+    request(
+      `${ADMIN_API_PREFIX}/investors/${investorId}/referral_commissions`,
+      { method: "POST", body: JSON.stringify(body) },
+    ),
   getReferralCommissions: (params?: { page?: number }) => {
     const qs = new URLSearchParams();
-    if (params?.page && params.page > 1) qs.set('page', params.page.toString());
-    const suffix = qs.toString() ? `?${qs.toString()}` : '';
+    if (params?.page && params.page > 1) qs.set("page", params.page.toString());
+    const suffix = qs.toString() ? `?${qs.toString()}` : "";
     return request(`${ADMIN_API_PREFIX}/referral_commissions${suffix}`);
   },
   getAdminSettings: () => request(`${ADMIN_API_PREFIX}/settings`),
-  updateAdminSettings: (body: { investor_notifications_enabled?: boolean; investor_email_whitelist?: string[] | string }) =>
-    request(`${ADMIN_API_PREFIX}/settings`, { method: 'PATCH', body: JSON.stringify(body) }),
-  getActivityLogs: (params?: { page?: number; per_page?: number; user_id?: string; filter_action?: string }) => {
+  updateAdminSettings: (body: {
+    investor_notifications_enabled?: boolean;
+    investor_email_whitelist?: string[] | string;
+  }) =>
+    request(`${ADMIN_API_PREFIX}/settings`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+  getActivityLogs: (params?: {
+    page?: number;
+    per_page?: number;
+    user_id?: string;
+    filter_action?: string;
+  }) => {
     const qs = new URLSearchParams();
-    if (params?.page) qs.set('page', params.page.toString());
-    if (params?.per_page) qs.set('per_page', params.per_page.toString());
-    if (params?.user_id) qs.set('user_id', params.user_id);
-    if (params?.filter_action) qs.set('filter_action', params.filter_action);
-    const suffix = qs.toString() ? `?${qs.toString()}` : '';
+    if (params?.page) qs.set("page", params.page.toString());
+    if (params?.per_page) qs.set("per_page", params.per_page.toString());
+    if (params?.user_id) qs.set("user_id", params.user_id);
+    if (params?.filter_action) qs.set("filter_action", params.filter_action);
+    const suffix = qs.toString() ? `?${qs.toString()}` : "";
     return request(`${ADMIN_API_PREFIX}/activity_logs${suffix}`);
   },
   // Operativa diaria
   getDailyOperatingResults: (params?: { page?: number; per_page?: number }) => {
     const qs = new URLSearchParams();
-    if (params?.page) qs.set('page', params.page.toString());
-    if (params?.per_page) qs.set('per_page', params.per_page.toString());
-    const suffix = qs.toString() ? `?${qs.toString()}` : '';
+    if (params?.page) qs.set("page", params.page.toString());
+    if (params?.per_page) qs.set("per_page", params.per_page.toString());
+    const suffix = qs.toString() ? `?${qs.toString()}` : "";
     return request(`${ADMIN_API_PREFIX}/daily_operating_results${suffix}`);
   },
-  getDailyOperatingMonthlySummary: (params?: { months?: number; offset?: number }) => {
+  getDailyOperatingMonthlySummary: (params?: {
+    months?: number;
+    offset?: number;
+  }) => {
     const qs = new URLSearchParams();
-    if (params?.months) qs.set('months', params.months.toString());
-    if (params?.offset !== undefined && params.offset > 0) qs.set('offset', params.offset.toString());
-    const suffix = qs.toString() ? `?${qs.toString()}` : '';
-    return request(`${ADMIN_API_PREFIX}/daily_operating_results/monthly_summary${suffix}`);
+    if (params?.months) qs.set("months", params.months.toString());
+    if (params?.offset !== undefined && params.offset > 0)
+      qs.set("offset", params.offset.toString());
+    const suffix = qs.toString() ? `?${qs.toString()}` : "";
+    return request(
+      `${ADMIN_API_PREFIX}/daily_operating_results/monthly_summary${suffix}`,
+    );
   },
   getDailyOperatingByMonth: (params: { month: string }) => {
     const qs = new URLSearchParams();
-    qs.set('month', params.month);
-    return request(`${ADMIN_API_PREFIX}/daily_operating_results/by_month?${qs.toString()}`);
+    qs.set("month", params.month);
+    return request(
+      `${ADMIN_API_PREFIX}/daily_operating_results/by_month?${qs.toString()}`,
+    );
   },
-  previewDailyOperatingResult: (params: { date: string; percent: number; notes?: string }) => {
+  previewDailyOperatingResult: (params: {
+    date: string;
+    percent: number;
+    notes?: string;
+  }) => {
     const qs = new URLSearchParams();
-    qs.set('date', params.date);
-    qs.set('percent', params.percent.toString());
-    if (params.notes) qs.set('notes', params.notes);
-    return request(`${ADMIN_API_PREFIX}/daily_operating_results/preview?${qs.toString()}`);
+    qs.set("date", params.date);
+    qs.set("percent", params.percent.toString());
+    if (params.notes) qs.set("notes", params.notes);
+    return request(
+      `${ADMIN_API_PREFIX}/daily_operating_results/preview?${qs.toString()}`,
+    );
   },
-  createDailyOperatingResult: (body: { date: string; percent: number; notes?: string }) =>
-    request(`${ADMIN_API_PREFIX}/daily_operating_results`, { method: 'POST', body: JSON.stringify(body) }),
-  editPreviewDailyOperatingResult: (id: string, params: { percent: number }) => {
+  createDailyOperatingResult: (body: {
+    date: string;
+    percent: number;
+    notes?: string;
+  }) =>
+    request(`${ADMIN_API_PREFIX}/daily_operating_results`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  editPreviewDailyOperatingResult: (
+    id: string,
+    params: { percent: number },
+  ) => {
     const qs = new URLSearchParams();
-    qs.set('percent', params.percent.toString());
-    return request(`${ADMIN_API_PREFIX}/daily_operating_results/${id}/edit_preview?${qs.toString()}`);
+    qs.set("percent", params.percent.toString());
+    return request(
+      `${ADMIN_API_PREFIX}/daily_operating_results/${id}/edit_preview?${qs.toString()}`,
+    );
   },
-  updateDailyOperatingResult: (id: string, body: { percent: number; notes?: string }) =>
-    request(`${ADMIN_API_PREFIX}/daily_operating_results/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
+  updateDailyOperatingResult: (
+    id: string,
+    body: { percent: number; notes?: string },
+  ) =>
+    request(`${ADMIN_API_PREFIX}/daily_operating_results/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
   // Trading Fees
-  getTradingFees: (params?: { investor_id?: string; include_voided?: boolean; page?: number; per_page?: number }) => {
+  getTradingFees: (params?: {
+    investor_id?: string;
+    include_voided?: boolean;
+    page?: number;
+    per_page?: number;
+  }) => {
     const qs = new URLSearchParams();
-    if (params?.investor_id) qs.set('investor_id', params.investor_id);
-    if (params?.include_voided !== undefined) qs.set('include_voided', String(params.include_voided));
-    if (params?.page !== undefined) qs.set('page', String(params.page));
-    if (params?.per_page !== undefined) qs.set('per_page', String(params.per_page));
-    const suffix = qs.toString() ? `?${qs.toString()}` : '';
+    if (params?.investor_id) qs.set("investor_id", params.investor_id);
+    if (params?.include_voided !== undefined)
+      qs.set("include_voided", String(params.include_voided));
+    if (params?.page !== undefined) qs.set("page", String(params.page));
+    if (params?.per_page !== undefined)
+      qs.set("per_page", String(params.per_page));
+    const suffix = qs.toString() ? `?${qs.toString()}` : "";
     return request(`${ADMIN_API_PREFIX}/trading_fees${suffix}`);
   },
-  getTradingFeesSummary: (params?: { period_start?: string; period_end?: string }) => {
+  getTradingFeesSummary: (params?: {
+    period_start?: string;
+    period_end?: string;
+  }) => {
     const qs = new URLSearchParams();
-    if (params?.period_start) qs.set('period_start', params.period_start);
-    if (params?.period_end) qs.set('period_end', params.period_end);
-    const suffix = qs.toString() ? `?${qs.toString()}` : '';
-    return request(`${ADMIN_API_PREFIX}/trading_fees/investors_summary${suffix}`);
+    if (params?.period_start) qs.set("period_start", params.period_start);
+    if (params?.period_end) qs.set("period_end", params.period_end);
+    const suffix = qs.toString() ? `?${qs.toString()}` : "";
+    return request(
+      `${ADMIN_API_PREFIX}/trading_fees/investors_summary${suffix}`,
+    );
   },
-  calculateTradingFee: (params: { investor_id: string; fee_percentage: number; period_start?: string; period_end?: string }) => {
+  calculateTradingFee: (params: {
+    investor_id: string;
+    fee_percentage: number;
+    period_start?: string;
+    period_end?: string;
+  }) => {
     const qs = new URLSearchParams();
-    qs.set('investor_id', params.investor_id);
-    qs.set('fee_percentage', params.fee_percentage.toString());
-    if (params.period_start) qs.set('period_start', params.period_start);
-    if (params.period_end) qs.set('period_end', params.period_end);
-    return request(`${ADMIN_API_PREFIX}/trading_fees/calculate?${qs.toString()}`);
+    qs.set("investor_id", params.investor_id);
+    qs.set("fee_percentage", params.fee_percentage.toString());
+    if (params.period_start) qs.set("period_start", params.period_start);
+    if (params.period_end) qs.set("period_end", params.period_end);
+    return request(
+      `${ADMIN_API_PREFIX}/trading_fees/calculate?${qs.toString()}`,
+    );
   },
-  applyTradingFee: (body: { investor_id: string; fee_percentage: number; notes?: string; period_start?: string; period_end?: string }) =>
-    request(`${ADMIN_API_PREFIX}/trading_fees`, { method: 'POST', body: JSON.stringify(body) }),
-  updateTradingFee: (id: string, body: { fee_percentage: number; notes?: string }) =>
-    request(`${ADMIN_API_PREFIX}/trading_fees/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
-  deleteTradingFee: (id: string) => request(`${ADMIN_API_PREFIX}/trading_fees/${id}`, { method: 'DELETE' }),
+  applyTradingFee: (body: {
+    investor_id: string;
+    fee_percentage: number;
+    notes?: string;
+    period_start?: string;
+    period_end?: string;
+  }) =>
+    request(`${ADMIN_API_PREFIX}/trading_fees`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  updateTradingFee: (
+    id: string,
+    body: { fee_percentage: number; notes?: string },
+  ) =>
+    request(`${ADMIN_API_PREFIX}/trading_fees/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+  deleteTradingFee: (id: string) =>
+    request(`${ADMIN_API_PREFIX}/trading_fees/${id}`, { method: "DELETE" }),
   // Deposit Options
   getDepositOptions: () => request(`${ADMIN_API_PREFIX}/deposit_options`),
-  createDepositOption: (body: { category: string; label: string; currency: string; details: Record<string, string>; position?: number }) =>
-    request(`${ADMIN_API_PREFIX}/deposit_options`, { method: 'POST', body: JSON.stringify(body) }),
-  updateDepositOption: (id: string, body: { category?: string; label?: string; currency?: string; active?: boolean; details?: Record<string, string>; position?: number }) =>
-    request(`${ADMIN_API_PREFIX}/deposit_options/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
-  deleteDepositOption: (id: string) => request(`${ADMIN_API_PREFIX}/deposit_options/${id}`, { method: 'DELETE' }),
-  toggleDepositOption: (id: string) => request(`${ADMIN_API_PREFIX}/deposit_options/${id}/toggle_active`, { method: 'POST' }),
+  createDepositOption: (body: {
+    category: string;
+    label: string;
+    currency: string;
+    details: Record<string, string>;
+    position?: number;
+  }) =>
+    request(`${ADMIN_API_PREFIX}/deposit_options`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  updateDepositOption: (
+    id: string,
+    body: {
+      category?: string;
+      label?: string;
+      currency?: string;
+      active?: boolean;
+      details?: Record<string, string>;
+      position?: number;
+    },
+  ) =>
+    request(`${ADMIN_API_PREFIX}/deposit_options/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+  deleteDepositOption: (id: string) =>
+    request(`${ADMIN_API_PREFIX}/deposit_options/${id}`, { method: "DELETE" }),
+  toggleDepositOption: (id: string) =>
+    request(`${ADMIN_API_PREFIX}/deposit_options/${id}/toggle_active`, {
+      method: "POST",
+    }),
 };

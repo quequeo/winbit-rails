@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
-import { api } from '../lib/api';
-import { formatDateAR } from '../lib/formatters';
-import { Select } from '../components/ui/Select';
+import { useCallback, useEffect, useState } from "react";
+import { api } from "../lib/api";
+import { formatCurrencyAR, formatDateAR } from "../lib/formatters";
+import { Select } from "../components/ui/Select";
 
 type ActivityLog = {
   id: number;
@@ -34,30 +34,41 @@ export const ActivityLogsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [filterAction, setFilterAction] = useState('');
+  const [filterAction, setFilterAction] = useState("");
 
-  const fetchLogs = useCallback(async (page: number = 1) => {
-    try {
-      setLoading(true);
-      setError(null);
+  const fetchLogs = useCallback(
+    async (page: number = 1) => {
+      try {
+        setLoading(true);
+        setError(null);
 
-      const params: { page: number; per_page: number; filter_action?: string } = {
-        page,
-        per_page: 20,
-      };
-      if (filterAction) params.filter_action = filterAction;
+        const params: {
+          page: number;
+          per_page: number;
+          filter_action?: string;
+        } = {
+          page,
+          per_page: 20,
+        };
+        if (filterAction) params.filter_action = filterAction;
 
-      const res = (await api.getActivityLogs(params)) as { data?: { logs?: ActivityLog[]; pagination?: Pagination } } | null;
-      setLogs(res?.data?.logs ?? []);
-      setPagination(res?.data?.pagination ?? null);
-      setCurrentPage(page);
-    } catch (err: unknown) {
-      console.error('❌ Error fetching activity logs:', err);
-      setError(err instanceof Error ? err.message : 'Error al cargar actividad');
-    } finally {
-      setLoading(false);
-    }
-  }, [filterAction]);
+        const res = (await api.getActivityLogs(params)) as {
+          data?: { logs?: ActivityLog[]; pagination?: Pagination };
+        } | null;
+        setLogs(res?.data?.logs ?? []);
+        setPagination(res?.data?.pagination ?? null);
+        setCurrentPage(page);
+      } catch (err: unknown) {
+        console.error("❌ Error fetching activity logs:", err);
+        setError(
+          err instanceof Error ? err.message : "Error al cargar actividad",
+        );
+      } finally {
+        setLoading(false);
+      }
+    },
+    [filterAction],
+  );
 
   useEffect(() => {
     void fetchLogs(1);
@@ -68,56 +79,64 @@ export const ActivityLogsPage = () => {
   };
 
   const KEY_LABELS: Record<string, string> = {
-    nuevo_valor: 'Nuevo valor',
-    emails: 'Emails',
-    cantidad: 'Cantidad',
-    amount: 'Monto',
-    status: 'Estado',
-    from: 'Desde',
-    to: 'Hacia',
-    reason: 'Razón',
-    request_type: 'Tipo',
-    method: 'Método',
-    network: 'Red',
-    label: 'Etiqueta',
-    category: 'Categoría',
-    active: 'Activo',
+    nuevo_valor: "Nuevo valor",
+    emails: "Emails",
+    cantidad: "Cantidad",
+    amount: "Monto",
+    status: "Estado",
+    from: "Desde",
+    to: "Hacia",
+    reason: "Razón",
+    request_type: "Tipo",
+    method: "Método",
+    network: "Red",
+    label: "Etiqueta",
+    category: "Categoría",
+    active: "Activo",
   };
 
   const VALUE_LABELS: Record<string, string> = {
-    WITHDRAWAL: 'Retiro',
-    DEPOSIT: 'Depósito',
-    TRANSFER_ARS: 'Transferencia ARS',
-    BANK_ARS: 'Banco (ARS)',
-    BANK_USD: 'Banco (USD)',
-    CASH_ARS: 'Efectivo (ARS)',
-    CASH_USD: 'Efectivo (USD)',
-    CRYPTO: 'Cripto',
-    LEMON: 'Lemon',
-    ACTIVE: 'Activo',
-    INACTIVE: 'Inactivo',
-    PENDING: 'Pendiente',
-    APPROVED: 'Aprobado',
-    REJECTED: 'Rechazado',
+    WITHDRAWAL: "Retiro",
+    DEPOSIT: "Depósito",
+    BANK_USD: "Banco (USD)",
+    CASH_USD: "Efectivo (USD)",
+    CRYPTO: "Cripto",
+    LEMON: "Lemon",
+    ACTIVE: "Activo",
+    INACTIVE: "Inactivo",
+    PENDING: "Pendiente",
+    APPROVED: "Aprobado",
+    REJECTED: "Rechazado",
   };
 
   const formatValue = (key: string, value: unknown): string => {
-    if (typeof value === 'boolean') return value ? 'Sí' : 'No';
-    if (typeof value === 'number' && (key === 'amount' || key === 'from' || key === 'to')) {
-      return `$${value.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    if (typeof value === "boolean") return value ? "Sí" : "No";
+    if (
+      typeof value === "number" &&
+      (key === "amount" || key === "from" || key === "to")
+    ) {
+      return formatCurrencyAR(value);
     }
     const str = String(value);
     return VALUE_LABELS[str] ?? str;
   };
 
   const getActionBadgeColor = (action: string) => {
-    if (action.includes('approve') || action.includes('activate')) return 'bg-green-100 text-green-800';
-    if (action.includes('reject') || action.includes('delete') || action.includes('deactivate') || action.includes('void'))
-      return 'bg-red-100 text-red-800';
-    if (action.includes('create') || action.includes('apply')) return 'bg-blue-100 text-blue-800';
-    if (action.includes('update') || action.includes('toggle')) return 'bg-yellow-100 text-yellow-800';
-    if (action.includes('distribute')) return 'bg-purple-100 text-purple-800';
-    return 'bg-gray-100 text-gray-800';
+    if (action.includes("approve") || action.includes("activate"))
+      return "bg-green-100 text-green-800";
+    if (
+      action.includes("reject") ||
+      action.includes("delete") ||
+      action.includes("deactivate") ||
+      action.includes("void")
+    )
+      return "bg-red-100 text-red-800";
+    if (action.includes("create") || action.includes("apply"))
+      return "bg-blue-100 text-blue-800";
+    if (action.includes("update") || action.includes("toggle"))
+      return "bg-yellow-100 text-yellow-800";
+    if (action.includes("distribute")) return "bg-purple-100 text-purple-800";
+    return "bg-gray-100 text-gray-800";
   };
 
   if (loading && logs.length === 0) {
@@ -132,7 +151,9 @@ export const ActivityLogsPage = () => {
     <div className="rounded-lg bg-white p-6 shadow-sm">
       {/* Header */}
       <div className="mb-6 border-b border-gray-200 pb-4">
-        <h2 className="text-2xl font-semibold text-gray-900">Registro de Actividad</h2>
+        <h2 className="text-2xl font-semibold text-gray-900">
+          Registro de Actividad
+        </h2>
         <p className="mt-1 text-sm text-gray-600">
           Historial completo de acciones realizadas por los administradores
         </p>
@@ -141,7 +162,10 @@ export const ActivityLogsPage = () => {
       {/* Filters */}
       <div className="mb-6 flex flex-wrap gap-4">
         <div className="flex-1 min-w-[200px]">
-          <label htmlFor="filterAction" className="mb-1 block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="filterAction"
+            className="mb-1 block text-sm font-medium text-gray-700"
+          >
             Filtrar por acción
           </label>
           <Select
@@ -150,38 +174,61 @@ export const ActivityLogsPage = () => {
             onChange={(v) => setFilterAction(v)}
             portal
             options={[
-              { value: '', label: 'Todas las acciones' },
-              { value: 'create_request', label: 'Solicitud creada' },
-              { value: 'update_request', label: 'Solicitud actualizada' },
-              { value: 'approve_request', label: 'Aprobar solicitud' },
-              { value: 'reject_request', label: 'Rechazar solicitud' },
-              { value: 'create_investor', label: 'Crear inversor' },
-              { value: 'update_investor', label: 'Actualizar inversor' },
-              { value: 'deactivate_investor', label: 'Desactivar inversor' },
-              { value: 'activate_investor', label: 'Activar inversor' },
-              { value: 'delete_investor', label: 'Eliminar inversor' },
-              { value: 'apply_referral_commission', label: 'Comisión por referido' },
-              { value: 'apply_trading_fee', label: 'Trading fee aplicado' },
-              { value: 'update_trading_fee', label: 'Trading fee actualizado' },
-              { value: 'void_trading_fee', label: 'Trading fee anulado' },
-              { value: 'apply_daily_operating_result', label: 'Operativa diaria aplicada' },
-              { value: 'edit_daily_operating_result', label: 'Operativa diaria editada' },
-              { value: 'create_deposit_option', label: 'Opción depósito creada' },
-              { value: 'update_deposit_option', label: 'Opción depósito actualizada' },
-              { value: 'delete_deposit_option', label: 'Opción depósito eliminada' },
-              { value: 'toggle_deposit_option', label: 'Opción depósito activada/desactivada' },
-              { value: 'distribute_profit', label: 'Ganancias distribuidas' },
-              { value: 'create_admin', label: 'Crear admin' },
-              { value: 'update_admin', label: 'Actualizar admin' },
-              { value: 'delete_admin', label: 'Eliminar admin' },
-              { value: 'update_settings', label: 'Actualizar configuración' },
+              { value: "", label: "Todas las acciones" },
+              { value: "create_request", label: "Solicitud creada" },
+              { value: "update_request", label: "Solicitud actualizada" },
+              { value: "approve_request", label: "Aprobar solicitud" },
+              { value: "reject_request", label: "Rechazar solicitud" },
+              { value: "create_investor", label: "Crear inversor" },
+              { value: "update_investor", label: "Actualizar inversor" },
+              { value: "deactivate_investor", label: "Desactivar inversor" },
+              { value: "activate_investor", label: "Activar inversor" },
+              { value: "delete_investor", label: "Eliminar inversor" },
+              {
+                value: "apply_referral_commission",
+                label: "Comisión por referido",
+              },
+              { value: "apply_trading_fee", label: "Trading fee aplicado" },
+              { value: "update_trading_fee", label: "Trading fee actualizado" },
+              { value: "void_trading_fee", label: "Trading fee anulado" },
+              {
+                value: "apply_daily_operating_result",
+                label: "Operativa diaria aplicada",
+              },
+              {
+                value: "edit_daily_operating_result",
+                label: "Operativa diaria editada",
+              },
+              {
+                value: "create_deposit_option",
+                label: "Opción depósito creada",
+              },
+              {
+                value: "update_deposit_option",
+                label: "Opción depósito actualizada",
+              },
+              {
+                value: "delete_deposit_option",
+                label: "Opción depósito eliminada",
+              },
+              {
+                value: "toggle_deposit_option",
+                label: "Opción depósito activada/desactivada",
+              },
+              { value: "distribute_profit", label: "Ganancias distribuidas" },
+              { value: "create_admin", label: "Crear admin" },
+              { value: "update_admin", label: "Actualizar admin" },
+              { value: "delete_admin", label: "Eliminar admin" },
+              { value: "update_settings", label: "Actualizar configuración" },
             ]}
           />
         </div>
       </div>
 
       {error && (
-        <div className="mb-4 rounded-lg bg-red-50 p-4 text-sm text-red-800">{error}</div>
+        <div className="mb-4 rounded-lg bg-red-50 p-4 text-sm text-red-800">
+          {error}
+        </div>
       )}
 
       {/* Mobile Cards (visible on small screens) */}
@@ -192,7 +239,10 @@ export const ActivityLogsPage = () => {
           </div>
         ) : (
           logs.map((log) => (
-            <div key={log.id} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+            <div
+              key={log.id}
+              className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm"
+            >
               {/* Fecha */}
               <div className="text-xs text-gray-500 mb-2">
                 {formatDate(log.created_at)}
@@ -209,15 +259,23 @@ export const ActivityLogsPage = () => {
 
               {/* Admin */}
               <div className="mb-3 pb-3 border-b border-gray-100">
-                <div className="text-xs font-medium text-gray-500 mb-1">Administrador</div>
-                <div className="font-medium text-sm text-gray-900">{log.user.name}</div>
+                <div className="text-xs font-medium text-gray-500 mb-1">
+                  Administrador
+                </div>
+                <div className="font-medium text-sm text-gray-900">
+                  {log.user.name}
+                </div>
                 <div className="text-xs text-gray-500">{log.user.email}</div>
               </div>
 
               {/* Objetivo */}
               <div className="mb-3">
-                <div className="text-xs font-medium text-gray-500 mb-1">Objetivo</div>
-                <div className="text-sm font-medium text-gray-900">{log.target.display}</div>
+                <div className="text-xs font-medium text-gray-500 mb-1">
+                  Objetivo
+                </div>
+                <div className="text-sm font-medium text-gray-900">
+                  {log.target.display}
+                </div>
                 <div className="text-xs text-gray-500">
                   {log.target.type} #{log.target.id}
                 </div>
@@ -226,12 +284,18 @@ export const ActivityLogsPage = () => {
               {/* Detalles */}
               {log.metadata && Object.keys(log.metadata).length > 0 && (
                 <div>
-                  <div className="text-xs font-medium text-gray-500 mb-1">Detalles</div>
+                  <div className="text-xs font-medium text-gray-500 mb-1">
+                    Detalles
+                  </div>
                   <div className="space-y-1">
                     {Object.entries(log.metadata).map(([key, value]) => (
                       <div key={key} className="text-xs">
-                        <span className="font-medium text-gray-700">{KEY_LABELS[key] ?? key}:</span>{' '}
-                        <span className="text-gray-600">{formatValue(key, value)}</span>
+                        <span className="font-medium text-gray-700">
+                          {KEY_LABELS[key] ?? key}:
+                        </span>{" "}
+                        <span className="text-gray-600">
+                          {formatValue(key, value)}
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -267,7 +331,10 @@ export const ActivityLogsPage = () => {
           <tbody className="divide-y divide-gray-200 bg-white">
             {logs.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-sm text-gray-500">
+                <td
+                  colSpan={5}
+                  className="px-4 py-8 text-center text-sm text-gray-500"
+                >
                   No hay actividad registrada
                 </td>
               </tr>
@@ -278,7 +345,9 @@ export const ActivityLogsPage = () => {
                     {formatDate(log.created_at)}
                   </td>
                   <td className="px-4 py-3 text-sm">
-                    <div className="font-medium text-gray-900">{log.user.name}</div>
+                    <div className="font-medium text-gray-900">
+                      {log.user.name}
+                    </div>
                     <div className="text-gray-500">{log.user.email}</div>
                   </td>
                   <td className="px-4 py-3 text-sm">
@@ -289,7 +358,9 @@ export const ActivityLogsPage = () => {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-sm">
-                    <div className="font-medium text-gray-900">{log.target.display}</div>
+                    <div className="font-medium text-gray-900">
+                      {log.target.display}
+                    </div>
                     <div className="text-xs text-gray-500">
                       {log.target.type} #{log.target.id}
                     </div>
@@ -299,8 +370,12 @@ export const ActivityLogsPage = () => {
                       <div className="max-w-xs">
                         {Object.entries(log.metadata).map(([key, value]) => (
                           <div key={key} className="text-xs mb-1">
-                            <span className="font-medium text-gray-700">{KEY_LABELS[key] ?? key}:</span>{' '}
-                            <span className="text-gray-600">{formatValue(key, value)}</span>
+                            <span className="font-medium text-gray-700">
+                              {KEY_LABELS[key] ?? key}:
+                            </span>{" "}
+                            <span className="text-gray-600">
+                              {formatValue(key, value)}
+                            </span>
                           </div>
                         ))}
                       </div>
@@ -319,7 +394,8 @@ export const ActivityLogsPage = () => {
       {pagination && pagination.total_pages > 1 && (
         <div className="mt-6 flex items-center justify-between border-t border-gray-200 pt-4">
           <div className="text-sm text-gray-700">
-            Página {pagination.page} de {pagination.total_pages} ({pagination.total} registros)
+            Página {pagination.page} de {pagination.total_pages} (
+            {pagination.total} registros)
           </div>
           <div className="flex gap-2">
             <button

@@ -1,20 +1,27 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { api } from '../lib/api';
-import { Button } from '../components/ui/Button';
-import { Input } from '../components/ui/Input';
-import { ConfirmDialog } from '../components/ui/ConfirmDialog';
-import type { ApiAdmin } from '../types';
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { api } from "../lib/api";
+import { Button } from "../components/ui/Button";
+import { Input } from "../components/ui/Input";
+import { ConfirmDialog } from "../components/ui/ConfirmDialog";
+import type { ApiAdmin } from "../types";
 
 export const AdminsPage = () => {
   const navigate = useNavigate();
   const [data, setData] = useState<{ data?: ApiAdmin[] } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({ email: '', name: '', role: 'ADMIN' as 'ADMIN' | 'SUPERADMIN' });
+  const [formData, setFormData] = useState({
+    email: "",
+    name: "",
+    role: "ADMIN" as "ADMIN" | "SUPERADMIN",
+  });
   const [submitting, setSubmitting] = useState(false);
-  const [loggedInEmail, setLoggedInEmail] = useState<string>('');
-  const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; admin: ApiAdmin | null }>({
+  const [loggedInEmail, setLoggedInEmail] = useState<string>("");
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    isOpen: boolean;
+    admin: ApiAdmin | null;
+  }>({
     isOpen: false,
     admin: null,
   });
@@ -32,9 +39,12 @@ export const AdminsPage = () => {
 
   useEffect(() => {
     fetchAdmins();
-    api.getAdminSession().then((res) => {
-      setLoggedInEmail(res?.data?.email || '');
-    }).catch(() => {});
+    api
+      .getAdminSession()
+      .then((res) => {
+        setLoggedInEmail(res?.data?.email || "");
+      })
+      .catch(() => {});
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -42,11 +52,11 @@ export const AdminsPage = () => {
     setSubmitting(true);
     try {
       await api.createAdmin(formData);
-      setFormData({ email: '', name: '', role: 'ADMIN' });
+      setFormData({ email: "", name: "", role: "ADMIN" });
       setShowForm(false);
       fetchAdmins();
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Error al crear admin');
+      alert(err instanceof Error ? err.message : "Error al crear admin");
     } finally {
       setSubmitting(false);
     }
@@ -54,7 +64,7 @@ export const AdminsPage = () => {
 
   const handleDelete = (admin: ApiAdmin) => {
     if (admin.email === loggedInEmail) {
-      alert('No puedes eliminar tu propia cuenta.');
+      alert("No puedes eliminar tu propia cuenta.");
       return;
     }
     setDeleteConfirm({ isOpen: true, admin });
@@ -66,7 +76,7 @@ export const AdminsPage = () => {
       await api.deleteAdmin(deleteConfirm.admin.id);
       fetchAdmins();
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Error al eliminar admin');
+      alert(err instanceof Error ? err.message : "Error al eliminar admin");
     }
   };
 
@@ -80,43 +90,65 @@ export const AdminsPage = () => {
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Admins</h1>
-          <p className="text-gray-600 mt-1">Gestiona los usuarios que pueden acceder al panel.</p>
+          <p className="text-gray-600 mt-1">
+            Gestiona los usuarios que pueden acceder al panel.
+          </p>
         </div>
         <Button onClick={() => setShowForm(!showForm)} className="shrink-0">
-          {showForm ? 'Cancelar' : '+ Agregar Admin'}
+          {showForm ? "Cancelar" : "+ Agregar Admin"}
         </Button>
       </div>
 
       {showForm && (
         <div className="rounded-lg bg-white p-6 shadow">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Nuevo Admin</h2>
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            Nuevo Admin
+          </h2>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Email *
+              </label>
               <Input
                 type="email"
                 required
                 value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, email: e.target.value })
+                }
                 placeholder="admin@ejemplo.com"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Nombre (opcional)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Nombre (opcional)
+              </label>
               <Input
                 type="text"
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
                 placeholder="Juan Pérez"
               />
             </div>
             <div>
-              <label htmlFor="admin-role" className="block text-sm font-medium text-gray-700 mb-1">Rol *</label>
+              <label
+                htmlFor="admin-role"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Rol *
+              </label>
               <select
                 id="admin-role"
                 required
                 value={formData.role}
-                onChange={(e) => setFormData({ ...formData, role: e.target.value as 'ADMIN' | 'SUPERADMIN' })}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    role: e.target.value as "ADMIN" | "SUPERADMIN",
+                  })
+                }
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
               >
                 <option value="ADMIN">Admin</option>
@@ -125,9 +157,13 @@ export const AdminsPage = () => {
             </div>
             <div className="flex gap-3">
               <Button type="submit" disabled={submitting}>
-                {submitting ? 'Creando...' : 'Crear Admin'}
+                {submitting ? "Creando..." : "Crear Admin"}
               </Button>
-              <Button type="button" onClick={() => setShowForm(false)} className="bg-gray-500 hover:bg-gray-600">
+              <Button
+                type="button"
+                onClick={() => setShowForm(false)}
+                className="bg-gray-500 hover:bg-gray-600"
+              >
                 Cancelar
               </Button>
             </div>
@@ -138,24 +174,33 @@ export const AdminsPage = () => {
       {/* Mobile: cards */}
       <div className="grid gap-3 px-1 md:hidden">
         {admins.map((a) => (
-          <div key={a.id} className="w-full overflow-hidden rounded-lg bg-white p-4 shadow">
+          <div
+            key={a.id}
+            className="w-full overflow-hidden rounded-lg bg-white p-4 shadow"
+          >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-gray-900">{a.email}</p>
-                <p className="mt-1 text-sm text-gray-600">{a.name || '-'}</p>
+                <p className="truncate text-sm font-semibold text-gray-900">
+                  {a.email}
+                </p>
+                <p className="mt-1 text-sm text-gray-600">{a.name || "-"}</p>
               </div>
               <span
                 className={`shrink-0 inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
-                  a.role === 'SUPERADMIN' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'
+                  a.role === "SUPERADMIN"
+                    ? "bg-purple-100 text-purple-800"
+                    : "bg-blue-100 text-blue-800"
                 }`}
               >
-                {a.role === 'SUPERADMIN' ? 'Super Admin' : 'Admin'}
+                {a.role === "SUPERADMIN" ? "Super Admin" : "Admin"}
               </span>
             </div>
             <div className="mt-3 border-t pt-3 text-xs text-gray-600">
-              Notificaciones activas:{' '}
+              Notificaciones activas:{" "}
               <span className="font-semibold">
-                {(a.notify_deposit_created ? 1 : 0) + (a.notify_withdrawal_created ? 1 : 0)} / 2
+                {(a.notify_deposit_created ? 1 : 0) +
+                  (a.notify_withdrawal_created ? 1 : 0)}{" "}
+                / 2
               </span>
             </div>
             <div className="mt-3 flex gap-2">
@@ -164,8 +209,18 @@ export const AdminsPage = () => {
                 className="rounded p-2 text-[#58b098] hover:bg-[#58b098]/10"
                 title="Editar"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                  />
                 </svg>
               </button>
               <button
@@ -173,13 +228,27 @@ export const AdminsPage = () => {
                 disabled={a.email === loggedInEmail}
                 className={`p-2 rounded ${
                   a.email === loggedInEmail
-                    ? 'text-gray-400 cursor-not-allowed'
-                    : 'text-red-600 hover:bg-red-50'
+                    ? "text-gray-400 cursor-not-allowed"
+                    : "text-red-600 hover:bg-red-50"
                 }`}
-                title={a.email === loggedInEmail ? 'No puedes eliminar tu propia cuenta' : 'Eliminar'}
+                title={
+                  a.email === loggedInEmail
+                    ? "No puedes eliminar tu propia cuenta"
+                    : "Eliminar"
+                }
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                  />
                 </svg>
               </button>
             </div>
@@ -204,20 +273,22 @@ export const AdminsPage = () => {
               {admins.map((a) => (
                 <tr key={a.id} className="text-sm">
                   <td className="py-2 font-medium">{a.email}</td>
-                  <td className="py-2">{a.name || '-'}</td>
+                  <td className="py-2">{a.name || "-"}</td>
                   <td className="py-2">
                     <span
                       className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
-                        a.role === 'SUPERADMIN'
-                          ? 'bg-purple-100 text-purple-800'
-                          : 'bg-blue-100 text-blue-800'
+                        a.role === "SUPERADMIN"
+                          ? "bg-purple-100 text-purple-800"
+                          : "bg-blue-100 text-blue-800"
                       }`}
                     >
-                      {a.role === 'SUPERADMIN' ? 'Super Admin' : 'Admin'}
+                      {a.role === "SUPERADMIN" ? "Super Admin" : "Admin"}
                     </span>
                   </td>
                   <td className="py-2 text-gray-700">
-                    {(a.notify_deposit_created ? 1 : 0) + (a.notify_withdrawal_created ? 1 : 0)} / 2 activas
+                    {(a.notify_deposit_created ? 1 : 0) +
+                      (a.notify_withdrawal_created ? 1 : 0)}{" "}
+                    / 2 activas
                   </td>
                   <td className="py-2 text-right">
                     <div className="flex gap-2 justify-end">
@@ -226,8 +297,18 @@ export const AdminsPage = () => {
                         className="rounded p-2 text-[#58b098] hover:bg-[#58b098]/10"
                         title="Editar"
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                          />
                         </svg>
                       </button>
                       <button
@@ -235,13 +316,27 @@ export const AdminsPage = () => {
                         disabled={a.email === loggedInEmail}
                         className={`p-2 rounded ${
                           a.email === loggedInEmail
-                            ? 'text-gray-400 cursor-not-allowed'
-                            : 'text-red-600 hover:bg-red-50'
+                            ? "text-gray-400 cursor-not-allowed"
+                            : "text-red-600 hover:bg-red-50"
                         }`}
-                        title={a.email === loggedInEmail ? 'No puedes eliminar tu propia cuenta' : 'Eliminar'}
+                        title={
+                          a.email === loggedInEmail
+                            ? "No puedes eliminar tu propia cuenta"
+                            : "Eliminar"
+                        }
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                          />
                         </svg>
                       </button>
                     </div>
@@ -261,13 +356,16 @@ export const AdminsPage = () => {
         message={
           deleteConfirm.admin ? (
             <>
-              ¿Estás seguro de eliminar a{' '}
-              <span className="font-semibold">{deleteConfirm.admin.email}</span>?
+              ¿Estás seguro de eliminar a{" "}
+              <span className="font-semibold">{deleteConfirm.admin.email}</span>
+              ?
               <br />
-              <span className="text-red-600">Esta acción no se puede deshacer.</span>
+              <span className="text-red-600">
+                Esta acción no se puede deshacer.
+              </span>
             </>
           ) : (
-            ''
+            ""
           )
         }
         confirmText="Eliminar"

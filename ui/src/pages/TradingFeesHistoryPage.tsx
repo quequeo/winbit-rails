@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
-import { api } from '../lib/api';
-import { formatCurrencyAR, formatDateAR } from '../lib/formatters';
+import { useEffect, useMemo, useState } from "react";
+import { api } from "../lib/api";
+import { formatCurrencyAR, formatDateAR } from "../lib/formatters";
 
 type TradingFeeHistoryRow = {
   id: string;
@@ -13,7 +13,7 @@ type TradingFeeHistoryRow = {
   profit_amount: number;
   fee_percentage: number;
   fee_amount: number;
-  source?: 'PERIODIC' | 'WITHDRAWAL';
+  source?: "PERIODIC" | "WITHDRAWAL";
   withdrawal_amount?: number | null;
   applied_at: string;
   voided_at?: string | null;
@@ -35,7 +35,7 @@ const formatDate = (value: string | null | undefined) => formatDateAR(value);
 
 const formatPeriod = (start: string, ending: string) => {
   const fmt = (v: string) => {
-    const m = String(v || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    const m = String(v || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
     if (!m) return v;
     return `${m[3]}/${m[2]}/${m[1]}`;
   };
@@ -43,22 +43,27 @@ const formatPeriod = (start: string, ending: string) => {
 };
 
 const feeLabel = (row: TradingFeeHistoryRow) =>
-  row.source === 'WITHDRAWAL' ? 'Trading Fee por retiro' : 'Trading Fee';
+  row.source === "WITHDRAWAL" ? "Trading Fee por retiro" : "Trading Fee";
 
 export const TradingFeesHistoryPage = () => {
   const [rows, setRows] = useState<TradingFeeHistoryRow[]>([]);
-  const [pagination, setPagination] = useState<Pagination>({ page: 1, per_page: 25, total: 0, total_pages: 0 });
+  const [pagination, setPagination] = useState<Pagination>({
+    page: 1,
+    per_page: 25,
+    total: 0,
+    total_pages: 0,
+  });
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [search, setSearch] = useState('');
-  const [status, setStatus] = useState<'ALL' | 'ACTIVE' | 'VOIDED'>('ALL');
+  const [error, setError] = useState("");
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState<"ALL" | "ACTIVE" | "VOIDED">("ALL");
 
   useEffect(() => {
     const load = async () => {
       try {
         setLoading(true);
-        setError('');
+        setError("");
         const response = (await api.getTradingFees({
           include_voided: true,
           page,
@@ -86,7 +91,9 @@ export const TradingFeesHistoryPage = () => {
           },
         );
       } catch (err: unknown) {
-        setError(err instanceof Error ? err.message : 'Error al cargar historial');
+        setError(
+          err instanceof Error ? err.message : "Error al cargar historial",
+        );
       } finally {
         setLoading(false);
       }
@@ -99,15 +106,18 @@ export const TradingFeesHistoryPage = () => {
     return rows.filter((row) => {
       const matchesText =
         q.length === 0 ||
-        String(row.investor_name || '')
+        String(row.investor_name || "")
           .toLowerCase()
           .includes(q) ||
-        String(row.investor_email || '')
+        String(row.investor_email || "")
           .toLowerCase()
           .includes(q);
 
       const isVoided = !!row.voided_at;
-      const matchesStatus = status === 'ALL' || (status === 'ACTIVE' && !isVoided) || (status === 'VOIDED' && isVoided);
+      const matchesStatus =
+        status === "ALL" ||
+        (status === "ACTIVE" && !isVoided) ||
+        (status === "VOIDED" && isVoided);
       return matchesText && matchesStatus;
     });
   }, [rows, search, status]);
@@ -118,8 +128,12 @@ export const TradingFeesHistoryPage = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Historial de Trading Fees</h1>
-        <p className="mt-1 text-sm text-gray-600">Histórico de comisiones cobradas por Winbit (incluye anuladas).</p>
+        <h1 className="text-2xl font-bold text-gray-900">
+          Historial de Trading Fees
+        </h1>
+        <p className="mt-1 text-sm text-gray-600">
+          Histórico de comisiones cobradas por Winbit (incluye anuladas).
+        </p>
       </div>
 
       <div className="rounded-lg bg-white p-4 shadow">
@@ -133,7 +147,9 @@ export const TradingFeesHistoryPage = () => {
           />
           <select
             value={status}
-            onChange={(e) => setStatus(e.target.value as 'ALL' | 'ACTIVE' | 'VOIDED')}
+            onChange={(e) =>
+              setStatus(e.target.value as "ALL" | "ACTIVE" | "VOIDED")
+            }
             className="h-10 rounded border border-gray-300 bg-white px-3 text-sm"
           >
             <option value="ALL">Todos</option>
@@ -141,7 +157,8 @@ export const TradingFeesHistoryPage = () => {
             <option value="VOIDED">Anuladas</option>
           </select>
           <div className="flex items-center text-sm text-gray-600">
-            Resultados en página: {filtered.length} de {rows.length} (total: {pagination.total})
+            Resultados en página: {filtered.length} de {rows.length} (total:{" "}
+            {pagination.total})
           </div>
         </div>
       </div>
@@ -150,15 +167,33 @@ export const TradingFeesHistoryPage = () => {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">Fecha</th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">Inversor</th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">Tipo</th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">Período / Retiro</th>
-              <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-700">Profit</th>
-              <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-700">%</th>
-              <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-700">Fee cobrada</th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">Aplicado por</th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">Estado</th>
+              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">
+                Fecha
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">
+                Inversor
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">
+                Tipo
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">
+                Período / Retiro
+              </th>
+              <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-700">
+                Profit
+              </th>
+              <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-700">
+                %
+              </th>
+              <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-700">
+                Fee cobrada
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">
+                Aplicado por
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">
+                Estado
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 bg-white">
@@ -166,28 +201,46 @@ export const TradingFeesHistoryPage = () => {
               const isVoided = !!row.voided_at;
               return (
                 <tr key={row.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 text-sm text-gray-900">{formatDate(row.applied_at)}</td>
-                  <td className="px-4 py-3 text-sm">
-                    <div className="font-medium text-gray-900">{row.investor_name}</div>
-                    <div className="text-xs text-gray-500">{row.investor_email}</div>
+                  <td className="px-4 py-3 text-sm text-gray-900">
+                    {formatDate(row.applied_at)}
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-700">{feeLabel(row)}</td>
+                  <td className="px-4 py-3 text-sm">
+                    <div className="font-medium text-gray-900">
+                      {row.investor_name}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {row.investor_email}
+                    </div>
+                  </td>
                   <td className="px-4 py-3 text-sm text-gray-700">
-                    {row.source === 'WITHDRAWAL'
+                    {feeLabel(row)}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-700">
+                    {row.source === "WITHDRAWAL"
                       ? `Retiro: ${formatCurrencyAR(Number(row.withdrawal_amount || 0))}`
                       : formatPeriod(row.period_start, row.period_end)}
                   </td>
-                  <td className="px-4 py-3 text-right text-sm text-gray-900">{formatCurrencyAR(row.profit_amount)}</td>
-                  <td className="px-4 py-3 text-right text-sm text-gray-900">{row.fee_percentage}%</td>
-                  <td className="px-4 py-3 text-right text-sm font-semibold text-purple-700">{formatCurrencyAR(row.fee_amount)}</td>
-                  <td className="px-4 py-3 text-sm text-gray-700">{row.applied_by_name}</td>
+                  <td className="px-4 py-3 text-right text-sm text-gray-900">
+                    {formatCurrencyAR(row.profit_amount)}
+                  </td>
+                  <td className="px-4 py-3 text-right text-sm text-gray-900">
+                    {row.fee_percentage}%
+                  </td>
+                  <td className="px-4 py-3 text-right text-sm font-semibold text-purple-700">
+                    {formatCurrencyAR(row.fee_amount)}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-700">
+                    {row.applied_by_name}
+                  </td>
                   <td className="px-4 py-3 text-sm">
                     {isVoided ? (
                       <span className="inline-flex rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-800">
                         Anulada ({formatDate(row.voided_at)})
                       </span>
                     ) : (
-                      <span className="inline-flex rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-800">Cobrada</span>
+                      <span className="inline-flex rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-800">
+                        Cobrada
+                      </span>
                     )}
                   </td>
                 </tr>
@@ -201,29 +254,54 @@ export const TradingFeesHistoryPage = () => {
         {filtered.map((row) => {
           const isVoided = !!row.voided_at;
           return (
-            <div key={row.id} className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+            <div
+              key={row.id}
+              className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm"
+            >
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <div className="text-sm font-semibold text-gray-900">{row.investor_name}</div>
-                  <div className="text-xs text-gray-500">{row.investor_email}</div>
+                  <div className="text-sm font-semibold text-gray-900">
+                    {row.investor_name}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {row.investor_email}
+                  </div>
                 </div>
                 {isVoided ? (
-                  <span className="inline-flex rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-800">Anulada</span>
+                  <span className="inline-flex rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-800">
+                    Anulada
+                  </span>
                 ) : (
-                  <span className="inline-flex rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-800">Cobrada</span>
+                  <span className="inline-flex rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-800">
+                    Cobrada
+                  </span>
                 )}
               </div>
-              <div className="mt-2 text-xs text-gray-600">Aplicada: {formatDate(row.applied_at)}</div>
-              {isVoided ? <div className="text-xs text-red-600">Anulada: {formatDate(row.voided_at)}</div> : null}
-              <div className="mt-2 text-sm text-gray-700">Tipo: {feeLabel(row)}</div>
+              <div className="mt-2 text-xs text-gray-600">
+                Aplicada: {formatDate(row.applied_at)}
+              </div>
+              {isVoided ? (
+                <div className="text-xs text-red-600">
+                  Anulada: {formatDate(row.voided_at)}
+                </div>
+              ) : null}
+              <div className="mt-2 text-sm text-gray-700">
+                Tipo: {feeLabel(row)}
+              </div>
               <div className="mt-1 text-sm text-gray-700">
-                {row.source === 'WITHDRAWAL'
+                {row.source === "WITHDRAWAL"
                   ? `Retiro: ${formatCurrencyAR(Number(row.withdrawal_amount || 0))}`
                   : `Período: ${formatPeriod(row.period_start, row.period_end)}`}
               </div>
-              <div className="mt-1 text-sm text-gray-700">Profit: {formatCurrencyAR(row.profit_amount)}</div>
-              <div className="mt-1 text-sm text-gray-700">Fee: {row.fee_percentage}% · {formatCurrencyAR(row.fee_amount)}</div>
-              <div className="mt-1 text-xs text-gray-500">Aplicado por: {row.applied_by_name}</div>
+              <div className="mt-1 text-sm text-gray-700">
+                Profit: {formatCurrencyAR(row.profit_amount)}
+              </div>
+              <div className="mt-1 text-sm text-gray-700">
+                Fee: {row.fee_percentage}% · {formatCurrencyAR(row.fee_amount)}
+              </div>
+              <div className="mt-1 text-xs text-gray-500">
+                Aplicado por: {row.applied_by_name}
+              </div>
             </div>
           );
         })}
@@ -239,12 +317,16 @@ export const TradingFeesHistoryPage = () => {
           Anterior
         </button>
         <div className="text-sm text-gray-600">
-          Página {pagination.total_pages === 0 ? 0 : pagination.page} de {pagination.total_pages}
+          Página {pagination.total_pages === 0 ? 0 : pagination.page} de{" "}
+          {pagination.total_pages}
         </div>
         <button
           type="button"
           onClick={() => setPage((prev) => prev + 1)}
-          disabled={pagination.total_pages === 0 || pagination.page >= pagination.total_pages}
+          disabled={
+            pagination.total_pages === 0 ||
+            pagination.page >= pagination.total_pages
+          }
           className="rounded border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Siguiente

@@ -1,19 +1,19 @@
-import { useSearchParams } from 'react-router-dom';
-import { TradingFeesPage } from './TradingFeesPage';
-import { ReferralCommissionsPage } from './ReferralCommissionsPage';
-import { TradingFeesHistoryPage } from './TradingFeesHistoryPage';
+import { useSearchParams } from "react-router-dom";
+import { TradingFeesPage } from "./TradingFeesPage";
+import { ReferralCommissionsPage } from "./ReferralCommissionsPage";
+import { TradingFeesHistoryPage } from "./TradingFeesHistoryPage";
 
-type Tab = 'periodo' | 'referido' | 'historial';
+type Tab = "periodo" | "referido" | "historial";
 
 const TABS: { id: Tab; label: string }[] = [
-  { id: 'periodo', label: 'Comisiones por período' },
-  { id: 'referido', label: 'Comisiones por referido' },
-  { id: 'historial', label: 'Historial de Comisiones' },
+  { id: "periodo", label: "Comisiones por período" },
+  { id: "referido", label: "Comisiones por referido" },
+  { id: "historial", label: "Historial de Comisiones" },
 ];
 
 export const ComisionesHubPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = (searchParams.get('tab') as Tab) || 'periodo';
+  const activeTab = (searchParams.get("tab") as Tab) || "periodo";
 
   const setTab = (tab: Tab) => {
     setSearchParams({ tab }, { replace: true });
@@ -30,8 +30,8 @@ export const ComisionesHubPage = () => {
               onClick={() => setTab(tab.id)}
               className={
                 activeTab === tab.id
-                  ? 'border-b-2 border-[#58b098] pb-3 text-sm font-semibold text-[#58b098]'
-                  : 'border-b-2 border-transparent pb-3 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                  ? "border-b-2 border-[#58b098] pb-3 text-sm font-semibold text-[#58b098]"
+                  : "border-b-2 border-transparent pb-3 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700"
               }
             >
               {tab.label}
@@ -40,9 +40,9 @@ export const ComisionesHubPage = () => {
         </nav>
       </div>
 
-      {activeTab === 'periodo' && <TradingFeesPage />}
-      {activeTab === 'referido' && <ReferralCommissionsPage />}
-      {activeTab === 'historial' && <TradingFeesHistoryPage />}
+      {activeTab === "periodo" && <TradingFeesPage />}
+      {activeTab === "referido" && <ReferralCommissionsPage />}
+      {activeTab === "historial" && <TradingFeesHistoryPage />}
     </div>
   );
 };

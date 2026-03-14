@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
-import { api } from '../lib/api';
-import { Button } from '../components/ui/Button';
-import { formatNumberAR } from '../lib/formatters';
+import { useEffect, useMemo, useState } from "react";
+import { api } from "../lib/api";
+import { Button } from "../components/ui/Button";
+import { formatNumberAR } from "../lib/formatters";
 
 type HistoryRow = {
   id: string;
@@ -21,7 +21,7 @@ type MonthlySummaryRow = {
 
 const EyeIcon = ({ className }: { className?: string }) => (
   <svg
-    className={className || ''}
+    className={className || ""}
     viewBox="0 0 24 24"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
@@ -45,17 +45,35 @@ const EyeIcon = ({ className }: { className?: string }) => (
 );
 
 const monthLabel = (ym: string) => {
-  const m = String(ym || '').match(/^(\d{4})-(\d{2})$/);
+  const m = String(ym || "").match(/^(\d{4})-(\d{2})$/);
   if (!m) return ym;
   const yyyy = m[1];
   const mm = Number(m[2]);
-  const names = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+  const names = [
+    "Ene",
+    "Feb",
+    "Mar",
+    "Abr",
+    "May",
+    "Jun",
+    "Jul",
+    "Ago",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dic",
+  ];
   return `${names[mm - 1] || m[2]} ${yyyy}`;
 };
 
 export const OperatingHistoryPage = () => {
   const [history, setHistory] = useState<HistoryRow[]>([]);
-  const [historyMeta, setHistoryMeta] = useState<{ page: number; per_page: number; total: number; total_pages: number } | null>(null);
+  const [historyMeta, setHistoryMeta] = useState<{
+    page: number;
+    per_page: number;
+    total: number;
+    total_pages: number;
+  } | null>(null);
   const [historyPage, setHistoryPage] = useState(1);
   const historyPerPage = 10;
 
@@ -67,23 +85,32 @@ export const OperatingHistoryPage = () => {
 
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailMonth, setDetailMonth] = useState<string | null>(null);
-  const [detailRows, setDetailRows] = useState<{ id: string; date: string; percent: number; notes?: string | null }[]>([]);
+  const [detailRows, setDetailRows] = useState<
+    { id: string; date: string; percent: number; notes?: string | null }[]
+  >([]);
   const [detailLoading, setDetailLoading] = useState(false);
-
 
   const loadHistory = async (page: number) => {
     try {
       setLoadingHistory(true);
       setError(null);
-      const res = (await api.getDailyOperatingResults({ page, per_page: historyPerPage })) as {
+      const res = (await api.getDailyOperatingResults({
+        page,
+        per_page: historyPerPage,
+      })) as {
         data?: HistoryRow[];
-        meta?: { page: number; per_page: number; total: number; total_pages: number };
+        meta?: {
+          page: number;
+          per_page: number;
+          total: number;
+          total_pages: number;
+        };
       } | null;
       setHistory(res?.data ?? []);
       setHistoryMeta(res?.meta ?? null);
       setHistoryPage(page);
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Error al cargar historial');
+      setError(e instanceof Error ? e.message : "Error al cargar historial");
     } finally {
       setLoadingHistory(false);
     }
@@ -92,7 +119,10 @@ export const OperatingHistoryPage = () => {
   const loadMonthly = async (offset: number) => {
     try {
       setLoadingMonthly(true);
-      const res = (await api.getDailyOperatingMonthlySummary({ months: 12, offset })) as {
+      const res = (await api.getDailyOperatingMonthlySummary({
+        months: 12,
+        offset,
+      })) as {
         data?: MonthlySummaryRow[];
       } | null;
       setMonthlySummary(res?.data ?? []);
@@ -115,7 +145,6 @@ export const OperatingHistoryPage = () => {
     void loadMonthly(next);
   };
 
-  
   const openMonthDetail = async (month: string) => {
     try {
       setDetailOpen(true);
@@ -123,17 +152,24 @@ export const OperatingHistoryPage = () => {
       setDetailRows([]);
       setDetailLoading(true);
       const res = (await api.getDailyOperatingByMonth({ month })) as {
-        data?: { id: string; date: string; percent: number; notes?: string | null }[];
+        data?: {
+          id: string;
+          date: string;
+          percent: number;
+          notes?: string | null;
+        }[];
       } | null;
       setDetailRows(res?.data ?? []);
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Error al cargar detalle del mes');
+      setError(
+        e instanceof Error ? e.message : "Error al cargar detalle del mes",
+      );
     } finally {
       setDetailLoading(false);
     }
   };
 
-useEffect(() => {
+  useEffect(() => {
     void loadHistory(1);
     void loadMonthly(0);
   }, []);
@@ -146,16 +182,30 @@ useEffect(() => {
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Historial de Operativas</h1>
-          <p className="mt-1 text-sm text-gray-600">Resumen mensual + detalle diario (paginado).</p>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Historial de Operativas
+          </h1>
+          <p className="mt-1 text-sm text-gray-600">
+            Resumen mensual + detalle diario (paginado).
+          </p>
         </div>
-        <Button type="button" variant="outline" onClick={() => { void loadHistory(historyPage); void loadMonthly(monthlyOffset); }} disabled={loadingHistory || loadingMonthly}>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => {
+            void loadHistory(historyPage);
+            void loadMonthly(monthlyOffset);
+          }}
+          disabled={loadingHistory || loadingMonthly}
+        >
           Actualizar
         </Button>
       </div>
 
       {error ? (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</div>
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          {error}
+        </div>
       ) : null}
 
       <div className="rounded-lg bg-white p-6 shadow space-y-4">
@@ -175,7 +225,7 @@ useEffect(() => {
             {monthlySummary.length > 0 ? (
               <div className="text-xs text-gray-500 mt-0.5">
                 {monthLabel(monthlySummary[monthlySummary.length - 1].month)}
-                {' – '}
+                {" – "}
                 {monthLabel(monthlySummary[0].month)}
               </div>
             ) : null}
@@ -193,21 +243,33 @@ useEffect(() => {
         </div>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {(loadingMonthly && cards.length === 0) ? (
+          {loadingMonthly && cards.length === 0 ? (
             <div className="text-sm text-gray-500">Cargando…</div>
           ) : null}
 
           {cards.map((m) => {
             const v = m.compounded_percent;
-            const tone = v > 0 ? 'text-green-700 bg-green-50 border-green-200' : (v < 0 ? 'text-red-700 bg-red-50 border-red-200' : 'text-gray-700 bg-gray-50 border-gray-200');
-            const sign = v > 0 ? '+' : '';
+            const tone =
+              v > 0
+                ? "text-green-700 bg-green-50 border-green-200"
+                : v < 0
+                  ? "text-red-700 bg-red-50 border-red-200"
+                  : "text-gray-700 bg-gray-50 border-gray-200";
+            const sign = v > 0 ? "+" : "";
             return (
               <div key={m.month} className={`rounded-lg border p-4 ${tone}`}>
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <div className="text-xs uppercase">{monthLabel(m.month)}</div>
-                    <div className="mt-1 text-lg font-semibold">{sign}{formatNumberAR(v)}%</div>
-                    <div className="mt-1 text-xs opacity-80">Días cargados: {m.days}</div>
+                    <div className="text-xs uppercase">
+                      {monthLabel(m.month)}
+                    </div>
+                    <div className="mt-1 text-lg font-semibold">
+                      {sign}
+                      {formatNumberAR(v)}%
+                    </div>
+                    <div className="mt-1 text-xs opacity-80">
+                      Días cargados: {m.days}
+                    </div>
                   </div>
                   <button
                     type="button"
@@ -223,8 +285,10 @@ useEffect(() => {
             );
           })}
 
-          {(!loadingMonthly && cards.length === 0) ? (
-            <div className="text-sm text-gray-500">No hay operativas para resumir.</div>
+          {!loadingMonthly && cards.length === 0 ? (
+            <div className="text-sm text-gray-500">
+              No hay operativas para resumir.
+            </div>
           ) : null}
         </div>
       </div>
@@ -233,7 +297,12 @@ useEffect(() => {
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold text-gray-900">Detalle diario</h2>
           <div className="text-xs text-gray-500">
-            {historyMeta ? <>Página {historyMeta.page} de {historyMeta.total_pages} • Total: {historyMeta.total}</> : null}
+            {historyMeta ? (
+              <>
+                Página {historyMeta.page} de {historyMeta.total_pages} • Total:{" "}
+                {historyMeta.total}
+              </>
+            ) : null}
           </div>
         </div>
 
@@ -241,24 +310,41 @@ useEffect(() => {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">Fecha</th>
-                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-700">Resultado (%)</th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">Notas</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">
+                  Fecha
+                </th>
+                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-700">
+                  Resultado (%)
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">
+                  Notas
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 bg-white">
               {history.length === 0 ? (
                 <tr>
-                  <td className="px-4 py-6 text-center text-sm text-gray-500" colSpan={3}>
-                    {loadingHistory ? 'Cargando…' : 'No hay operativas cargadas.'}
+                  <td
+                    className="px-4 py-6 text-center text-sm text-gray-500"
+                    colSpan={3}
+                  >
+                    {loadingHistory
+                      ? "Cargando…"
+                      : "No hay operativas cargadas."}
                   </td>
                 </tr>
               ) : (
                 history.map((h) => (
                   <tr key={h.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-sm text-gray-900">{h.date}</td>
-                    <td className="px-4 py-3 text-right text-sm text-gray-900">{formatNumberAR(h.percent)}%</td>
-                    <td className="px-4 py-3 text-sm text-gray-700">{h.notes || '—'}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">
+                      {h.date}
+                    </td>
+                    <td className="px-4 py-3 text-right text-sm text-gray-900">
+                      {formatNumberAR(h.percent)}%
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-700">
+                      {h.notes || "—"}
+                    </td>
                   </tr>
                 ))
               )}
@@ -278,14 +364,17 @@ useEffect(() => {
           <Button
             type="button"
             variant="outline"
-            disabled={loadingHistory || !historyMeta || historyMeta.page >= historyMeta.total_pages}
+            disabled={
+              loadingHistory ||
+              !historyMeta ||
+              historyMeta.page >= historyMeta.total_pages
+            }
             onClick={() => void loadHistory((historyMeta?.page || 1) + 1)}
           >
             Siguiente
           </Button>
         </div>
       </div>
-
 
       {detailOpen ? (
         <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -296,8 +385,12 @@ useEffect(() => {
           <div className="flex min-h-full items-center justify-center p-4">
             <div className="relative w-full max-w-lg overflow-hidden rounded-lg bg-white shadow-xl">
               <div className="border-b border-gray-200 px-6 py-4">
-                <h3 className="text-lg font-semibold text-gray-900">Detalle del mes</h3>
-                <p className="mt-1 text-sm text-gray-600">{detailMonth ? monthLabel(detailMonth) : ''}</p>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Detalle del mes
+                </h3>
+                <p className="mt-1 text-sm text-gray-600">
+                  {detailMonth ? monthLabel(detailMonth) : ""}
+                </p>
               </div>
               <div className="px-6 py-4">
                 {detailLoading ? (
@@ -307,24 +400,39 @@ useEffect(() => {
                     <table className="min-w-full divide-y divide-gray-200">
                       <thead className="bg-gray-50">
                         <tr>
-                          <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">Fecha</th>
-                          <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-700">Resultado (%)</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">Notas</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">
+                            Fecha
+                          </th>
+                          <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-700">
+                            Resultado (%)
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">
+                            Notas
+                          </th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200 bg-white">
                         {detailRows.length === 0 ? (
                           <tr>
-                            <td className="px-4 py-6 text-center text-sm text-gray-500" colSpan={3}>
+                            <td
+                              className="px-4 py-6 text-center text-sm text-gray-500"
+                              colSpan={3}
+                            >
                               No hay operativas cargadas para este mes.
                             </td>
                           </tr>
                         ) : (
                           detailRows.map((r) => (
                             <tr key={r.id} className="hover:bg-gray-50">
-                              <td className="px-4 py-3 text-sm text-gray-900">{r.date}</td>
-                              <td className="px-4 py-3 text-right text-sm text-gray-900">{formatNumberAR(r.percent)}%</td>
-                              <td className="px-4 py-3 text-sm text-gray-700">{r.notes || '—'}</td>
+                              <td className="px-4 py-3 text-sm text-gray-900">
+                                {r.date}
+                              </td>
+                              <td className="px-4 py-3 text-right text-sm text-gray-900">
+                                {formatNumberAR(r.percent)}%
+                              </td>
+                              <td className="px-4 py-3 text-sm text-gray-700">
+                                {r.notes || "—"}
+                              </td>
                             </tr>
                           ))
                         )}
@@ -334,7 +442,11 @@ useEffect(() => {
                 )}
               </div>
               <div className="flex justify-end gap-3 border-t border-gray-200 px-6 py-4">
-                <Button type="button" variant="outline" onClick={() => setDetailOpen(false)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setDetailOpen(false)}
+                >
                   Cerrar
                 </Button>
               </div>

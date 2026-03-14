@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { api } from '../lib/api';
-import type { ApiAdmin } from '../types';
-import { Button } from '../components/ui/Button';
-import { Input } from '../components/ui/Input';
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { api } from "../lib/api";
+import type { ApiAdmin } from "../types";
+import { Button } from "../components/ui/Button";
+import { Input } from "../components/ui/Input";
 
 const WinbitCheckbox = ({
   checked,
@@ -44,9 +44,9 @@ export const EditAdminPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({
-    email: '',
-    name: '',
-    role: 'ADMIN' as 'ADMIN' | 'SUPERADMIN',
+    email: "",
+    name: "",
+    role: "ADMIN" as "ADMIN" | "SUPERADMIN",
     notify_deposit_created: true,
     notify_withdrawal_created: true,
   });
@@ -55,20 +55,22 @@ export const EditAdminPage = () => {
     api
       .getAdminAdmins()
       .then((res) => {
-        const adm = (res?.data as ApiAdmin[] | undefined)?.find((a) => String(a.id) === id);
+        const adm = (res?.data as ApiAdmin[] | undefined)?.find(
+          (a) => String(a.id) === id,
+        );
         if (!adm) {
-          setError('Admin no encontrado');
+          setError("Admin no encontrado");
           return;
         }
         setForm({
-          email: adm.email || '',
-          name: adm.name || '',
-          role: (adm.role || 'ADMIN') as 'ADMIN' | 'SUPERADMIN',
+          email: adm.email || "",
+          name: adm.name || "",
+          role: (adm.role || "ADMIN") as "ADMIN" | "SUPERADMIN",
           notify_deposit_created: adm.notify_deposit_created ?? true,
           notify_withdrawal_created: adm.notify_withdrawal_created ?? true,
         });
       })
-      .catch((e) => setError(e.message || 'Error al cargar admin'))
+      .catch((e) => setError(e.message || "Error al cargar admin"))
       .finally(() => setLoading(false));
   }, [id]);
 
@@ -78,9 +80,9 @@ export const EditAdminPage = () => {
     setSubmitting(true);
     try {
       await api.updateAdmin(id, form);
-      navigate('/admins');
+      navigate("/admins");
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Error al actualizar admin');
+      alert(err instanceof Error ? err.message : "Error al actualizar admin");
     } finally {
       setSubmitting(false);
     }
@@ -92,9 +94,22 @@ export const EditAdminPage = () => {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
-        <button onClick={() => navigate('/admins')} className="text-gray-500 hover:text-gray-700">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+        <button
+          onClick={() => navigate("/admins")}
+          className="text-gray-500 hover:text-gray-700"
+        >
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 19l-7-7 7-7"
+            />
           </svg>
         </button>
         <h1 className="text-2xl font-bold text-gray-900">Editar Admin</h1>
@@ -103,7 +118,9 @@ export const EditAdminPage = () => {
       <div className="rounded-lg bg-white p-6 shadow">
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Email *
+            </label>
             <Input
               type="email"
               required
@@ -113,7 +130,9 @@ export const EditAdminPage = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Nombre
+            </label>
             <Input
               type="text"
               value={form.name}
@@ -122,14 +141,22 @@ export const EditAdminPage = () => {
           </div>
 
           <div>
-            <label htmlFor="admin-edit-role" className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="admin-edit-role"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Rol *
             </label>
             <select
               id="admin-edit-role"
               required
               value={form.role}
-              onChange={(e) => setForm({ ...form, role: e.target.value as 'ADMIN' | 'SUPERADMIN' })}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  role: e.target.value as "ADMIN" | "SUPERADMIN",
+                })
+              }
               className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
             >
               <option value="ADMIN">Admin</option>
@@ -138,20 +165,30 @@ export const EditAdminPage = () => {
           </div>
 
           <div className="rounded-lg border border-gray-200 p-4">
-            <p className="text-sm font-semibold text-gray-900">Notificaciones</p>
-            <p className="mt-1 text-xs text-gray-500">Actualmente hay 2 tipos configurables por admin.</p>
+            <p className="text-sm font-semibold text-gray-900">
+              Notificaciones
+            </p>
+            <p className="mt-1 text-xs text-gray-500">
+              Actualmente hay 2 tipos configurables por admin.
+            </p>
             <div className="mt-3 space-y-2">
               <label className="flex items-center gap-2 text-sm cursor-pointer">
                 <WinbitCheckbox
                   checked={form.notify_deposit_created}
-                  onChange={(next) => setForm({ ...form, notify_deposit_created: next })}
+                  onChange={(next) =>
+                    setForm({ ...form, notify_deposit_created: next })
+                  }
                 />
-                <span className="text-gray-700">Nueva solicitud de depósito</span>
+                <span className="text-gray-700">
+                  Nueva solicitud de depósito
+                </span>
               </label>
               <label className="flex items-center gap-2 text-sm cursor-pointer">
                 <WinbitCheckbox
                   checked={form.notify_withdrawal_created}
-                  onChange={(next) => setForm({ ...form, notify_withdrawal_created: next })}
+                  onChange={(next) =>
+                    setForm({ ...form, notify_withdrawal_created: next })
+                  }
                 />
                 <span className="text-gray-700">Nueva solicitud de retiro</span>
               </label>
@@ -160,9 +197,13 @@ export const EditAdminPage = () => {
 
           <div className="flex gap-3 pt-2">
             <Button type="submit" disabled={submitting}>
-              {submitting ? 'Guardando...' : 'Guardar cambios'}
+              {submitting ? "Guardando..." : "Guardar cambios"}
             </Button>
-            <Button type="button" onClick={() => navigate('/admins')} className="bg-gray-500 hover:bg-gray-600">
+            <Button
+              type="button"
+              onClick={() => navigate("/admins")}
+              className="bg-gray-500 hover:bg-gray-600"
+            >
               Cancelar
             </Button>
           </div>

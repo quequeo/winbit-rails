@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { api } from '../lib/api';
-import { Button } from '../components/ui/Button';
-import { Input } from '../components/ui/Input';
-import { Select } from '../components/ui/Select';
-import type { ApiInvestor } from '../types';
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { api } from "../lib/api";
+import { Button } from "../components/ui/Button";
+import { Input } from "../components/ui/Input";
+import { Select } from "../components/ui/Select";
+import type { ApiInvestor } from "../types";
 
 export const EditInvestorPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -14,12 +14,16 @@ export const EditInvestorPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [investor, setInvestor] = useState<ApiInvestor | null>(null);
   const [form, setForm] = useState({
-    email: '',
-    name: '',
-    status: 'ACTIVE' as 'ACTIVE' | 'INACTIVE',
-    tradingFeeFrequency: 'QUARTERLY' as 'MONTHLY' | 'QUARTERLY' | 'SEMESTRAL' | 'ANNUAL',
-    tradingFeePercentage: '30',
-    newPassword: '',
+    email: "",
+    name: "",
+    status: "ACTIVE" as "ACTIVE" | "INACTIVE",
+    tradingFeeFrequency: "QUARTERLY" as
+      | "MONTHLY"
+      | "QUARTERLY"
+      | "SEMESTRAL"
+      | "ANNUAL",
+    tradingFeePercentage: "30",
+    newPassword: "",
   });
 
   useEffect(() => {
@@ -31,15 +35,21 @@ export const EditInvestorPage = () => {
         if (inv) {
           setInvestor(inv);
           setForm({
-            email: inv.email ?? '',
-            name: inv.name ?? '',
-            status: (inv.status === 'INACTIVE' ? 'INACTIVE' : 'ACTIVE') as 'ACTIVE' | 'INACTIVE',
-            tradingFeeFrequency: (inv.tradingFeeFrequency ?? 'QUARTERLY') as 'MONTHLY' | 'QUARTERLY' | 'SEMESTRAL' | 'ANNUAL',
+            email: inv.email ?? "",
+            name: inv.name ?? "",
+            status: (inv.status === "INACTIVE" ? "INACTIVE" : "ACTIVE") as
+              | "ACTIVE"
+              | "INACTIVE",
+            tradingFeeFrequency: (inv.tradingFeeFrequency ?? "QUARTERLY") as
+              | "MONTHLY"
+              | "QUARTERLY"
+              | "SEMESTRAL"
+              | "ANNUAL",
             tradingFeePercentage: String(inv.tradingFeePercentage ?? 30),
-            newPassword: '',
+            newPassword: "",
           });
         } else {
-          setError('Inversor no encontrado');
+          setError("Inversor no encontrado");
         }
         setLoading(false);
       })
@@ -56,7 +66,7 @@ export const EditInvestorPage = () => {
     try {
       const pct = Number(form.tradingFeePercentage);
       if (!Number.isFinite(pct) || pct <= 0 || pct > 100) {
-        alert('El porcentaje debe estar entre 0 y 100');
+        alert("El porcentaje debe estar entre 0 y 100");
         return;
       }
 
@@ -69,9 +79,11 @@ export const EditInvestorPage = () => {
       };
       if (form.newPassword) body.password = form.newPassword;
       await api.updateInvestor(id, body);
-      navigate('/investors');
+      navigate("/investors");
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Error al actualizar inversor');
+      alert(
+        err instanceof Error ? err.message : "Error al actualizar inversor",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -83,9 +95,22 @@ export const EditInvestorPage = () => {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
-        <button onClick={() => navigate('/investors')} className="text-gray-500 hover:text-gray-700">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+        <button
+          onClick={() => navigate("/investors")}
+          className="text-gray-500 hover:text-gray-700"
+        >
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 19l-7-7 7-7"
+            />
           </svg>
         </button>
         <h1 className="text-2xl font-bold text-gray-900">Editar Inversor</h1>
@@ -94,7 +119,9 @@ export const EditInvestorPage = () => {
       <div className="rounded-lg bg-white p-6 shadow">
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Email *
+            </label>
             <Input
               type="email"
               required
@@ -102,13 +129,16 @@ export const EditInvestorPage = () => {
               onChange={(e) => setForm({ ...form, email: e.target.value })}
             />
             <p className="mt-1 text-xs text-amber-600">
-              Cambiar el email puede impedir que el inversor inicie sesión en la app (Firebase Auth usa el email). Solo
-              modificarlo si es necesario y coordinar con el inversor.
+              Cambiar el email puede impedir que el inversor inicie sesión en la
+              app (Firebase Auth usa el email). Solo modificarlo si es necesario
+              y coordinar con el inversor.
             </p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Nombre *
+            </label>
             <Input
               type="text"
               required
@@ -118,43 +148,63 @@ export const EditInvestorPage = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Estado
+            </label>
             <Select
               value={form.status}
-              onChange={(v) => setForm({ ...form, status: v as 'ACTIVE' | 'INACTIVE' })}
+              onChange={(v) =>
+                setForm({ ...form, status: v as "ACTIVE" | "INACTIVE" })
+              }
               options={[
-                { value: 'ACTIVE', label: 'Activo' },
-                { value: 'INACTIVE', label: 'Inactivo' },
+                { value: "ACTIVE", label: "Activo" },
+                { value: "INACTIVE", label: "Inactivo" },
               ]}
             />
             <p className="mt-1 text-xs text-gray-500">
-              Si está inactivo, pierde acceso a la app de clientes y queda excluido de cálculos globales.
+              Si está inactivo, pierde acceso a la app de clientes y queda
+              excluido de cálculos globales.
             </p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Frecuencia trading fee</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Frecuencia trading fee
+            </label>
             <Select
               value={form.tradingFeeFrequency}
-              onChange={(v) => setForm({ ...form, tradingFeeFrequency: v as 'MONTHLY' | 'QUARTERLY' | 'SEMESTRAL' | 'ANNUAL' })}
+              onChange={(v) =>
+                setForm({
+                  ...form,
+                  tradingFeeFrequency: v as
+                    | "MONTHLY"
+                    | "QUARTERLY"
+                    | "SEMESTRAL"
+                    | "ANNUAL",
+                })
+              }
               options={[
-                { value: 'MONTHLY', label: 'Mensual' },
-                { value: 'QUARTERLY', label: 'Trimestral' },
-                { value: 'SEMESTRAL', label: 'Semestral' },
-                { value: 'ANNUAL', label: 'Anual' },
+                { value: "MONTHLY", label: "Mensual" },
+                { value: "QUARTERLY", label: "Trimestral" },
+                { value: "SEMESTRAL", label: "Semestral" },
+                { value: "ANNUAL", label: "Anual" },
               ]}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Trading fee (%)</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Trading fee (%)
+            </label>
             <Input
               type="number"
               min={0}
               max={100}
               step="0.1"
               value={form.tradingFeePercentage}
-              onChange={(e) => setForm({ ...form, tradingFeePercentage: e.target.value })}
+              onChange={(e) =>
+                setForm({ ...form, tradingFeePercentage: e.target.value })
+              }
             />
           </div>
 
@@ -162,29 +212,44 @@ export const EditInvestorPage = () => {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Nueva contraseña
-                <span className="ml-2 text-xs text-blue-600 font-normal">(tiene contraseña)</span>
+                <span className="ml-2 text-xs text-blue-600 font-normal">
+                  (tiene contraseña)
+                </span>
               </label>
               <Input
                 type="password"
                 value={form.newPassword}
-                onChange={(e) => setForm({ ...form, newPassword: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, newPassword: e.target.value })
+                }
                 placeholder="Dejar vacío para no cambiar"
                 minLength={6}
               />
-              <p className="mt-1 text-xs text-gray-500">Mínimo 6 caracteres. Solo se actualiza si completás este campo.</p>
+              <p className="mt-1 text-xs text-gray-500">
+                Mínimo 6 caracteres. Solo se actualiza si completás este campo.
+              </p>
             </div>
           ) : (
             <div className="rounded-lg bg-gray-50 p-4 text-sm text-gray-600">
-              <p className="font-medium text-gray-700">Método de autenticación: Google</p>
-              <p className="mt-1">Este inversor ingresa con Google. No se puede configurar contraseña.</p>
+              <p className="font-medium text-gray-700">
+                Método de autenticación: Google
+              </p>
+              <p className="mt-1">
+                Este inversor ingresa con Google. No se puede configurar
+                contraseña.
+              </p>
             </div>
           )}
 
           <div className="flex gap-3 pt-2">
             <Button type="submit" disabled={submitting}>
-              {submitting ? 'Guardando...' : 'Guardar cambios'}
+              {submitting ? "Guardando..." : "Guardar cambios"}
             </Button>
-            <Button type="button" onClick={() => navigate('/investors')} className="bg-gray-500 hover:bg-gray-600">
+            <Button
+              type="button"
+              onClick={() => navigate("/investors")}
+              className="bg-gray-500 hover:bg-gray-600"
+            >
               Cancelar
             </Button>
           </div>

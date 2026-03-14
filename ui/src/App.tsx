@@ -1,15 +1,15 @@
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
-import { AdminLayout } from './components/layout/AdminLayout';
-import { DashboardPage } from './pages/DashboardPage';
-import { InvestorsPage } from './pages/InvestorsPage';
-import { EditInvestorPage } from './pages/EditInvestorPage';
-import { RequestsPage } from './pages/RequestsPage';
-import { AdminsHubPage } from './pages/AdminsHubPage';
-import { EditAdminPage } from './pages/EditAdminPage';
-import { ActivityLogsPage } from './pages/ActivityLogsPage';
-import { ComisionesHubPage } from './pages/ComisionesHubPage';
-import { OperativaHubPage } from './pages/OperativaHubPage';
-import { LoginPage } from './pages/LoginPage';
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { AdminLayout } from "./components/layout/AdminLayout";
+import { DashboardPage } from "./pages/DashboardPage";
+import { InvestorsPage } from "./pages/InvestorsPage";
+import { EditInvestorPage } from "./pages/EditInvestorPage";
+import { RequestsPage } from "./pages/RequestsPage";
+import { AdminsHubPage } from "./pages/AdminsHubPage";
+import { EditAdminPage } from "./pages/EditAdminPage";
+import { ActivityLogsPage } from "./pages/ActivityLogsPage";
+import { ComisionesHubPage } from "./pages/ComisionesHubPage";
+import { OperativaHubPage } from "./pages/OperativaHubPage";
+import { LoginPage } from "./pages/LoginPage";
 
 function App() {
   return (
@@ -24,15 +24,30 @@ function App() {
           <Route path="/investors/:id/edit" element={<EditInvestorPage />} />
           <Route path="/requests" element={<RequestsPage />} />
           <Route path="/operativa" element={<OperativaHubPage />} />
-          <Route path="/daily-operating" element={<Navigate to="/operativa?tab=diaria" replace />} />
-          <Route path="/operating-history" element={<Navigate to="/operativa?tab=historial" replace />} />
+          <Route
+            path="/daily-operating"
+            element={<Navigate to="/operativa?tab=diaria" replace />}
+          />
+          <Route
+            path="/operating-history"
+            element={<Navigate to="/operativa?tab=historial" replace />}
+          />
           <Route path="/trading-fees" element={<ComisionesHubPage />} />
-          <Route path="/trading-fees/history" element={<Navigate to="/trading-fees?tab=historial" replace />} />
+          <Route
+            path="/trading-fees/history"
+            element={<Navigate to="/trading-fees?tab=historial" replace />}
+          />
           <Route path="/admins" element={<AdminsHubPage />} />
           <Route path="/admins/:id/edit" element={<EditAdminPage />} />
           {/* Legacy redirects */}
-          <Route path="/deposit-options" element={<Navigate to="/admins?tab=depositos" replace />} />
-          <Route path="/settings" element={<Navigate to="/admins?tab=configuracion" replace />} />
+          <Route
+            path="/deposit-options"
+            element={<Navigate to="/admins?tab=depositos" replace />}
+          />
+          <Route
+            path="/settings"
+            element={<Navigate to="/admins?tab=configuracion" replace />}
+          />
           <Route path="/activity" element={<ActivityLogsPage />} />
         </Route>
       </Routes>

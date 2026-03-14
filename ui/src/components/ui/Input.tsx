@@ -1,8 +1,8 @@
-import type { InputHTMLAttributes } from 'react';
+import type { InputHTMLAttributes } from "react";
 
 type Props = InputHTMLAttributes<HTMLInputElement>;
 
-export const Input = ({ className = '', ...props }: Props) => {
+export const Input = ({ className = "", ...props }: Props) => {
   return (
     <input
       {...props}
