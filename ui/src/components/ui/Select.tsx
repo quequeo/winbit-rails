@@ -1,23 +1,23 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { createPortal } from 'react-dom'
+import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 export type SelectOption = {
-  value: string
-  label: string
-  disabled?: boolean
-}
+  value: string;
+  label: string;
+  disabled?: boolean;
+};
 
 type Props = {
-  id?: string
-  name?: string
-  value: string
-  options: SelectOption[]
-  onChange: (nextValue: string) => void
-  disabled?: boolean
-  className?: string
-  buttonClassName?: string
-  portal?: boolean
-}
+  id?: string;
+  name?: string;
+  value: string;
+  options: SelectOption[];
+  onChange: (nextValue: string) => void;
+  disabled?: boolean;
+  className?: string;
+  buttonClassName?: string;
+  portal?: boolean;
+};
 
 export const Select = ({
   id,
@@ -26,74 +26,81 @@ export const Select = ({
   options,
   onChange,
   disabled = false,
-  className = '',
-  buttonClassName = '',
+  className = "",
+  buttonClassName = "",
   portal = false,
 }: Props) => {
-  const containerRef = useRef<HTMLDivElement | null>(null)
-  const buttonRef = useRef<HTMLButtonElement | null>(null)
-  const menuRef = useRef<HTMLDivElement | null>(null)
-  const [open, setOpen] = useState(false)
-  const [menuRect, setMenuRect] = useState<{ left: number; top: number; width: number } | null>(null)
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+  const [open, setOpen] = useState(false);
+  const [menuRect, setMenuRect] = useState<{
+    left: number;
+    top: number;
+    width: number;
+  } | null>(null);
 
-  const items = useMemo(() => (Array.isArray(options) ? options : []), [options])
+  const items = useMemo(
+    () => (Array.isArray(options) ? options : []),
+    [options],
+  );
 
   const selected = useMemo(() => {
-    return items.find((it) => String(it.value) === String(value)) ?? null
-  }, [items, value])
+    return items.find((it) => String(it.value) === String(value)) ?? null;
+  }, [items, value]);
 
   useEffect(() => {
-    if (!open) return
+    if (!open) return;
 
     const updatePosition = () => {
-      if (!portal) return
-      const btn = buttonRef.current
-      if (!btn) return
-      const r = btn.getBoundingClientRect()
-      setMenuRect({ left: r.left, top: r.bottom + 8, width: r.width })
-    }
+      if (!portal) return;
+      const btn = buttonRef.current;
+      if (!btn) return;
+      const r = btn.getBoundingClientRect();
+      setMenuRect({ left: r.left, top: r.bottom + 8, width: r.width });
+    };
 
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false)
-    }
+      if (e.key === "Escape") setOpen(false);
+    };
 
     const onMouseDown = (e: MouseEvent) => {
-      const t = e.target as Node
-      const container = containerRef.current
-      const menu = menuRef.current
-      if (container?.contains(t)) return
-      if (portal && menu?.contains(t)) return
-      setOpen(false)
-    }
+      const t = e.target as Node;
+      const container = containerRef.current;
+      const menu = menuRef.current;
+      if (container?.contains(t)) return;
+      if (portal && menu?.contains(t)) return;
+      setOpen(false);
+    };
 
-    const onResize = () => updatePosition()
-    const onScroll = () => updatePosition()
+    const onResize = () => updatePosition();
+    const onScroll = () => updatePosition();
 
-    document.addEventListener('keydown', onKeyDown)
-    document.addEventListener('mousedown', onMouseDown)
+    document.addEventListener("keydown", onKeyDown);
+    document.addEventListener("mousedown", onMouseDown);
     if (portal) {
-      updatePosition()
-      window.addEventListener('resize', onResize)
+      updatePosition();
+      window.addEventListener("resize", onResize);
       // capture=true to catch scroll on nested containers
-      window.addEventListener('scroll', onScroll, true)
+      window.addEventListener("scroll", onScroll, true);
     }
     return () => {
-      document.removeEventListener('keydown', onKeyDown)
-      document.removeEventListener('mousedown', onMouseDown)
+      document.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("mousedown", onMouseDown);
       if (portal) {
-        window.removeEventListener('resize', onResize)
-        window.removeEventListener('scroll', onScroll, true)
+        window.removeEventListener("resize", onResize);
+        window.removeEventListener("scroll", onScroll, true);
       }
-    }
-  }, [open, portal])
+    };
+  }, [open, portal]);
 
   const selectValue = (nextValue: string) => {
-    if (disabled) return
-    setOpen(false)
-    onChange(nextValue)
-  }
+    if (disabled) return;
+    setOpen(false);
+    onChange(nextValue);
+  };
 
-  const displayLabel = selected?.label ?? items?.[0]?.label ?? ''
+  const displayLabel = selected?.label ?? items?.[0]?.label ?? "";
 
   return (
     <div className={className}>
@@ -107,11 +114,11 @@ export const Select = ({
           aria-haspopup="listbox"
           aria-expanded={open}
           onClick={() => {
-            if (!disabled) setOpen((v) => !v)
+            if (!disabled) setOpen((v) => !v);
           }}
           className={
-            'flex h-10 w-full items-center justify-between gap-2 rounded-md border border-gray-300 bg-white px-3 text-left text-sm ' +
-            'focus:border-[#58b098] focus:outline-none focus:ring-1 focus:ring-[#58b098] disabled:cursor-not-allowed disabled:bg-gray-100 ' +
+            "flex h-10 w-full items-center justify-between gap-2 rounded-md border border-gray-300 bg-white px-3 text-left text-sm " +
+            "focus:border-[#58b098] focus:outline-none focus:ring-1 focus:ring-[#58b098] disabled:cursor-not-allowed disabled:bg-gray-100 " +
             buttonClassName
           }
         >
@@ -119,7 +126,7 @@ export const Select = ({
           <svg
             viewBox="0 0 20 20"
             fill="currentColor"
-            className={`h-4 w-4 shrink-0 ${disabled ? 'text-gray-300' : 'text-gray-400'}`}
+            className={`h-4 w-4 shrink-0 ${disabled ? "text-gray-300" : "text-gray-400"}`}
             aria-hidden="true"
           >
             <path
@@ -130,82 +137,89 @@ export const Select = ({
           </svg>
         </button>
 
-        {open
-          ? portal
-            ? createPortal(
-                <div
-                  ref={menuRef}
-                  role="listbox"
-                  aria-labelledby={id}
-                  className="z-[9999] max-h-64 overflow-auto rounded-md border border-gray-200 bg-white shadow-lg"
-                  style={{
-                    position: 'fixed',
-                    left: menuRect?.left ?? 0,
-                    top: menuRect?.top ?? 0,
-                    width: menuRect?.width ?? 0,
-                  }}
-                >
-                  {items.map((opt) => {
-                    const isSelected = String(opt.value) === String(value)
-                    const optDisabled = !!opt.disabled
-                    return (
-                      <button
-                        key={opt.value}
-                        type="button"
-                        role="option"
-                        aria-selected={isSelected}
-                        disabled={optDisabled}
-                        onClick={() => {
-                          if (!optDisabled) selectValue(opt.value)
-                        }}
-                        className={
-                          'w-full px-3 py-2 text-left text-sm ' +
-                          (optDisabled ? 'cursor-not-allowed text-gray-300 ' : 'hover:bg-gray-50 ') +
-                          (isSelected ? 'bg-[#58b098]/10 font-semibold text-gray-900' : 'text-gray-700')
-                        }
-                      >
-                        {opt.label}
-                      </button>
-                    )
-                  })}
-                </div>,
-                document.body,
-              )
-            : (
-                <div
-                  ref={menuRef}
-                  role="listbox"
-                  aria-labelledby={id}
-                  className="absolute left-0 right-0 z-50 mt-2 max-h-64 overflow-auto rounded-md border border-gray-200 bg-white shadow-lg"
-                >
-                  {items.map((opt) => {
-                    const isSelected = String(opt.value) === String(value)
-                    const optDisabled = !!opt.disabled
-                    return (
-                      <button
-                        key={opt.value}
-                        type="button"
-                        role="option"
-                        aria-selected={isSelected}
-                        disabled={optDisabled}
-                        onClick={() => {
-                          if (!optDisabled) selectValue(opt.value)
-                        }}
-                        className={
-                          'w-full px-3 py-2 text-left text-sm ' +
-                          (optDisabled ? 'cursor-not-allowed text-gray-300 ' : 'hover:bg-gray-50 ') +
-                          (isSelected ? 'bg-[#58b098]/10 font-semibold text-gray-900' : 'text-gray-700')
-                        }
-                      >
-                        {opt.label}
-                      </button>
-                    )
-                  })}
-                </div>
-              )
-          : null}
+        {open ? (
+          portal ? (
+            createPortal(
+              <div
+                ref={menuRef}
+                role="listbox"
+                aria-labelledby={id}
+                className="z-[9999] max-h-64 overflow-auto rounded-md border border-gray-200 bg-white shadow-lg"
+                style={{
+                  position: "fixed",
+                  left: menuRect?.left ?? 0,
+                  top: menuRect?.top ?? 0,
+                  width: menuRect?.width ?? 0,
+                }}
+              >
+                {items.map((opt) => {
+                  const isSelected = String(opt.value) === String(value);
+                  const optDisabled = !!opt.disabled;
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      role="option"
+                      aria-selected={isSelected}
+                      disabled={optDisabled}
+                      onClick={() => {
+                        if (!optDisabled) selectValue(opt.value);
+                      }}
+                      className={
+                        "w-full px-3 py-2 text-left text-sm " +
+                        (optDisabled
+                          ? "cursor-not-allowed text-gray-300 "
+                          : "hover:bg-gray-50 ") +
+                        (isSelected
+                          ? "bg-[#58b098]/10 font-semibold text-gray-900"
+                          : "text-gray-700")
+                      }
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
+              </div>,
+              document.body,
+            )
+          ) : (
+            <div
+              ref={menuRef}
+              role="listbox"
+              aria-labelledby={id}
+              className="absolute left-0 right-0 z-50 mt-2 max-h-64 overflow-auto rounded-md border border-gray-200 bg-white shadow-lg"
+            >
+              {items.map((opt) => {
+                const isSelected = String(opt.value) === String(value);
+                const optDisabled = !!opt.disabled;
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    role="option"
+                    aria-selected={isSelected}
+                    disabled={optDisabled}
+                    onClick={() => {
+                      if (!optDisabled) selectValue(opt.value);
+                    }}
+                    className={
+                      "w-full px-3 py-2 text-left text-sm " +
+                      (optDisabled
+                        ? "cursor-not-allowed text-gray-300 "
+                        : "hover:bg-gray-50 ") +
+                      (isSelected
+                        ? "bg-[#58b098]/10 font-semibold text-gray-900"
+                        : "text-gray-700")
+                    }
+                  >
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
+          )
+        ) : null}
       </div>
     </div>
-  )
-}
-
+  );
+};

@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { api } from '../../lib/api';
+import { useEffect, useState } from "react";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { api } from "../../lib/api";
 
 const linkBase =
-  'border-b-2 border-transparent px-1 py-4 text-sm font-medium text-gray-700 hover:border-[#58b098] hover:text-[#58b098]';
+  "border-b-2 border-transparent px-1 py-4 text-sm font-medium text-gray-700 hover:border-[#58b098] hover:text-[#58b098]";
 
 type AdminSession = {
   data: {
@@ -29,11 +29,11 @@ export const AdminLayout = () => {
       })
       .catch((e) => {
         if (!isMounted) return;
-        if (e?.message === 'Unauthorized') {
-          navigate('/login', { replace: true });
+        if (e?.message === "Unauthorized") {
+          navigate("/login", { replace: true });
           return;
         }
-        setError(e?.message || 'Error');
+        setError(e?.message || "Error");
       })
       .finally(() => {
         if (isMounted) setIsCheckingSession(false);
@@ -49,11 +49,12 @@ export const AdminLayout = () => {
       await api.signOut();
     } finally {
       setMobileMenuOpen(false);
-      navigate('/login', { replace: true });
+      navigate("/login", { replace: true });
     }
   };
 
-  if (isCheckingSession) return <div className="p-6 text-gray-600">Cargando...</div>;
+  if (isCheckingSession)
+    return <div className="p-6 text-gray-600">Cargando...</div>;
   if (error) return <div className="p-6 text-red-600">{error}</div>;
 
   return (
@@ -61,8 +62,10 @@ export const AdminLayout = () => {
       <header className="bg-white shadow">
         <div className="flex items-center justify-between px-4 py-4 md:px-6">
           <div>
-            <h1 className="text-2xl font-bold text-[#58b098]">Winbit Admin v1.0.0</h1>
-            <p className="text-sm text-gray-600">{sessionEmail || '—'}</p>
+            <h1 className="text-2xl font-bold text-[#58b098]">
+              Winbit Admin v1.0.0
+            </h1>
+            <p className="text-sm text-gray-600">{sessionEmail || "—"}</p>
           </div>
 
           <div className="flex items-center gap-2">
@@ -85,7 +88,12 @@ export const AdminLayout = () => {
               onClick={() => setMobileMenuOpen((v) => !v)}
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                <path
+                  d="M4 6h16M4 12h16M4 18h16"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
               </svg>
             </button>
           </div>
@@ -97,7 +105,9 @@ export const AdminLayout = () => {
             <NavLink
               to="/dashboard"
               className={({ isActive }) =>
-                isActive ? `${linkBase} border-[#58b098] text-[#58b098]` : linkBase
+                isActive
+                  ? `${linkBase} border-[#58b098] text-[#58b098]`
+                  : linkBase
               }
             >
               Dashboard
@@ -105,7 +115,9 @@ export const AdminLayout = () => {
             <NavLink
               to="/investors"
               className={({ isActive }) =>
-                isActive ? `${linkBase} border-[#58b098] text-[#58b098]` : linkBase
+                isActive
+                  ? `${linkBase} border-[#58b098] text-[#58b098]`
+                  : linkBase
               }
             >
               Inversores
@@ -113,7 +125,9 @@ export const AdminLayout = () => {
             <NavLink
               to="/requests"
               className={({ isActive }) =>
-                isActive ? `${linkBase} border-[#58b098] text-[#58b098]` : linkBase
+                isActive
+                  ? `${linkBase} border-[#58b098] text-[#58b098]`
+                  : linkBase
               }
             >
               Solicitudes
@@ -121,7 +135,9 @@ export const AdminLayout = () => {
             <NavLink
               to="/operativa"
               className={({ isActive }) =>
-                isActive ? `${linkBase} border-[#58b098] text-[#58b098]` : linkBase
+                isActive
+                  ? `${linkBase} border-[#58b098] text-[#58b098]`
+                  : linkBase
               }
             >
               Operativa
@@ -129,7 +145,9 @@ export const AdminLayout = () => {
             <NavLink
               to="/trading-fees"
               className={({ isActive }) =>
-                isActive ? `${linkBase} border-[#58b098] text-[#58b098]` : linkBase
+                isActive
+                  ? `${linkBase} border-[#58b098] text-[#58b098]`
+                  : linkBase
               }
             >
               Comisiones
@@ -137,7 +155,9 @@ export const AdminLayout = () => {
             <NavLink
               to="/admins"
               className={({ isActive }) =>
-                isActive ? `${linkBase} border-[#58b098] text-[#58b098]` : linkBase
+                isActive
+                  ? `${linkBase} border-[#58b098] text-[#58b098]`
+                  : linkBase
               }
             >
               Admins
@@ -145,7 +165,9 @@ export const AdminLayout = () => {
             <NavLink
               to="/activity"
               className={({ isActive }) =>
-                isActive ? `${linkBase} border-[#58b098] text-[#58b098]` : linkBase
+                isActive
+                  ? `${linkBase} border-[#58b098] text-[#58b098]`
+                  : linkBase
               }
             >
               Actividad
@@ -162,8 +184,8 @@ export const AdminLayout = () => {
                 onClick={() => setMobileMenuOpen(false)}
                 className={({ isActive }) =>
                   isActive
-                    ? 'rounded-lg bg-[#58b098]/10 px-3 py-2 text-sm font-medium text-[#58b098]'
-                    : 'rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50'
+                    ? "rounded-lg bg-[#58b098]/10 px-3 py-2 text-sm font-medium text-[#58b098]"
+                    : "rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
                 }
               >
                 Dashboard
@@ -173,8 +195,8 @@ export const AdminLayout = () => {
                 onClick={() => setMobileMenuOpen(false)}
                 className={({ isActive }) =>
                   isActive
-                    ? 'rounded-lg bg-[#58b098]/10 px-3 py-2 text-sm font-medium text-[#58b098]'
-                    : 'rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50'
+                    ? "rounded-lg bg-[#58b098]/10 px-3 py-2 text-sm font-medium text-[#58b098]"
+                    : "rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
                 }
               >
                 Inversores
@@ -184,8 +206,8 @@ export const AdminLayout = () => {
                 onClick={() => setMobileMenuOpen(false)}
                 className={({ isActive }) =>
                   isActive
-                    ? 'rounded-lg bg-[#58b098]/10 px-3 py-2 text-sm font-medium text-[#58b098]'
-                    : 'rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50'
+                    ? "rounded-lg bg-[#58b098]/10 px-3 py-2 text-sm font-medium text-[#58b098]"
+                    : "rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
                 }
               >
                 Solicitudes
@@ -195,8 +217,8 @@ export const AdminLayout = () => {
                 onClick={() => setMobileMenuOpen(false)}
                 className={({ isActive }) =>
                   isActive
-                    ? 'rounded-lg bg-[#58b098]/10 px-3 py-2 text-sm font-medium text-[#58b098]'
-                    : 'rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50'
+                    ? "rounded-lg bg-[#58b098]/10 px-3 py-2 text-sm font-medium text-[#58b098]"
+                    : "rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
                 }
               >
                 Operativa
@@ -206,8 +228,8 @@ export const AdminLayout = () => {
                 onClick={() => setMobileMenuOpen(false)}
                 className={({ isActive }) =>
                   isActive
-                    ? 'rounded-lg bg-[#58b098]/10 px-3 py-2 text-sm font-medium text-[#58b098]'
-                    : 'rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50'
+                    ? "rounded-lg bg-[#58b098]/10 px-3 py-2 text-sm font-medium text-[#58b098]"
+                    : "rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
                 }
               >
                 Comisiones
@@ -217,8 +239,8 @@ export const AdminLayout = () => {
                 onClick={() => setMobileMenuOpen(false)}
                 className={({ isActive }) =>
                   isActive
-                    ? 'rounded-lg bg-[#58b098]/10 px-3 py-2 text-sm font-medium text-[#58b098]'
-                    : 'rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50'
+                    ? "rounded-lg bg-[#58b098]/10 px-3 py-2 text-sm font-medium text-[#58b098]"
+                    : "rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
                 }
               >
                 Admins
@@ -228,8 +250,8 @@ export const AdminLayout = () => {
                 onClick={() => setMobileMenuOpen(false)}
                 className={({ isActive }) =>
                   isActive
-                    ? 'rounded-lg bg-[#58b098]/10 px-3 py-2 text-sm font-medium text-[#58b098]'
-                    : 'rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50'
+                    ? "rounded-lg bg-[#58b098]/10 px-3 py-2 text-sm font-medium text-[#58b098]"
+                    : "rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
                 }
               >
                 Actividad

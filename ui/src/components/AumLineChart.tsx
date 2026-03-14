@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { formatCurrencyAR } from '../lib/formatters';
+import { useMemo, useState } from "react";
+import { formatCurrencyAR, formatDateAR } from "../lib/formatters";
 
 export type AumPoint = {
   date: string;
@@ -22,18 +22,16 @@ const formatTick = (v: number) => {
   return `${Math.round(v)}`;
 };
 
-const formatDate = (dateStr: string) => {
-  if (!dateStr) return '';
-  const d = new Date(dateStr + 'T00:00:00.000Z');
-  if (Number.isNaN(d.getTime())) return dateStr;
-  const day = String(d.getUTCDate()).padStart(2, '0');
-  const month = String(d.getUTCMonth() + 1).padStart(2, '0');
-  const year = d.getUTCFullYear();
-  return `${day}/${month}/${year}`;
-};
+const formatDate = (dateStr: string) => formatDateAR(dateStr, { time: false });
 
 export const AumLineChart = ({ series }: { series: AumPoint[] }) => {
-  const [hoveredPoint, setHoveredPoint] = useState<{ x: number; y: number; date: string; totalAum: number; index: number } | null>(null);
+  const [hoveredPoint, setHoveredPoint] = useState<{
+    x: number;
+    y: number;
+    date: string;
+    totalAum: number;
+    index: number;
+  } | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const width = 900;
   const height = 240;
@@ -74,7 +72,7 @@ export const AumLineChart = ({ series }: { series: AumPoint[] }) => {
     const svgX = ((e.clientX - rect.left) / rect.width) * width;
     const svgY = ((e.clientY - rect.top) / rect.height) * height;
 
-    let closestPoint: typeof points[0] | null = null;
+    let closestPoint: (typeof points)[0] | null = null;
     let minDistance = Infinity;
     const hoverRadius = 30;
 
@@ -125,7 +123,9 @@ export const AumLineChart = ({ series }: { series: AumPoint[] }) => {
     setHoveredPoint(null);
   };
 
-  const line = points.map((pt) => `${pt.x.toFixed(2)},${pt.y.toFixed(2)}`).join(' ');
+  const line = points
+    .map((pt) => `${pt.x.toFixed(2)},${pt.y.toFixed(2)}`)
+    .join(" ");
   const area = `${padX},${height - padY} ${line} ${width - padX},${height - padY}`;
 
   return (
@@ -152,7 +152,15 @@ export const AumLineChart = ({ series }: { series: AumPoint[] }) => {
 
           return (
             <g key={v}>
-              <line x1={padX} y1={y} x2={width - padX} y2={y} stroke="#e5e7eb" strokeWidth="1" opacity="0.6" />
+              <line
+                x1={padX}
+                y1={y}
+                x2={width - padX}
+                y2={y}
+                stroke="#e5e7eb"
+                strokeWidth="1"
+                opacity="0.6"
+              />
               <text x={6} y={y + 3} fontSize="10" fill="#6b7280">
                 {formatTick(v)}
               </text>
@@ -160,10 +168,24 @@ export const AumLineChart = ({ series }: { series: AumPoint[] }) => {
           );
         })}
 
-        <line x1={padX} y1={height - padY} x2={width - padX} y2={height - padY} stroke="#e5e7eb" strokeWidth="1" />
+        <line
+          x1={padX}
+          y1={height - padY}
+          x2={width - padX}
+          y2={height - padY}
+          stroke="#e5e7eb"
+          strokeWidth="1"
+        />
 
         <polyline points={area} fill="url(#aumArea)" stroke="none" />
-        <polyline points={line} fill="none" stroke="#2563eb" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+        <polyline
+          points={line}
+          fill="none"
+          stroke="#2563eb"
+          strokeWidth="2"
+          strokeLinejoin="round"
+          strokeLinecap="round"
+        />
 
         {points.map((point, idx) => (
           <circle
@@ -173,7 +195,7 @@ export const AumLineChart = ({ series }: { series: AumPoint[] }) => {
             r="8"
             fill="transparent"
             stroke="none"
-            style={{ cursor: 'pointer' }}
+            style={{ cursor: "pointer" }}
           />
         ))}
 
@@ -183,7 +205,7 @@ export const AumLineChart = ({ series }: { series: AumPoint[] }) => {
             cy={hoveredPoint.y}
             r="5"
             fill="#1e40af"
-            style={{ transition: 'r 0.2s, fill 0.2s' }}
+            style={{ transition: "r 0.2s, fill 0.2s" }}
           />
         )}
 
@@ -207,17 +229,19 @@ export const AumLineChart = ({ series }: { series: AumPoint[] }) => {
           style={{
             left: `${tooltipPosition.x}px`,
             top: `${tooltipPosition.y}px`,
-            transform: 'translate(-50%, -100%)',
+            transform: "translate(-50%, -100%)",
           }}
         >
           <div className="font-semibold">{formatDate(hoveredPoint.date)}</div>
-          <div className="text-blue-300 mt-1">{formatCurrencyAR(hoveredPoint.totalAum)}</div>
+          <div className="text-blue-300 mt-1">
+            {formatCurrencyAR(hoveredPoint.totalAum)}
+          </div>
         </div>
       )}
 
       <div className="mt-2 flex items-center justify-between text-xs text-gray-500">
-        <span>{formatDate(series[0]?.date || '')}</span>
-        <span>{formatDate(series[series.length - 1]?.date || '')}</span>
+        <span>{formatDate(series[0]?.date || "")}</span>
+        <span>{formatDate(series[series.length - 1]?.date || "")}</span>
       </div>
     </div>
   );

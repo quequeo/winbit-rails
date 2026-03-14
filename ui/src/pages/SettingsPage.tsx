@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { api } from '../lib/api';
+import { useEffect, useState } from "react";
+import { api } from "../lib/api";
 
 export const SettingsPage = () => {
   const [loading, setLoading] = useState(true);
@@ -9,7 +9,7 @@ export const SettingsPage = () => {
 
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [whitelist, setWhitelist] = useState<string[]>([]);
-  const [whitelistInput, setWhitelistInput] = useState('');
+  const [whitelistInput, setWhitelistInput] = useState("");
 
   useEffect(() => {
     loadSettings();
@@ -23,9 +23,11 @@ export const SettingsPage = () => {
       const data = res?.data || {};
       setNotificationsEnabled(data.investor_notifications_enabled || false);
       setWhitelist(data.investor_email_whitelist || []);
-      setWhitelistInput((data.investor_email_whitelist || []).join(', '));
+      setWhitelistInput((data.investor_email_whitelist || []).join(", "));
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Error al cargar configuración');
+      setError(
+        err instanceof Error ? err.message : "Error al cargar configuración",
+      );
     } finally {
       setLoading(false);
     }
@@ -39,7 +41,7 @@ export const SettingsPage = () => {
 
       // Parse whitelist
       const emails = whitelistInput
-        .split(',')
+        .split(",")
         .map((e) => e.trim())
         .filter((e) => e.length > 0);
 
@@ -48,13 +50,15 @@ export const SettingsPage = () => {
         investor_email_whitelist: emails,
       });
 
-      setSuccess('Configuración guardada exitosamente');
+      setSuccess("Configuración guardada exitosamente");
       setWhitelist(emails);
 
       // Clear success message after 3 seconds
       setTimeout(() => setSuccess(null), 3000);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Error al guardar configuración');
+      setError(
+        err instanceof Error ? err.message : "Error al guardar configuración",
+      );
     } finally {
       setSaving(false);
     }
@@ -97,8 +101,8 @@ export const SettingsPage = () => {
               Notificaciones a Inversores
             </h3>
             <p className="mt-1 text-sm text-gray-600">
-              Controla si se envían emails automáticos a los inversores cuando se crean,
-              aprueban o rechazan solicitudes.
+              Controla si se envían emails automáticos a los inversores cuando
+              se crean, aprueban o rechazan solicitudes.
             </p>
           </div>
 
@@ -120,15 +124,16 @@ export const SettingsPage = () => {
 
           {!notificationsEnabled && (
             <div className="mt-3 rounded-md bg-yellow-50 p-3 text-sm text-yellow-800">
-              ⚠️ <strong>Notificaciones deshabilitadas:</strong> Los inversores no
-              recibirán emails automáticos, excepto aquellos en la lista de testing.
+              ⚠️ <strong>Notificaciones deshabilitadas:</strong> Los inversores
+              no recibirán emails automáticos, excepto aquellos en la lista de
+              testing.
             </div>
           )}
 
           {notificationsEnabled && (
             <div className="mt-3 rounded-md bg-green-50 p-3 text-sm text-green-800">
-              ✅ <strong>Notificaciones habilitadas:</strong> Todos los inversores
-              recibirán emails automáticos.
+              ✅ <strong>Notificaciones habilitadas:</strong> Todos los
+              inversores recibirán emails automáticos.
             </div>
           )}
         </div>
@@ -140,9 +145,9 @@ export const SettingsPage = () => {
               Lista de Testing (Whitelist)
             </h3>
             <p className="mt-1 text-sm text-gray-600">
-              Emails de inversores que <strong>siempre</strong> recibirán notificaciones,
-              incluso si las notificaciones están deshabilitadas. Útil para testing antes
-              del lanzamiento.
+              Emails de inversores que <strong>siempre</strong> recibirán
+              notificaciones, incluso si las notificaciones están
+              deshabilitadas. Útil para testing antes del lanzamiento.
             </p>
           </div>
 
@@ -162,7 +167,8 @@ export const SettingsPage = () => {
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-[#58b098] focus:outline-none focus:ring-1 focus:ring-[#58b098]"
             />
             <p className="mt-1 text-xs text-gray-500">
-              Los emails serán normalizados automáticamente (minúsculas, sin espacios).
+              Los emails serán normalizados automáticamente (minúsculas, sin
+              espacios).
             </p>
           </div>
 
@@ -193,7 +199,7 @@ export const SettingsPage = () => {
             disabled={saving}
             className="rounded-lg bg-[#58b098] px-4 py-2 text-sm font-medium text-white hover:bg-[#4a9580] disabled:opacity-50"
           >
-            {saving ? 'Guardando...' : 'Guardar Configuración'}
+            {saving ? "Guardando..." : "Guardar Configuración"}
           </button>
         </div>
       </div>

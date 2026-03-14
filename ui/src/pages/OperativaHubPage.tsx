@@ -1,17 +1,17 @@
-import { useSearchParams } from 'react-router-dom';
-import { DailyOperatingResultsPage } from './DailyOperatingResultsPage';
-import { OperatingHistoryPage } from './OperatingHistoryPage';
+import { useSearchParams } from "react-router-dom";
+import { DailyOperatingResultsPage } from "./DailyOperatingResultsPage";
+import { OperatingHistoryPage } from "./OperatingHistoryPage";
 
-type Tab = 'diaria' | 'historial';
+type Tab = "diaria" | "historial";
 
 const TABS: { id: Tab; label: string }[] = [
-  { id: 'diaria', label: 'Operativa Diaria' },
-  { id: 'historial', label: 'Historial de Operativas' },
+  { id: "diaria", label: "Operativa Diaria" },
+  { id: "historial", label: "Historial de Operativas" },
 ];
 
 export const OperativaHubPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = (searchParams.get('tab') as Tab) || 'diaria';
+  const activeTab = (searchParams.get("tab") as Tab) || "diaria";
 
   const setTab = (tab: Tab) => {
     setSearchParams({ tab }, { replace: true });
@@ -28,8 +28,8 @@ export const OperativaHubPage = () => {
               onClick={() => setTab(tab.id)}
               className={
                 activeTab === tab.id
-                  ? 'border-b-2 border-[#58b098] pb-3 text-sm font-semibold text-[#58b098]'
-                  : 'border-b-2 border-transparent pb-3 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                  ? "border-b-2 border-[#58b098] pb-3 text-sm font-semibold text-[#58b098]"
+                  : "border-b-2 border-transparent pb-3 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700"
               }
             >
               {tab.label}
@@ -38,8 +38,8 @@ export const OperativaHubPage = () => {
         </nav>
       </div>
 
-      {activeTab === 'diaria' && <DailyOperatingResultsPage />}
-      {activeTab === 'historial' && <OperatingHistoryPage />}
+      {activeTab === "diaria" && <DailyOperatingResultsPage />}
+      {activeTab === "historial" && <OperatingHistoryPage />}
     </div>
   );
 };

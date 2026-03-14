@@ -1,11 +1,17 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor, fireEvent, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { RequestsPage } from './RequestsPage';
-import { api } from '../lib/api';
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import {
+  render,
+  screen,
+  waitFor,
+  fireEvent,
+  within,
+} from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { RequestsPage } from "./RequestsPage";
+import { api } from "../lib/api";
 
 // Mock del módulo api
-vi.mock('../lib/api', () => ({
+vi.mock("../lib/api", () => ({
   api: {
     getAdminRequests: vi.fn(),
     getAdminInvestors: vi.fn(),
@@ -20,57 +26,58 @@ vi.mock('../lib/api', () => ({
 global.confirm = vi.fn(() => true);
 global.alert = vi.fn();
 
-describe('RequestsPage', () => {
+describe("RequestsPage", () => {
   const mockInvestors = [
-    { id: '1', email: 'inv1@test.com', name: 'Investor One' },
-    { id: '2', email: 'inv2@test.com', name: 'Investor Two' },
+    { id: "1", email: "inv1@test.com", name: "Investor One" },
+    { id: "2", email: "inv2@test.com", name: "Investor Two" },
   ];
 
   const mockRequests = {
     data: {
       requests: [
         {
-          id: '1',
-          investor: { id: '1', name: 'Investor One' },
-          type: 'DEPOSIT',
-          method: 'USDT',
+          id: "1",
+          investor: { id: "1", name: "Investor One" },
+          type: "DEPOSIT",
+          method: "USDT",
           amount: 1000,
-          network: 'TRC20',
-          status: 'PENDING',
-          requestedAt: '2024-01-01T10:00:00Z',
+          network: "TRC20",
+          status: "PENDING",
+          requestedAt: "2024-01-01T10:00:00Z",
         },
         {
-          id: '2',
-          investor: { id: '2', name: 'Investor Two' },
-          type: 'WITHDRAWAL',
-          method: 'USDC',
+          id: "2",
+          investor: { id: "2", name: "Investor Two" },
+          type: "WITHDRAWAL",
+          method: "USDC",
           amount: 500,
           network: null,
-          status: 'APPROVED',
-          requestedAt: '2024-01-02T15:00:00Z',
-          processedAt: '2024-01-03T10:00:00Z',
+          status: "APPROVED",
+          requestedAt: "2024-01-02T15:00:00Z",
+          processedAt: "2024-01-03T10:00:00Z",
         },
         {
-          id: '3',
-          investor: { id: '1', name: 'Investor One' },
-          type: 'DEPOSIT',
-          method: 'USDT',
+          id: "3",
+          investor: { id: "1", name: "Investor One" },
+          type: "DEPOSIT",
+          method: "USDT",
           amount: 500,
-          network: 'TRC20',
-          status: 'REVERSED',
-          requestedAt: '2024-01-03T10:00:00Z',
-          processedAt: '2024-01-04T10:00:00Z',
-          attachmentUrl: 'https://firebasestorage.googleapis.com/v1/b/bucket/o/file.pdf',
+          network: "TRC20",
+          status: "REVERSED",
+          requestedAt: "2024-01-03T10:00:00Z",
+          processedAt: "2024-01-04T10:00:00Z",
+          attachmentUrl:
+            "https://firebasestorage.googleapis.com/v1/b/bucket/o/file.pdf",
         },
         {
-          id: '4',
-          investor: { id: '2', name: 'Investor Two' },
-          type: 'WITHDRAWAL',
-          method: 'BANK_USD',
+          id: "4",
+          investor: { id: "2", name: "Investor Two" },
+          type: "WITHDRAWAL",
+          method: "BANK_USD",
           amount: 200,
           network: null,
-          status: 'REJECTED',
-          requestedAt: '2024-01-05T10:00:00Z',
+          status: "REJECTED",
+          requestedAt: "2024-01-05T10:00:00Z",
         },
       ],
       pendingCount: 1,
@@ -82,42 +89,46 @@ describe('RequestsPage', () => {
     vi.mocked(api.getAdminInvestors).mockResolvedValue({ data: mockInvestors });
   });
 
-  describe('Listar solicitudes', () => {
-    it('renders loading state initially', async () => {
-      vi.mocked(api.getAdminRequests).mockImplementation(() => new Promise(() => {}));
+  describe("Listar solicitudes", () => {
+    it("renders loading state initially", async () => {
+      vi.mocked(api.getAdminRequests).mockImplementation(
+        () => new Promise(() => {}),
+      );
 
       render(<RequestsPage />);
 
       await waitFor(() => {
-        expect(screen.getByText('Cargando...')).toBeInTheDocument();
+        expect(screen.getByText("Cargando...")).toBeInTheDocument();
       });
     });
 
-    it('renders requests list after loading', async () => {
+    it("renders requests list after loading", async () => {
       vi.mocked(api.getAdminRequests).mockResolvedValue(mockRequests);
 
       render(<RequestsPage />);
 
       // Wait for data to be rendered
       await waitFor(() => {
-        expect(screen.getAllByText('Investor One').length).toBeGreaterThan(0);
+        expect(screen.getAllByText("Investor One").length).toBeGreaterThan(0);
       });
 
-      expect(screen.getAllByText('Investor Two').length).toBeGreaterThan(0);
+      expect(screen.getAllByText("Investor Two").length).toBeGreaterThan(0);
       expect(api.getAdminRequests).toHaveBeenCalled();
     });
 
-    it('renders error message when fetch fails', async () => {
-      vi.mocked(api.getAdminRequests).mockRejectedValue(new Error('Network error'));
+    it("renders error message when fetch fails", async () => {
+      vi.mocked(api.getAdminRequests).mockRejectedValue(
+        new Error("Network error"),
+      );
 
       render(<RequestsPage />);
 
       await waitFor(() => {
-        expect(screen.getByText('Network error')).toBeInTheDocument();
+        expect(screen.getByText("Network error")).toBeInTheDocument();
       });
     });
 
-    it('shows pending count', async () => {
+    it("shows pending count", async () => {
       vi.mocked(api.getAdminRequests).mockResolvedValue(mockRequests);
 
       render(<RequestsPage />);
@@ -128,8 +139,8 @@ describe('RequestsPage', () => {
     });
   });
 
-  describe('Filtros', () => {
-    it('filters by status', async () => {
+  describe("Filtros", () => {
+    it("filters by status", async () => {
       vi.mocked(api.getAdminRequests).mockResolvedValue(mockRequests);
 
       render(<RequestsPage />);
@@ -138,15 +149,18 @@ describe('RequestsPage', () => {
         expect(api.getAdminRequests).toHaveBeenCalled();
       });
 
-      const statusSelect = screen.getByLabelText('Estado');
-      fireEvent.change(statusSelect, { target: { value: 'PENDING' } });
+      const statusSelect = screen.getByLabelText("Estado");
+      fireEvent.change(statusSelect, { target: { value: "PENDING" } });
 
       await waitFor(() => {
-        expect(api.getAdminRequests).toHaveBeenCalledWith({ status: 'PENDING', type: undefined });
+        expect(api.getAdminRequests).toHaveBeenCalledWith({
+          status: "PENDING",
+          type: undefined,
+        });
       });
     });
 
-    it('filters by type', async () => {
+    it("filters by type", async () => {
       vi.mocked(api.getAdminRequests).mockResolvedValue(mockRequests);
 
       render(<RequestsPage />);
@@ -155,16 +169,19 @@ describe('RequestsPage', () => {
         expect(api.getAdminRequests).toHaveBeenCalled();
       });
 
-      const typeSelect = screen.getByLabelText('Tipo');
-      fireEvent.change(typeSelect, { target: { value: 'DEPOSIT' } });
+      const typeSelect = screen.getByLabelText("Tipo");
+      fireEvent.change(typeSelect, { target: { value: "DEPOSIT" } });
 
       await waitFor(() => {
-        expect(api.getAdminRequests).toHaveBeenCalledWith({ status: undefined, type: 'DEPOSIT' });
+        expect(api.getAdminRequests).toHaveBeenCalledWith({
+          status: undefined,
+          type: "DEPOSIT",
+        });
       });
     });
   });
 
-  describe('Crear solicitud', () => {
+  describe("Crear solicitud", () => {
     it('shows form when "+ Agregar Solicitud" button is clicked', async () => {
       vi.mocked(api.getAdminRequests).mockResolvedValue(mockRequests);
 
@@ -174,15 +191,17 @@ describe('RequestsPage', () => {
         expect(api.getAdminRequests).toHaveBeenCalled();
       });
 
-      const addButton = await screen.findByRole('button', { name: /Agregar Solicitud/i });
+      const addButton = await screen.findByRole("button", {
+        name: /Agregar Solicitud/i,
+      });
       fireEvent.click(addButton);
 
-      expect(screen.getByText('Nueva Solicitud')).toBeInTheDocument();
+      expect(screen.getByText("Nueva Solicitud")).toBeInTheDocument();
     });
 
-    it('creates new request successfully', async () => {
+    it("creates new request successfully", async () => {
       vi.mocked(api.getAdminRequests).mockResolvedValue(mockRequests);
-      vi.mocked(api.createRequest).mockResolvedValue({ data: { id: '3' } });
+      vi.mocked(api.createRequest).mockResolvedValue({ data: { id: "3" } });
 
       const user = userEvent.setup({ delay: null });
       render(<RequestsPage />);
@@ -192,88 +211,106 @@ describe('RequestsPage', () => {
       });
 
       // Open form
-      const addButton = await screen.findByRole('button', { name: /Agregar Solicitud/i });
+      const addButton = await screen.findByRole("button", {
+        name: /Agregar Solicitud/i,
+      });
       await user.click(addButton);
 
       // Fill form
       const investorSelect = screen.getByLabelText(/Inversor/i);
-      await user.selectOptions(investorSelect, '1');
+      await user.selectOptions(investorSelect, "1");
 
       const typeSelect = screen.getByLabelText(/Tipo \*/i);
-      await user.selectOptions(typeSelect, 'DEPOSIT');
+      await user.selectOptions(typeSelect, "DEPOSIT");
 
-      const amountInput = screen.getByPlaceholderText('1000');
-      await user.type(amountInput, '2000');
+      const amountInput = screen.getByPlaceholderText("1000");
+      await user.type(amountInput, "2000");
 
       // Submit
-      const submitButton = screen.getByRole('button', { name: /Crear Solicitud/i });
+      const submitButton = screen.getByRole("button", {
+        name: /Crear Solicitud/i,
+      });
       await user.click(submitButton);
 
       await waitFor(() => {
         expect(api.createRequest).toHaveBeenCalledWith(
           expect.objectContaining({
-            investor_id: '1',
-            request_type: 'DEPOSIT',
-            method: 'USDT',
+            investor_id: "1",
+            request_type: "DEPOSIT",
+            method: "USDT",
             amount: 2000,
-            status: 'PENDING',
+            status: "PENDING",
           }),
         );
       });
     });
 
-    it('shows alert on create error', async () => {
+    it("shows alert on create error", async () => {
       vi.mocked(api.getAdminRequests).mockResolvedValue(mockRequests);
-      vi.mocked(api.createRequest).mockRejectedValue(new Error('Create failed'));
+      vi.mocked(api.createRequest).mockRejectedValue(
+        new Error("Create failed"),
+      );
 
-      const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
+      const alertSpy = vi.spyOn(window, "alert").mockImplementation(() => {});
       const user = userEvent.setup();
 
       render(<RequestsPage />);
 
       await waitFor(() => expect(api.getAdminRequests).toHaveBeenCalled());
 
-      const addButton = await screen.findByRole('button', { name: /Agregar Solicitud/i });
+      const addButton = await screen.findByRole("button", {
+        name: /Agregar Solicitud/i,
+      });
       await user.click(addButton);
 
       const investorSelect = screen.getByLabelText(/Inversor/i);
-      await user.selectOptions(investorSelect, '1');
+      await user.selectOptions(investorSelect, "1");
 
-      const amountInput = screen.getByPlaceholderText('1000');
-      await user.type(amountInput, '1000');
+      const amountInput = screen.getByPlaceholderText("1000");
+      await user.type(amountInput, "1000");
 
-      const submitButton = screen.getByRole('button', { name: /Crear Solicitud/i });
+      const submitButton = screen.getByRole("button", {
+        name: /Crear Solicitud/i,
+      });
       await user.click(submitButton);
 
-      await waitFor(() => expect(alertSpy).toHaveBeenCalledWith('Create failed'));
+      await waitFor(() =>
+        expect(alertSpy).toHaveBeenCalledWith("Create failed"),
+      );
 
       alertSpy.mockRestore();
     });
 
-    it('shows generic alert when create rejects with non-Error', async () => {
+    it("shows generic alert when create rejects with non-Error", async () => {
       vi.mocked(api.getAdminRequests).mockResolvedValue(mockRequests);
-      vi.mocked(api.createRequest).mockRejectedValue('string error');
+      vi.mocked(api.createRequest).mockRejectedValue("string error");
 
-      const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
+      const alertSpy = vi.spyOn(window, "alert").mockImplementation(() => {});
       const user = userEvent.setup();
 
       render(<RequestsPage />);
 
       await waitFor(() => expect(api.getAdminRequests).toHaveBeenCalled());
 
-      await user.click(screen.getByRole('button', { name: /Agregar Solicitud/i }));
-      await user.selectOptions(screen.getByLabelText(/Inversor/i), '1');
-      await user.type(screen.getByPlaceholderText('1000'), '1000');
-      await user.click(screen.getByRole('button', { name: /Crear Solicitud/i }));
+      await user.click(
+        screen.getByRole("button", { name: /Agregar Solicitud/i }),
+      );
+      await user.selectOptions(screen.getByLabelText(/Inversor/i), "1");
+      await user.type(screen.getByPlaceholderText("1000"), "1000");
+      await user.click(
+        screen.getByRole("button", { name: /Crear Solicitud/i }),
+      );
 
-      await waitFor(() => expect(alertSpy).toHaveBeenCalledWith('Error al guardar solicitud'));
+      await waitFor(() =>
+        expect(alertSpy).toHaveBeenCalledWith("Error al guardar solicitud"),
+      );
 
       alertSpy.mockRestore();
     });
   });
 
-  describe('Aprobar/Rechazar solicitud', () => {
-    it('approves pending request', async () => {
+  describe("Aprobar/Rechazar solicitud", () => {
+    it("approves pending request", async () => {
       vi.mocked(api.getAdminRequests).mockResolvedValue(mockRequests);
       vi.mocked(api.approveRequest).mockResolvedValue({});
 
@@ -284,15 +321,17 @@ describe('RequestsPage', () => {
         expect(api.getAdminRequests).toHaveBeenCalled();
       });
 
-      const approveButtons = screen.getAllByRole('button', { name: /Aprobar/i });
+      const approveButtons = screen.getAllByRole("button", {
+        name: /Aprobar/i,
+      });
       await user.click(approveButtons[0]);
 
       await waitFor(() => {
-        expect(api.approveRequest).toHaveBeenCalledWith('1');
+        expect(api.approveRequest).toHaveBeenCalledWith("1");
       });
     });
 
-    it('rejects pending request', async () => {
+    it("rejects pending request", async () => {
       vi.mocked(api.getAdminRequests).mockResolvedValue(mockRequests);
       vi.mocked(api.rejectRequest).mockResolvedValue({});
 
@@ -303,17 +342,19 @@ describe('RequestsPage', () => {
         expect(api.getAdminRequests).toHaveBeenCalled();
       });
 
-      const rejectButtons = screen.getAllByRole('button', { name: /Rechazar/i });
+      const rejectButtons = screen.getAllByRole("button", {
+        name: /Rechazar/i,
+      });
       await user.click(rejectButtons[0]);
 
       await waitFor(() => {
-        expect(api.rejectRequest).toHaveBeenCalledWith('1');
+        expect(api.rejectRequest).toHaveBeenCalledWith("1");
       });
     });
   });
 
-  describe('Revertir solicitud', () => {
-    it('shows confirmation modal and reverses on confirm', async () => {
+  describe("Revertir solicitud", () => {
+    it("shows confirmation modal and reverses on confirm", async () => {
       vi.mocked(api.getAdminRequests).mockResolvedValue(mockRequests);
       vi.mocked(api.reverseRequest).mockResolvedValue(null);
 
@@ -324,22 +365,32 @@ describe('RequestsPage', () => {
         expect(api.getAdminRequests).toHaveBeenCalled();
       });
 
-      const revertButtons = screen.getAllByRole('button', { name: /Revertir/i });
+      const revertButtons = screen.getAllByRole("button", {
+        name: /Revertir/i,
+      });
       await user.click(revertButtons[0]);
 
-      expect(screen.getByText('Confirmar reversa de solicitud')).toBeInTheDocument();
-      expect(screen.getByText(/operación compleja y riesgosa/i)).toBeInTheDocument();
-      expect(screen.getByText(/debe evitarse siempre que sea posible/i)).toBeInTheDocument();
+      expect(
+        screen.getByText("Confirmar reversa de solicitud"),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(/operación compleja y riesgosa/i),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(/debe evitarse siempre que sea posible/i),
+      ).toBeInTheDocument();
 
-      const confirmButton = screen.getByRole('button', { name: /Sí, revertir/i });
+      const confirmButton = screen.getByRole("button", {
+        name: /Sí, revertir/i,
+      });
       await user.click(confirmButton);
 
       await waitFor(() => {
-        expect(api.reverseRequest).toHaveBeenCalledWith('2');
+        expect(api.reverseRequest).toHaveBeenCalledWith("2");
       });
     });
 
-    it('does not reverse when cancel is clicked', async () => {
+    it("does not reverse when cancel is clicked", async () => {
       vi.mocked(api.getAdminRequests).mockResolvedValue(mockRequests);
 
       const user = userEvent.setup();
@@ -349,72 +400,98 @@ describe('RequestsPage', () => {
         expect(api.getAdminRequests).toHaveBeenCalled();
       });
 
-      const revertButtons = screen.getAllByRole('button', { name: /Revertir/i });
+      const revertButtons = screen.getAllByRole("button", {
+        name: /Revertir/i,
+      });
       await user.click(revertButtons[0]);
 
-      expect(screen.getByText('Confirmar reversa de solicitud')).toBeInTheDocument();
+      expect(
+        screen.getByText("Confirmar reversa de solicitud"),
+      ).toBeInTheDocument();
 
-      const cancelButtons = screen.getAllByRole('button', { name: /Cancelar/i });
+      const cancelButtons = screen.getAllByRole("button", {
+        name: /Cancelar/i,
+      });
       await user.click(cancelButtons[cancelButtons.length - 1]);
 
       await waitFor(() => {
-        expect(screen.queryByText('Confirmar reversa de solicitud')).not.toBeInTheDocument();
+        expect(
+          screen.queryByText("Confirmar reversa de solicitud"),
+        ).not.toBeInTheDocument();
       });
 
       expect(api.reverseRequest).not.toHaveBeenCalled();
     });
 
-    it('shows error when reverse fails', async () => {
+    it("shows error when reverse fails", async () => {
       vi.mocked(api.getAdminRequests).mockResolvedValue(mockRequests);
-      vi.mocked(api.reverseRequest).mockRejectedValue(new Error('Reverse failed'));
+      vi.mocked(api.reverseRequest).mockRejectedValue(
+        new Error("Reverse failed"),
+      );
 
       const user = userEvent.setup();
       render(<RequestsPage />);
 
       await waitFor(() => expect(api.getAdminRequests).toHaveBeenCalled());
 
-      const revertButtons = screen.getAllByRole('button', { name: /Revertir/i });
+      const revertButtons = screen.getAllByRole("button", {
+        name: /Revertir/i,
+      });
       await user.click(revertButtons[0]);
-      await user.click(screen.getByRole('button', { name: /Sí, revertir/i }));
+      await user.click(screen.getByRole("button", { name: /Sí, revertir/i }));
 
-      await waitFor(() => expect(screen.getByText('Reverse failed')).toBeInTheDocument());
+      await waitFor(() =>
+        expect(screen.getByText("Reverse failed")).toBeInTheDocument(),
+      );
     });
   });
 
-  describe('Errores approve/reject', () => {
-    it('shows error when approve fails', async () => {
+  describe("Errores approve/reject", () => {
+    it("shows error when approve fails", async () => {
       vi.mocked(api.getAdminRequests).mockResolvedValue(mockRequests);
-      vi.mocked(api.approveRequest).mockRejectedValue(new Error('Approve failed'));
+      vi.mocked(api.approveRequest).mockRejectedValue(
+        new Error("Approve failed"),
+      );
 
       const user = userEvent.setup();
       render(<RequestsPage />);
 
       await waitFor(() => expect(api.getAdminRequests).toHaveBeenCalled());
 
-      const approveButtons = screen.getAllByRole('button', { name: /Aprobar/i });
+      const approveButtons = screen.getAllByRole("button", {
+        name: /Aprobar/i,
+      });
       await user.click(approveButtons[0]);
 
-      await waitFor(() => expect(screen.getByText('Approve failed')).toBeInTheDocument());
+      await waitFor(() =>
+        expect(screen.getByText("Approve failed")).toBeInTheDocument(),
+      );
     });
 
-    it('shows error when reject fails', async () => {
+    it("shows error when reject fails", async () => {
       vi.mocked(api.getAdminRequests).mockResolvedValue(mockRequests);
-      vi.mocked(api.rejectRequest).mockRejectedValue(new Error('Reject failed'));
+      vi.mocked(api.rejectRequest).mockRejectedValue(
+        new Error("Reject failed"),
+      );
 
       const user = userEvent.setup();
       render(<RequestsPage />);
 
       await waitFor(() => expect(api.getAdminRequests).toHaveBeenCalled());
 
-      const rejectButtons = screen.getAllByRole('button', { name: /Rechazar/i });
+      const rejectButtons = screen.getAllByRole("button", {
+        name: /Rechazar/i,
+      });
       await user.click(rejectButtons[0]);
 
-      await waitFor(() => expect(screen.getByText('Reject failed')).toBeInTheDocument());
+      await waitFor(() =>
+        expect(screen.getByText("Reject failed")).toBeInTheDocument(),
+      );
     });
   });
 
-  describe('Form cancel', () => {
-    it('closes and resets form when Cancelar is clicked', async () => {
+  describe("Form cancel", () => {
+    it("closes and resets form when Cancelar is clicked", async () => {
       vi.mocked(api.getAdminRequests).mockResolvedValue(mockRequests);
 
       const user = userEvent.setup();
@@ -422,43 +499,53 @@ describe('RequestsPage', () => {
 
       await waitFor(() => expect(api.getAdminRequests).toHaveBeenCalled());
 
-      await user.click(screen.getByRole('button', { name: /Agregar Solicitud/i }));
-      expect(screen.getByText('Nueva Solicitud')).toBeInTheDocument();
+      await user.click(
+        screen.getByRole("button", { name: /Agregar Solicitud/i }),
+      );
+      expect(screen.getByText("Nueva Solicitud")).toBeInTheDocument();
 
-      const form = screen.getByRole('button', { name: /Crear Solicitud/i }).closest('form')!;
-      const cancelInForm = within(form).getByRole('button', { name: 'Cancelar' });
+      const form = screen
+        .getByRole("button", { name: /Crear Solicitud/i })
+        .closest("form")!;
+      const cancelInForm = within(form).getByRole("button", {
+        name: "Cancelar",
+      });
       await user.click(cancelInForm);
 
-      await waitFor(() => expect(screen.queryByText('Nueva Solicitud')).not.toBeInTheDocument());
+      await waitFor(() =>
+        expect(screen.queryByText("Nueva Solicitud")).not.toBeInTheDocument(),
+      );
     });
   });
 
-  describe('AttachmentViewer', () => {
-    it('renders attachment link for deposit with PDF', async () => {
+  describe("AttachmentViewer", () => {
+    it("renders attachment link for deposit with PDF", async () => {
       vi.mocked(api.getAdminRequests).mockResolvedValue(mockRequests);
 
       render(<RequestsPage />);
 
-      await waitFor(() => expect(screen.getAllByTitle('Ver PDF').length).toBeGreaterThan(0));
+      await waitFor(() =>
+        expect(screen.getAllByTitle("Ver PDF").length).toBeGreaterThan(0),
+      );
 
-      const pdfLinks = screen.getAllByTitle('Ver PDF');
+      const pdfLinks = screen.getAllByTitle("Ver PDF");
       expect(pdfLinks.length).toBeGreaterThan(0);
     });
 
-    it('opens data URL as blob in new tab on click', async () => {
+    it("opens data URL as blob in new tab on click", async () => {
       const requestsWithDataUrl = {
         data: {
           requests: [
             {
-              id: '1',
-              investor: { id: '1', name: 'Investor One' },
-              type: 'DEPOSIT',
-              method: 'USDT',
+              id: "1",
+              investor: { id: "1", name: "Investor One" },
+              type: "DEPOSIT",
+              method: "USDT",
               amount: 1000,
-              network: 'TRC20',
-              status: 'PENDING',
-              requestedAt: '2024-01-01T10:00:00Z',
-              attachmentUrl: 'data:application/pdf;base64,JVBGRi0xLjM=',
+              network: "TRC20",
+              status: "PENDING",
+              requestedAt: "2024-01-01T10:00:00Z",
+              attachmentUrl: "data:application/pdf;base64,JVBGRi0xLjM=",
             },
           ],
           pendingCount: 1,
@@ -466,10 +553,10 @@ describe('RequestsPage', () => {
       };
       vi.mocked(api.getAdminRequests).mockResolvedValue(requestsWithDataUrl);
 
-      const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
-      const createObjectURLStub = vi.fn(() => 'blob:mock-url');
+      const openSpy = vi.spyOn(window, "open").mockImplementation(() => null);
+      const createObjectURLStub = vi.fn(() => "blob:mock-url");
       const revokeObjectURLStub = vi.fn();
-      vi.stubGlobal('URL', {
+      vi.stubGlobal("URL", {
         ...URL,
         createObjectURL: createObjectURLStub,
         revokeObjectURL: revokeObjectURLStub,
@@ -478,12 +565,16 @@ describe('RequestsPage', () => {
       const user = userEvent.setup();
       render(<RequestsPage />);
 
-      await waitFor(() => expect(screen.getAllByTitle(/Ver (PDF|comprobante)/).length).toBeGreaterThan(0));
+      await waitFor(() =>
+        expect(
+          screen.getAllByTitle(/Ver (PDF|comprobante)/).length,
+        ).toBeGreaterThan(0),
+      );
 
       const links = screen.getAllByTitle(/Ver (PDF|comprobante)/);
       await user.click(links[0]);
 
-      expect(openSpy).toHaveBeenCalledWith('blob:mock-url', '_blank');
+      expect(openSpy).toHaveBeenCalledWith("blob:mock-url", "_blank");
       openSpy.mockRestore();
       vi.unstubAllGlobals();
     });

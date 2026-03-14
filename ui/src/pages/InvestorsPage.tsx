@@ -1,17 +1,17 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { api } from '../lib/api';
-import { Button } from '../components/ui/Button';
-import { Input } from '../components/ui/Input';
-import { ConfirmDialog } from '../components/ui/ConfirmDialog';
-import { formatCurrencyAR } from '../lib/formatters';
-import type { ApiInvestor } from '../types';
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { api } from "../lib/api";
+import { Button } from "../components/ui/Button";
+import { Input } from "../components/ui/Input";
+import { ConfirmDialog } from "../components/ui/ConfirmDialog";
+import { formatCurrencyAR } from "../lib/formatters";
+import type { ApiInvestor } from "../types";
 
 const frequencyLabel = (freq: string) => {
-  if (freq === 'MONTHLY') return 'Mensual';
-  if (freq === 'ANNUAL') return 'Anual';
-  if (freq === 'SEMESTRAL') return 'Semestral';
-  return 'Trimestral';
+  if (freq === "MONTHLY") return "Mensual";
+  if (freq === "ANNUAL") return "Anual";
+  if (freq === "SEMESTRAL") return "Semestral";
+  return "Trimestral";
 };
 
 export const InvestorsPage = () => {
@@ -19,9 +19,17 @@ export const InvestorsPage = () => {
   const [data, setData] = useState<{ data?: ApiInvestor[] } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({ email: '', name: '', tradingFeePercentage: '30', password: '' });
+  const [formData, setFormData] = useState({
+    email: "",
+    name: "",
+    tradingFeePercentage: "30",
+    password: "",
+  });
   const [submitting, setSubmitting] = useState(false);
-  const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; investor: ApiInvestor | null }>({
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    isOpen: boolean;
+    investor: ApiInvestor | null;
+  }>({
     isOpen: false,
     investor: null,
   });
@@ -43,7 +51,7 @@ export const InvestorsPage = () => {
     try {
       const pct = Number(formData.tradingFeePercentage);
       if (!Number.isFinite(pct) || pct <= 0 || pct > 100) {
-        alert('El porcentaje debe estar entre 0 y 100');
+        alert("El porcentaje debe estar entre 0 y 100");
         return;
       }
 
@@ -54,11 +62,16 @@ export const InvestorsPage = () => {
       };
 
       await api.createInvestor(password ? { ...payload, password } : payload);
-      setFormData({ email: '', name: '', tradingFeePercentage: '30', password: '' });
+      setFormData({
+        email: "",
+        name: "",
+        tradingFeePercentage: "30",
+        password: "",
+      });
       setShowForm(false);
       fetchInvestors();
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Error al crear inversor');
+      alert(err instanceof Error ? err.message : "Error al crear inversor");
     } finally {
       setSubmitting(false);
     }
@@ -74,7 +87,7 @@ export const InvestorsPage = () => {
       await api.deleteInvestor(deleteConfirm.investor.id);
       fetchInvestors();
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Error al eliminar inversor');
+      alert(err instanceof Error ? err.message : "Error al eliminar inversor");
     }
   };
 
@@ -83,7 +96,7 @@ export const InvestorsPage = () => {
       await api.toggleInvestorStatus(investor.id);
       fetchInvestors();
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Error al cambiar status');
+      alert(err instanceof Error ? err.message : "Error al cambiar status");
     }
   };
 
@@ -96,64 +109,97 @@ export const InvestorsPage = () => {
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-2 md:gap-4">
         <h1 className="text-3xl font-bold text-gray-900">Inversores</h1>
-        <Button onClick={() => setShowForm(!showForm)} className="shrink-0 text-xs md:text-sm px-2 py-1.5 md:px-4 md:py-2">
-          {showForm ? 'Cancelar' : '+ Agregar Inversor'}
+        <Button
+          onClick={() => setShowForm(!showForm)}
+          className="shrink-0 text-xs md:text-sm px-2 py-1.5 md:px-4 md:py-2"
+        >
+          {showForm ? "Cancelar" : "+ Agregar Inversor"}
         </Button>
       </div>
 
       {showForm && (
         <div className="rounded-lg bg-white p-6 shadow">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Nuevo Inversor</h2>
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            Nuevo Inversor
+          </h2>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Email *
+              </label>
               <Input
                 type="email"
                 required
                 value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, email: e.target.value })
+                }
                 placeholder="inversor@ejemplo.com"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Nombre *
+              </label>
               <Input
                 type="text"
                 required
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
                 placeholder="María González"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Trading fee (%)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Trading fee (%)
+              </label>
               <Input
                 type="number"
                 min={0}
                 max={100}
                 step="0.1"
                 value={formData.tradingFeePercentage}
-                onChange={(e) => setFormData({ ...formData, tradingFeePercentage: e.target.value })}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    tradingFeePercentage: e.target.value,
+                  })
+                }
                 placeholder="30"
               />
-              <p className="mt-1 text-xs text-gray-500">Default 30%. Podés editarlo por inversor.</p>
+              <p className="mt-1 text-xs text-gray-500">
+                Default 30%. Podés editarlo por inversor.
+              </p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Contraseña
+              </label>
               <Input
                 type="password"
                 value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, password: e.target.value })
+                }
                 placeholder="Mínimo 6 caracteres"
                 minLength={6}
               />
-              <p className="mt-1 text-xs text-gray-500">Opcional. Si no se establece, el inversor solo podrá acceder con Google.</p>
+              <p className="mt-1 text-xs text-gray-500">
+                Opcional. Si no se establece, el inversor solo podrá acceder con
+                Google.
+              </p>
             </div>
             <div className="flex gap-3">
               <Button type="submit" disabled={submitting}>
-                {submitting ? 'Creando...' : 'Crear Inversor'}
+                {submitting ? "Creando..." : "Crear Inversor"}
               </Button>
-              <Button type="button" onClick={() => setShowForm(false)} className="bg-gray-500 hover:bg-gray-600">
+              <Button
+                type="button"
+                onClick={() => setShowForm(false)}
+                className="bg-gray-500 hover:bg-gray-600"
+              >
                 Cancelar
               </Button>
             </div>
@@ -164,22 +210,29 @@ export const InvestorsPage = () => {
       {/* Mobile: cards */}
       <div className="grid gap-3 px-1 md:hidden">
         {investors.map((inv) => (
-          <div key={inv.id} className="w-full overflow-hidden rounded-lg bg-white p-4 shadow">
+          <div
+            key={inv.id}
+            className="w-full overflow-hidden rounded-lg bg-white p-4 shadow"
+          >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-gray-900">{inv.name}</p>
-                <p className="truncate mt-1 text-sm text-gray-600">{inv.email}</p>
+                <p className="truncate text-sm font-semibold text-gray-900">
+                  {inv.name}
+                </p>
+                <p className="truncate mt-1 text-sm text-gray-600">
+                  {inv.email}
+                </p>
               </div>
               <button
                 onClick={() => handleToggleStatus(inv)}
                 className={`shrink-0 inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold cursor-pointer ${
-                  inv.status === 'ACTIVE'
-                    ? 'bg-green-50 text-green-700 hover:bg-green-100'
-                    : 'bg-red-50 text-red-700 hover:bg-red-100'
+                  inv.status === "ACTIVE"
+                    ? "bg-green-50 text-green-700 hover:bg-green-100"
+                    : "bg-red-50 text-red-700 hover:bg-red-100"
                 }`}
-                title={inv.status === 'ACTIVE' ? 'Desactivar' : 'Activar'}
+                title={inv.status === "ACTIVE" ? "Desactivar" : "Activar"}
               >
-                {inv.status === 'ACTIVE' ? 'Activo' : 'Inactivo'}
+                {inv.status === "ACTIVE" ? "Activo" : "Inactivo"}
               </button>
             </div>
             <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
@@ -197,8 +250,11 @@ export const InvestorsPage = () => {
               </div>
             </div>
             <div className="mt-2 flex items-center justify-between text-xs text-gray-500">
-              <span>Fee: {frequencyLabel(inv.tradingFeeFrequency ?? 'QUARTERLY')} ({inv.tradingFeePercentage ?? 30}%)</span>
-              <span>{inv.hasPassword ? '🔑 Pass' : 'Google'}</span>
+              <span>
+                Fee: {frequencyLabel(inv.tradingFeeFrequency ?? "QUARTERLY")} (
+                {inv.tradingFeePercentage ?? 30}%)
+              </span>
+              <span>{inv.hasPassword ? "🔑 Pass" : "Google"}</span>
             </div>
             <div className="mt-3 flex gap-2">
               <button
@@ -206,8 +262,18 @@ export const InvestorsPage = () => {
                 className="rounded p-2 text-[#58b098] hover:bg-[#58b098]/10"
                 title="Editar"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                  />
                 </svg>
               </button>
               <button
@@ -215,8 +281,18 @@ export const InvestorsPage = () => {
                 className="p-2 text-red-600 hover:bg-red-50 rounded"
                 title="Eliminar"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                  />
                 </svg>
               </button>
             </div>
@@ -241,20 +317,27 @@ export const InvestorsPage = () => {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {investors.map((inv) => (
-                <tr key={inv.id} className={`text-sm ${inv.status === 'INACTIVE' ? 'opacity-50' : ''}`}>
+                <tr
+                  key={inv.id}
+                  className={`text-sm ${inv.status === "INACTIVE" ? "opacity-50" : ""}`}
+                >
                   <td className="py-3 pr-4 font-medium">{inv.name}</td>
                   <td className="py-3 pr-4 text-gray-600">{inv.email}</td>
                   <td className="py-3 pr-4 text-center">
                     <button
                       onClick={() => handleToggleStatus(inv)}
                       className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold cursor-pointer transition-colors ${
-                        inv.status === 'ACTIVE'
-                          ? 'bg-green-50 text-green-700 hover:bg-green-100'
-                          : 'bg-red-50 text-red-700 hover:bg-red-100'
+                        inv.status === "ACTIVE"
+                          ? "bg-green-50 text-green-700 hover:bg-green-100"
+                          : "bg-red-50 text-red-700 hover:bg-red-100"
                       }`}
-                      title={inv.status === 'ACTIVE' ? 'Click para desactivar' : 'Click para activar'}
+                      title={
+                        inv.status === "ACTIVE"
+                          ? "Click para desactivar"
+                          : "Click para activar"
+                      }
                     >
-                      {inv.status === 'ACTIVE' ? 'Activo' : 'Inactivo'}
+                      {inv.status === "ACTIVE" ? "Activo" : "Inactivo"}
                     </button>
                   </td>
                   <td className="py-3 pr-4 text-right font-mono text-gray-900">
@@ -262,12 +345,16 @@ export const InvestorsPage = () => {
                   </td>
                   <td className="py-3 pr-4 text-center">
                     <span className="inline-flex rounded-full bg-purple-50 px-2 py-0.5 text-xs font-semibold text-purple-700">
-                      {frequencyLabel(inv.tradingFeeFrequency ?? 'QUARTERLY')} ({inv.tradingFeePercentage ?? 30}%)
+                      {frequencyLabel(inv.tradingFeeFrequency ?? "QUARTERLY")} (
+                      {inv.tradingFeePercentage ?? 30}%)
                     </span>
                   </td>
                   <td className="py-3 pr-4 text-center">
                     {inv.hasPassword ? (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700" title="Contraseña configurada">
+                      <span
+                        className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700"
+                        title="Contraseña configurada"
+                      >
                         🔑
                       </span>
                     ) : (
@@ -277,12 +364,24 @@ export const InvestorsPage = () => {
                   <td className="py-3 text-right">
                     <div className="flex gap-1 justify-end">
                       <button
-                        onClick={() => navigate(`/investors/${String(inv.id)}/edit`)}
+                        onClick={() =>
+                          navigate(`/investors/${String(inv.id)}/edit`)
+                        }
                         className="rounded p-1.5 text-[#58b098] hover:bg-[#58b098]/10"
                         title="Editar"
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                          />
                         </svg>
                       </button>
                       <button
@@ -290,8 +389,18 @@ export const InvestorsPage = () => {
                         className="p-1.5 text-red-600 hover:bg-red-50 rounded"
                         title="Eliminar"
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                          />
                         </svg>
                       </button>
                     </div>
@@ -311,13 +420,18 @@ export const InvestorsPage = () => {
         message={
           deleteConfirm.investor ? (
             <>
-              ¿Estás seguro de eliminar a{' '}
-              <span className="font-semibold">{deleteConfirm.investor.name}</span>?
+              ¿Estás seguro de eliminar a{" "}
+              <span className="font-semibold">
+                {deleteConfirm.investor.name}
+              </span>
+              ?
               <br />
-              <span className="text-red-600">Esta acción no se puede deshacer.</span>
+              <span className="text-red-600">
+                Esta acción no se puede deshacer.
+              </span>
             </>
           ) : (
-            ''
+            ""
           )
         }
         confirmText="Eliminar"

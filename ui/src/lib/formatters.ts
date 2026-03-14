@@ -1,71 +1,94 @@
 /**
- * Formatea números en formato argentino: $XX.XXX,XX
- * - Separador de miles: punto (.)
- * - Separador decimal: coma (,)
+ * Formatea números en formato USD: $XX,XXX.XX
+ * - Separador de miles: coma (,)
+ * - Separador decimal: punto (.)
  * - Símbolo: $
- * Version: 3.0 - Manual formatting (no locale dependency)
  */
 export const formatCurrencyAR = (value: number): string => {
-  // Convertir a número si es string
-  const num = typeof value === 'string' ? parseFloat(value) : value;
-  
-  // Formatear manualmente sin depender de locales
-  const fixed = num.toFixed(2); // "15314.00"
-  const parts = fixed.split('.'); // ["15314", "00"]
-  
-  // Agregar puntos cada 3 dígitos desde la derecha
-  const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-  
-  // Unir con coma como separador decimal
-  return `$${integerPart},${parts[1]}`;
+  const num = typeof value === "string" ? parseFloat(value) : value;
+  const fixed = num.toFixed(2);
+  const parts = fixed.split(".");
+  const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return `$${integerPart}.${parts[1]}`;
 };
 
 /**
- * Formatea números sin símbolo de moneda: XX.XXX,XX
+ * Formatea números sin símbolo de moneda: XX,XXX.XX
  */
 export const formatNumberAR = (value: number): string => {
-  const num = typeof value === 'string' ? parseFloat(value) : value;
+  const num = typeof value === "string" ? parseFloat(value) : value;
   const fixed = num.toFixed(2);
-  const parts = fixed.split('.');
-  const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-  return `${integerPart},${parts[1]}`;
+  const parts = fixed.split(".");
+  const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return `${integerPart}.${parts[1]}`;
 };
 
 /**
- * Formatea porcentajes: XX,XX%
+ * Formatea porcentajes: XX.XX%
  */
 export const formatPercentAR = (value: number): string => {
-  const num = typeof value === 'string' ? parseFloat(value) : value;
+  const num = typeof value === "string" ? parseFloat(value) : value;
   const fixed = num.toFixed(2);
-  const parts = fixed.split('.');
-  const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-  return `${integerPart},${parts[1]}%`;
+  const parts = fixed.split(".");
+  const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return `${integerPart}.${parts[1]}%`;
 };
 
-const AR_TZ = 'America/Argentina/Buenos_Aires';
+const MONTHS_SHORT = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+
+const AR_TZ = "America/Argentina/Buenos_Aires";
 
 /**
  * Formatea fecha en timezone de Argentina.
  * Acepta ISO string, Date o null/undefined.
- * Ejemplo: "13/02/2026, 19:00"
+ * Ejemplo: "13 Mar 2026 - 19:00"
  */
 export const formatDateAR = (
   value: string | Date | null | undefined,
   opts: { time?: boolean } = { time: true },
 ): string => {
-  if (!value) return '-';
-  const d = typeof value === 'string' ? new Date(value) : value;
-  if (isNaN(d.getTime())) return '-';
+  if (!value) return "-";
+  const d = typeof value === "string" ? new Date(value) : value;
+  if (isNaN(d.getTime())) return "-";
 
-  const options: Intl.DateTimeFormatOptions = {
+  const formatter = new Intl.DateTimeFormat("en-US", {
     timeZone: AR_TZ,
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  };
-  if (opts.time !== false) {
-    options.hour = '2-digit';
-    options.minute = '2-digit';
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+
+  const parts: Record<string, string> = {};
+  for (const { type, value: v } of formatter.formatToParts(d)) {
+    parts[type] = v;
   }
-  return d.toLocaleDateString('es-AR', options);
+
+  const day = parts.day;
+  const month = MONTHS_SHORT[parseInt(parts.month, 10) - 1];
+  const year = parts.year;
+
+  if (opts.time === false) {
+    return `${day} ${month} ${year}`;
+  }
+
+  const hour = parts.hour;
+  const minute = parts.minute;
+
+  return `${day} ${month} ${year} - ${hour}:${minute}`;
 };

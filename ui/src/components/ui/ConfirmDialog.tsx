@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { ReactNode } from "react";
 
 interface ConfirmDialogProps {
   isOpen: boolean;
@@ -8,7 +8,7 @@ interface ConfirmDialogProps {
   message: string | ReactNode;
   confirmText?: string;
   cancelText?: string;
-  confirmVariant?: 'danger' | 'primary';
+  confirmVariant?: "danger" | "primary";
 }
 
 export const ConfirmDialog = ({
@@ -17,9 +17,9 @@ export const ConfirmDialog = ({
   onConfirm,
   title,
   message,
-  confirmText = 'Confirmar',
-  cancelText = 'Cancelar',
-  confirmVariant = 'danger',
+  confirmText = "Confirmar",
+  cancelText = "Cancelar",
+  confirmVariant = "danger",
 }: ConfirmDialogProps) => {
   if (!isOpen) return null;
 
@@ -29,9 +29,9 @@ export const ConfirmDialog = ({
   };
 
   const confirmButtonClass =
-    confirmVariant === 'danger'
-      ? 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-600'
-      : 'bg-[#58b098] text-white hover:bg-[#4aa48d] focus:ring-[#58b098]';
+    confirmVariant === "danger"
+      ? "bg-red-600 text-white hover:bg-red-700 focus:ring-red-600"
+      : "bg-[#58b098] text-white hover:bg-[#4aa48d] focus:ring-[#58b098]";
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -51,7 +51,7 @@ export const ConfirmDialog = ({
 
           {/* Content */}
           <div className="px-6 py-4">
-            {typeof message === 'string' ? (
+            {typeof message === "string" ? (
               <p className="text-sm text-gray-700">{message}</p>
             ) : (
               <div className="text-sm text-gray-700">{message}</div>

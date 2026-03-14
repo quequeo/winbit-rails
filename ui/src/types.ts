@@ -3,7 +3,7 @@ export interface ApiAdmin {
   id: string;
   email: string;
   name?: string;
-  role: 'ADMIN' | 'SUPERADMIN';
+  role: "ADMIN" | "SUPERADMIN";
   superadmin?: boolean;
   notify_deposit_created?: boolean;
   notify_withdrawal_created?: boolean;
