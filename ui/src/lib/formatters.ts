@@ -6,10 +6,12 @@
  */
 export const formatCurrencyAR = (value: number): string => {
   const num = typeof value === "string" ? parseFloat(value) : value;
-  const fixed = num.toFixed(2);
+  const abs = Math.abs(num);
+  const fixed = abs.toFixed(2);
   const parts = fixed.split(".");
   const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-  return `$${integerPart}.${parts[1]}`;
+  const result = `$${integerPart}.${parts[1]}`;
+  return num < 0 ? `-${result}` : result;
 };
 
 /**
@@ -31,7 +33,8 @@ export const formatPercentAR = (value: number): string => {
   const fixed = num.toFixed(2);
   const parts = fixed.split(".");
   const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-  return `${integerPart}.${parts[1]}%`;
+  const sign = num > 0 ? "+" : "";
+  return `${sign}${integerPart}.${parts[1]}%`;
 };
 
 const MONTHS_SHORT = [

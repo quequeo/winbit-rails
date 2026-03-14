@@ -182,10 +182,10 @@ export const OperatingHistoryPage = () => {
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-3xl font-bold text-t-primary">
             Historial de Operativas
           </h1>
-          <p className="mt-1 text-sm text-gray-600">
+          <p className="mt-1 text-sm text-t-muted">
             Resumen mensual + detalle diario (paginado).
           </p>
         </div>
@@ -203,27 +203,27 @@ export const OperatingHistoryPage = () => {
       </div>
 
       {error ? (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+        <div className="rounded-lg border border-b-default bg-error/15 px-4 py-3 text-sm text-error">
           {error}
         </div>
       ) : null}
 
-      <div className="rounded-lg bg-white p-6 shadow space-y-4">
+      <div className="rounded-lg bg-dark-card p-6 space-y-4">
         <div className="flex items-center justify-between gap-3">
           <button
             type="button"
             onClick={goMonthlyOlder}
             disabled={loadingMonthly || !monthlySummary.some((m) => m.days > 0)}
-            className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+            className="rounded-lg border border-b-default bg-dark-card px-3 py-1.5 text-sm font-medium text-t-muted hover:bg-dark-section disabled:cursor-not-allowed disabled:opacity-40"
             title="Meses anteriores"
           >
             &lsaquo;
           </button>
 
           <div className="flex-1 text-center">
-            <h2 className="text-xl font-bold text-gray-900">Resumen por mes</h2>
+            <h2 className="text-xl font-bold text-t-primary">Resumen por mes</h2>
             {monthlySummary.length > 0 ? (
-              <div className="text-xs text-gray-500 mt-0.5">
+              <div className="text-xs text-t-dim mt-0.5">
                 {monthLabel(monthlySummary[monthlySummary.length - 1].month)}
                 {" – "}
                 {monthLabel(monthlySummary[0].month)}
@@ -235,7 +235,7 @@ export const OperatingHistoryPage = () => {
             type="button"
             onClick={goMonthlyNewer}
             disabled={loadingMonthly || monthlyOffset === 0}
-            className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+            className="rounded-lg border border-b-default bg-dark-card px-3 py-1.5 text-sm font-medium text-t-muted hover:bg-dark-section disabled:cursor-not-allowed disabled:opacity-40"
             title="Meses siguientes"
           >
             &rsaquo;
@@ -244,17 +244,17 @@ export const OperatingHistoryPage = () => {
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {loadingMonthly && cards.length === 0 ? (
-            <div className="text-sm text-gray-500">Cargando…</div>
+            <div className="text-sm text-t-dim">Cargando…</div>
           ) : null}
 
           {cards.map((m) => {
             const v = m.compounded_percent;
             const tone =
               v > 0
-                ? "text-green-700 bg-green-50 border-green-200"
+                ? "text-success bg-success/15 border-b-default"
                 : v < 0
-                  ? "text-red-700 bg-red-50 border-red-200"
-                  : "text-gray-700 bg-gray-50 border-gray-200";
+                  ? "text-error bg-error/15 border-b-default"
+                  : "text-t-muted bg-dark-section border-b-default";
             const sign = v > 0 ? "+" : "";
             return (
               <div key={m.month} className={`rounded-lg border p-4 ${tone}`}>
@@ -273,7 +273,7 @@ export const OperatingHistoryPage = () => {
                   </div>
                   <button
                     type="button"
-                    className="rounded-md border border-black/10 bg-white/60 px-2 py-1 text-sm hover:bg-white"
+                    className="rounded-md border border-black/10 bg-dark-card/60 px-2 py-1 text-sm hover:bg-primary-dim"
                     onClick={() => void openMonthDetail(m.month)}
                     title="Ver"
                     aria-label="Ver detalle"
@@ -286,17 +286,17 @@ export const OperatingHistoryPage = () => {
           })}
 
           {!loadingMonthly && cards.length === 0 ? (
-            <div className="text-sm text-gray-500">
+            <div className="text-sm text-t-dim">
               No hay operativas para resumir.
             </div>
           ) : null}
         </div>
       </div>
 
-      <div className="rounded-lg bg-white p-6 shadow space-y-4">
+      <div className="rounded-lg bg-dark-card p-6 space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-gray-900">Detalle diario</h2>
-          <div className="text-xs text-gray-500">
+          <h2 className="text-xl font-bold text-t-primary">Detalle diario</h2>
+          <div className="text-xs text-t-dim">
             {historyMeta ? (
               <>
                 Página {historyMeta.page} de {historyMeta.total_pages} • Total:{" "}
@@ -306,26 +306,26 @@ export const OperatingHistoryPage = () => {
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-xl border border-gray-200">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+        <div className="overflow-hidden rounded-xl border border-b-default">
+          <table className="min-w-full divide-y divide-b-default">
+            <thead className="bg-dark-section">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-t-muted">
                   Fecha
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-700">
+                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-t-muted">
                   Resultado (%)
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-t-muted">
                   Notas
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 bg-white">
+            <tbody className="divide-y divide-b-default bg-dark-card">
               {history.length === 0 ? (
                 <tr>
                   <td
-                    className="px-4 py-6 text-center text-sm text-gray-500"
+                    className="px-4 py-6 text-center text-sm text-t-dim"
                     colSpan={3}
                   >
                     {loadingHistory
@@ -335,14 +335,14 @@ export const OperatingHistoryPage = () => {
                 </tr>
               ) : (
                 history.map((h) => (
-                  <tr key={h.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-sm text-gray-900">
+                  <tr key={h.id} className="hover:bg-dark-section">
+                    <td className="px-4 py-3 text-sm text-t-primary">
                       {h.date}
                     </td>
-                    <td className="px-4 py-3 text-right text-sm text-gray-900">
+                    <td className="px-4 py-3 text-right text-sm text-t-primary">
                       {formatNumberAR(h.percent)}%
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-700">
+                    <td className="px-4 py-3 text-sm text-t-muted">
                       {h.notes || "—"}
                     </td>
                   </tr>
@@ -383,39 +383,39 @@ export const OperatingHistoryPage = () => {
             onClick={() => setDetailOpen(false)}
           />
           <div className="flex min-h-full items-center justify-center p-4">
-            <div className="relative w-full max-w-lg overflow-hidden rounded-lg bg-white shadow-xl">
-              <div className="border-b border-gray-200 px-6 py-4">
-                <h3 className="text-lg font-semibold text-gray-900">
+            <div className="relative w-full max-w-lg overflow-hidden rounded-lg bg-dark-card-xl">
+              <div className="border-b border-b-default px-6 py-4">
+                <h3 className="text-lg font-semibold text-t-primary">
                   Detalle del mes
                 </h3>
-                <p className="mt-1 text-sm text-gray-600">
+                <p className="mt-1 text-sm text-t-muted">
                   {detailMonth ? monthLabel(detailMonth) : ""}
                 </p>
               </div>
               <div className="px-6 py-4">
                 {detailLoading ? (
-                  <div className="text-sm text-gray-600">Cargando…</div>
+                  <div className="text-sm text-t-muted">Cargando…</div>
                 ) : (
-                  <div className="overflow-hidden rounded-xl border border-gray-200">
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-50">
+                  <div className="overflow-hidden rounded-xl border border-b-default">
+                    <table className="min-w-full divide-y divide-b-default">
+                      <thead className="bg-dark-section">
                         <tr>
-                          <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">
+                          <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-t-muted">
                             Fecha
                           </th>
-                          <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-700">
+                          <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-t-muted">
                             Resultado (%)
                           </th>
-                          <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">
+                          <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-t-muted">
                             Notas
                           </th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-gray-200 bg-white">
+                      <tbody className="divide-y divide-b-default bg-dark-card">
                         {detailRows.length === 0 ? (
                           <tr>
                             <td
-                              className="px-4 py-6 text-center text-sm text-gray-500"
+                              className="px-4 py-6 text-center text-sm text-t-dim"
                               colSpan={3}
                             >
                               No hay operativas cargadas para este mes.
@@ -423,14 +423,14 @@ export const OperatingHistoryPage = () => {
                           </tr>
                         ) : (
                           detailRows.map((r) => (
-                            <tr key={r.id} className="hover:bg-gray-50">
-                              <td className="px-4 py-3 text-sm text-gray-900">
+                            <tr key={r.id} className="hover:bg-dark-section">
+                              <td className="px-4 py-3 text-sm text-t-primary">
                                 {r.date}
                               </td>
-                              <td className="px-4 py-3 text-right text-sm text-gray-900">
+                              <td className="px-4 py-3 text-right text-sm text-t-primary">
                                 {formatNumberAR(r.percent)}%
                               </td>
-                              <td className="px-4 py-3 text-sm text-gray-700">
+                              <td className="px-4 py-3 text-sm text-t-muted">
                                 {r.notes || "—"}
                               </td>
                             </tr>
@@ -441,7 +441,7 @@ export const OperatingHistoryPage = () => {
                   </div>
                 )}
               </div>
-              <div className="flex justify-end gap-3 border-t border-gray-200 px-6 py-4">
+              <div className="flex justify-end gap-3 border-t border-b-default px-6 py-4">
                 <Button
                   type="button"
                   variant="outline"

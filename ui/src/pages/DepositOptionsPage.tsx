@@ -93,7 +93,7 @@ type FormState = {
 const emptyForm = (cat = "CASH_USD"): FormState => ({
   category: cat,
   label: "",
-  currency: DEFAULT_CURRENCY[cat] || "ARS",
+  currency: DEFAULT_CURRENCY[cat] || "USD",
   active: true,
   details: {},
 });
@@ -234,8 +234,8 @@ export const DepositOptionsPage = () => {
 
   if (loading) {
     return (
-      <div className="rounded-lg bg-white p-6 shadow-sm">
-        <div className="text-gray-600">Cargando opciones de depósito...</div>
+      <div className="rounded-lg bg-dark-card p-6 ">
+        <div className="text-t-muted">Cargando opciones de depósito...</div>
       </div>
     );
   }
@@ -244,10 +244,10 @@ export const DepositOptionsPage = () => {
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-3xl font-bold text-t-primary">
             Opciones de depósito
           </h1>
-          <p className="mt-1 text-gray-600">
+          <p className="mt-1 text-t-muted">
             Gestiona las opciones que ven los clientes para depositar fondos.
           </p>
         </div>
@@ -263,12 +263,12 @@ export const DepositOptionsPage = () => {
       </div>
 
       {error && (
-        <div className="rounded-lg bg-red-50 p-4 text-sm text-red-800">
+        <div className="rounded-lg bg-error/15 p-4 text-sm text-error">
           {error}
         </div>
       )}
       {success && (
-        <div className="rounded-lg bg-green-50 p-4 text-sm text-green-800">
+        <div className="rounded-lg bg-success/15 p-4 text-sm text-success">
           {success}
         </div>
       )}
@@ -289,11 +289,11 @@ export const DepositOptionsPage = () => {
       )}
 
       {options.length === 0 && !showForm ? (
-        <div className="rounded-lg bg-white p-8 text-center shadow-sm">
-          <p className="text-gray-500">
+        <div className="rounded-lg bg-dark-card p-8 text-center ">
+          <p className="text-t-dim">
             No hay opciones de depósito configuradas.
           </p>
-          <p className="mt-1 text-sm text-gray-400">
+          <p className="mt-1 text-sm text-t-dim">
             Crea la primera opción usando el botón de arriba.
           </p>
         </div>
@@ -304,7 +304,7 @@ export const DepositOptionsPage = () => {
             {options.map((opt) => (
               <div
                 key={opt.id}
-                className="w-full overflow-hidden rounded-lg bg-white p-4 shadow"
+                className="w-full overflow-hidden rounded-lg bg-dark-card p-4"
               >
                 {editingId === opt.id ? (
                   <DepositOptionForm
@@ -335,11 +335,11 @@ export const DepositOptionsPage = () => {
           </div>
 
           {/* Desktop: table */}
-          <div className="hidden md:block rounded-lg bg-white p-6 shadow">
+          <div className="hidden md:block rounded-lg bg-dark-card p-6">
             <div className="overflow-x-auto">
               <table className="min-w-full">
                 <thead>
-                  <tr className="text-left text-sm text-gray-500">
+                  <tr className="text-left text-sm text-t-dim">
                     <th className="py-2">Pos</th>
                     <th className="py-2">Categoría</th>
                     <th className="py-2">Label</th>
@@ -349,7 +349,7 @@ export const DepositOptionsPage = () => {
                     <th className="py-2 text-right">Acciones</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-b-default">
                   {options.map((opt) => (
                     <tr key={opt.id} className="text-sm">
                       {editingId === opt.id ? (
@@ -371,7 +371,7 @@ export const DepositOptionsPage = () => {
                       ) : (
                         <>
                           <td className="py-2">
-                            <span className="inline-flex rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700">
+                            <span className="inline-flex rounded-full bg-dark-section px-2 py-1 text-xs font-medium text-t-muted">
                               {categoryLabel(opt.category)}
                             </span>
                           </td>
@@ -388,8 +388,8 @@ export const DepositOptionsPage = () => {
                               onClick={() => handleToggle(opt)}
                               className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
                                 opt.active
-                                  ? "bg-green-100 text-green-800 hover:bg-green-200"
-                                  : "bg-red-100 text-red-800 hover:bg-red-200"
+                                  ? "bg-success/15 text-success hover:bg-primary-dim"
+                                  : "bg-error/15 text-error hover:bg-primary-dim"
                               }`}
                             >
                               {opt.active ? "Activo" : "Inactivo"}
@@ -399,7 +399,7 @@ export const DepositOptionsPage = () => {
                             <div className="flex justify-end gap-2">
                               <button
                                 onClick={() => startEdit(opt)}
-                                className="rounded p-2 text-[#58b098] hover:bg-[#58b098]/10"
+                                className="rounded p-2 text-primary hover:bg-primary-dim"
                                 title="Editar"
                               >
                                 <svg
@@ -423,7 +423,7 @@ export const DepositOptionsPage = () => {
                                     option: opt,
                                   })
                                 }
-                                className="rounded p-2 text-red-600 hover:bg-red-50"
+                                className="rounded p-2 text-error hover:bg-error/15"
                                 title="Eliminar"
                               >
                                 <svg
@@ -467,7 +467,7 @@ export const DepositOptionsPage = () => {
               </span>{" "}
               ({categoryLabel(deleteConfirm.option.category)})?
               <br />
-              <span className="text-red-600">
+              <span className="text-error">
                 Esta acción no se puede deshacer.
               </span>
             </>
@@ -507,19 +507,19 @@ function DepositOptionForm({
   const fields = CATEGORY_FIELDS[form.category] || [];
 
   return (
-    <div className="rounded-lg bg-white p-6 shadow">
-      <h2 className="mb-4 text-lg font-semibold text-gray-900">{title}</h2>
+    <div className="rounded-lg bg-dark-card p-6">
+      <h2 className="mb-4 text-lg font-semibold text-t-primary">{title}</h2>
       <form onSubmit={onSubmit} className="space-y-4">
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">
+            <label className="mb-1 block text-sm font-medium text-t-muted">
               Categoría *
             </label>
             <select
               required
               value={form.category}
               onChange={(e) => onCategoryChange(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-[#58b098] focus:outline-none focus:ring-1 focus:ring-[#58b098]"
+              className="w-full rounded-lg border border-b-default px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
             >
               {CATEGORIES.map((c) => (
                 <option key={c.value} value={c.value}>
@@ -529,7 +529,7 @@ function DepositOptionForm({
             </select>
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">
+            <label className="mb-1 block text-sm font-medium text-t-muted">
               Label *
             </label>
             <Input
@@ -540,14 +540,14 @@ function DepositOptionForm({
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">
+            <label className="mb-1 block text-sm font-medium text-t-muted">
               Moneda *
             </label>
             <select
               required
               value={form.currency}
               onChange={(e) => setForm({ ...form, currency: e.target.value })}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-[#58b098] focus:outline-none focus:ring-1 focus:ring-[#58b098]"
+              className="w-full rounded-lg border border-b-default px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
             >
               {CURRENCIES.map((c) => (
                 <option key={c} value={c}>
@@ -558,7 +558,7 @@ function DepositOptionForm({
           </div>
           {allowActiveEdit && (
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">
+              <label className="mb-1 block text-sm font-medium text-t-muted">
                 Estado
               </label>
               <select
@@ -566,7 +566,7 @@ function DepositOptionForm({
                 onChange={(e) =>
                   setForm({ ...form, active: e.target.value === "true" })
                 }
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-[#58b098] focus:outline-none focus:ring-1 focus:ring-[#58b098]"
+                className="w-full rounded-lg border border-b-default px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
               >
                 <option value="true">Activo</option>
                 <option value="false">Inactivo</option>
@@ -576,14 +576,14 @@ function DepositOptionForm({
         </div>
 
         {fields.length > 0 && (
-          <div className="rounded-lg border border-gray-200 p-4">
-            <h3 className="mb-3 text-sm font-semibold text-gray-700">
+          <div className="rounded-lg border border-b-default p-4">
+            <h3 className="mb-3 text-sm font-semibold text-t-muted">
               Detalles — {categoryLabel(form.category)}
             </h3>
             <div className="grid gap-3 sm:grid-cols-2">
               {fields.map((f) => (
                 <div key={f.key}>
-                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                  <label className="mb-1 block text-sm font-medium text-t-muted">
                     {f.label}
                   </label>
                   <Input
@@ -609,7 +609,7 @@ function DepositOptionForm({
           <Button
             type="button"
             onClick={onCancel}
-            className="bg-gray-500 hover:bg-gray-600"
+            className="bg-dark-section hover:bg-primary-dim"
           >
             Cancelar
           </Button>
@@ -634,10 +634,10 @@ function OptionCard({
     <>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold text-gray-900">
+          <p className="truncate text-sm font-semibold text-t-primary">
             {opt.label}
           </p>
-          <p className="mt-1 text-xs text-gray-500">
+          <p className="mt-1 text-xs text-t-dim">
             {categoryLabel(opt.category)} &middot; {opt.currency}
           </p>
         </div>
@@ -645,8 +645,8 @@ function OptionCard({
           onClick={onToggle}
           className={`shrink-0 inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
             opt.active
-              ? "bg-green-100 text-green-800"
-              : "bg-red-100 text-red-800"
+              ? "bg-success/15 text-success"
+              : "bg-error/15 text-error"
           }`}
         >
           {opt.active ? "Activo" : "Inactivo"}
@@ -658,7 +658,7 @@ function OptionCard({
       <div className="mt-3 flex gap-2">
         <button
           onClick={onEdit}
-          className="rounded p-2 text-[#58b098] hover:bg-[#58b098]/10"
+          className="rounded p-2 text-primary hover:bg-primary-dim"
           title="Editar"
         >
           <svg
@@ -677,7 +677,7 @@ function OptionCard({
         </button>
         <button
           onClick={onDelete}
-          className="rounded p-2 text-red-600 hover:bg-red-50"
+          className="rounded p-2 text-error hover:bg-error/15"
           title="Eliminar"
         >
           <svg
@@ -715,13 +715,13 @@ function DetailsPreview({
     }));
 
   if (entries.length === 0) {
-    return <span className="text-xs text-gray-400">Sin detalles</span>;
+    return <span className="text-xs text-t-dim">Sin detalles</span>;
   }
 
   return (
     <div className="space-y-1">
       {entries.map((e) => (
-        <p key={e.label} className="text-xs text-gray-600">
+        <p key={e.label} className="text-xs text-t-muted">
           <span className="font-medium">{e.label}:</span> {e.value}
         </p>
       ))}

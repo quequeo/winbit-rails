@@ -121,10 +121,10 @@ export const ReferralCommissionsPage = () => {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">
+        <h1 className="text-2xl font-bold text-t-primary">
           Comisiones por referido
         </h1>
-        <p className="mt-1 text-sm text-gray-600">
+        <p className="mt-1 text-sm text-t-muted">
           Cargá un monto puntual al balance de un inversor. Si usás una fecha
           pasada, se recalcula el historial.
         </p>
@@ -135,8 +135,8 @@ export const ReferralCommissionsPage = () => {
           className={
             `mb-4 rounded-lg border px-4 py-3 text-sm ` +
             (flash.type === "success"
-              ? "border-green-200 bg-green-50 text-green-800"
-              : "border-red-200 bg-red-50 text-red-800")
+              ? "border-b-default bg-success/15 text-success"
+              : "border-b-default bg-error/15 text-error")
           }
         >
           <div className="flex items-start justify-between gap-3">
@@ -144,7 +144,7 @@ export const ReferralCommissionsPage = () => {
             <button
               type="button"
               onClick={() => setFlash(null)}
-              className="rounded px-2 py-1 text-xs hover:bg-black/5"
+              className="rounded px-2 py-1 text-xs hover:bg-primary-dim"
             >
               Cerrar
             </button>
@@ -152,10 +152,10 @@ export const ReferralCommissionsPage = () => {
         </div>
       ) : null}
 
-      <div className="max-w-2xl rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+      <div className="max-w-2xl rounded-xl border border-b-default bg-dark-card p-6 ">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="sm:col-span-2">
-            <label className="mb-1 block text-sm font-medium text-gray-700">
+            <label className="mb-1 block text-sm font-medium text-t-muted">
               Inversor
             </label>
             <Select
@@ -173,7 +173,7 @@ export const ReferralCommissionsPage = () => {
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">
+            <label className="mb-1 block text-sm font-medium text-t-muted">
               Monto (USD)
             </label>
             <Input
@@ -187,7 +187,7 @@ export const ReferralCommissionsPage = () => {
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">
+            <label className="mb-1 block text-sm font-medium text-t-muted">
               Fecha (opcional)
             </label>
             <DatePicker value={appliedAt} onChange={setAppliedAt} />
@@ -203,48 +203,48 @@ export const ReferralCommissionsPage = () => {
 
       {/* History */}
       <div className="mt-8">
-        <h2 className="mb-3 text-lg font-semibold text-gray-900">Historial</h2>
+        <h2 className="mb-3 text-lg font-semibold text-t-primary">Historial</h2>
 
         {loadingHistory ? (
-          <div className="py-6 text-center text-sm text-gray-500">
+          <div className="py-6 text-center text-sm text-t-dim">
             Cargando...
           </div>
         ) : rows.length === 0 ? (
-          <div className="py-6 text-center text-sm text-gray-500">
+          <div className="py-6 text-center text-sm text-t-dim">
             No hay comisiones por referido registradas.
           </div>
         ) : (
           <>
-            <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+            <div className="overflow-x-auto rounded-lg border border-b-default bg-dark-card ">
+              <table className="min-w-full divide-y divide-b-default">
+                <thead className="bg-dark-section">
                   <tr>
-                    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
+                    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-t-muted">
                       Inversor
                     </th>
-                    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
+                    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-t-muted">
                       Fecha
                     </th>
-                    <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-600">
+                    <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wider text-t-muted">
                       Monto
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100 bg-white">
+                <tbody className="divide-y divide-b-default bg-dark-card">
                   {rows.map((row) => (
-                    <tr key={row.id} className="hover:bg-gray-50">
+                    <tr key={row.id} className="hover:bg-dark-section">
                       <td className="px-5 py-3">
-                        <div className="text-sm font-medium text-gray-900">
+                        <div className="text-sm font-medium text-t-primary">
                           {row.investor_name}
                         </div>
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs text-t-dim">
                           {row.investor_email}
                         </div>
                       </td>
-                      <td className="px-5 py-3 text-sm text-gray-700">
+                      <td className="px-5 py-3 text-sm text-t-muted">
                         {formatDateAR(row.date, { time: false })}
                       </td>
-                      <td className="px-5 py-3 text-right text-sm font-semibold text-green-700">
+                      <td className="px-5 py-3 text-right text-sm font-semibold text-success">
                         {formatCurrencyAR(row.amount)}
                       </td>
                     </tr>
@@ -255,14 +255,14 @@ export const ReferralCommissionsPage = () => {
 
             {pagination && pagination.total_pages > 1 ? (
               <div className="mt-4 flex items-center justify-between">
-                <span className="text-sm text-gray-600">
+                <span className="text-sm text-t-muted">
                   Página{" "}
                   <span className="font-semibold">{pagination.page}</span> de{" "}
                   <span className="font-semibold">
                     {pagination.total_pages}
                   </span>
                   {" · "}
-                  <span className="text-gray-500">
+                  <span className="text-t-dim">
                     {pagination.total} registros
                   </span>
                 </span>
@@ -271,7 +271,7 @@ export const ReferralCommissionsPage = () => {
                     type="button"
                     disabled={page <= 1}
                     onClick={() => setPage((p) => p - 1)}
-                    className="rounded border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                    className="rounded border border-b-default bg-dark-card px-3 py-1.5 text-sm text-t-muted hover:bg-dark-section disabled:opacity-50"
                   >
                     Anterior
                   </button>
@@ -279,7 +279,7 @@ export const ReferralCommissionsPage = () => {
                     type="button"
                     disabled={page >= pagination.total_pages}
                     onClick={() => setPage((p) => p + 1)}
-                    className="rounded border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                    className="rounded border border-b-default bg-dark-card px-3 py-1.5 text-sm text-t-muted hover:bg-dark-section disabled:opacity-50"
                   >
                     Siguiente
                   </button>

@@ -89,15 +89,15 @@ export const EditInvestorPage = () => {
     }
   };
 
-  if (loading) return <div className="text-gray-600">Cargando...</div>;
-  if (error) return <div className="text-red-600">{error}</div>;
+  if (loading) return <div className="text-t-muted">Cargando...</div>;
+  if (error) return <div className="text-error">{error}</div>;
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
         <button
           onClick={() => navigate("/investors")}
-          className="text-gray-500 hover:text-gray-700"
+          className="text-t-dim hover:text-t-muted"
         >
           <svg
             className="w-5 h-5"
@@ -113,13 +113,13 @@ export const EditInvestorPage = () => {
             />
           </svg>
         </button>
-        <h1 className="text-2xl font-bold text-gray-900">Editar Inversor</h1>
+        <h1 className="text-2xl font-bold text-t-primary">Editar Inversor</h1>
       </div>
 
-      <div className="rounded-lg bg-white p-6 shadow">
+      <div className="rounded-lg bg-dark-card p-6">
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-t-muted mb-1">
               Email *
             </label>
             <Input
@@ -128,7 +128,7 @@ export const EditInvestorPage = () => {
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
             />
-            <p className="mt-1 text-xs text-amber-600">
+            <p className="mt-1 text-xs text-warning">
               Cambiar el email puede impedir que el inversor inicie sesión en la
               app (Firebase Auth usa el email). Solo modificarlo si es necesario
               y coordinar con el inversor.
@@ -136,7 +136,7 @@ export const EditInvestorPage = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-t-muted mb-1">
               Nombre *
             </label>
             <Input
@@ -148,7 +148,7 @@ export const EditInvestorPage = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-t-muted mb-1">
               Estado
             </label>
             <Select
@@ -161,14 +161,14 @@ export const EditInvestorPage = () => {
                 { value: "INACTIVE", label: "Inactivo" },
               ]}
             />
-            <p className="mt-1 text-xs text-gray-500">
+            <p className="mt-1 text-xs text-t-dim">
               Si está inactivo, pierde acceso a la app de clientes y queda
               excluido de cálculos globales.
             </p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-t-muted mb-1">
               Frecuencia trading fee
             </label>
             <Select
@@ -193,7 +193,7 @@ export const EditInvestorPage = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-t-muted mb-1">
               Trading fee (%)
             </label>
             <Input
@@ -210,9 +210,9 @@ export const EditInvestorPage = () => {
 
           {investor?.hasPassword ? (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-t-muted mb-1">
                 Nueva contraseña
-                <span className="ml-2 text-xs text-blue-600 font-normal">
+                <span className="ml-2 text-xs text-info font-normal">
                   (tiene contraseña)
                 </span>
               </label>
@@ -225,13 +225,13 @@ export const EditInvestorPage = () => {
                 placeholder="Dejar vacío para no cambiar"
                 minLength={6}
               />
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-t-dim">
                 Mínimo 6 caracteres. Solo se actualiza si completás este campo.
               </p>
             </div>
           ) : (
-            <div className="rounded-lg bg-gray-50 p-4 text-sm text-gray-600">
-              <p className="font-medium text-gray-700">
+            <div className="rounded-lg bg-dark-section p-4 text-sm text-t-muted">
+              <p className="font-medium text-t-muted">
                 Método de autenticación: Google
               </p>
               <p className="mt-1">
@@ -248,7 +248,7 @@ export const EditInvestorPage = () => {
             <Button
               type="button"
               onClick={() => navigate("/investors")}
-              className="bg-gray-500 hover:bg-gray-600"
+              className="bg-dark-section hover:bg-primary-dim"
             >
               Cancelar
             </Button>

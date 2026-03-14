@@ -19,7 +19,7 @@ export const OperativaHubPage = () => {
 
   return (
     <div>
-      <div className="mb-6 border-b border-gray-200">
+      <div className="mb-6 border-b border-b-default">
         <nav className="-mb-px flex space-x-6">
           {TABS.map((tab) => (
             <button
@@ -28,8 +28,8 @@ export const OperativaHubPage = () => {
               onClick={() => setTab(tab.id)}
               className={
                 activeTab === tab.id
-                  ? "border-b-2 border-[#58b098] pb-3 text-sm font-semibold text-[#58b098]"
-                  : "border-b-2 border-transparent pb-3 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                  ? "border-b-2 border-primary pb-3 text-sm font-semibold text-primary"
+                  : "border-b-2 border-transparent pb-3 text-sm font-medium text-t-dim hover:border-b-default hover:text-t-muted"
               }
             >
               {tab.label}

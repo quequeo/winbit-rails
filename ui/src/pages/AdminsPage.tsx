@@ -80,8 +80,8 @@ export const AdminsPage = () => {
     }
   };
 
-  if (error) return <div className="text-red-600">{error}</div>;
-  if (!data) return <div className="text-gray-600">Cargando...</div>;
+  if (error) return <div className="text-error">{error}</div>;
+  if (!data) return <div className="text-t-muted">Cargando...</div>;
 
   const admins: ApiAdmin[] = data?.data ?? [];
 
@@ -89,8 +89,8 @@ export const AdminsPage = () => {
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Admins</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-3xl font-bold text-t-primary">Admins</h1>
+          <p className="text-t-muted mt-1">
             Gestiona los usuarios que pueden acceder al panel.
           </p>
         </div>
@@ -100,13 +100,13 @@ export const AdminsPage = () => {
       </div>
 
       {showForm && (
-        <div className="rounded-lg bg-white p-6 shadow">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+        <div className="rounded-lg bg-dark-card p-6">
+          <h2 className="text-lg font-semibold text-t-primary mb-4">
             Nuevo Admin
           </h2>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-t-muted mb-1">
                 Email *
               </label>
               <Input
@@ -120,7 +120,7 @@ export const AdminsPage = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-t-muted mb-1">
                 Nombre (opcional)
               </label>
               <Input
@@ -135,7 +135,7 @@ export const AdminsPage = () => {
             <div>
               <label
                 htmlFor="admin-role"
-                className="block text-sm font-medium text-gray-700 mb-1"
+                className="block text-sm font-medium text-t-muted mb-1"
               >
                 Rol *
               </label>
@@ -149,7 +149,7 @@ export const AdminsPage = () => {
                     role: e.target.value as "ADMIN" | "SUPERADMIN",
                   })
                 }
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
+                className="w-full rounded-lg border border-b-default px-3 py-2 focus:border-primary focus:outline-none"
               >
                 <option value="ADMIN">Admin</option>
                 <option value="SUPERADMIN">Super Admin</option>
@@ -162,7 +162,7 @@ export const AdminsPage = () => {
               <Button
                 type="button"
                 onClick={() => setShowForm(false)}
-                className="bg-gray-500 hover:bg-gray-600"
+                className="bg-dark-section hover:bg-primary-dim"
               >
                 Cancelar
               </Button>
@@ -176,26 +176,26 @@ export const AdminsPage = () => {
         {admins.map((a) => (
           <div
             key={a.id}
-            className="w-full overflow-hidden rounded-lg bg-white p-4 shadow"
+            className="w-full overflow-hidden rounded-lg bg-dark-card p-4"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-gray-900">
+                <p className="truncate text-sm font-semibold text-t-primary">
                   {a.email}
                 </p>
-                <p className="mt-1 text-sm text-gray-600">{a.name || "-"}</p>
+                <p className="mt-1 text-sm text-t-muted">{a.name || "-"}</p>
               </div>
               <span
                 className={`shrink-0 inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
                   a.role === "SUPERADMIN"
-                    ? "bg-purple-100 text-purple-800"
-                    : "bg-blue-100 text-blue-800"
+                    ? "bg-info/15 text-info"
+                    : "bg-info/15 text-info"
                 }`}
               >
                 {a.role === "SUPERADMIN" ? "Super Admin" : "Admin"}
               </span>
             </div>
-            <div className="mt-3 border-t pt-3 text-xs text-gray-600">
+            <div className="mt-3 border-t pt-3 text-xs text-t-muted">
               Notificaciones activas:{" "}
               <span className="font-semibold">
                 {(a.notify_deposit_created ? 1 : 0) +
@@ -206,7 +206,7 @@ export const AdminsPage = () => {
             <div className="mt-3 flex gap-2">
               <button
                 onClick={() => navigate(`/admins/${a.id}/edit`)}
-                className="rounded p-2 text-[#58b098] hover:bg-[#58b098]/10"
+                className="rounded p-2 text-primary hover:bg-primary-dim"
                 title="Editar"
               >
                 <svg
@@ -228,8 +228,8 @@ export const AdminsPage = () => {
                 disabled={a.email === loggedInEmail}
                 className={`p-2 rounded ${
                   a.email === loggedInEmail
-                    ? "text-gray-400 cursor-not-allowed"
-                    : "text-red-600 hover:bg-red-50"
+                    ? "text-t-dim cursor-not-allowed"
+                    : "text-error hover:bg-error/15"
                 }`}
                 title={
                   a.email === loggedInEmail
@@ -257,11 +257,11 @@ export const AdminsPage = () => {
       </div>
 
       {/* Desktop/tablet: table */}
-      <div className="hidden md:block rounded-lg bg-white p-6 shadow">
+      <div className="hidden md:block rounded-lg bg-dark-card p-6">
         <div className="overflow-x-auto">
           <table className="min-w-full">
             <thead>
-              <tr className="text-left text-sm text-gray-500">
+              <tr className="text-left text-sm text-t-dim">
                 <th className="py-2">Email</th>
                 <th className="py-2">Nombre</th>
                 <th className="py-2">Rol</th>
@@ -269,7 +269,7 @@ export const AdminsPage = () => {
                 <th className="py-2 text-right">Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-b-default">
               {admins.map((a) => (
                 <tr key={a.id} className="text-sm">
                   <td className="py-2 font-medium">{a.email}</td>
@@ -278,14 +278,14 @@ export const AdminsPage = () => {
                     <span
                       className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
                         a.role === "SUPERADMIN"
-                          ? "bg-purple-100 text-purple-800"
-                          : "bg-blue-100 text-blue-800"
+                          ? "bg-info/15 text-info"
+                          : "bg-info/15 text-info"
                       }`}
                     >
                       {a.role === "SUPERADMIN" ? "Super Admin" : "Admin"}
                     </span>
                   </td>
-                  <td className="py-2 text-gray-700">
+                  <td className="py-2 text-t-muted">
                     {(a.notify_deposit_created ? 1 : 0) +
                       (a.notify_withdrawal_created ? 1 : 0)}{" "}
                     / 2 activas
@@ -294,7 +294,7 @@ export const AdminsPage = () => {
                     <div className="flex gap-2 justify-end">
                       <button
                         onClick={() => navigate(`/admins/${a.id}/edit`)}
-                        className="rounded p-2 text-[#58b098] hover:bg-[#58b098]/10"
+                        className="rounded p-2 text-primary hover:bg-primary-dim"
                         title="Editar"
                       >
                         <svg
@@ -316,8 +316,8 @@ export const AdminsPage = () => {
                         disabled={a.email === loggedInEmail}
                         className={`p-2 rounded ${
                           a.email === loggedInEmail
-                            ? "text-gray-400 cursor-not-allowed"
-                            : "text-red-600 hover:bg-red-50"
+                            ? "text-t-dim cursor-not-allowed"
+                            : "text-error hover:bg-error/15"
                         }`}
                         title={
                           a.email === loggedInEmail
@@ -360,7 +360,7 @@ export const AdminsPage = () => {
               <span className="font-semibold">{deleteConfirm.admin.email}</span>
               ?
               <br />
-              <span className="text-red-600">
+              <span className="text-error">
                 Esta acción no se puede deshacer.
               </span>
             </>

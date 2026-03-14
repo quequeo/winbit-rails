@@ -224,7 +224,7 @@ export const DailyOperatingResultsPage = () => {
 
   const openEdit = (row: HistoryRow) => {
     setEditRow(row);
-    setEditPercent(row.percent.toFixed(2).replace(".", ","));
+    setEditPercent(row.percent.toFixed(2));
     setEditNotes("");
     setEditPreview(null);
     setEditConfirmOpen(false);
@@ -294,8 +294,8 @@ export const DailyOperatingResultsPage = () => {
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Operativa diaria</h1>
-          <p className="mt-1 text-sm text-gray-600">
+          <h1 className="text-3xl font-bold text-t-primary">Operativa diaria</h1>
+          <p className="mt-1 text-sm text-t-muted">
             Cargá el resultado operativo del día (porcentaje). Se aplica a todos
             los inversores activos con capital.
           </p>
@@ -307,22 +307,22 @@ export const DailyOperatingResultsPage = () => {
           className={
             `rounded-lg border px-4 py-3 text-sm ` +
             (notice.type === "success"
-              ? "border-green-200 bg-green-50 text-green-800"
-              : "border-red-200 bg-red-50 text-red-800")
+              ? "border-b-accent bg-success/15 text-success"
+              : "border-b-accent bg-error/15 text-error")
           }
         >
           {notice.message}
         </div>
       ) : null}
 
-      <div className="rounded-lg bg-white p-6 shadow space-y-4">
+      <div className="rounded-lg bg-dark-card p-6 space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">Fecha</label>
+            <label className="text-sm font-medium text-t-muted">Fecha</label>
             <DatePicker value={date} onChange={setDate} />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">
+            <label className="text-sm font-medium text-t-muted">
               Resultado (%)
             </label>
             <Input
@@ -331,12 +331,12 @@ export const DailyOperatingResultsPage = () => {
               onChange={(e) => setPercent(e.target.value)}
               placeholder="Ej: 0,10"
             />
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-t-dim">
               Se redondea a 2 decimales en el impacto por inversor.
             </p>
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">
+            <label className="text-sm font-medium text-t-muted">
               Notas (opcional)
             </label>
             <Input
@@ -369,18 +369,18 @@ export const DailyOperatingResultsPage = () => {
       </div>
 
       {preview ? (
-        <div className="rounded-lg bg-white p-6 shadow space-y-4">
+        <div className="rounded-lg bg-dark-card p-6 space-y-4">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h2 className="text-xl font-bold text-gray-900">Preview</h2>
-              <p className="mt-1 text-sm text-gray-600">
+              <h2 className="text-xl font-bold text-t-primary">Preview</h2>
+              <p className="mt-1 text-sm text-t-muted">
                 Saldos calculados al cierre del{" "}
                 <span className="font-semibold">{preview.date}</span> (18:00
                 GMT-3, antes de aplicar la operativa). Si hubo movimientos
                 posteriores (depósitos/retiros/trading fees), puede diferir del
                 balance actual.
               </p>
-              <p className="mt-1 text-sm text-gray-600">
+              <p className="mt-1 text-sm text-t-muted">
                 Inversores impactados:{" "}
                 <span className="font-semibold">{preview.investors_count}</span>
               </p>
@@ -395,71 +395,71 @@ export const DailyOperatingResultsPage = () => {
           </div>
 
           {!canApplyPreview ? (
-            <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            <div className="rounded-lg border border-b-default bg-warning/15 px-4 py-3 text-sm text-warning">
               No hay inversores activos con capital para esa fecha. No es
               posible aplicar la operativa.
             </div>
           ) : null}
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-              <div className="text-xs uppercase text-gray-500">
+            <div className="rounded-lg border border-b-default bg-dark-section p-4">
+              <div className="text-xs uppercase text-t-dim">
                 Total antes (cierre)
               </div>
-              <div className="mt-1 text-lg font-semibold text-gray-900">
+              <div className="mt-1 text-lg font-semibold text-t-primary">
                 USD {formatNumberAR(preview.total_before)}
               </div>
             </div>
-            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-              <div className="text-xs uppercase text-gray-500">Delta total</div>
-              <div className="mt-1 text-lg font-semibold text-gray-900">
+            <div className="rounded-lg border border-b-default bg-dark-section p-4">
+              <div className="text-xs uppercase text-t-dim">Delta total</div>
+              <div className="mt-1 text-lg font-semibold text-t-primary">
                 USD {formatNumberAR(preview.total_delta)}
               </div>
             </div>
-            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-              <div className="text-xs uppercase text-gray-500">
+            <div className="rounded-lg border border-b-default bg-dark-section p-4">
+              <div className="text-xs uppercase text-t-dim">
                 Total después (cierre)
               </div>
-              <div className="mt-1 text-lg font-semibold text-gray-900">
+              <div className="mt-1 text-lg font-semibold text-t-primary">
                 USD {formatNumberAR(preview.total_after)}
               </div>
             </div>
           </div>
 
-          <div className="overflow-hidden rounded-xl border border-gray-200">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+          <div className="overflow-hidden rounded-xl border border-b-default">
+            <table className="min-w-full divide-y divide-b-default">
+              <thead className="bg-dark-section">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-t-muted">
                     Inversor
                   </th>
-                  <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-700">
+                  <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-t-muted">
                     Antes (cierre)
                   </th>
-                  <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-700">
+                  <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-t-muted">
                     Delta
                   </th>
-                  <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-700">
+                  <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-t-muted">
                     Después (cierre)
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200 bg-white">
+              <tbody className="divide-y divide-b-default bg-dark-card">
                 {rows.map((r) => (
-                  <tr key={r.investor_id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-sm text-gray-900">
+                  <tr key={r.investor_id} className="hover:bg-dark-section">
+                    <td className="px-4 py-3 text-sm text-t-primary">
                       <div className="font-medium">{r.investor_name}</div>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-t-dim">
                         {r.investor_email}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-right text-sm text-gray-900">
+                    <td className="px-4 py-3 text-right text-sm text-t-primary">
                       USD {formatNumberAR(r.balance_before)}
                     </td>
-                    <td className="px-4 py-3 text-right text-sm text-gray-900">
+                    <td className="px-4 py-3 text-right text-sm text-t-primary">
                       USD {formatNumberAR(r.delta)}
                     </td>
-                    <td className="px-4 py-3 text-right text-sm text-gray-900">
+                    <td className="px-4 py-3 text-right text-sm text-t-primary">
                       USD {formatNumberAR(r.balance_after)}
                     </td>
                   </tr>
@@ -472,55 +472,55 @@ export const DailyOperatingResultsPage = () => {
 
       {/* Recent history */}
       <div>
-        <h2 className="mb-3 text-lg font-semibold text-gray-900">
+        <h2 className="mb-3 text-lg font-semibold text-t-primary">
           Últimas operativas aplicadas
         </h2>
 
         {loadingHistory ? (
-          <div className="py-6 text-center text-sm text-gray-500">
+          <div className="py-6 text-center text-sm text-t-dim">
             Cargando...
           </div>
         ) : historyRows.length === 0 ? (
-          <div className="py-6 text-center text-sm text-gray-500">
+          <div className="py-6 text-center text-sm text-t-dim">
             No hay operativas registradas.
           </div>
         ) : (
           <>
-            <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+            <div className="overflow-x-auto rounded-lg border border-b-default bg-dark-card-sm">
+              <table className="min-w-full divide-y divide-b-default">
+                <thead className="bg-dark-section">
                   <tr>
-                    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
+                    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-t-muted">
                       Fecha
                     </th>
-                    <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-600">
+                    <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wider text-t-muted">
                       Rendimiento
                     </th>
-                    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
+                    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-t-muted">
                       Aplicado por
                     </th>
-                    <th className="px-5 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-600">
+                    <th className="px-5 py-3 text-center text-xs font-semibold uppercase tracking-wider text-t-muted">
                       Acciones
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100 bg-white">
+                <tbody className="divide-y divide-b-default bg-dark-card">
                   {historyRows.map((row) => {
                     const dateStr = formatDateAR(row.date, { time: false });
                     const isPos = row.percent >= 0;
                     const editable = isToday(row.date);
                     return (
-                      <tr key={row.id} className="hover:bg-gray-50">
-                        <td className="px-5 py-3 text-sm text-gray-700">
+                      <tr key={row.id} className="hover:bg-dark-section">
+                        <td className="px-5 py-3 text-sm text-t-muted">
                           {dateStr}
                         </td>
                         <td
-                          className={`px-5 py-3 text-right text-sm font-semibold ${isPos ? "text-green-700" : "text-red-700"}`}
+                          className={`px-5 py-3 text-right text-sm font-semibold ${isPos ? "text-success" : "text-error"}`}
                         >
                           {isPos ? "+" : ""}
-                          {row.percent.toFixed(2).replace(".", ",")}%
+                          {row.percent.toFixed(2)}%
                         </td>
-                        <td className="px-5 py-3 text-sm text-gray-500">
+                        <td className="px-5 py-3 text-sm text-t-dim">
                           {row.applied_by?.name ?? "—"}
                         </td>
                         <td className="px-5 py-3 text-center">
@@ -528,13 +528,13 @@ export const DailyOperatingResultsPage = () => {
                             <button
                               type="button"
                               onClick={() => openEdit(row)}
-                              className="inline-flex items-center rounded-md border border-gray-300 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                              className="inline-flex items-center rounded-md border border-b-default bg-dark-card px-2.5 py-1 text-xs font-medium text-t-muted hover:bg-dark-section"
                               title="Editar operativa"
                             >
                               Editar
                             </button>
                           ) : (
-                            <span className="text-xs text-gray-400">—</span>
+                            <span className="text-xs text-t-dim">—</span>
                           )}
                         </td>
                       </tr>
@@ -546,14 +546,14 @@ export const DailyOperatingResultsPage = () => {
 
             {historyMeta && historyMeta.total_pages > 1 ? (
               <div className="mt-4 flex items-center justify-between">
-                <span className="text-sm text-gray-600">
+                <span className="text-sm text-t-muted">
                   Página{" "}
                   <span className="font-semibold">{historyMeta.page}</span> de{" "}
                   <span className="font-semibold">
                     {historyMeta.total_pages}
                   </span>
                   {" · "}
-                  <span className="text-gray-500">
+                  <span className="text-t-dim">
                     {historyMeta.total} registros
                   </span>
                 </span>
@@ -562,7 +562,7 @@ export const DailyOperatingResultsPage = () => {
                     type="button"
                     disabled={historyPage <= 1}
                     onClick={() => setHistoryPage((p) => p - 1)}
-                    className="rounded border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                    className="rounded border border-b-default bg-dark-card px-3 py-1.5 text-sm text-t-muted hover:bg-dark-section disabled:opacity-50"
                   >
                     Anterior
                   </button>
@@ -570,7 +570,7 @@ export const DailyOperatingResultsPage = () => {
                     type="button"
                     disabled={historyPage >= historyMeta.total_pages}
                     onClick={() => setHistoryPage((p) => p + 1)}
-                    className="rounded border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                    className="rounded border border-b-default bg-dark-card px-3 py-1.5 text-sm text-t-muted hover:bg-dark-section disabled:opacity-50"
                   >
                     Siguiente
                   </button>
@@ -588,21 +588,21 @@ export const DailyOperatingResultsPage = () => {
             onClick={() => setAlertOpen(false)}
           />
           <div className="flex min-h-full items-center justify-center p-4">
-            <div className="relative w-full max-w-md overflow-hidden rounded-lg bg-white shadow-xl">
-              <div className="border-b border-gray-200 px-6 py-4">
-                <h3 className="text-lg font-semibold text-gray-900">
+            <div className="relative w-full max-w-md overflow-hidden rounded-lg bg-dark-card-xl">
+              <div className="border-b border-b-default px-6 py-4">
+                <h3 className="text-lg font-semibold text-t-primary">
                   {alertTitle || "Error"}
                 </h3>
               </div>
               <div className="px-6 py-4">
-                <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                <p className="text-sm text-t-muted whitespace-pre-wrap">
                   {alertMessage}
                 </p>
               </div>
-              <div className="flex justify-end gap-3 border-t border-gray-200 px-6 py-4">
+              <div className="flex justify-end gap-3 border-t border-b-default px-6 py-4">
                 <button
                   onClick={() => setAlertOpen(false)}
-                  className="rounded-lg bg-[#58b098] px-4 py-2 text-sm font-medium text-white hover:bg-[#4aa48d] focus:outline-none focus:ring-2 focus:ring-[#58b098] focus:ring-offset-2"
+                  className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/80 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-dark-bg"
                 >
                   OK
                 </button>
@@ -629,23 +629,23 @@ export const DailyOperatingResultsPage = () => {
             onClick={closeEdit}
           />
           <div className="flex min-h-full items-center justify-center p-4">
-            <div className="relative w-full max-w-2xl overflow-hidden rounded-lg bg-white shadow-xl">
-              <div className="border-b border-gray-200 px-6 py-4">
-                <h3 className="text-lg font-semibold text-gray-900">
+            <div className="relative w-full max-w-2xl overflow-hidden rounded-lg bg-dark-card-xl">
+              <div className="border-b border-b-default px-6 py-4">
+                <h3 className="text-lg font-semibold text-t-primary">
                   Editar operativa diaria
                 </h3>
-                <p className="mt-1 text-sm text-gray-600">
+                <p className="mt-1 text-sm text-t-muted">
                   Fecha: <span className="font-semibold">{editRow.date}</span> —
                   Porcentaje actual:{" "}
                   <span className="font-semibold">
-                    {editRow.percent.toFixed(2).replace(".", ",")}%
+                    {editRow.percent.toFixed(2)}%
                   </span>
                 </p>
               </div>
               <div className="px-6 py-4 space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">
+                    <label className="text-sm font-medium text-t-muted">
                       Nuevo porcentaje (%)
                     </label>
                     <Input
@@ -656,7 +656,7 @@ export const DailyOperatingResultsPage = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">
+                    <label className="text-sm font-medium text-t-muted">
                       Notas (opcional)
                     </label>
                     <Input
@@ -684,74 +684,74 @@ export const DailyOperatingResultsPage = () => {
                 {editPreview ? (
                   <div className="space-y-3">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                      <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
-                        <div className="text-xs uppercase text-gray-500">
+                      <div className="rounded-lg border border-b-default bg-dark-section p-3">
+                        <div className="text-xs uppercase text-t-dim">
                           Delta anterior total
                         </div>
-                        <div className="mt-1 text-sm font-semibold text-gray-900">
+                        <div className="mt-1 text-sm font-semibold text-t-primary">
                           USD {formatNumberAR(editPreview.total_old_delta)}
                         </div>
                       </div>
-                      <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
-                        <div className="text-xs uppercase text-gray-500">
+                      <div className="rounded-lg border border-b-default bg-dark-section p-3">
+                        <div className="text-xs uppercase text-t-dim">
                           Delta nuevo total
                         </div>
-                        <div className="mt-1 text-sm font-semibold text-gray-900">
+                        <div className="mt-1 text-sm font-semibold text-t-primary">
                           USD {formatNumberAR(editPreview.total_new_delta)}
                         </div>
                       </div>
-                      <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
-                        <div className="text-xs uppercase text-gray-500">
+                      <div className="rounded-lg border border-b-default bg-dark-section p-3">
+                        <div className="text-xs uppercase text-t-dim">
                           Diferencia total
                         </div>
                         <div
-                          className={`mt-1 text-sm font-semibold ${editPreview.total_difference >= 0 ? "text-green-700" : "text-red-700"}`}
+                          className={`mt-1 text-sm font-semibold ${editPreview.total_difference >= 0 ? "text-success" : "text-error"}`}
                         >
                           USD {formatNumberAR(editPreview.total_difference)}
                         </div>
                       </div>
                     </div>
 
-                    <div className="overflow-hidden rounded-xl border border-gray-200 max-h-64 overflow-y-auto">
-                      <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50 sticky top-0">
+                    <div className="overflow-hidden rounded-xl border border-b-default max-h-64 overflow-y-auto">
+                      <table className="min-w-full divide-y divide-b-default">
+                        <thead className="bg-dark-section sticky top-0">
                           <tr>
-                            <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-700">
+                            <th className="px-3 py-2 text-left text-xs font-medium uppercase text-t-muted">
                               Inversor
                             </th>
-                            <th className="px-3 py-2 text-right text-xs font-medium uppercase text-gray-700">
+                            <th className="px-3 py-2 text-right text-xs font-medium uppercase text-t-muted">
                               Delta anterior
                             </th>
-                            <th className="px-3 py-2 text-right text-xs font-medium uppercase text-gray-700">
+                            <th className="px-3 py-2 text-right text-xs font-medium uppercase text-t-muted">
                               Delta nuevo
                             </th>
-                            <th className="px-3 py-2 text-right text-xs font-medium uppercase text-gray-700">
+                            <th className="px-3 py-2 text-right text-xs font-medium uppercase text-t-muted">
                               Diferencia
                             </th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-200 bg-white">
+                        <tbody className="divide-y divide-b-default bg-dark-card">
                           {editPreview.investors.map((r) => (
                             <tr
                               key={r.investor_id}
-                              className="hover:bg-gray-50"
+                              className="hover:bg-dark-section"
                             >
-                              <td className="px-3 py-2 text-sm text-gray-900">
+                              <td className="px-3 py-2 text-sm text-t-primary">
                                 <div className="font-medium">
                                   {r.investor_name}
                                 </div>
-                                <div className="text-xs text-gray-500">
+                                <div className="text-xs text-t-dim">
                                   {r.investor_email}
                                 </div>
                               </td>
-                              <td className="px-3 py-2 text-right text-sm text-gray-900">
+                              <td className="px-3 py-2 text-right text-sm text-t-primary">
                                 USD {formatNumberAR(r.old_delta)}
                               </td>
-                              <td className="px-3 py-2 text-right text-sm text-gray-900">
+                              <td className="px-3 py-2 text-right text-sm text-t-primary">
                                 USD {formatNumberAR(r.new_delta)}
                               </td>
                               <td
-                                className={`px-3 py-2 text-right text-sm font-medium ${r.difference >= 0 ? "text-green-700" : "text-red-700"}`}
+                                className={`px-3 py-2 text-right text-sm font-medium ${r.difference >= 0 ? "text-success" : "text-error"}`}
                               >
                                 USD {formatNumberAR(r.difference)}
                               </td>
@@ -763,7 +763,7 @@ export const DailyOperatingResultsPage = () => {
                   </div>
                 ) : null}
               </div>
-              <div className="flex justify-end gap-3 border-t border-gray-200 px-6 py-4">
+              <div className="flex justify-end gap-3 border-t border-b-default px-6 py-4">
                 <Button type="button" variant="outline" onClick={closeEdit}>
                   Cancelar
                 </Button>
@@ -784,7 +784,7 @@ export const DailyOperatingResultsPage = () => {
       <ConfirmDialog
         isOpen={editConfirmOpen}
         title="Confirmar edición de operativa"
-        message={`Se cambiará el porcentaje de ${editRow?.percent.toFixed(2).replace(".", ",")}% a ${editParsedPercent?.toFixed(2).replace(".", ",")}%. Se recalculará el capital de ${editPreview?.investors_count ?? 0} inversor(es).`}
+        message={`Se cambiará el porcentaje de ${editRow?.percent.toFixed(2)}% a ${editParsedPercent?.toFixed(2)}%. Se recalculará el capital de ${editPreview?.investors_count ?? 0} inversor(es).`}
         confirmText={editApplying ? "Aplicando…" : "Confirmar edición"}
         cancelText="Cancelar"
         confirmVariant="primary"

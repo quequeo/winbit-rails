@@ -186,6 +186,6 @@ describe("AdminLayout", () => {
       'a[href="/investors"]',
     );
     expect(mobileInvestorsLink).toBeInTheDocument();
-    expect(mobileInvestorsLink).toHaveClass("bg-[#58b098]/10");
+    expect(mobileInvestorsLink).toHaveClass("bg-primary-dim");
   });
 });

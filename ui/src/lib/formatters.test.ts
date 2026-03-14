@@ -187,9 +187,9 @@ describe("formatters", () => {
       expect(formatNumberAR(15314.0)).toBe("15,314.00");
       expect(formatNumberAR(1000000)).toBe("1,000,000.00");
 
-      // Percent format: XX.XX%
-      expect(formatPercentAR(12.5)).toBe("12.50%");
-      expect(formatPercentAR(100)).toBe("100.00%");
+      // Percent format: +XX.XX% (positive gets + prefix)
+      expect(formatPercentAR(12.5)).toBe("+12.50%");
+      expect(formatPercentAR(100)).toBe("+100.00%");
     });
   });
 });

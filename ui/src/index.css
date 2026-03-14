@@ -1,7 +1,21 @@
 @import 'tailwindcss';
 
-:root {
-  --winbit-primary: #58b098;
+@theme {
+  --color-primary: #65a7a5;
+  --color-primary-dim: rgba(101, 167, 165, 0.15);
+  --color-primary-glow: rgba(101, 167, 165, 0.3);
+  --color-dark-bg: #0a0a0a;
+  --color-dark-card: rgba(20, 20, 20, 0.5);
+  --color-dark-section: rgba(20, 20, 20, 0.55);
+  --color-t-primary: #e8e8e8;
+  --color-t-muted: #888888;
+  --color-t-dim: #555555;
+  --color-b-default: rgba(255, 255, 255, 0.08);
+  --color-b-accent: rgba(101, 167, 165, 0.3);
+  --color-success: #4caf50;
+  --color-warning: #ff9800;
+  --color-error: #ef5350;
+  --color-info: #65a7a5;
 }
 
 html,
@@ -10,5 +24,37 @@ body {
 }
 
 body {
-  font-family: 'Montserrat', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, 'Noto Sans', 'Liberation Sans', sans-serif;
+  background: #0a0a0a;
+  color: #e8e8e8;
+  font-family: 'Montserrat', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial,
+    'Noto Sans', 'Liberation Sans', sans-serif;
+}
+
+input,
+select,
+textarea {
+  background: rgba(20, 20, 20, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: #e8e8e8;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.875rem;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #555555;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: rgba(101, 167, 165, 0.5);
+  box-shadow: 0 0 0 2px rgba(101, 167, 165, 0.15);
+}
+
+.rdp {
+  --rdp-accent-color: #65a7a5;
 }

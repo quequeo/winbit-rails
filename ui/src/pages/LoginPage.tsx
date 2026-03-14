@@ -15,12 +15,12 @@ export const LoginPage = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-      <div className="w-full max-w-md rounded-xl bg-white shadow p-8">
-        <h1 className="text-2xl font-bold text-gray-900">Winbit Admin</h1>
-        <p className="text-sm text-gray-600 mt-1">Ingresá con Google</p>
+    <div className="min-h-screen bg-dark-bg flex items-center justify-center px-4">
+      <div className="w-full max-w-md rounded-xl bg-dark-card border border-b-default p-8">
+        <h1 className="text-2xl font-bold text-t-primary">Winbit Admin</h1>
+        <p className="text-sm text-t-muted mt-1">Ingresá con Google</p>
         {message ? (
-          <p className="mt-3 text-sm text-red-600">{message}</p>
+          <p className="mt-3 text-sm text-error">{message}</p>
         ) : null}
 
         <div className="mt-6">
@@ -29,7 +29,7 @@ export const LoginPage = () => {
           </a>
         </div>
 
-        <p className="mt-4 text-xs text-gray-500">
+        <p className="mt-4 text-xs text-t-dim">
           Solo admins autorizados pueden acceder.
         </p>
       </div>

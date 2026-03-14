@@ -117,16 +117,16 @@ export const Select = ({
             if (!disabled) setOpen((v) => !v);
           }}
           className={
-            "flex h-10 w-full items-center justify-between gap-2 rounded-md border border-gray-300 bg-white px-3 text-left text-sm " +
-            "focus:border-[#58b098] focus:outline-none focus:ring-1 focus:ring-[#58b098] disabled:cursor-not-allowed disabled:bg-gray-100 " +
+            "flex h-10 w-full items-center justify-between gap-2 rounded-md border border-b-default bg-dark-card px-3 text-left text-sm " +
+            "focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:bg-dark-section " +
             buttonClassName
           }
         >
-          <span className="truncate text-gray-900">{displayLabel}</span>
+          <span className="truncate text-t-primary">{displayLabel}</span>
           <svg
             viewBox="0 0 20 20"
             fill="currentColor"
-            className={`h-4 w-4 shrink-0 ${disabled ? "text-gray-300" : "text-gray-400"}`}
+            className={`h-4 w-4 shrink-0 ${disabled ? "text-t-dim" : "text-t-muted"}`}
             aria-hidden="true"
           >
             <path
@@ -144,7 +144,7 @@ export const Select = ({
                 ref={menuRef}
                 role="listbox"
                 aria-labelledby={id}
-                className="z-[9999] max-h-64 overflow-auto rounded-md border border-gray-200 bg-white shadow-lg"
+                className="z-[9999] max-h-64 overflow-auto rounded-md border border-b-default bg-dark-card shadow-lg"
                 style={{
                   position: "fixed",
                   left: menuRect?.left ?? 0,
@@ -168,11 +168,11 @@ export const Select = ({
                       className={
                         "w-full px-3 py-2 text-left text-sm " +
                         (optDisabled
-                          ? "cursor-not-allowed text-gray-300 "
-                          : "hover:bg-gray-50 ") +
+                          ? "cursor-not-allowed text-t-dim "
+                          : "hover:bg-primary-dim ") +
                         (isSelected
-                          ? "bg-[#58b098]/10 font-semibold text-gray-900"
-                          : "text-gray-700")
+                          ? "bg-primary-dim font-semibold text-t-primary"
+                          : "text-t-muted")
                       }
                     >
                       {opt.label}
@@ -187,7 +187,7 @@ export const Select = ({
               ref={menuRef}
               role="listbox"
               aria-labelledby={id}
-              className="absolute left-0 right-0 z-50 mt-2 max-h-64 overflow-auto rounded-md border border-gray-200 bg-white shadow-lg"
+              className="absolute left-0 right-0 z-50 mt-2 max-h-64 overflow-auto rounded-md border border-b-default bg-dark-card shadow-lg"
             >
               {items.map((opt) => {
                 const isSelected = String(opt.value) === String(value);
@@ -205,11 +205,11 @@ export const Select = ({
                     className={
                       "w-full px-3 py-2 text-left text-sm " +
                       (optDisabled
-                        ? "cursor-not-allowed text-gray-300 "
-                        : "hover:bg-gray-50 ") +
+                        ? "cursor-not-allowed text-t-dim "
+                        : "hover:bg-primary-dim ") +
                       (isSelected
-                        ? "bg-[#58b098]/10 font-semibold text-gray-900"
-                        : "text-gray-700")
+                        ? "bg-primary-dim font-semibold text-t-primary"
+                        : "text-t-muted")
                     }
                   >
                     {opt.label}
