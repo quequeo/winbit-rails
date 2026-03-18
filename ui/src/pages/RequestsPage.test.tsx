@@ -156,6 +156,7 @@ describe("RequestsPage", () => {
         expect(api.getAdminRequests).toHaveBeenCalledWith({
           status: "PENDING",
           type: undefined,
+          investor_id: undefined,
         });
       });
     });
@@ -176,6 +177,35 @@ describe("RequestsPage", () => {
         expect(api.getAdminRequests).toHaveBeenCalledWith({
           status: undefined,
           type: "DEPOSIT",
+          investor_id: undefined,
+        });
+      });
+    });
+
+    it("filters by investor", async () => {
+      vi.mocked(api.getAdminRequests).mockResolvedValue(mockRequests);
+      vi.mocked(api.getAdminInvestors).mockResolvedValue({
+        data: [
+          { id: "inv-1", email: "inv1@test.com", name: "Investor One" },
+          { id: "inv-2", email: "inv2@test.com", name: "Investor Two" },
+        ],
+      });
+
+      render(<RequestsPage />);
+
+      await waitFor(() => {
+        expect(screen.getByRole("option", { name: "Investor One" })).toBeInTheDocument();
+      });
+
+      fireEvent.change(screen.getByLabelText("Buscar por inversor"), {
+        target: { value: "inv-1" },
+      });
+
+      await waitFor(() => {
+        expect(api.getAdminRequests).toHaveBeenCalledWith({
+          status: undefined,
+          type: undefined,
+          investor_id: "inv-1",
         });
       });
     });
@@ -217,7 +247,7 @@ describe("RequestsPage", () => {
       await user.click(addButton);
 
       // Fill form
-      const investorSelect = screen.getByLabelText(/Inversor/i);
+      const investorSelect = screen.getByLabelText(/Inversor \*/);
       await user.selectOptions(investorSelect, "1");
 
       const typeSelect = screen.getByLabelText(/Tipo \*/i);
@@ -263,7 +293,7 @@ describe("RequestsPage", () => {
       });
       await user.click(addButton);
 
-      const investorSelect = screen.getByLabelText(/Inversor/i);
+      const investorSelect = screen.getByLabelText(/Inversor \*/);
       await user.selectOptions(investorSelect, "1");
 
       const amountInput = screen.getByPlaceholderText("1000");
@@ -295,7 +325,7 @@ describe("RequestsPage", () => {
       await user.click(
         screen.getByRole("button", { name: /Agregar Solicitud/i }),
       );
-      await user.selectOptions(screen.getByLabelText(/Inversor/i), "1");
+      await user.selectOptions(screen.getByLabelText(/Inversor \*/), "1");
       await user.type(screen.getByPlaceholderText("1000"), "1000");
       await user.click(
         screen.getByRole("button", { name: /Crear Solicitud/i }),

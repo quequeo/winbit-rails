@@ -4,10 +4,12 @@ module Api
       def index
         status = params[:status]
         type = params[:type]
+        investor_id = params[:investor_id]
 
         scope = InvestorRequest.includes(:investor).order(requested_at: :desc)
         scope = scope.where(status: status) if status.present?
         scope = scope.where(request_type: type) if type.present?
+        scope = scope.where(investor_id: investor_id) if investor_id.present?
 
         paginated_result = paginate(scope, default_per_page: 200, max_per_page: 200)
         paginated = paginated_result[:records]

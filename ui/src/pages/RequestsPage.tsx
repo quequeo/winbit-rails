@@ -106,6 +106,7 @@ const AttachmentViewer = ({ url }: { url: string }) => {
 export const RequestsPage = () => {
   const [status, setStatus] = useState("");
   const [type, setType] = useState("");
+  const [investorId, setInvestorId] = useState("");
   const [data, setData] = useState<{
     data?: { requests?: ApiRequest[]; pendingCount?: number };
   } | null>(null);
@@ -126,8 +127,12 @@ export const RequestsPage = () => {
   const [reverseConfirm, setReverseConfirm] = useState<ApiRequest | null>(null);
 
   const params = useMemo(
-    () => ({ status: status || undefined, type: type || undefined }),
-    [status, type],
+    () => ({
+      status: status || undefined,
+      type: type || undefined,
+      investor_id: investorId || undefined,
+    }),
+    [status, type, investorId],
   );
 
   const load = useCallback(() => {
@@ -424,7 +429,28 @@ export const RequestsPage = () => {
       )}
 
       <div className="rounded-lg bg-dark-card p-6">
-        <div className="flex gap-4">
+        <div className="flex flex-wrap gap-4">
+          <div>
+            <label
+              htmlFor="filter-investor"
+              className="mb-2 block text-sm font-medium text-t-muted"
+            >
+              Buscar por inversor
+            </label>
+            <select
+              id="filter-investor"
+              className="rounded-md border border-b-default px-3 py-2 min-w-[200px]"
+              value={investorId}
+              onChange={(e) => setInvestorId(e.target.value)}
+            >
+              <option value="">Todos</option>
+              {investors.map((inv) => (
+                <option key={inv.id} value={inv.id}>
+                  {inv.name || inv.email}
+                </option>
+              ))}
+            </select>
+          </div>
           <div>
             <label
               htmlFor="filter-type"
