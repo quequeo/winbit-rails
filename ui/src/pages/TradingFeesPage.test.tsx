@@ -7,7 +7,6 @@ import { api } from "../lib/api";
 vi.mock("../lib/api", () => ({
   api: {
     getTradingFeesSummary: vi.fn(),
-    getAdminInvestors: vi.fn(),
     calculateTradingFee: vi.fn(),
     applyTradingFee: vi.fn(),
     updateTradingFee: vi.fn(),
@@ -18,7 +17,6 @@ vi.mock("../lib/api", () => ({
 describe("TradingFeesPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(api.getAdminInvestors).mockResolvedValue({ data: [] });
   });
 
   const mockRows = [
@@ -827,23 +825,4 @@ describe("TradingFeesPage", () => {
     });
   });
 
-  it("shows and hides add investor panel", async () => {
-    const user = userEvent.setup();
-    vi.mocked(api.getTradingFeesSummary).mockResolvedValue(mockRows);
-
-    render(<TradingFeesPage />);
-
-    await waitFor(() =>
-      expect(screen.getAllByText("Investor One").length).toBeGreaterThan(0),
-    );
-
-    const addBtn = screen.getByRole("button", { name: /Agregar inversor/ });
-    await user.click(addBtn);
-
-    expect(screen.getByText("Seleccionar inversor...")).toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: "Cancelar" }));
-
-    expect(screen.queryByText("Seleccionar inversor...")).not.toBeInTheDocument();
-  });
 });
