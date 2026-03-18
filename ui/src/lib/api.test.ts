@@ -209,6 +209,21 @@ describe("api", () => {
         expect.any(Object),
       );
     });
+
+    it("should fetch requests with investor_id param", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: new Headers({ "content-type": "application/json" }),
+        text: async () => JSON.stringify({ data: [] }),
+      });
+
+      await api.getAdminRequests({ investor_id: "inv-123" });
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining("investor_id=inv-123"),
+        expect.any(Object),
+      );
+    });
   });
 
   describe("createRequest", () => {

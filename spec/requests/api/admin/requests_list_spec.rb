@@ -121,6 +121,15 @@ RSpec.describe 'Admin requests list', type: :request do
       expect(json['data']['requests'][0]['type']).to eq('DEPOSIT')
     end
 
+    it 'filters by investor_id when investor_id param is provided' do
+      get '/api/admin/requests', params: { investor_id: investor1.id, per_page: 200 }
+
+      json = JSON.parse(response.body)
+
+      expect(json['data']['requests'].length).to eq(2)
+      expect(json['data']['requests'].all? { |r| r['investorId'] == investor1.id }).to be true
+    end
+
     it 'includes attachment_url when present' do
       get '/api/admin/requests', params: { per_page: 200 }
 

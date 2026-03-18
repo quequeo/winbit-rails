@@ -65,10 +65,15 @@ export const api = {
     return request(`${ADMIN_API_PREFIX}/investors${suffix}`);
   },
   signOut: () => request("/users/sign_out", { method: "DELETE" }),
-  getAdminRequests: (params?: { status?: string; type?: string }) => {
+  getAdminRequests: (params?: {
+    status?: string;
+    type?: string;
+    investor_id?: string;
+  }) => {
     const qs = new URLSearchParams();
     if (params?.status) qs.set("status", params.status);
     if (params?.type) qs.set("type", params.type);
+    if (params?.investor_id) qs.set("investor_id", params.investor_id);
     const suffix = qs.toString() ? `?${qs.toString()}` : "";
     return request(`${ADMIN_API_PREFIX}/requests${suffix}`);
   },
