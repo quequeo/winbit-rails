@@ -698,7 +698,7 @@ RSpec.describe 'Admin Trading Fees API', type: :request do
   end
 
   describe 'GET /api/admin/trading_fees/investors_summary' do
-    it 'returns active investors with invested > 0 and monthly breakdown' do
+    it 'returns all active investors and monthly breakdown' do
       inv1 = create_investor_with_portfolio(email: 'sum1@test.com')
       inv1.update!(trading_fee_percentage: 22.5)
       inv2 = create_investor_with_portfolio(email: 'sum2@test.com')
@@ -719,15 +719,19 @@ RSpec.describe 'Admin Trading Fees API', type: :request do
 
       expect(response).to have_http_status(:ok)
       json = JSON.parse(response.body)
-      expect(json.map { |r| r['investor_id'] }).to contain_exactly(inv1.id)
+      expect(json.map { |r| r['investor_id'] }).to contain_exactly(inv1.id, inv2.id)
 
-      row = json.first
-      expect(row['profit_amount']).to eq(15.0)
-      expect(row['has_profit']).to eq(true)
-      expect(row['investor_trading_fee_percentage']).to eq(22.5)
-      expect(row['monthly_profits']).to be_an(Array)
-      months = row['monthly_profits'].map { |m| m['month'] }
+      row1 = json.find { |r| r['investor_id'] == inv1.id }
+      expect(row1['profit_amount']).to eq(15.0)
+      expect(row1['has_profit']).to eq(true)
+      expect(row1['investor_trading_fee_percentage']).to eq(22.5)
+      expect(row1['monthly_profits']).to be_an(Array)
+      months = row1['monthly_profits'].map { |m| m['month'] }
       expect(months).to include('2025-10', '2025-11', '2025-12')
+
+      row2 = json.find { |r| r['investor_id'] == inv2.id }
+      expect(row2['profit_amount']).to eq(0.0)
+      expect(row2['has_profit']).to eq(false)
     end
 
     it 'returns summary without period params using calculator' do

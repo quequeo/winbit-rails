@@ -344,9 +344,6 @@ module Api
 
         summary = investors.map do |investor|
           if start_date && end_date
-            invested = invested_amount_at(investor, end_date)
-            next if invested <= 0 && params[:investor_id].blank?
-
             adj_start, adj_end = TradingFeeCalculator.adjust_period_for_withdrawal_fees(investor, start_date, end_date)
             profit_amount = profits_for(investor, adj_start, adj_end)
             existing_fee = overlapping_periodic_fee(investor, adj_start, adj_end)
@@ -366,9 +363,6 @@ module Api
           else
             calculator = TradingFeeCalculator.new(investor)
             result = calculator.calculate
-
-            invested = invested_amount_at(investor, result[:period_end])
-            next if invested <= 0 && params[:investor_id].blank?
 
             existing_fee = TradingFee.active.find_by(
               investor_id: investor.id,

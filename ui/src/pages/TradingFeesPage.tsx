@@ -3,7 +3,6 @@ import { api } from "../lib/api";
 import { ConfirmDialog } from "../components/ui/ConfirmDialog";
 import { Select } from "../components/ui/Select";
 import { formatDateAR, formatCurrencyAR } from "../lib/formatters";
-import type { ApiInvestor } from "../types";
 
 type Frequency = "MONTHLY" | "QUARTERLY" | "SEMESTRAL" | "ANNUAL";
 
@@ -167,10 +166,6 @@ export const TradingFeesPage = () => {
 
   const [frequencyMode, setFrequencyMode] = useState<"per_investor" | Frequency>("per_investor");
   const [periodValue, setPeriodValue] = useState("");
-  const [allInvestors, setAllInvestors] = useState<ApiInvestor[]>([]);
-  const [addInvestorId, setAddInvestorId] = useState("");
-  const [addingInvestor, setAddingInvestor] = useState(false);
-  const [showAddInvestor, setShowAddInvestor] = useState(false);
 
   const periodOptions = useMemo(() => {
     switch (frequencyMode) {
@@ -202,13 +197,6 @@ export const TradingFeesPage = () => {
   }, [frequencyMode, periodValue]);
 
   useEffect(() => {
-    api.getAdminInvestors({}).then((res) => {
-      const data = (res as { data?: ApiInvestor[] })?.data ?? [];
-      setAllInvestors(data);
-    }).catch(() => {});
-  }, []);
-
-  useEffect(() => {
     if (!flash) return;
     const t = setTimeout(() => setFlash(null), 4000);
     return () => clearTimeout(t);
@@ -218,7 +206,7 @@ export const TradingFeesPage = () => {
     period_start?: string,
     period_end?: string,
     frequency?: string,
-    opts?: { suppressError?: boolean; investor_id?: string },
+    opts?: { suppressError?: boolean },
   ) => {
     try {
       setLoading(true);
@@ -227,74 +215,21 @@ export const TradingFeesPage = () => {
         period_start,
         period_end,
         frequency,
-        investor_id: opts?.investor_id,
       })) as InvestorSummary[];
-      if (opts?.investor_id) {
-        setInvestors((prev) => {
-          const existingIds = new Set(prev.map((i) => i.investor_id));
-          const toAdd = response.filter((r) => !existingIds.has(r.investor_id));
-          return [...prev, ...toAdd];
-        });
-        const newPct: Record<string, string> = {};
-        response.forEach((inv) => {
-          const applied = typeof inv.applied_fee_percentage === "number" ? inv.applied_fee_percentage : null;
-          const investorDefault = typeof inv.investor_trading_fee_percentage === "number" ? inv.investor_trading_fee_percentage : 30;
-          newPct[inv.investor_id] = applied !== null ? String(applied) : String(investorDefault);
-        });
-        if (Object.keys(newPct).length > 0) {
-          setPercentages((p) => ({ ...p, ...newPct }));
-        }
-      } else {
-        setInvestors(response);
-        const initialPercentages: Record<string, string> = {};
-        response.forEach((inv) => {
-          const applied = typeof inv.applied_fee_percentage === "number" ? inv.applied_fee_percentage : null;
-          const investorDefault = typeof inv.investor_trading_fee_percentage === "number" ? inv.investor_trading_fee_percentage : 30;
-          initialPercentages[inv.investor_id] = applied !== null ? String(applied) : String(investorDefault);
-        });
-        setPercentages(initialPercentages);
-      }
+      setInvestors(response);
+      const initialPercentages: Record<string, string> = {};
+      response.forEach((inv) => {
+        const applied = typeof inv.applied_fee_percentage === "number" ? inv.applied_fee_percentage : null;
+        const investorDefault = typeof inv.investor_trading_fee_percentage === "number" ? inv.investor_trading_fee_percentage : 30;
+        initialPercentages[inv.investor_id] = applied !== null ? String(applied) : String(investorDefault);
+      });
+      setPercentages(initialPercentages);
     } catch (err: unknown) {
       if (!opts?.suppressError) {
         setError(err instanceof Error ? err.message : "Error al cargar inversores");
       }
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleAddInvestor = async () => {
-    if (!addInvestorId) return;
-    setAddingInvestor(true);
-    try {
-      const [start, end] = frequencyMode !== "per_investor" && periodValue ? periodValue.split("|") : [undefined, undefined];
-      const response = (await api.getTradingFeesSummary({
-        period_start: start,
-        period_end: end,
-        investor_id: addInvestorId,
-      })) as InvestorSummary[];
-      setAddInvestorId("");
-      if (response.length === 0) {
-        setFlash({ type: "error", message: "Inversor no encontrado o sin capital invertido en el período" });
-      } else {
-        setInvestors((prev) => {
-          const existingIds = new Set(prev.map((i) => i.investor_id));
-          const toAdd = response.filter((r) => !existingIds.has(r.investor_id));
-          return [...prev, ...toAdd];
-        });
-        const newPct: Record<string, string> = {};
-        response.forEach((inv) => {
-          const applied = typeof inv.applied_fee_percentage === "number" ? inv.applied_fee_percentage : null;
-          const investorDefault = typeof inv.investor_trading_fee_percentage === "number" ? inv.investor_trading_fee_percentage : 30;
-          newPct[inv.investor_id] = applied !== null ? String(applied) : String(investorDefault);
-        });
-        setPercentages((p) => ({ ...p, ...newPct }));
-        setShowAddInvestor(false);
-      }
-    } catch {
-      setFlash({ type: "error", message: "Error al cargar el inversor" });
-    } finally {
-      setAddingInvestor(false);
     }
   };
 
@@ -552,48 +487,6 @@ export const TradingFeesPage = () => {
             </div>
           </div>
 
-          <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-t-muted invisible">Acción</label>
-            {showAddInvestor ? (
-              <div className="flex items-center gap-2">
-                <select
-                  value={addInvestorId}
-                  onChange={(e) => setAddInvestorId(e.target.value)}
-                  className="h-10 min-w-[200px] rounded border border-b-default bg-dark-card px-3 text-sm text-t-primary"
-                >
-                  <option value="">Seleccionar inversor...</option>
-                  {allInvestors
-                    .filter((inv) => !investors.some((i) => i.investor_id === String(inv.id)))
-                    .map((inv) => (
-                      <option key={inv.id} value={inv.id}>{inv.name} ({inv.email})</option>
-                    ))}
-                </select>
-                <button
-                  type="button"
-                  onClick={handleAddInvestor}
-                  disabled={!addInvestorId || addingInvestor}
-                  className="h-10 rounded border border-b-default bg-primary px-3 text-sm font-medium text-white hover:bg-primary/90 disabled:opacity-50"
-                >
-                  {addingInvestor ? "..." : "Agregar"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setShowAddInvestor(false); setAddInvestorId(""); }}
-                  className="h-10 rounded border border-b-default bg-dark-card px-3 text-sm text-t-muted hover:bg-dark-section"
-                >
-                  Cancelar
-                </button>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setShowAddInvestor(true)}
-                className="h-10 rounded border border-b-default bg-dark-card px-3 text-sm text-t-muted hover:bg-dark-section"
-              >
-                + Agregar inversor
-              </button>
-            )}
-          </div>
         </div>
 
         {flash ? (
