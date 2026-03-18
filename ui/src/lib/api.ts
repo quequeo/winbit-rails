@@ -115,8 +115,6 @@ export const api = {
     }),
   rejectRequest: (id: string) =>
     request(`${ADMIN_API_PREFIX}/requests/${id}/reject`, { method: "POST" }),
-  reverseRequest: (id: string) =>
-    request(`${ADMIN_API_PREFIX}/requests/${id}/reverse`, { method: "POST" }),
   getAdminAdmins: () => request(`${ADMIN_API_PREFIX}/admins`),
   createAdmin: (body: {
     email: string;

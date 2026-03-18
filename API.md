@@ -260,7 +260,6 @@ Requiere sesión de admin. Usada por el backoffice.
 | DELETE | `/requests/:id` | Eliminar solicitud |
 | POST | `/requests/:id/approve` | Aprobar solicitud |
 | POST | `/requests/:id/reject` | Rechazar solicitud |
-| POST | `/requests/:id/reverse` | Revertir solicitud aprobada |
 | GET | `/deposit_options` | Opciones de depósito |
 | GET | `/daily_operating_results` | Operativa diaria |
 | POST | `/daily_operating_results` | Cargar operativa |
