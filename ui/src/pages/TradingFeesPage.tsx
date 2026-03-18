@@ -125,6 +125,7 @@ export const TradingFeesPage = () => {
     const { year, quarter } = getLastCompletedQuarter();
     return quarterToDates(year, quarter);
   }, []);
+  const [periodMode, setPeriodMode] = useState<"per_investor" | "quarter">("per_investor");
   const [periodStart, setPeriodStart] = useState(defaultPeriod.start);
   const [periodEnd, setPeriodEnd] = useState(defaultPeriod.end);
   const [allInvestors, setAllInvestors] = useState<ApiInvestor[]>([]);
@@ -137,8 +138,12 @@ export const TradingFeesPage = () => {
   }, [defaultPeriod.start, defaultPeriod.end]);
 
   useEffect(() => {
-    void loadInvestorsSummary(periodStart, periodEnd);
-  }, [periodStart, periodEnd]);
+    if (periodMode === "per_investor") {
+      void loadInvestorsSummary(undefined, undefined);
+    } else {
+      void loadInvestorsSummary(periodStart, periodEnd);
+    }
+  }, [periodMode, periodStart, periodEnd]);
 
   useEffect(() => {
     api
@@ -224,8 +229,8 @@ export const TradingFeesPage = () => {
     setAddingInvestor(true);
     try {
       const response = (await api.getTradingFeesSummary({
-        period_start: periodStart,
-        period_end: periodEnd,
+        period_start: periodMode === "quarter" ? periodStart : undefined,
+        period_end: periodMode === "quarter" ? periodEnd : undefined,
         investor_id: addInvestorId,
       })) as InvestorSummary[];
       setAddInvestorId("");
@@ -391,7 +396,11 @@ export const TradingFeesPage = () => {
       setConfirmModal(null);
       setNotes("");
 
-      await loadInvestorsSummary(periodStart, periodEnd, { suppressError: true });
+      await loadInvestorsSummary(
+        periodMode === "quarter" ? periodStart : undefined,
+        periodMode === "quarter" ? periodEnd : undefined,
+        { suppressError: true },
+      );
     } catch (err: unknown) {
       setFlash({
         type: "error",
@@ -458,7 +467,10 @@ export const TradingFeesPage = () => {
       });
       setEditModal(null);
       setEditNotes("");
-      await loadInvestorsSummary(periodStart, periodEnd);
+      await loadInvestorsSummary(
+        periodMode === "quarter" ? periodStart : undefined,
+        periodMode === "quarter" ? periodEnd : undefined,
+      );
     } catch (err: unknown) {
       setFlash({
         type: "error",
@@ -496,7 +508,10 @@ export const TradingFeesPage = () => {
       });
       setEditModal(null);
       setEditNotes("");
-      await loadInvestorsSummary(periodStart, periodEnd);
+      await loadInvestorsSummary(
+        periodMode === "quarter" ? periodStart : undefined,
+        periodMode === "quarter" ? periodEnd : undefined,
+      );
     } catch (err: unknown) {
       setFlash({
         type: "error",
@@ -553,28 +568,46 @@ export const TradingFeesPage = () => {
         </p>
 
         <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
-          <div className="flex flex-col gap-1 min-w-[160px]">
+          <div className="flex flex-col gap-1 min-w-[200px]">
             <label className="text-sm font-medium text-t-muted">Período</label>
             <select
-              value={`${periodStart}|${periodEnd}`}
+              value={
+                periodMode === "per_investor"
+                  ? "per_investor"
+                  : `${periodStart}|${periodEnd}`
+              }
               onChange={(e) => {
-                const [start, end] = e.target.value.split("|");
-                if (start && end) {
-                  setPeriodStart(start);
-                  setPeriodEnd(end);
+                const val = e.target.value;
+                if (val === "per_investor") {
+                  setPeriodMode("per_investor");
+                } else {
+                  const [start, end] = val.split("|");
+                  if (start && end) {
+                    setPeriodMode("quarter");
+                    setPeriodStart(start);
+                    setPeriodEnd(end);
+                  }
                 }
               }}
               className="h-10 rounded border border-b-default bg-dark-card px-3 text-sm text-t-primary"
             >
+              <option value="per_investor">
+                Por inversor (mensual/trimestral/semestral/anual)
+              </option>
               {QUARTER_OPTIONS.map((q) => {
                 const { start, end } = quarterToDates(q.year, q.quarter);
                 return (
                   <option key={`${q.year}-${q.quarter}`} value={`${start}|${end}`}>
-                    {q.label}
+                    Trimestre: {q.label}
                   </option>
                 );
               })}
             </select>
+            {periodMode === "quarter" && (
+              <p className="mt-0.5 text-xs text-t-dim">
+                Solo aplica a inversores trimestrales
+              </p>
+            )}
           </div>
           <div className="flex flex-1 flex-col gap-1 min-w-[240px]">
             <label className="text-sm font-medium text-t-muted">
