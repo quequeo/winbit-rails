@@ -14,6 +14,30 @@ class TradingFeeCalculator
     }
   end
 
+  # Returns [adjusted_start, adjusted_end] when a withdrawal fee in the period
+  # already charged profit. The periodic fee should only charge from the day after.
+  def self.adjust_period_for_withdrawal_fees(investor, period_start, period_end)
+    return [period_start.to_date, period_end.to_date] if period_start.blank? || period_end.blank?
+
+    start_d = period_start.to_date
+    end_d = period_end.to_date
+
+    last_wd = investor.trading_fees
+                      .where(source: 'WITHDRAWAL')
+                      .where(voided_at: nil)
+                      .where('applied_at::date >= ? AND applied_at::date <= ?', start_d, end_d)
+                      .order(applied_at: :desc)
+                      .first
+
+    return [start_d, end_d] if last_wd.blank?
+
+    day_after = last_wd.applied_at.to_date + 1.day
+    # Period fully consumed: withdrawal on last day (or later). Use empty future range.
+    return [end_d + 1.day, end_d + 2.days] if day_after > end_d
+
+    [day_after, end_d]
+  end
+
   private
 
   def frequency
@@ -106,26 +130,40 @@ class TradingFeeCalculator
     end
   end
 
+  def effective_period_start
+    @effective_period_start ||= self.class.adjust_period_for_withdrawal_fees(
+      investor, default_period_start, default_period_end
+    ).first
+  end
+
+  def effective_period_end
+    @effective_period_end ||= self.class.adjust_period_for_withdrawal_fees(
+      investor, default_period_start, default_period_end
+    ).last
+  end
+
   # Para mostrar el período en UI:
-  # - si ya existe un fee para ese período (según frecuencia), mostramos ese período (period_start..period_end)
-  # - si no, mostramos el período por defecto
+  # - si ya existe un fee que solapa con el período efectivo, mostramos ese
+  # - si no, mostramos el período efectivo (ajustado por fees por retiro)
   def period_start
     @period_start ||= begin
-      fee = last_fee_for(default_period_start, default_period_end)
-      fee ? fee.period_start : default_period_start
+      fee = last_periodic_fee_overlapping(effective_period_start, effective_period_end)
+      fee ? fee.period_start : effective_period_start
     end
   end
 
   def period_end
     @period_end ||= begin
-      fee = last_fee_for(default_period_start, default_period_end)
-      fee ? fee.period_end : default_period_end
+      fee = last_periodic_fee_overlapping(effective_period_start, effective_period_end)
+      fee ? fee.period_end : effective_period_end
     end
   end
 
   def profit_amount
     @profit_amount ||= begin
-      range = period_start.to_date.beginning_of_day..period_end.to_date.end_of_day
+      return 0.0 if effective_period_start >= effective_period_end
+
+      range = effective_period_start.beginning_of_day..effective_period_end.end_of_day
 
       PortfolioHistory.where(investor_id: investor.id)
                      .where(event: 'OPERATING_RESULT')
@@ -134,6 +172,15 @@ class TradingFeeCalculator
                      .sum(:amount)
                      .to_f
     end
+  end
+
+  def last_periodic_fee_overlapping(start_date, end_date)
+    investor.trading_fees
+            .active
+            .where(source: 'PERIODIC')
+            .where('period_start <= ? AND period_end >= ?', end_date, start_date)
+            .order(applied_at: :desc)
+            .first
   end
 
   def last_fee_for(start_date, end_date)

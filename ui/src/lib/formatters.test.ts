@@ -153,6 +153,17 @@ describe("formatters", () => {
       const result = formatDateAR("2026-02-14T12:00:00.000Z");
       expect(result).toMatch(/\d{2}\s\w{3}\s\d{4}\s-\s\d{2}:\d{2}/);
     });
+
+    it("formats YYYY-MM-DD date-only without timezone shift", () => {
+      // "2026-02-01" as new Date() = UTC midnight → shows 31 Jan in Argentina
+      const result = formatDateAR("2026-02-01", { time: false });
+      expect(result).toBe("1 Feb 2026");
+    });
+
+    it("formats YYYY-MM-DD period_end correctly", () => {
+      const result = formatDateAR("2026-02-28", { time: false });
+      expect(result).toBe("28 Feb 2026");
+    });
   });
 
   describe("Argentine locale format consistency", () => {

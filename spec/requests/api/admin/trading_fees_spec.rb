@@ -520,6 +520,49 @@ RSpec.describe 'Admin Trading Fees API', type: :request do
       expect(json['period_start']).to be_present
       expect(json['period_end']).to be_present
     end
+
+    it 'accepts clipped period when MONTHLY investor has withdrawal fee' do
+      inv = create_investor_with_portfolio(email: 'inv_clipped_calc@test.com')
+      inv.update!(trading_fee_frequency: 'MONTHLY')
+      inv.portfolio.update!(current_balance: 1050, total_invested: 1000)
+
+      add_history(inv: inv, event: 'DEPOSIT', amount: 1000, date: Time.zone.local(2025, 2, 1, 19, 0, 0), prev: 0, newb: 1000)
+      add_history(inv: inv, event: 'OPERATING_RESULT', amount: 100, date: Time.zone.local(2025, 2, 10, 17, 0, 0), prev: 1000, newb: 1100)
+
+      wd_request = InvestorRequest.create!(
+        investor: inv, request_type: 'WITHDRAWAL', amount: 50, method: 'CRYPTO',
+        status: 'APPROVED', requested_at: Time.zone.local(2025, 2, 15), processed_at: Time.zone.local(2025, 2, 15)
+      )
+
+      TradingFee.create!(
+        investor: inv,
+        applied_by: admin,
+        period_start: Date.new(2025, 2, 15),
+        period_end: Date.new(2025, 2, 16),
+        profit_amount: 100,
+        fee_percentage: 30,
+        fee_amount: 30,
+        source: 'WITHDRAWAL',
+        withdrawal_amount: 50,
+        withdrawal_request_id: wd_request.id,
+        applied_at: Time.zone.local(2025, 2, 15, 19, 0, 0),
+      )
+
+      add_history(inv: inv, event: 'OPERATING_RESULT', amount: 50, date: Time.zone.local(2025, 2, 20, 17, 0, 0), prev: 1000, newb: 1050)
+
+      get '/api/admin/trading_fees/calculate', params: {
+        investor_id: inv.id,
+        period_start: '2025-02-16',
+        period_end: '2025-02-28',
+        fee_percentage: 30,
+      }
+
+      expect(response).to have_http_status(:ok)
+      json = JSON.parse(response.body)
+      expect(json['profit_amount']).to eq(50.0)
+      expect(json['period_start']).to eq('2025-02-16')
+      expect(json['period_end']).to eq('2025-02-28')
+    end
   end
 
   describe 'POST /api/admin/trading_fees' do
@@ -746,6 +789,97 @@ RSpec.describe 'Admin Trading Fees API', type: :request do
       expect(json.first['investor_id']).to eq(inv.id)
       expect(json.first['profit_amount']).to eq(0)
       expect(json.first['has_profit']).to eq(false)
+    end
+
+    it 'filters by frequency when frequency param is passed' do
+      monthly_inv = create_investor_with_portfolio(email: 'monthly_freq@test.com')
+      monthly_inv.update!(trading_fee_frequency: 'MONTHLY')
+      add_history(inv: monthly_inv, event: 'DEPOSIT', amount: 1000, date: Time.zone.local(2025, 1, 2), prev: 0, newb: 1000)
+      add_history(inv: monthly_inv, event: 'OPERATING_RESULT', amount: 20, date: Time.zone.local(2025, 2, 10, 17, 0, 0), prev: 1000, newb: 1020)
+
+      quarterly_inv = create_investor_with_portfolio(email: 'quarterly_freq@test.com')
+      quarterly_inv.update!(trading_fee_frequency: 'QUARTERLY')
+      add_history(inv: quarterly_inv, event: 'DEPOSIT', amount: 1000, date: Time.zone.local(2025, 1, 2), prev: 0, newb: 1000)
+      add_history(inv: quarterly_inv, event: 'OPERATING_RESULT', amount: 30, date: Time.zone.local(2025, 2, 10, 17, 0, 0), prev: 1000, newb: 1030)
+
+      get '/api/admin/trading_fees/investors_summary', params: {
+        period_start: '2025-02-01',
+        period_end: '2025-02-28',
+        frequency: 'MONTHLY',
+      }
+
+      expect(response).to have_http_status(:ok)
+      json = JSON.parse(response.body)
+      ids = json.map { |r| r['investor_id'] }
+      expect(ids).to include(monthly_inv.id)
+      expect(ids).not_to include(quarterly_inv.id)
+    end
+
+    it 'returns withdrawal_fee_in_period and period_clipped when period was clipped' do
+      inv = create_investor_with_portfolio(email: 'clipped@test.com')
+      inv.update!(trading_fee_frequency: 'MONTHLY')
+      inv.portfolio.update!(current_balance: 1500, total_invested: 1000)
+
+      add_history(inv: inv, event: 'DEPOSIT', amount: 1000, date: Time.zone.local(2025, 2, 1, 19, 0, 0), prev: 0, newb: 1000)
+      add_history(inv: inv, event: 'OPERATING_RESULT', amount: 200, date: Time.zone.local(2025, 2, 10, 17, 0, 0), prev: 1000, newb: 1200)
+
+      wd_request = InvestorRequest.create!(
+        investor: inv, request_type: 'WITHDRAWAL', amount: 100, method: 'CRYPTO',
+        status: 'APPROVED', requested_at: Time.zone.local(2025, 2, 15), processed_at: Time.zone.local(2025, 2, 15)
+      )
+
+      TradingFee.create!(
+        investor: inv,
+        applied_by: admin,
+        period_start: Date.new(2025, 2, 15),
+        period_end: Date.new(2025, 2, 16),
+        profit_amount: 200,
+        fee_percentage: 30,
+        fee_amount: 60,
+        source: 'WITHDRAWAL',
+        withdrawal_amount: 100,
+        withdrawal_request_id: wd_request.id,
+        applied_at: Time.zone.local(2025, 2, 15, 19, 0, 0),
+      )
+
+      add_history(inv: inv, event: 'OPERATING_RESULT', amount: 50, date: Time.zone.local(2025, 2, 20, 17, 0, 0), prev: 1040, newb: 1090)
+
+      get '/api/admin/trading_fees/investors_summary', params: {
+        period_start: '2025-02-01',
+        period_end: '2025-02-28',
+      }
+
+      expect(response).to have_http_status(:ok)
+      json = JSON.parse(response.body)
+      row = json.find { |r| r['investor_id'] == inv.id }
+      expect(row).to be_present
+      expect(row['period_clipped']).to eq(true)
+      expect(row['period_start']).to eq('2025-02-16')
+      expect(row['period_end']).to eq('2025-02-28')
+
+      wf = row['withdrawal_fee_in_period']
+      expect(wf).to be_present
+      expect(wf['fee_amount']).to eq(60.0)
+      expect(wf['withdrawal_amount']).to eq(100.0)
+      expect(wf['count']).to eq(1)
+    end
+
+    it 'returns period_clipped false when period is not clipped' do
+      inv = create_investor_with_portfolio(email: 'notclipped@test.com')
+      add_history(inv: inv, event: 'DEPOSIT', amount: 1000, date: Time.zone.local(2025, 10, 2, 19, 0, 0), prev: 0, newb: 1000)
+      add_history(inv: inv, event: 'OPERATING_RESULT', amount: 10, date: Time.zone.local(2025, 10, 10, 17, 0, 0), prev: 1000, newb: 1010)
+
+      get '/api/admin/trading_fees/investors_summary', params: {
+        period_start: '2025-10-01',
+        period_end: '2025-12-31',
+      }
+
+      expect(response).to have_http_status(:ok)
+      json = JSON.parse(response.body)
+      row = json.find { |r| r['investor_id'] == inv.id }
+      expect(row).to be_present
+      expect(row['period_clipped']).to eq(false)
+      expect(row['withdrawal_fee_in_period']).to be_nil
     end
   end
 end

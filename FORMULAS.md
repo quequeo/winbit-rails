@@ -75,11 +75,13 @@ Se crea:
 ### 6) Trading fee periódico (comisión por performance del período)
 **Nota:** Esta sección describe el fee **trimestral/mensual** (source: `PERIODIC`). La comisión por **retiro** (CST) usa otro modelo: ver `CST_FEE_LOGIC.md`.
 
-Para un inversor y un período \([start..end]\):
+**Ajuste por fee por retiro:** Si el inversor tuvo un fee por retiro (source: `WITHDRAWAL`) dentro del período calendario, el fee periódico **no** cobra sobre la rentabilidad ya cobrada. El período efectivo empieza el día **siguiente** al último fee por retiro. Ej: retiro con fee el 15 feb → fee mensual de febrero cobra solo del 16 feb al 28 feb.
+
+Para un inversor y un período \([start..end]\) (ajustado si hubo fee por retiro):
 - Profit base:
 
 \[
-profit = \sum OPERATING\_RESULT.amount \text{ dentro del período}
+profit = \sum OPERATING\_RESULT.amount \text{ dentro del período efectivo}
 \]
 
 - Fee:
@@ -92,7 +94,7 @@ Se crea:
 - `TradingFee(period_start, period_end, profit_amount, fee_percentage, fee_amount, source: 'PERIODIC', ...)`
 - `PortfolioHistory` `TRADING_FEE` por \(-fee\)
 
-Servicio: `TradingFeeApplicator`
+Servicio: `TradingFeeApplicator`. Ajuste de período: `TradingFeeCalculator.adjust_period_for_withdrawal_fees`
 
 ### 7) Rentabilidad principal: **TWR** (Time-Weighted Return)
 Objetivo: rentabilidad de la estrategia **independiente de depósitos/retiros**.

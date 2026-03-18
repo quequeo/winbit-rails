@@ -1,15 +1,17 @@
 class TradingFeeInvestorSummarySerializer
-  def initialize(investor:, period_start:, period_end:, profit_amount:, monthly_profits:, existing_fee:)
+  def initialize(investor:, period_start:, period_end:, profit_amount:, monthly_profits:, existing_fee:, canonical_period_start: nil, withdrawal_fee_info: nil)
     @investor = investor
     @period_start = period_start
     @period_end = period_end
+    @canonical_period_start = canonical_period_start
     @profit_amount = profit_amount
     @monthly_profits = monthly_profits
     @existing_fee = existing_fee
+    @withdrawal_fee_info = withdrawal_fee_info
   end
 
   def as_json(*)
-    {
+    result = {
       investor_id: investor.id,
       investor_name: investor.name,
       investor_email: investor.email,
@@ -26,9 +28,18 @@ class TradingFeeInvestorSummarySerializer
       applied_fee_percentage: existing_fee&.fee_percentage&.to_f,
       monthly_profits: monthly_profits
     }
+
+    result[:period_clipped] = canonical_period_start.present? &&
+                               period_start.to_date != canonical_period_start.to_date
+
+    if withdrawal_fee_info.present?
+      result[:withdrawal_fee_in_period] = withdrawal_fee_info
+    end
+
+    result
   end
 
   private
 
-  attr_reader :investor, :period_start, :period_end, :profit_amount, :monthly_profits, :existing_fee
+  attr_reader :investor, :period_start, :period_end, :canonical_period_start, :profit_amount, :monthly_profits, :existing_fee, :withdrawal_fee_info
 end
