@@ -9,6 +9,8 @@ class Investor < ApplicationRecord
   has_many :investor_requests, dependent: :destroy
   has_many :trading_fees, dependent: :destroy
 
+  before_destroy :nullify_trading_fee_withdrawal_references
+
   before_validation :normalize_email
 
   validates :email,
@@ -37,5 +39,10 @@ class Investor < ApplicationRecord
 
   def new_record_with_password?
     new_record? && password.present?
+  end
+
+  def nullify_trading_fee_withdrawal_references
+    # trading_fees.withdrawal_request_id references requests; FK would block investor_requests destroy
+    trading_fees.update_all(withdrawal_request_id: nil)
   end
 end
