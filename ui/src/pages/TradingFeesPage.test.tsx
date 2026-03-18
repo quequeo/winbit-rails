@@ -7,6 +7,7 @@ import { api } from "../lib/api";
 vi.mock("../lib/api", () => ({
   api: {
     getTradingFeesSummary: vi.fn(),
+    getAdminInvestors: vi.fn(),
     calculateTradingFee: vi.fn(),
     applyTradingFee: vi.fn(),
     updateTradingFee: vi.fn(),
@@ -17,6 +18,7 @@ vi.mock("../lib/api", () => ({
 describe("TradingFeesPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(api.getAdminInvestors).mockResolvedValue({ data: [] });
   });
 
   const mockRows = [
@@ -79,7 +81,7 @@ describe("TradingFeesPage", () => {
       expect(screen.getAllByText("Investor One").length).toBeGreaterThan(0);
     });
 
-    const filter = screen.getByPlaceholderText("Buscar por nombre o email...");
+    const filter = screen.getByPlaceholderText("Filtrar por nombre o email...");
     await user.type(filter, "one@test.com");
 
     expect(screen.getAllByText("Investor One").length).toBeGreaterThan(0);
@@ -115,7 +117,7 @@ describe("TradingFeesPage", () => {
     const editBtn = screen.getAllByTitle("Editar")[0];
     await user.click(editBtn);
 
-    const title = screen.getByText("Editar comisión aplicada");
+    const title = screen.getByText(/Editar comisi.n aplicada/);
     expect(title).toBeInTheDocument();
 
     const modal = title.closest("div")!;
@@ -148,7 +150,7 @@ describe("TradingFeesPage", () => {
     const trashBtn = screen.getAllByTitle("Eliminar")[0];
     await user.click(trashBtn);
 
-    expect(screen.getByText("Eliminar comisión aplicada")).toBeInTheDocument();
+    expect(screen.getByText(/Eliminar comisi.n aplicada/)).toBeInTheDocument();
 
     const confirmButtons = screen.getAllByRole("button", { name: "Eliminar" });
     const confirm = confirmButtons.find(
@@ -188,7 +190,7 @@ describe("TradingFeesPage", () => {
     await user.click(applyButtons[0]);
 
     await waitFor(() =>
-      expect(screen.getByText("¿Aplicar comisión?")).toBeInTheDocument(),
+      expect(screen.getByText(/Aplicar comisi.n/)).toBeInTheDocument(),
     );
 
     await user.click(
@@ -204,7 +206,7 @@ describe("TradingFeesPage", () => {
       );
     });
     expect(
-      screen.getByText("Comisión aplicada exitosamente"),
+      screen.getByText(/Comisi.n aplicada exitosamente/),
     ).toBeInTheDocument();
   });
 
@@ -266,14 +268,14 @@ describe("TradingFeesPage", () => {
     );
 
     await user.type(
-      screen.getByPlaceholderText("Buscar por nombre o email..."),
+      screen.getByPlaceholderText("Filtrar por nombre o email..."),
       "one",
     );
     expect(screen.getByRole("button", { name: "Limpiar" })).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Limpiar" }));
     expect(
-      screen.getByPlaceholderText("Buscar por nombre o email..."),
+      screen.getByPlaceholderText("Filtrar por nombre o email..."),
     ).toHaveValue("");
   });
 
@@ -358,7 +360,7 @@ describe("TradingFeesPage", () => {
     );
     await user.click(screen.getAllByRole("button", { name: "Aplicar" })[0]);
     await waitFor(() =>
-      expect(screen.getByText("¿Aplicar comisión?")).toBeInTheDocument(),
+      expect(screen.getByText(/Aplicar comisi.n/)).toBeInTheDocument(),
     );
 
     await user.click(
@@ -406,21 +408,21 @@ describe("TradingFeesPage", () => {
       expect(screen.getAllByText("Investor One").length).toBeGreaterThan(0),
     );
     await user.click(screen.getAllByTitle("Editar")[0]);
-    const modal = screen.getByText("Editar comisión aplicada").closest("div")!;
+    const modal = screen.getByText(/Editar comisi.n aplicada/).closest("div")!;
     await user.clear(within(modal).getByRole("spinbutton"));
     await user.type(within(modal).getByRole("spinbutton"), "25");
     await user.click(screen.getByRole("button", { name: "Guardar" }));
 
     await waitFor(() =>
       expect(
-        screen.getByText("Comisión actualizada exitosamente"),
+        screen.getByText(/Comisi.n actualizada exitosamente/),
       ).toBeInTheDocument(),
     );
     const cerrarButtons = screen.getAllByRole("button", { name: "Cerrar" });
     await user.click(cerrarButtons[cerrarButtons.length - 1]);
     await waitFor(() =>
       expect(
-        screen.queryByText("Comisión actualizada exitosamente"),
+        screen.queryByText(/Comisi.n actualizada exitosamente/),
       ).not.toBeInTheDocument(),
     );
   });
@@ -441,7 +443,7 @@ describe("TradingFeesPage", () => {
       expect(screen.getAllByText("Investor 0").length).toBeGreaterThan(0),
     );
 
-    expect(screen.getByText(/Filas por página/)).toBeInTheDocument();
+    expect(screen.getByText(/Filas por p.gina/)).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Siguiente" }));
     await waitFor(() =>
@@ -466,21 +468,21 @@ describe("TradingFeesPage", () => {
     );
     await user.click(screen.getAllByTitle("Editar")[0]);
     await waitFor(() =>
-      expect(screen.getByText("Editar comisión aplicada")).toBeInTheDocument(),
+      expect(screen.getByText(/Editar comisi.n aplicada/)).toBeInTheDocument(),
     );
 
     const deleteBtnInEditModal = within(
-      screen.getByText("Editar comisión aplicada").closest("div")!,
+      screen.getByText(/Editar comisi.n aplicada/).closest("div")!,
     ).getByRole("button", { name: "Eliminar" });
     await user.click(deleteBtnInEditModal);
 
     await waitFor(() =>
       expect(
-        screen.getByText("Eliminar comisión aplicada"),
+        screen.getByText(/Eliminar comisi.n aplicada/),
       ).toBeInTheDocument(),
     );
     const deleteConfirmModal = screen
-      .getByText("Eliminar comisión aplicada")
+      .getByText(/Eliminar comisi.n aplicada/)
       .closest(".relative")!;
     const confirmDelete = within(deleteConfirmModal).getByRole("button", {
       name: "Eliminar",
@@ -503,10 +505,10 @@ describe("TradingFeesPage", () => {
     );
     await user.click(screen.getAllByTitle("Editar")[0]);
     await waitFor(() =>
-      expect(screen.getByText("Editar comisión aplicada")).toBeInTheDocument(),
+      expect(screen.getByText(/Editar comisi.n aplicada/)).toBeInTheDocument(),
     );
 
-    const modal = screen.getByText("Editar comisión aplicada").closest("div")!;
+    const modal = screen.getByText(/Editar comisi.n aplicada/).closest("div")!;
     const pctInput = within(modal).getByRole("spinbutton");
     pctInput.focus();
     expect(document.activeElement).toBe(pctInput);
@@ -589,21 +591,21 @@ describe("TradingFeesPage", () => {
     await user.click(screen.getAllByTitle("Editar")[0]);
     await waitFor(() =>
       expect(
-        screen.getByText("No se encontró el ID de la comisión aplicada"),
+        screen.getByText(/No se encontr. el ID de la comisi.n aplicada/),
       ).toBeInTheDocument(),
     );
 
     // Mobile delete action branch
     await user.click(screen.getAllByTitle("Eliminar")[0]);
     expect(
-      screen.getByText("No se encontró el ID de la comisión aplicada"),
+      screen.getByText(/No se encontr. el ID de la comisi.n aplicada/),
     ).toBeInTheDocument();
 
     // Desktop delete action branch
     const desktopDelete = screen.getAllByTitle("Eliminar")[1];
     await user.click(desktopDelete);
     expect(
-      screen.getByText("No se encontró el ID de la comisión aplicada"),
+      screen.getByText(/No se encontr. el ID de la comisi.n aplicada/),
     ).toBeInTheDocument();
   });
 
@@ -622,10 +624,10 @@ describe("TradingFeesPage", () => {
 
     await user.click(screen.getAllByTitle("Editar")[0]);
     await waitFor(() =>
-      expect(screen.getByText("Editar comisión aplicada")).toBeInTheDocument(),
+      expect(screen.getByText(/Editar comisi.n aplicada/)).toBeInTheDocument(),
     );
 
-    const modal = screen.getByText("Editar comisión aplicada").closest("div")!;
+    const modal = screen.getByText(/Editar comisi.n aplicada/).closest("div")!;
     const pctInput = within(modal).getByRole("spinbutton");
 
     await user.clear(pctInput);
@@ -738,7 +740,7 @@ describe("TradingFeesPage", () => {
     await user.click(desktopDelete);
     await waitFor(() =>
       expect(
-        screen.getByText("Eliminar comisión aplicada"),
+        screen.getByText(/Eliminar comisi.n aplicada/),
       ).toBeInTheDocument(),
     );
     await user.click(

@@ -3,6 +3,45 @@ import { api } from "../lib/api";
 import { ConfirmDialog } from "../components/ui/ConfirmDialog";
 import { Select } from "../components/ui/Select";
 import { formatDateAR, formatCurrencyAR } from "../lib/formatters";
+import type { ApiInvestor } from "../types";
+
+const getLastCompletedQuarter = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  if (month < 3) return { year: year - 1, quarter: 4 };
+  if (month < 6) return { year: year, quarter: 1 };
+  if (month < 9) return { year: year, quarter: 2 };
+  return { year: year, quarter: 3 };
+};
+
+const quarterToDates = (year: number, quarter: number) => {
+  const startMonth = (quarter - 1) * 3 + 1;
+  const endMonth = quarter * 3;
+  const start = `${year}-${String(startMonth).padStart(2, "0")}-01`;
+  const endDay = new Date(year, endMonth, 0).getDate();
+  const end = `${year}-${String(endMonth).padStart(2, "0")}-${String(endDay).padStart(2, "0")}`;
+  return { start, end };
+};
+
+const QUARTER_OPTIONS: { year: number; quarter: number; label: string }[] = (() => {
+  const opts: { year: number; quarter: number; label: string }[] = [];
+  const { year: baseYear, quarter: baseQ } = getLastCompletedQuarter();
+  for (let i = 0; i < 8; i++) {
+    let y = baseYear;
+    let q = baseQ - i;
+    while (q <= 0) {
+      q += 4;
+      y -= 1;
+    }
+    opts.push({
+      year: y,
+      quarter: q,
+      label: `Q${q} ${y}`,
+    });
+  }
+  return opts;
+})();
 
 export type InvestorSummary = {
   investor_id: string;
@@ -82,8 +121,33 @@ export const TradingFeesPage = () => {
     useState<(typeof PAGE_SIZE_OPTIONS)[number]>(20);
   const [page, setPage] = useState(1);
 
+  const defaultPeriod = useMemo(() => {
+    const { year, quarter } = getLastCompletedQuarter();
+    return quarterToDates(year, quarter);
+  }, []);
+  const [periodStart, setPeriodStart] = useState(defaultPeriod.start);
+  const [periodEnd, setPeriodEnd] = useState(defaultPeriod.end);
+  const [allInvestors, setAllInvestors] = useState<ApiInvestor[]>([]);
+  const [addInvestorId, setAddInvestorId] = useState("");
+  const [addingInvestor, setAddingInvestor] = useState(false);
+
   useEffect(() => {
-    void loadInvestorsSummary(undefined, undefined);
+    setPeriodStart(defaultPeriod.start);
+    setPeriodEnd(defaultPeriod.end);
+  }, [defaultPeriod.start, defaultPeriod.end]);
+
+  useEffect(() => {
+    void loadInvestorsSummary(periodStart, periodEnd);
+  }, [periodStart, periodEnd]);
+
+  useEffect(() => {
+    api
+      .getAdminInvestors({})
+      .then((res) => {
+        const data = (res as { data?: ApiInvestor[] })?.data ?? [];
+        setAllInvestors(data);
+      })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -95,7 +159,7 @@ export const TradingFeesPage = () => {
   const loadInvestorsSummary = async (
     period_start?: string,
     period_end?: string,
-    opts?: { suppressError?: boolean },
+    opts?: { suppressError?: boolean; investor_id?: string },
   ) => {
     try {
       setLoading(true);
@@ -103,23 +167,47 @@ export const TradingFeesPage = () => {
       const response = (await api.getTradingFeesSummary({
         period_start,
         period_end,
+        investor_id: opts?.investor_id,
       })) as InvestorSummary[];
-      setInvestors(response);
-
-      const initialPercentages: Record<string, string> = {};
-      response.forEach((inv) => {
-        const applied =
-          typeof inv.applied_fee_percentage === "number"
-            ? inv.applied_fee_percentage
-            : null;
-        const investorDefault =
-          typeof inv.investor_trading_fee_percentage === "number"
-            ? inv.investor_trading_fee_percentage
-            : 30;
-        initialPercentages[inv.investor_id] =
-          applied !== null ? String(applied) : String(investorDefault);
-      });
-      setPercentages(initialPercentages);
+      if (opts?.investor_id) {
+        setInvestors((prev) => {
+          const existingIds = new Set(prev.map((i) => i.investor_id));
+          const toAdd = response.filter((r) => !existingIds.has(r.investor_id));
+          return [...prev, ...toAdd];
+        });
+        const newPct: Record<string, string> = {};
+        response.forEach((inv) => {
+          const applied =
+            typeof inv.applied_fee_percentage === "number"
+              ? inv.applied_fee_percentage
+              : null;
+          const investorDefault =
+            typeof inv.investor_trading_fee_percentage === "number"
+              ? inv.investor_trading_fee_percentage
+              : 30;
+          newPct[inv.investor_id] =
+            applied !== null ? String(applied) : String(investorDefault);
+        });
+        if (Object.keys(newPct).length > 0) {
+          setPercentages((p) => ({ ...p, ...newPct }));
+        }
+      } else {
+        setInvestors(response);
+        const initialPercentages: Record<string, string> = {};
+        response.forEach((inv) => {
+          const applied =
+            typeof inv.applied_fee_percentage === "number"
+              ? inv.applied_fee_percentage
+              : null;
+          const investorDefault =
+            typeof inv.investor_trading_fee_percentage === "number"
+              ? inv.investor_trading_fee_percentage
+              : 30;
+          initialPercentages[inv.investor_id] =
+            applied !== null ? String(applied) : String(investorDefault);
+        });
+        setPercentages(initialPercentages);
+      }
     } catch (err: unknown) {
       if (!opts?.suppressError) {
         setError(
@@ -128,6 +216,53 @@ export const TradingFeesPage = () => {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAddInvestor = async () => {
+    if (!addInvestorId) return;
+    setAddingInvestor(true);
+    try {
+      const response = (await api.getTradingFeesSummary({
+        period_start: periodStart,
+        period_end: periodEnd,
+        investor_id: addInvestorId,
+      })) as InvestorSummary[];
+      setAddInvestorId("");
+      if (response.length === 0) {
+        setFlash({
+          type: "error",
+          message:
+            "Inversor no encontrado o sin capital invertido en el período",
+        });
+      } else {
+        setInvestors((prev) => {
+          const existingIds = new Set(prev.map((i) => i.investor_id));
+          const toAdd = response.filter((r) => !existingIds.has(r.investor_id));
+          return [...prev, ...toAdd];
+        });
+        const newPct: Record<string, string> = {};
+        response.forEach((inv) => {
+          const applied =
+            typeof inv.applied_fee_percentage === "number"
+              ? inv.applied_fee_percentage
+              : null;
+          const investorDefault =
+            typeof inv.investor_trading_fee_percentage === "number"
+              ? inv.investor_trading_fee_percentage
+              : 30;
+          newPct[inv.investor_id] =
+            applied !== null ? String(applied) : String(investorDefault);
+        });
+        setPercentages((p) => ({ ...p, ...newPct }));
+      }
+    } catch {
+      setFlash({
+        type: "error",
+        message: "Error al cargar el inversor",
+      });
+    } finally {
+      setAddingInvestor(false);
     }
   };
 
@@ -256,7 +391,7 @@ export const TradingFeesPage = () => {
       setConfirmModal(null);
       setNotes("");
 
-      await loadInvestorsSummary(undefined, undefined, { suppressError: true });
+      await loadInvestorsSummary(periodStart, periodEnd, { suppressError: true });
     } catch (err: unknown) {
       setFlash({
         type: "error",
@@ -323,7 +458,7 @@ export const TradingFeesPage = () => {
       });
       setEditModal(null);
       setEditNotes("");
-      await loadInvestorsSummary(undefined, undefined);
+      await loadInvestorsSummary(periodStart, periodEnd);
     } catch (err: unknown) {
       setFlash({
         type: "error",
@@ -361,7 +496,7 @@ export const TradingFeesPage = () => {
       });
       setEditModal(null);
       setEditNotes("");
-      await loadInvestorsSummary(undefined, undefined);
+      await loadInvestorsSummary(periodStart, periodEnd);
     } catch (err: unknown) {
       setFlash({
         type: "error",
@@ -418,16 +553,39 @@ export const TradingFeesPage = () => {
         </p>
 
         <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+          <div className="flex flex-col gap-1 min-w-[160px]">
+            <label className="text-sm font-medium text-t-muted">Período</label>
+            <select
+              value={`${periodStart}|${periodEnd}`}
+              onChange={(e) => {
+                const [start, end] = e.target.value.split("|");
+                if (start && end) {
+                  setPeriodStart(start);
+                  setPeriodEnd(end);
+                }
+              }}
+              className="h-10 rounded border border-b-default bg-dark-card px-3 text-sm text-t-primary"
+            >
+              {QUARTER_OPTIONS.map((q) => {
+                const { start, end } = quarterToDates(q.year, q.quarter);
+                return (
+                  <option key={`${q.year}-${q.quarter}`} value={`${start}|${end}`}>
+                    {q.label}
+                  </option>
+                );
+              })}
+            </select>
+          </div>
           <div className="flex flex-1 flex-col gap-1 min-w-[240px]">
             <label className="text-sm font-medium text-t-muted">
-              Inversor
+              Buscar en lista
             </label>
             <div className="flex items-center gap-2">
               <input
                 type="text"
                 value={investorFilter}
                 onChange={(e) => setInvestorFilter(e.target.value)}
-                placeholder="Buscar por nombre o email..."
+                placeholder="Filtrar por nombre o email..."
                 className="h-10 w-full rounded border border-b-default bg-dark-card px-3 text-sm"
               />
               {investorFilter ? (
@@ -439,6 +597,38 @@ export const TradingFeesPage = () => {
                   Limpiar
                 </button>
               ) : null}
+            </div>
+          </div>
+          <div className="flex flex-col gap-1 min-w-[240px]">
+            <label className="text-sm font-medium text-t-muted">
+              Agregar inversor
+            </label>
+            <div className="flex items-center gap-2">
+              <select
+                value={addInvestorId}
+                onChange={(e) => setAddInvestorId(e.target.value)}
+                className="h-10 flex-1 rounded border border-b-default bg-dark-card px-3 text-sm text-t-primary"
+              >
+                <option value="">Seleccionar inversor...</option>
+                {allInvestors
+                  .filter(
+                    (inv) =>
+                      !investors.some((i) => i.investor_id === String(inv.id)),
+                  )
+                  .map((inv) => (
+                    <option key={inv.id} value={inv.id}>
+                      {inv.name} ({inv.email})
+                    </option>
+                  ))}
+              </select>
+              <button
+                type="button"
+                onClick={handleAddInvestor}
+                disabled={!addInvestorId || addingInvestor}
+                className="h-10 rounded border border-b-default bg-primary px-3 text-sm font-medium text-white hover:bg-primary/90 disabled:opacity-50"
+              >
+                {addingInvestor ? "..." : "Agregar"}
+              </button>
             </div>
           </div>
         </div>

@@ -339,13 +339,14 @@ module Api
 
       def investors_summary
         investors = Investor.where(status: 'ACTIVE').includes(:portfolio)
+        investors = investors.where(id: params[:investor_id]) if params[:investor_id].present?
 
         start_date, end_date = extract_period_params
 
         summary = investors.map do |investor|
           if start_date && end_date
             invested = invested_amount_at(investor, end_date)
-            next if invested <= 0
+            next if invested <= 0 && params[:investor_id].blank?
 
             profit_amount = profits_for(investor, start_date, end_date)
             existing_fee = TradingFee.active.find_by(investor_id: investor.id, period_start: start_date, period_end: end_date)
@@ -364,7 +365,7 @@ module Api
             result = calculator.calculate
 
             invested = invested_amount_at(investor, result[:period_end])
-            next if invested <= 0
+            next if invested <= 0 && params[:investor_id].blank?
 
             existing_fee = TradingFee.active.find_by(
               investor_id: investor.id,
