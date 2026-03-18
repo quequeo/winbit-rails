@@ -584,7 +584,7 @@ export const DailyOperatingResultsPage = () => {
       {alertOpen ? (
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div
-            className="fixed inset-0 bg-black/15 transition-opacity"
+            className="fixed inset-0 bg-black transition-opacity"
             onClick={() => setAlertOpen(false)}
           />
           <div className="flex min-h-full items-center justify-center p-4">
@@ -625,7 +625,7 @@ export const DailyOperatingResultsPage = () => {
       {editRow ? (
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div
-            className="fixed inset-0 bg-black/15 transition-opacity"
+            className="fixed inset-0 bg-black transition-opacity"
             onClick={closeEdit}
           />
           <div className="flex min-h-full items-center justify-center p-4">

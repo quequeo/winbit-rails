@@ -1196,7 +1196,7 @@ export const TradingFeesPage = () => {
       </div>
 
       {detailModal ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/15 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black p-4">
           <div className="w-full max-w-lg overflow-hidden rounded-2xl bg-dark-card shadow-2xl">
             <div className="flex items-start justify-between border-b border-b-default px-5 py-4">
               <div>
@@ -1289,22 +1289,22 @@ export const TradingFeesPage = () => {
       ) : null}
 
       {confirmModal ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/15 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black p-4">
           <div className="w-full max-w-md rounded-lg bg-dark-card p-6 shadow-xl">
             <h2 className="mb-4 text-xl font-bold text-t-primary">
               ¿Aplicar comisión?
             </h2>
 
-            <div className="mb-4 space-y-2 rounded-lg bg-purple-50 p-4">
+            <div className="mb-4 space-y-2 rounded-lg border border-purple-600/40 bg-purple-900/25 p-4">
               <div className="flex justify-between">
                 <span className="text-sm text-t-muted">Inversor:</span>
-                <span className="text-sm font-semibold">
+                <span className="text-sm font-semibold text-t-primary">
                   {confirmModal.investor_name}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-sm text-t-muted">Período:</span>
-                <span className="text-sm">
+                <span className="text-sm text-t-primary">
                   {formatDate(confirmModal.period_start)} -{" "}
                   {formatDate(confirmModal.period_end)}
                 </span>
@@ -1317,15 +1317,15 @@ export const TradingFeesPage = () => {
               </div>
               <div className="flex justify-between">
                 <span className="text-sm text-t-muted">Porcentaje:</span>
-                <span className="text-sm font-semibold">
+                <span className="text-sm font-semibold text-t-primary">
                   {confirmModal.fee_percentage}%
                 </span>
               </div>
-              <div className="flex justify-between border-t border-purple-200 pt-2">
+              <div className="flex justify-between border-t border-purple-600/40 pt-2">
                 <span className="text-sm text-t-muted">
                   Comisión a cobrar:
                 </span>
-                <span className="text-lg font-bold text-purple-600">
+                <span className="text-lg font-bold text-purple-400">
                   {formatCurrencyAR(confirmModal.fee_amount)}
                 </span>
               </div>
@@ -1380,7 +1380,7 @@ export const TradingFeesPage = () => {
       ) : null}
 
       {editModal ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/15 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black p-4">
           <div className="w-full max-w-md rounded-lg bg-dark-card p-6 shadow-xl">
             <h2 className="mb-4 text-xl font-bold text-t-primary">
               Editar comisión aplicada
@@ -1400,16 +1400,16 @@ export const TradingFeesPage = () => {
 
               return (
                 <>
-                  <div className="mb-4 space-y-2 rounded-lg bg-purple-50 p-4">
+                  <div className="mb-4 space-y-2 rounded-lg border border-purple-600/40 bg-purple-900/25 p-4">
                     <div className="flex justify-between">
                       <span className="text-sm text-t-muted">Inversor:</span>
-                      <span className="text-sm font-semibold">
+                      <span className="text-sm font-semibold text-t-primary">
                         {editModal.investor_name}
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-t-muted">Período:</span>
-                      <span className="text-sm">
+                      <span className="text-sm text-t-primary">
                         {formatDate(editModal.period_start)} -{" "}
                         {formatDate(editModal.period_end)}
                       </span>
