@@ -9,6 +9,7 @@ import {
 import userEvent from "@testing-library/user-event";
 import { RequestsPage } from "./RequestsPage";
 import { api } from "../lib/api";
+import { exportRequestsToExcel } from "../lib/exportRequestsToExcel";
 
 // Mock del módulo api
 vi.mock("../lib/api", () => ({
@@ -20,6 +21,10 @@ vi.mock("../lib/api", () => ({
     rejectRequest: vi.fn(),
     reverseRequest: vi.fn(),
   },
+}));
+
+vi.mock("../lib/exportRequestsToExcel", () => ({
+  exportRequestsToExcel: vi.fn(),
 }));
 
 // Mock de window.confirm y window.alert
@@ -208,6 +213,47 @@ describe("RequestsPage", () => {
           investor_id: "inv-1",
         });
       });
+    });
+  });
+
+  describe("Exportar a Excel", () => {
+    it("shows export button and calls export with filtered requests when clicked", async () => {
+      vi.mocked(api.getAdminRequests).mockResolvedValue(mockRequests);
+
+      render(<RequestsPage />);
+
+      await waitFor(() => {
+        expect(api.getAdminRequests).toHaveBeenCalled();
+      });
+
+      const exportBtn = screen.getByRole("button", {
+        name: /Exportar a Excel/i,
+      });
+      expect(exportBtn).toBeInTheDocument();
+      expect(exportBtn).not.toBeDisabled();
+
+      fireEvent.click(exportBtn);
+
+      expect(vi.mocked(exportRequestsToExcel)).toHaveBeenCalledWith(
+        mockRequests.data.requests,
+      );
+    });
+
+    it("disables export button when there are no requests", async () => {
+      vi.mocked(api.getAdminRequests).mockResolvedValue({
+        data: { requests: [], pendingCount: 0 },
+      });
+
+      render(<RequestsPage />);
+
+      await waitFor(() => {
+        expect(api.getAdminRequests).toHaveBeenCalled();
+      });
+
+      const exportBtn = screen.getByRole("button", {
+        name: /Exportar a Excel/i,
+      });
+      expect(exportBtn).toBeDisabled();
     });
   });
 

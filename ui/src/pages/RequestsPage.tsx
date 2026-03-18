@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { api } from "../lib/api";
 import { formatCurrencyAR, formatDateAR } from "../lib/formatters";
+import { exportRequestsToExcel } from "../lib/exportRequestsToExcel";
 import type { ApiInvestor, ApiRequest } from "../types";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
@@ -429,7 +430,7 @@ export const RequestsPage = () => {
       )}
 
       <div className="rounded-lg bg-dark-card p-6">
-        <div className="flex flex-wrap gap-4">
+        <div className="flex flex-wrap items-end gap-4">
           <div>
             <label
               htmlFor="filter-investor"
@@ -488,6 +489,16 @@ export const RequestsPage = () => {
               <option value="REJECTED">Rechazados</option>
               <option value="REVERSED">Revertidos</option>
             </select>
+          </div>
+          <div className="ml-auto">
+            <Button
+              type="button"
+              onClick={() => exportRequestsToExcel(requests)}
+              disabled={requests.length === 0}
+              className="text-xs md:text-sm px-3 py-2"
+            >
+              Exportar a Excel
+            </Button>
           </div>
         </div>
       </div>
