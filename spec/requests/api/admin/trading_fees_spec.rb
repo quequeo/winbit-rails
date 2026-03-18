@@ -728,5 +728,24 @@ RSpec.describe 'Admin Trading Fees API', type: :request do
       expect(row['already_applied']).to eq(false)
       expect(row['applied_fee_id']).to be_nil
     end
+
+    it 'includes investor when investor_id param is passed even if invested <= 0' do
+      inv = create_investor_with_portfolio(email: 'invested_zero@test.com')
+      add_history(inv: inv, event: 'DEPOSIT', amount: 500, date: Time.zone.local(2025, 10, 2), prev: 0, newb: 500)
+      add_history(inv: inv, event: 'WITHDRAWAL', amount: 500, date: Time.zone.local(2025, 10, 3), prev: 500, newb: 0)
+
+      get '/api/admin/trading_fees/investors_summary', params: {
+        period_start: '2025-10-01',
+        period_end: '2025-12-31',
+        investor_id: inv.id,
+      }
+
+      expect(response).to have_http_status(:ok)
+      json = JSON.parse(response.body)
+      expect(json.size).to eq(1)
+      expect(json.first['investor_id']).to eq(inv.id)
+      expect(json.first['profit_amount']).to eq(0)
+      expect(json.first['has_profit']).to eq(false)
+    end
   end
 end
