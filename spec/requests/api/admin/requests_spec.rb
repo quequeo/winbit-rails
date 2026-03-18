@@ -333,5 +333,4 @@ RSpec.describe 'Admin requests', type: :request do
     expect(JSON.parse(response.body)['error']).to include('No se puede eliminar')
     expect(InvestorRequest.find_by(id: req.id)).to be_present
   end
-
 end
