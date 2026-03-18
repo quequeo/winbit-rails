@@ -57,6 +57,7 @@ const AR_TZ = "America/Argentina/Buenos_Aires";
 /**
  * Formatea fecha en timezone de Argentina.
  * Acepta ISO string, Date o null/undefined.
+ * Para strings YYYY-MM-DD evita parsear como UTC (que causaba "2026-02-01" → "31 Jan 2026").
  * Ejemplo: "13 Mar 2026 - 19:00"
  */
 export const formatDateAR = (
@@ -64,7 +65,14 @@ export const formatDateAR = (
   opts: { time?: boolean } = { time: true },
 ): string => {
   if (!value) return "-";
-  const d = typeof value === "string" ? new Date(value) : value;
+  // Date-only YYYY-MM-DD: formatear sin timezone para evitar desplazamiento
+  if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const [y, m, day] = value.split("-").map(Number);
+    const month = MONTHS_SHORT[m - 1];
+    if (opts.time === false) return `${day} ${month} ${y}`;
+    return `${day} ${month} ${y} - 00:00`;
+  }
+  const d = value instanceof Date ? value : new Date(value);
   if (isNaN(d.getTime())) return "-";
 
   const formatter = new Intl.DateTimeFormat("en-US", {

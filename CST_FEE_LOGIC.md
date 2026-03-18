@@ -138,8 +138,13 @@ Si `saldo_actual < Vpcust` (rentabilidad negativa), no se cobra comisión. El re
 
 ---
 
-## 9) Referencias
+## 9) Interacción con fee periódico
+
+Cuando un inversor tiene fee por retiro en el medio de un período (ej. febrero), el fee periódico mensual **no** cobra sobre la rentabilidad ya cobrada. El período efectivo empieza el día siguiente al último fee por retiro. Ver `FORMULAS.md` sección 6 y `TradingFeeCalculator.adjust_period_for_withdrawal_fees`.
+
+## 10) Referencias
 
 - `app/services/requests/approve.rb` — `calculate_and_apply_withdrawal_fee`, `pending_profit_until`, `create_withdrawal_histories!`
 - `app/controllers/api/public/investors_controller.rb` — `preview_pending_profit`, `withdrawal_fee_preview`, `sort_history_items`
+- `app/services/trading_fee_calculator.rb` — `adjust_period_for_withdrawal_fees`
 - `../PREGUNTAS_CST.md` (workspace raíz) — Preguntas y respuestas confirmadas con el dueño.

@@ -298,11 +298,13 @@ export const api = {
     period_start?: string;
     period_end?: string;
     investor_id?: string;
+    frequency?: string;
   }) => {
     const qs = new URLSearchParams();
     if (params?.period_start) qs.set("period_start", params.period_start);
     if (params?.period_end) qs.set("period_end", params.period_end);
     if (params?.investor_id) qs.set("investor_id", params.investor_id);
+    if (params?.frequency) qs.set("frequency", params.frequency);
     const suffix = qs.toString() ? `?${qs.toString()}` : "";
     return request(
       `${ADMIN_API_PREFIX}/trading_fees/investors_summary${suffix}`,

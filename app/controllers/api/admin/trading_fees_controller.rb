@@ -35,14 +35,15 @@ module Api
           ok = validate_period_for_investor!(@investor, start_date, end_date)
           return unless ok
 
-          profit_amount = profits_for(@investor, start_date, end_date)
-          existing_fee = TradingFee.active.find_by(investor_id: @investor.id, period_start: start_date, period_end: end_date)
+          adj_start, adj_end = TradingFeeCalculator.adjust_period_for_withdrawal_fees(@investor, start_date, end_date)
+          profit_amount = profits_for(@investor, adj_start, adj_end)
+          existing_fee = overlapping_periodic_fee(@investor, adj_start, adj_end)
 
           if existing_fee
             render json: {
               error: 'Trading fee ya aplicado para este período',
-              period_start: start_date,
-              period_end: end_date,
+              period_start: adj_start,
+              period_end: adj_end,
               profit_amount: profit_amount,
               fee_percentage: existing_fee.fee_percentage,
               fee_amount: existing_fee.fee_amount,
@@ -51,11 +52,11 @@ module Api
             return
           end
 
-          if profit_amount <= 0
+          if profit_amount <= 0 || adj_start >= adj_end
             render json: {
               error: 'No hay ganancias en el período',
-              period_start: start_date,
-              period_end: end_date,
+              period_start: adj_start,
+              period_end: adj_end,
               profit_amount: 0
             }, status: :unprocessable_content
             return
@@ -67,8 +68,8 @@ module Api
           render json: {
             investor_id: @investor.id,
             investor_name: @investor.name,
-            period_start: start_date,
-            period_end: end_date,
+            period_start: adj_start,
+            period_end: adj_end,
             profit_amount: profit_amount,
             fee_percentage: fee_percentage,
             fee_amount: fee_amount,
@@ -82,11 +83,7 @@ module Api
         calculator = TradingFeeCalculator.new(@investor)
         result = calculator.calculate
 
-        existing_fee = TradingFee.active.find_by(
-          investor_id: @investor.id,
-          period_start: result[:period_start],
-          period_end: result[:period_end]
-        )
+        existing_fee = overlapping_periodic_fee(@investor, result[:period_start], result[:period_end])
 
         if existing_fee
           render json: {
@@ -142,7 +139,8 @@ module Api
           ok = validate_period_for_investor!(@investor, start_date, end_date)
           return unless ok
 
-          if TradingFee.active.exists?(investor_id: @investor.id, period_start: start_date, period_end: end_date)
+          adj_start, adj_end = TradingFeeCalculator.adjust_period_for_withdrawal_fees(@investor, start_date, end_date)
+          if overlapping_periodic_fee(@investor, adj_start, adj_end)
             render_error('Trading fee ya aplicado para este período', status: :conflict)
             return
           end
@@ -152,12 +150,12 @@ module Api
             fee_percentage: fee_percentage,
             applied_by: current_user,
             notes: params[:notes],
-            period_start: start_date,
-            period_end: end_date
+            period_start: adj_start,
+            period_end: adj_end
           )
 
           if applicator.apply
-            fee = TradingFee.where(investor_id: @investor.id, period_start: start_date, period_end: end_date).order(applied_at: :desc).first
+            fee = TradingFee.where(investor_id: @investor.id, period_start: adj_start, period_end: adj_end).order(applied_at: :desc).first
 
             ActivityLogger.log(
               user: current_user,
@@ -340,6 +338,7 @@ module Api
       def investors_summary
         investors = Investor.where(status: 'ACTIVE').includes(:portfolio)
         investors = investors.where(id: params[:investor_id]) if params[:investor_id].present?
+        investors = investors.where(trading_fee_frequency: params[:frequency].upcase) if params[:frequency].present?
 
         start_date, end_date = extract_period_params
 
@@ -348,17 +347,21 @@ module Api
             invested = invested_amount_at(investor, end_date)
             next if invested <= 0 && params[:investor_id].blank?
 
-            profit_amount = profits_for(investor, start_date, end_date)
-            existing_fee = TradingFee.active.find_by(investor_id: investor.id, period_start: start_date, period_end: end_date)
+            adj_start, adj_end = TradingFeeCalculator.adjust_period_for_withdrawal_fees(investor, start_date, end_date)
+            profit_amount = profits_for(investor, adj_start, adj_end)
+            existing_fee = overlapping_periodic_fee(investor, adj_start, adj_end)
             existing_fee = nil if existing_fee.present? && !fee_backed_by_history?(existing_fee)
+            withdrawal_fee_info = withdrawal_fee_in_period(investor, start_date, end_date)
 
             TradingFeeInvestorSummarySerializer.new(
               investor: investor,
-              period_start: start_date,
-              period_end: end_date,
+              period_start: adj_start,
+              period_end: adj_end,
+              canonical_period_start: start_date.to_date,
               profit_amount: profit_amount,
-              monthly_profits: monthly_breakdown_for(investor, start_date, end_date),
-              existing_fee: existing_fee
+              monthly_profits: monthly_breakdown_for(investor, adj_start, adj_end),
+              existing_fee: existing_fee,
+              withdrawal_fee_info: withdrawal_fee_info
             ).as_json
           else
             calculator = TradingFeeCalculator.new(investor)
@@ -374,13 +377,20 @@ module Api
             )
             existing_fee = nil if existing_fee.present? && !fee_backed_by_history?(existing_fee)
 
+            canonical_start = TradingFeeCalculator.new(investor).send(:default_period_start)
+            default_start = canonical_start
+            default_end = TradingFeeCalculator.new(investor).send(:default_period_end)
+            withdrawal_fee_info = withdrawal_fee_in_period(investor, default_start, default_end)
+
             TradingFeeInvestorSummarySerializer.new(
               investor: investor,
               period_start: result[:period_start],
               period_end: result[:period_end],
+              canonical_period_start: canonical_start,
               profit_amount: result[:profit_amount],
               monthly_profits: monthly_breakdown_for(investor, result[:period_start], result[:period_end]),
-              existing_fee: existing_fee
+              existing_fee: existing_fee,
+              withdrawal_fee_info: withdrawal_fee_info
             ).as_json
           end
         end
@@ -420,40 +430,43 @@ module Api
         return true if investor.blank? || start_date.blank? || end_date.blank?
         return true unless investor.respond_to?(:trading_fee_frequency)
 
-        case investor.trading_fee_frequency
+        freq = investor.trading_fee_frequency
+
+        canonical_start, canonical_end = case freq
         when 'MONTHLY'
-          expected_start = start_date.beginning_of_month.to_date
-          expected_end = start_date.end_of_month.to_date
-          if start_date != expected_start || end_date != expected_end
-            render_error('Este inversor está configurado como MONTHLY: el período debe ser un mes calendario completo', status: :unprocessable_content)
-            return false
-          end
+          [start_date.beginning_of_month.to_date, start_date.end_of_month.to_date]
         when 'QUARTERLY'
-          expected_start = start_date.beginning_of_quarter.to_date
-          expected_end = start_date.end_of_quarter.to_date
-          if start_date != expected_start || end_date != expected_end
-            render_error('Este inversor está configurado como QUARTERLY: el período debe ser un trimestre completo', status: :unprocessable_content)
-            return false
-          end
+          [start_date.beginning_of_quarter.to_date, start_date.end_of_quarter.to_date]
         when 'SEMESTRAL'
-          valid_semesters = [
+          semesters = [
             [Date.new(start_date.year, 1, 1), Date.new(start_date.year, 6, 30)],
             [Date.new(start_date.year, 7, 1), Date.new(start_date.year, 12, 31)]
           ]
-          unless valid_semesters.any? { |s, e| start_date == s && end_date == e }
-            render_error('Este inversor está configurado como SEMESTRAL: el período debe ser un semestre completo (Ene-Jun o Jul-Dic)', status: :unprocessable_content)
-            return false
-          end
+          match = semesters.find { |s, e| start_date >= s && end_date <= e }
+          match || [nil, nil]
         when 'ANNUAL'
-          expected_start = start_date.beginning_of_year.to_date
-          expected_end = start_date.end_of_year.to_date
-          if start_date != expected_start || end_date != expected_end
-            render_error('Este inversor está configurado como ANNUAL: el período debe ser un año calendario completo', status: :unprocessable_content)
-            return false
-          end
+          [start_date.beginning_of_year.to_date, start_date.end_of_year.to_date]
+        else
+          return true
         end
 
-        true
+        return true if canonical_start.nil?
+
+        if start_date == canonical_start && end_date == canonical_end
+          return true
+        end
+
+        if end_date == canonical_end && start_date > canonical_start
+          has_wd_fee = investor.trading_fees
+                              .where(source: 'WITHDRAWAL', voided_at: nil)
+                              .where('applied_at::date >= ? AND applied_at::date < ?', canonical_start, start_date)
+                              .exists?
+          return true if has_wd_fee
+        end
+
+        label = { 'MONTHLY' => 'MONTHLY', 'QUARTERLY' => 'QUARTERLY', 'SEMESTRAL' => 'SEMESTRAL', 'ANNUAL' => 'ANNUAL' }[freq]
+        render_error("Este inversor está configurado como #{label}: el período debe coincidir con su frecuencia", status: :unprocessable_content)
+        false
       end
 
       def monthly_breakdown_for(investor, start_date, end_date)
@@ -511,6 +524,8 @@ module Api
       end
 
       def profits_for(investor, start_date, end_date)
+        return 0.0 if start_date.blank? || end_date.blank? || start_date >= end_date
+
         range = start_date.to_date.beginning_of_day..end_date.to_date.end_of_day
 
         PortfolioHistory.where(investor_id: investor.id)
@@ -518,6 +533,16 @@ module Api
                        .where(date: range)
                        .sum(:amount)
                        .to_f
+      end
+
+      def overlapping_periodic_fee(investor, start_date, end_date)
+        return nil if start_date.blank? || end_date.blank?
+
+        TradingFee.active
+                 .where(investor_id: investor.id, source: 'PERIODIC')
+                 .where('period_start <= ? AND period_end >= ?', end_date, start_date)
+                 .order(applied_at: :desc)
+                 .first
       end
 
       # Protects admin views against stale fee rows when old movements were deleted manually.
@@ -532,6 +557,28 @@ module Api
                         .where(date: min_time..max_time)
                         .where(amount: expected_amount)
                         .exists?
+      end
+
+      def withdrawal_fee_in_period(investor, period_start, period_end)
+        return nil if period_start.blank? || period_end.blank?
+
+        start_d = period_start.to_date
+        end_d = period_end.to_date
+
+        fees = investor.trading_fees
+                       .where(source: 'WITHDRAWAL', voided_at: nil)
+                       .where('applied_at::date >= ? AND applied_at::date <= ?', start_d, end_d)
+                       .order(applied_at: :desc)
+
+        return nil if fees.empty?
+
+        last_fee = fees.first
+        {
+          fee_amount: fees.sum(&:fee_amount).to_f,
+          fee_date: last_fee.applied_at.to_date.iso8601,
+          withdrawal_amount: fees.sum(&:withdrawal_amount).to_f,
+          count: fees.size
+        }
       end
 
       def paginate_array(records, default_per_page:, max_per_page:)

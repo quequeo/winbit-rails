@@ -77,6 +77,7 @@ class TradingFeeApplicator
   end
 
   # Guardrail: valida que el período coincida con la frecuencia del inversor.
+  # Permite períodos "recortados" (ej. 16-28 feb) cuando un fee por retiro ya cobró la parte inicial.
   def validate_period_for_investor
     return if @period_start.blank? || @period_end.blank?
     return unless investor.respond_to?(:trading_fee_frequency)
@@ -84,15 +85,17 @@ class TradingFeeApplicator
     freq = investor.trading_fee_frequency
 
     if freq == 'MONTHLY'
-      expected_start = @period_start.beginning_of_month.to_date
       expected_end = @period_start.end_of_month.to_date
+      return if @period_end == expected_end && valid_monthly_clipped?(@period_start, expected_end)
 
+      expected_start = @period_start.beginning_of_month.to_date
       if @period_start != expected_start || @period_end != expected_end
         @errors << 'Este inversor está configurado como MONTHLY: el período debe ser un mes calendario completo'
       end
     elsif freq == 'ANNUAL'
       expected_start = @period_start.beginning_of_year.to_date
       expected_end = @period_start.end_of_year.to_date
+      return if @period_end == expected_end && valid_clipped?(expected_start, expected_end)
 
       if @period_start != expected_start || @period_end != expected_end
         @errors << 'Este inversor está configurado como ANNUAL: el período debe ser un año calendario completo'
@@ -102,6 +105,8 @@ class TradingFeeApplicator
         [Date.new(@period_start.year, 1, 1), Date.new(@period_start.year, 6, 30)],
         [Date.new(@period_start.year, 7, 1), Date.new(@period_start.year, 12, 31)]
       ]
+      canonical = valid_semesters.find { |s, e| @period_start >= s && @period_end <= e }
+      return if canonical && @period_end == canonical.last && valid_clipped?(canonical.first, canonical.last)
 
       unless valid_semesters.any? { |s, e| @period_start == s && @period_end == e }
         @errors << 'Este inversor está configurado como SEMESTRAL: el período debe ser un semestre completo (Ene-Jun o Jul-Dic)'
@@ -109,6 +114,7 @@ class TradingFeeApplicator
     elsif freq == 'QUARTERLY'
       expected_start = @period_start.beginning_of_quarter.to_date
       expected_end = @period_start.end_of_quarter.to_date
+      return if @period_end == expected_end && valid_clipped?(expected_start, expected_end)
 
       if @period_start != expected_start || @period_end != expected_end
         @errors << 'Este inversor está configurado como QUARTERLY: el período debe ser un trimestre completo'
@@ -120,6 +126,22 @@ class TradingFeeApplicator
     if @profit_amount <= 0
       @errors << "No profit in the period (#{@period_start} to #{@period_end})"
     end
+  end
+
+  def valid_monthly_clipped?(period_start, period_end)
+    valid_clipped?(period_start.beginning_of_month, period_end)
+  end
+
+  def valid_clipped?(canonical_start, canonical_end)
+    return false if @period_start >= @period_end
+    return false if @period_start <= canonical_start
+    return false if @period_end != canonical_end
+
+    # Clipped period valid only when a withdrawal fee charged the beginning
+    investor.trading_fees
+            .where(source: 'WITHDRAWAL', voided_at: nil)
+            .where('applied_at::date >= ? AND applied_at::date < ?', canonical_start, @period_start)
+            .exists?
   end
 
   def create_trading_fee

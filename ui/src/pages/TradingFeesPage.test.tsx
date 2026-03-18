@@ -38,6 +38,7 @@ describe("TradingFeesPage", () => {
       applied_fee_amount: 20,
       applied_fee_percentage: 20,
       monthly_profits: [{ month: "2025-10", amount: 10 }],
+      period_clipped: false,
     },
     {
       investor_id: "inv-2",
@@ -55,6 +56,7 @@ describe("TradingFeesPage", () => {
       applied_fee_amount: null,
       applied_fee_percentage: null,
       monthly_profits: [{ month: "2025-12", amount: 200 }],
+      period_clipped: false,
     },
   ] as InvestorSummary[];
 
@@ -113,7 +115,6 @@ describe("TradingFeesPage", () => {
       expect(screen.getAllByText("Investor One").length).toBeGreaterThan(0);
     });
 
-    // Pencil icon button has title="Editar"
     const editBtn = screen.getAllByTitle("Editar")[0];
     await user.click(editBtn);
 
@@ -294,7 +295,7 @@ describe("TradingFeesPage", () => {
 
     await waitFor(() =>
       expect(
-        screen.getByText("Detalle de rentabilidad mensual"),
+        screen.getByText("Detalle de rentabilidad"),
       ).toBeInTheDocument(),
     );
   });
@@ -385,14 +386,14 @@ describe("TradingFeesPage", () => {
     await user.click(screen.getAllByRole("button", { name: /Detalle/i })[0]);
     await waitFor(() =>
       expect(
-        screen.getByText("Detalle de rentabilidad mensual"),
+        screen.getByText("Detalle de rentabilidad"),
       ).toBeInTheDocument(),
     );
 
     await user.click(screen.getByRole("button", { name: "Cerrar" }));
     await waitFor(() =>
       expect(
-        screen.queryByText("Detalle de rentabilidad mensual"),
+        screen.queryByText("Detalle de rentabilidad"),
       ).not.toBeInTheDocument(),
     );
   });
@@ -531,6 +532,7 @@ describe("TradingFeesPage", () => {
         has_profit: false,
         already_applied: false,
         monthly_profits: [],
+        period_clipped: false,
       },
       {
         investor_id: "inv-m",
@@ -544,6 +546,7 @@ describe("TradingFeesPage", () => {
         profit_amount: -10,
         has_profit: false,
         already_applied: false,
+        period_clipped: false,
       },
     ] as InvestorSummary[]);
 
@@ -578,6 +581,7 @@ describe("TradingFeesPage", () => {
         has_profit: true,
         already_applied: true,
         applied_fee_percentage: 20,
+        period_clipped: false,
       },
     ] as InvestorSummary[]);
 
@@ -587,7 +591,6 @@ describe("TradingFeesPage", () => {
       expect(screen.getAllByText("Investor Error").length).toBeGreaterThan(0);
     });
 
-    // Mobile action branch
     await user.click(screen.getAllByTitle("Editar")[0]);
     await waitFor(() =>
       expect(
@@ -595,13 +598,11 @@ describe("TradingFeesPage", () => {
       ).toBeInTheDocument(),
     );
 
-    // Mobile delete action branch
     await user.click(screen.getAllByTitle("Eliminar")[0]);
     expect(
       screen.getByText(/No se encontr. el ID de la comisi.n aplicada/),
     ).toBeInTheDocument();
 
-    // Desktop delete action branch
     const desktopDelete = screen.getAllByTitle("Eliminar")[1];
     await user.click(desktopDelete);
     expect(
@@ -687,6 +688,7 @@ describe("TradingFeesPage", () => {
         has_profit: false,
         already_applied: false,
         monthly_profits: [{ month: "2025-10", amount: -45 }],
+        period_clipped: false,
       },
     ] as InvestorSummary[]);
 
@@ -701,10 +703,53 @@ describe("TradingFeesPage", () => {
     await user.click(screen.getAllByRole("button", { name: /Detalle/i })[0]);
     await waitFor(() =>
       expect(
-        screen.getByText("Detalle de rentabilidad mensual"),
+        screen.getByText("Detalle de rentabilidad"),
       ).toBeInTheDocument(),
     );
     expect(screen.getAllByText("-$45.00").length).toBeGreaterThan(0);
+  });
+
+  it("shows clipped badge and withdrawal fee info in detail modal", async () => {
+    const user = userEvent.setup();
+    vi.mocked(api.getTradingFeesSummary).mockResolvedValue([
+      {
+        investor_id: "inv-clip",
+        investor_name: "Investor Clipped",
+        investor_email: "clip@test.com",
+        trading_fee_frequency: "MONTHLY",
+        investor_trading_fee_percentage: 30,
+        current_balance: 2000,
+        period_start: "2025-02-16",
+        period_end: "2025-02-28",
+        profit_amount: 50,
+        has_profit: true,
+        already_applied: false,
+        monthly_profits: [{ month: "2025-02", amount: 50 }],
+        period_clipped: true,
+        withdrawal_fee_in_period: {
+          fee_amount: 240,
+          fee_date: "2025-02-15",
+          withdrawal_amount: 500,
+          count: 1,
+        },
+      },
+    ] as InvestorSummary[]);
+
+    render(<TradingFeesPage />);
+
+    await waitFor(() => {
+      expect(screen.getAllByText("Investor Clipped").length).toBeGreaterThan(0);
+    });
+
+    expect(screen.getAllByText("Recortado").length).toBeGreaterThan(0);
+
+    await user.click(screen.getAllByRole("button", { name: /Detalle/i })[0]);
+    await waitFor(() =>
+      expect(screen.getByText("Detalle de rentabilidad")).toBeInTheDocument(),
+    );
+
+    expect(screen.getByText("Fee por retiro cobrado en el período")).toBeInTheDocument();
+    expect(screen.getByText(/recortado porque ya se cobró/)).toBeInTheDocument();
   });
 
   it("uses desktop delete action with applied fee id and shows zero total in detail modal", async () => {
@@ -726,6 +771,7 @@ describe("TradingFeesPage", () => {
         applied_fee_amount: 0,
         applied_fee_percentage: 30,
         monthly_profits: [{ month: "2025-10", amount: 0 }],
+        period_clipped: false,
       },
     ] as InvestorSummary[]);
     vi.mocked(api.deleteTradingFee).mockResolvedValueOnce({});
@@ -753,9 +799,51 @@ describe("TradingFeesPage", () => {
     await user.click(screen.getAllByRole("button", { name: /Detalle/i })[0]);
     await waitFor(() =>
       expect(
-        screen.getByText("Detalle de rentabilidad mensual"),
+        screen.getByText("Detalle de rentabilidad"),
       ).toBeInTheDocument(),
     );
     expect(screen.getAllByText("$0.00").length).toBeGreaterThan(0);
+  });
+
+  it("switches frequency mode and loads with frequency param", async () => {
+    const user = userEvent.setup();
+    vi.mocked(api.getTradingFeesSummary).mockResolvedValue([]);
+
+    render(<TradingFeesPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Comisiones")).toBeInTheDocument();
+    });
+
+    const freqSelect = screen.getAllByRole("combobox")[0] as HTMLSelectElement;
+    expect(freqSelect).toBeDefined();
+
+    await user.selectOptions(freqSelect, "MONTHLY");
+
+    await waitFor(() => {
+      expect(api.getTradingFeesSummary).toHaveBeenCalledWith(
+        expect.objectContaining({ frequency: "MONTHLY" }),
+      );
+    });
+  });
+
+  it("shows and hides add investor panel", async () => {
+    const user = userEvent.setup();
+    vi.mocked(api.getTradingFeesSummary).mockResolvedValue(mockRows);
+
+    render(<TradingFeesPage />);
+
+    await waitFor(() =>
+      expect(screen.getAllByText("Investor One").length).toBeGreaterThan(0),
+    );
+
+    const addBtn = screen.getByRole("button", { name: /Agregar inversor/ });
+    await user.click(addBtn);
+
+    expect(screen.getByText("Seleccionar inversor...")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Cancelar" }));
+
+    expect(screen.queryByText("Seleccionar inversor...")).not.toBeInTheDocument();
   });
 });
