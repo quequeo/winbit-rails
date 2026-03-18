@@ -586,23 +586,6 @@ describe("api", () => {
     });
   });
 
-  describe("reverseRequest", () => {
-    it("should reverse a request", async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        headers: new Headers({ "content-type": "application/json" }),
-        text: async () => JSON.stringify({ data: {} }),
-      });
-
-      await api.reverseRequest("1");
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining("/api/admin/v1/requests/1/reverse"),
-        expect.objectContaining({ method: "POST" }),
-      );
-    });
-  });
-
   describe("Daily operating", () => {
     it("getDailyOperatingMonthlySummary with params", async () => {
       mockFetch.mockResolvedValueOnce({

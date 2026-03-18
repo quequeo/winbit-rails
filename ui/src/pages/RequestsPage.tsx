@@ -6,8 +6,6 @@ import type { ApiInvestor, ApiRequest } from "../types";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 import { DatePicker } from "../components/ui/DatePicker";
-import { ConfirmDialog } from "../components/ui/ConfirmDialog";
-
 const METHOD_LABELS: Record<string, string> = {
   USDT: "USDT",
   USDC: "USDC",
@@ -125,7 +123,6 @@ export const RequestsPage = () => {
   });
   const [submitting, setSubmitting] = useState(false);
   const [investors, setInvestors] = useState<ApiInvestor[]>([]);
-  const [reverseConfirm, setReverseConfirm] = useState<ApiRequest | null>(null);
 
   const params = useMemo(
     () => ({
@@ -178,19 +175,6 @@ export const RequestsPage = () => {
     try {
       setBusyId(id);
       await api.rejectRequest(id);
-      load();
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Error");
-    } finally {
-      setBusyId(null);
-    }
-  };
-
-  const reverse = async (id: string) => {
-    try {
-      setBusyId(id);
-      await api.reverseRequest(id);
-      setReverseConfirm(null);
       load();
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Error");
@@ -585,20 +569,6 @@ export const RequestsPage = () => {
                 </Button>
               </div>
             )}
-            {r.status === "APPROVED" &&
-              (r.type === "WITHDRAWAL" || r.type === "DEPOSIT") && (
-                <div className="mt-4">
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={() => setReverseConfirm(r)}
-                    disabled={busyId === r.id}
-                    className="w-full"
-                  >
-                    Revertir
-                  </Button>
-                </div>
-              )}
           </div>
         ))}
       </div>
@@ -691,17 +661,6 @@ export const RequestsPage = () => {
                         </Button>
                       </div>
                     )}
-                    {r.status === "APPROVED" &&
-                      (r.type === "WITHDRAWAL" || r.type === "DEPOSIT") && (
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => setReverseConfirm(r)}
-                          disabled={busyId === r.id}
-                        >
-                          Revertir
-                        </Button>
-                      )}
                   </td>
                 </tr>
               ))}
@@ -710,48 +669,6 @@ export const RequestsPage = () => {
         </div>
       </div>
 
-      <ConfirmDialog
-        isOpen={reverseConfirm !== null}
-        onClose={() => setReverseConfirm(null)}
-        onConfirm={() => reverseConfirm && reverse(reverseConfirm.id)}
-        title="Confirmar reversa de solicitud"
-        message={
-          reverseConfirm ? (
-            <div className="space-y-3 text-sm">
-              <div className="rounded-lg border border-b-accent bg-warning/15 p-3">
-                <p className="font-semibold text-warning">
-                  Esta es una operación compleja y riesgosa. Debe evitarse
-                  siempre que sea posible.
-                </p>
-              </div>
-              <p>
-                Estás a punto de revertir un{" "}
-                <strong>
-                  {reverseConfirm.type === "DEPOSIT" ? "depósito" : "retiro"}
-                </strong>{" "}
-                aprobado de{" "}
-                <strong>
-                  {formatCurrencyAR(Number(reverseConfirm.amount))}
-                </strong>{" "}
-                para <strong>{reverseConfirm.investor.name}</strong>.
-              </p>
-              <p className="text-t-muted">
-                La reversa modificará balances, historial de portfolio y total
-                invertido. Los datos se conservarán en el sistema con estado
-                “Revertido”.
-              </p>
-              <p className="font-semibold text-warning">
-                ¿Estás seguro de que deseas continuar?
-              </p>
-            </div>
-          ) : (
-            ""
-          )
-        }
-        confirmText="Sí, revertir"
-        cancelText="Cancelar"
-        confirmVariant="danger"
-      />
     </div>
   );
 };

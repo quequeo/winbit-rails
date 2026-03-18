@@ -1,7 +1,7 @@
 module Api
   module Admin
     class RequestsController < BaseController
-      before_action :set_request, only: [:update, :destroy, :approve, :reject, :reverse]
+      before_action :set_request, only: [:update, :destroy, :approve, :reject]
 
       def create
         permitted = params.permit(:investor_id, :request_type, :method, :amount, :network, :status, :requested_at, :processed_at)
@@ -89,11 +89,8 @@ module Api
       end
 
       def destroy
-        if @request.status == 'APPROVED' && @request.request_type == 'WITHDRAWAL'
-          return render_error('Usar acción Revertir para retiros aprobados', status: :unprocessable_content)
-        end
-        if @request.status == 'APPROVED' && @request.request_type == 'DEPOSIT'
-          return render_error('Usar acción Revertir para depósitos aprobados', status: :unprocessable_content)
+        if @request.status == 'APPROVED'
+          return render_error('No se puede eliminar solicitudes aprobadas', status: :unprocessable_content)
         end
 
         ActivityLogger.log(
@@ -107,33 +104,6 @@ module Api
           }
         )
         @request.destroy!
-        head :no_content
-      rescue StandardError => e
-        render_error(e.message, status: :bad_request)
-      end
-
-      def reverse
-        if @request.request_type == 'WITHDRAWAL'
-          Requests::ReverseApprovedWithdrawal.new(request_id: @request.id, reversed_by: current_user).call
-          action_log = 'reverse_withdrawal'
-        elsif @request.request_type == 'DEPOSIT'
-          Requests::ReverseApprovedDeposit.new(request_id: @request.id, reversed_by: current_user).call
-          action_log = 'reverse_deposit'
-        else
-          return render_error('Solo se pueden revertir depósitos o retiros aprobados', status: :unprocessable_content)
-        end
-
-        ActivityLogger.log(
-          user: current_user,
-          action: action_log,
-          target: @request,
-          metadata: {
-            request_type: @request.request_type,
-            amount: @request.amount.to_f,
-            investor_id: @request.investor_id
-          }
-        )
-
         head :no_content
       rescue StandardError => e
         render_error(e.message, status: :bad_request)
