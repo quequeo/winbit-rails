@@ -209,8 +209,7 @@ describe("TradingFeesPage", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows error when percentage is invalid on apply", async () => {
-    const user = userEvent.setup();
+  it("percentage inputs are read-only", async () => {
     vi.mocked(api.getTradingFeesSummary).mockResolvedValue(mockRows);
 
     render(<TradingFeesPage />);
@@ -220,19 +219,9 @@ describe("TradingFeesPage", () => {
     );
 
     const pctInputs = screen.getAllByRole("spinbutton") as HTMLInputElement[];
-    const investorTwoInput = pctInputs.find((el) => el.value === "27.5");
-    await user.clear(investorTwoInput!);
-    await user.type(investorTwoInput!, "150");
-
-    const applyButtons = screen.getAllByRole("button", { name: "Aplicar" });
-    await user.click(applyButtons[0]);
-
-    await waitFor(() =>
-      expect(
-        screen.getByText("El porcentaje debe estar entre 0 y 100"),
-      ).toBeInTheDocument(),
-    );
-    expect(api.calculateTradingFee).not.toHaveBeenCalled();
+    for (const input of pctInputs) {
+      expect(input).toBeDisabled();
+    }
   });
 
   it("shows error when calculate fails", async () => {
@@ -644,7 +633,7 @@ describe("TradingFeesPage", () => {
     );
   });
 
-  it("blurs number inputs on wheel in mobile and desktop lists", async () => {
+  it("percentage inputs in list are all disabled", async () => {
     vi.mocked(api.getTradingFeesSummary).mockResolvedValue(mockRows);
 
     render(<TradingFeesPage />);
@@ -653,21 +642,11 @@ describe("TradingFeesPage", () => {
       expect(screen.getAllByText("Investor One").length).toBeGreaterThan(0);
     });
 
-    const enabledInputs = (
-      screen.getAllByRole("spinbutton") as HTMLInputElement[]
-    ).filter((el) => !el.disabled);
-    const mobileInput = enabledInputs[0];
-    const desktopInput = enabledInputs[1];
-
-    mobileInput.focus();
-    expect(document.activeElement).toBe(mobileInput);
-    mobileInput.dispatchEvent(new WheelEvent("wheel", { bubbles: true }));
-    expect(document.activeElement).not.toBe(mobileInput);
-
-    desktopInput.focus();
-    expect(document.activeElement).toBe(desktopInput);
-    desktopInput.dispatchEvent(new WheelEvent("wheel", { bubbles: true }));
-    expect(document.activeElement).not.toBe(desktopInput);
+    const allInputs = screen.getAllByRole("spinbutton") as HTMLInputElement[];
+    const listInputs = allInputs.filter((el) => !el.closest("[role='dialog']"));
+    for (const input of listInputs) {
+      expect(input).toBeDisabled();
+    }
   });
 
   it("renders negative total style in monthly detail modal", async () => {
