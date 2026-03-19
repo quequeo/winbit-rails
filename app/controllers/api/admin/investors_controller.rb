@@ -142,6 +142,10 @@ module Api
 
         @investor.destroy!
         head :no_content
+      rescue ActiveRecord::RecordNotDestroyed => e
+        render_error("No se pudo eliminar el inversor: #{e.message}", status: :unprocessable_entity)
+      rescue ActiveRecord::InvalidForeignKey => e
+        render_error("No se pudo eliminar: el inversor tiene registros asociados que lo impiden", status: :conflict)
       end
 
       private
