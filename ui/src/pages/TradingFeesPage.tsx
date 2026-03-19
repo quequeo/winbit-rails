@@ -233,10 +233,6 @@ export const TradingFeesPage = () => {
     }
   };
 
-  const handlePercentageChange = (investorId: string, value: string) => {
-    setPercentages((prev) => ({ ...prev, [investorId]: value }));
-  };
-
   const formatMonthLabel = (month: string) => {
     const m = String(month || "").match(/^(\d{4})-(\d{2})$/);
     if (!m) return month;
@@ -422,7 +418,7 @@ export const TradingFeesPage = () => {
     return (
       <span
         title={`Período recortado: se cobró ${formatCurrencyAR(wf.fee_amount)} por retiro el ${formatDate(wf.fee_date)}`}
-        className="ml-1 inline-flex rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800 cursor-help"
+        className="ml-1 inline-flex items-center rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-amber-800 align-middle cursor-help"
       >
         Recortado
       </span>
@@ -571,9 +567,8 @@ export const TradingFeesPage = () => {
                     <input
                       type="number" min="0" max="100" step="0.1"
                       value={isApplied && appliedPct !== null ? String(appliedPct) : (rawPct ?? "30")}
-                      onChange={(e) => handlePercentageChange(investor.investor_id, e.target.value)}
-                      onWheel={(e) => { e.currentTarget.blur(); }}
-                      disabled={!investor.has_profit || isApplied}
+                      readOnly
+                      disabled
                       className="h-9 w-20 rounded border border-b-default px-2 text-sm disabled:bg-dark-section"
                     />
                     <span className="text-sm font-medium text-t-muted">%</span>
@@ -675,9 +670,8 @@ export const TradingFeesPage = () => {
                     <input
                       type="number" min="0" max="100" step="0.1"
                       value={isApplied && appliedPct !== null ? String(appliedPct) : (rawPct ?? "30")}
-                      onChange={(e) => handlePercentageChange(investor.investor_id, e.target.value)}
-                      onWheel={(e) => { e.currentTarget.blur(); }}
-                      disabled={!investor.has_profit || isApplied}
+                      readOnly
+                      disabled
                       className="w-20 rounded border border-b-default px-2 py-1 text-center text-sm disabled:bg-dark-section"
                     />
                   </td>
