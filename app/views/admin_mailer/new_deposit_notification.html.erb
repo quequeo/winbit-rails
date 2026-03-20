@@ -15,52 +15,46 @@
     .header {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
-      padding: 30px;
+      padding: 28px;
       border-radius: 10px 10px 0 0;
       text-align: center;
     }
     .content {
       background: #fff;
-      padding: 30px;
+      padding: 28px;
       border: 1px solid #e5e7eb;
       border-top: none;
-    }
-    .amount {
-      font-size: 32px;
-      font-weight: bold;
-      color: #667eea;
-      margin: 20px 0;
-      text-align: center;
     }
     .info-table {
       width: 100%;
       border-collapse: collapse;
-      margin: 20px 0;
+      margin: 16px 0;
     }
     .info-table th {
       background: #f3f4f6;
-      padding: 12px;
+      padding: 10px 12px;
       text-align: left;
       font-weight: 600;
-      width: 40%;
+      width: 42%;
+      vertical-align: top;
     }
     .info-table td {
-      padding: 12px;
+      padding: 10px 12px;
       border-bottom: 1px solid #e5e7eb;
     }
     .cta-button {
       display: inline-block;
       background: #667eea;
-      color: white;
+      color: white !important;
       padding: 12px 24px;
       border-radius: 6px;
       text-decoration: none;
       font-weight: 600;
-      margin: 20px 0;
+      margin: 16px 0;
     }
     .footer {
       background: #f9fafb;
-      padding: 20px;
+      padding: 18px;
       border-radius: 0 0 10px 10px;
       border: 1px solid #e5e7eb;
       border-top: none;
@@ -68,75 +62,89 @@
       font-size: 14px;
       color: #6b7280;
     }
-    .urgent {
+    .note {
+      background: #f9fafb;
+      border-left: 4px solid #667eea;
+      padding: 14px 16px;
+      margin: 20px 0;
+      border-radius: 4px;
+    }
+    .action {
       background: #fef3c7;
       border-left: 4px solid #f59e0b;
-      padding: 15px;
+      padding: 14px 16px;
+      margin: 16px 0;
       border-radius: 4px;
-      margin: 20px 0;
     }
   </style>
 </head>
 <body>
   <div class="header">
-    <h1 style="margin: 0;">💰 Nuevo Depósito</h1>
-    <p style="margin: 10px 0 0 0; font-size: 14px; opacity: 0.9;">Requiere revisión</p>
+    <p style="margin: 0; font-size: 13px; letter-spacing: 0.05em; opacity: 0.95;">NUEVO DEPÓSITO – WINBIT</p>
+    <h1 style="margin: 12px 0 0 0; font-size: 22px;">Depósito pendiente de aprobación</h1>
+    <p style="margin: 8px 0 0 0; font-size: 15px; opacity: 0.95;"><%= @investor.name %> · <%= @amount_label %></p>
   </div>
 
   <div class="content">
-    <div class="urgent">
-      <strong>⚠️ Acción requerida:</strong> Un cliente ha solicitado un depósito que requiere aprobación.
-    </div>
+    <h2 style="margin-top: 0; font-size: 18px;">Nuevo depósito – Requiere aprobación</h2>
+    <p>Se ha registrado una solicitud de depósito que requiere validación manual.</p>
 
-    <h2 style="margin-top: 0;">Cliente:</h2>
-    <p style="font-size: 20px; font-weight: bold; margin: 10px 0;"><%= @investor.name %></p>
-    <p style="color: #6b7280; margin: 0;"><%= @investor.email %></p>
+    <h3 style="margin-bottom: 8px; font-size: 15px;">Cliente</h3>
+    <p style="margin: 0; font-size: 17px; font-weight: 700;"><%= @investor.name %></p>
+    <p style="margin: 4px 0 20px 0; color: #6b7280;"><%= @investor.email %></p>
 
-    <div class="amount"><%= @amount %></div>
-
-    <h3>📋 Detalles de la solicitud:</h3>
+    <h3 style="margin-bottom: 8px; font-size: 15px;">Detalle de la solicitud</h3>
     <table class="info-table">
       <tr>
-        <th>ID de Solicitud</th>
-        <td>#<%= @request.id %></td>
+        <th>Monto</th>
+        <td><%= @amount_label %></td>
       </tr>
       <tr>
         <th>Método</th>
         <td><%= @method_label %></td>
       </tr>
+      <tr>
+        <th>Fecha</th>
+        <td><%= @requested_at_label %></td>
+      </tr>
+      <tr>
+        <th>ID de solicitud</th>
+        <td>#<%= @request.id %></td>
+      </tr>
       <% if @request.transaction_hash.present? %>
         <tr>
-          <th>Hash de Transacción</th>
+          <th>Hash de transacción</th>
           <td style="font-family: monospace; font-size: 12px; word-break: break-all;"><%= @request.transaction_hash %></td>
         </tr>
       <% end %>
       <% if @request.attachment_url.present? %>
         <tr>
           <th>Comprobante</th>
-          <td><a href="<%= @request.attachment_url %>" target="_blank" style="color: #667eea;">Ver comprobante adjunto</a></td>
+          <td><a href="<%= @request.attachment_url %>" target="_blank" style="color: #667eea;">Ver comprobante</a></td>
         </tr>
       <% end %>
-      <tr>
-        <th>Fecha de solicitud</th>
-        <td><%= @request.requested_at.strftime('%d/%m/%Y %H:%M') %></td>
-      </tr>
-      <tr>
-        <th>Balance actual</th>
-        <td><%= number_to_currency(@investor.portfolio&.current_balance || 0, unit: "$", separator: ",", delimiter: ".") %></td>
-      </tr>
     </table>
 
-    <div style="text-align: center; margin: 30px 0;">
-      <a href="<%= @review_url %>" class="cta-button">🔍 Revisar en el Backoffice</a>
+    <h3 style="margin-bottom: 8px; font-size: 15px;">Estado actual del cliente</h3>
+    <p style="margin: 0;"><strong>Balance previo:</strong> <%= @previous_balance_usdt %></p>
+
+    <div class="action">
+      <strong>Acción requerida</strong>
+      <p style="margin: 8px 0 0 0;">Verificar comprobante de pago y aprobar o rechazar la solicitud desde el sistema.</p>
     </div>
 
-    <p style="font-size: 14px; color: #6b7280;">
-      <strong>Recordatorio:</strong> Verificá el comprobante de pago antes de aprobar la solicitud.
-    </p>
+    <div style="text-align: center;">
+      <a href="<%= @review_url %>" class="cta-button">Revisar en backoffice</a>
+    </div>
+
+    <div class="note">
+      <strong>Nota operativa</strong>
+      <p style="margin: 8px 0 0 0;">Verificá el comprobante de pago y monto recibido antes de aprobar la solicitud.</p>
+    </div>
   </div>
 
   <div class="footer">
-    <p>Este email fue enviado automáticamente desde el sistema Winbit.</p>
+    <p style="margin: 0;">Este email fue enviado automáticamente desde el sistema Winbit.</p>
   </div>
 </body>
 </html>

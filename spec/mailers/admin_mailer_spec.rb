@@ -44,7 +44,8 @@ RSpec.describe AdminMailer, type: :mailer do
     let(:mail) { described_class.new_deposit_notification(deposit_request) }
 
     it 'renders the headers' do
-      expect(mail.subject).to match('Nuevo depósito de John Doe')
+      expect(mail.subject).to match('Depósito pendiente de aprobación')
+      expect(mail.subject).to match('John Doe')
       expect(mail.to).to include('admin@example.com')
     end
 
@@ -56,7 +57,7 @@ RSpec.describe AdminMailer, type: :mailer do
     end
 
     it 'includes attachment link when present' do
-      expect(mail.body.encoded).to match('Ver comprobante adjunto')
+      expect(mail.body.encoded).to match('Ver comprobante')
     end
   end
 
@@ -66,7 +67,8 @@ RSpec.describe AdminMailer, type: :mailer do
     let(:mail) { described_class.new_withdrawal_notification(withdrawal_request) }
 
     it 'renders the headers' do
-      expect(mail.subject).to match('Nueva solicitud de retiro de John Doe')
+      expect(mail.subject).to match('Retiro pendiente de aprobación')
+      expect(mail.subject).to match('John Doe')
       expect(mail.to).to include('admin@example.com')
     end
 
@@ -90,7 +92,7 @@ RSpec.describe AdminMailer, type: :mailer do
       end
 
       it 'indicates it is a total withdrawal' do
-        expect(mail.body.encoded).to match('RETIRO TOTAL')
+        expect(mail.body.encoded).to match('Retiro total')
       end
     end
   end

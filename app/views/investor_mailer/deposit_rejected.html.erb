@@ -16,29 +16,37 @@
     .header {
       background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
       color: white;
-      padding: 30px;
+      padding: 28px;
       border-radius: 10px 10px 0 0;
       text-align: center;
     }
     .content {
       background: #fff;
-      padding: 30px;
+      padding: 28px;
       border: 1px solid #e5e7eb;
       border-top: none;
     }
-    .amount {
-      font-size: 32px;
-      font-weight: bold;
-      color: #6b7280;
-      margin: 20px 0;
-      text-align: center;
-      text-decoration: line-through;
+    .info-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
     }
-    .reason-box {
+    .info-table th {
+      background: #f3f4f6;
+      padding: 10px 12px;
+      text-align: left;
+      font-weight: 600;
+      width: 40%;
+    }
+    .info-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .info-box {
       background: #fef2f2;
       border-left: 4px solid #ef4444;
-      padding: 20px;
-      border-radius: 8px;
+      padding: 16px;
+      border-radius: 6px;
       margin: 20px 0;
     }
     .footer {
@@ -47,70 +55,44 @@
       border-radius: 0 0 10px 10px;
       border: 1px solid #e5e7eb;
       border-top: none;
-      text-align: center;
       font-size: 14px;
-      color: #6b7280;
+      color: #4b5563;
     }
-    .status {
-      display: inline-block;
-      background: #ef4444;
-      color: white;
-      padding: 8px 16px;
-      border-radius: 20px;
-      font-weight: 600;
-      font-size: 14px;
-    }
-    .cta-button {
-      display: inline-block;
-      background: #667eea;
-      color: white;
-      padding: 12px 24px;
-      border-radius: 6px;
-      text-decoration: none;
-      font-weight: 600;
-      margin: 20px 0;
-    }
+    a { color: #dc2626; }
   </style>
 </head>
 <body>
   <div class="header">
-    <h1 style="margin: 0; font-size: 24px;">Depósito Rechazado</h1>
+    <h1 style="margin: 0; font-size: 22px;">Depósito rechazado</h1>
   </div>
 
   <div class="content">
-    <p>Hola <strong><%= @investor.name %></strong>,</p>
+    <p>Tu solicitud de depósito ha sido rechazada.</p>
 
-    <p>Lamentamos informarte que tu solicitud de depósito ha sido <strong>rechazada</strong>.</p>
+    <h2 style="font-size: 16px; margin-bottom: 8px;">Detalle de la solicitud</h2>
+    <table class="info-table">
+      <tr>
+        <th>Monto</th>
+        <td><%= @amount_label %></td>
+      </tr>
+      <tr>
+        <th>Estado</th>
+        <td>Rechazado</td>
+      </tr>
+    </table>
 
-    <div class="amount"><%= @amount %></div>
-
-    <p style="text-align: center;"><span class="status">RECHAZADO</span></p>
-
-    <div class="reason-box">
-      <h3 style="margin-top: 0; color: #dc2626;">Motivo del rechazo:</h3>
-      <p style="margin-bottom: 0;"><%= @reason %></p>
-    </div>
-
-    <h3 style="color: #dc2626;">¿Qué podés hacer?</h3>
-    <ul>
-      <li>Revisá la información del comprobante de pago</li>
-      <li>Verificá que los datos de la transferencia sean correctos</li>
-      <li>Podés intentar nuevamente con la información correcta</li>
-      <li>Contactanos para recibir asistencia</li>
-    </ul>
-
-    <div style="text-align: center;">
-      <a href="<%= frontend_url %>/wallets" class="cta-button">Intentar Nuevamente</a>
-    </div>
-
-    <p>Si necesitás ayuda o tenés consultas, no dudes en contactarnos.</p>
-
-    <p>Saludos,<br><strong>Equipo Winbit</strong></p>
+    <h2 style="font-size: 16px; margin-bottom: 8px;">Información</h2>
+    <% if @show_reason %>
+      <div class="info-box">
+        <p style="margin: 0;"><%= @reason %></p>
+      </div>
+    <% end %>
+    <p>En caso de ser necesario, el equipo de Winbit se pondrá en contacto con vos para brindarte más detalles sobre el rechazo.</p>
+    <p>Podés generar una nueva solicitud de depósito desde la aplicación.</p>
   </div>
 
   <div class="footer">
-    <p>Este es un email automático. Por favor no respondas a este mensaje.</p>
-    <p>Para consultas escribí a: <a href="mailto:winbit.cfds@gmail.com">winbit.cfds@gmail.com</a></p>
+    <%= render partial: 'investor_mailer/contact_footer' %>
   </div>
 </body>
 </html>

@@ -44,13 +44,13 @@ RSpec.describe InvestorMailer, type: :mailer do
     let(:mail) { described_class.deposit_created(investor, deposit_request) }
 
     it 'renders the headers' do
-      expect(mail.subject).to eq('Depósito recibido - Pendiente de revisión')
+      expect(mail.subject).to start_with('Winbit | Solicitud de depósito recibida |')
       expect(mail.to).to eq(['john@example.com'])
     end
 
     it 'renders the body' do
-      expect(mail.body.encoded).to match(/John Doe/)
-      expect(mail.body.encoded).to match(/Depósito Recibido/)
+      expect(mail.body.encoded).to match(/solicitud de depósito/)
+      expect(mail.body.encoded).to match(/USDT/)
     end
   end
 
@@ -60,13 +60,13 @@ RSpec.describe InvestorMailer, type: :mailer do
     let(:mail) { described_class.deposit_approved(investor, deposit_request) }
 
     it 'renders the headers' do
-      expect(mail.subject).to eq('Depósito aprobado - Fondos acreditados')
+      expect(mail.subject).to start_with('Winbit | Depósito acreditado |')
       expect(mail.to).to eq(['john@example.com'])
     end
 
     it 'renders the body' do
-      expect(mail.body.encoded).to match('John Doe')
-      expect(mail.body.encoded).to match('aprobado')
+      expect(mail.body.encoded).to match('acreditados')
+      expect(mail.body.encoded).to match('panel de inversión')
     end
   end
 
@@ -75,13 +75,12 @@ RSpec.describe InvestorMailer, type: :mailer do
     let(:mail) { described_class.deposit_rejected(investor, deposit_request, reason) }
 
     it 'renders the headers' do
-      expect(mail.subject).to eq('Depósito rechazado')
+      expect(mail.subject).to start_with('Winbit | Depósito rechazado |')
       expect(mail.to).to eq(['john@example.com'])
     end
 
     it 'renders the body' do
-      expect(mail.body.encoded).to match(/John Doe/)
-      expect(mail.body.encoded).to match(/Depósito Rechazado/)
+      expect(mail.body.encoded).to match(/rechazada/)
       expect(mail.body.encoded).to match(/Comprobante inválido/)
     end
   end
@@ -90,13 +89,13 @@ RSpec.describe InvestorMailer, type: :mailer do
     let(:mail) { described_class.withdrawal_created(investor, withdrawal_request) }
 
     it 'renders the headers' do
-      expect(mail.subject).to eq('Retiro solicitado - Pendiente de procesamiento')
+      expect(mail.subject).to start_with('Winbit | Solicitud de retiro recibida |')
       expect(mail.to).to eq(['john@example.com'])
     end
 
     it 'renders the body' do
-      expect(mail.body.encoded).to match('John Doe')
       expect(mail.body.encoded).to match('retiro')
+      expect(mail.body.encoded).to match('16:00')
     end
   end
 
@@ -106,13 +105,13 @@ RSpec.describe InvestorMailer, type: :mailer do
     let(:mail) { described_class.withdrawal_approved(investor, withdrawal_request) }
 
     it 'renders the headers' do
-      expect(mail.subject).to eq('Retiro aprobado - Fondos enviados')
+      expect(mail.subject).to start_with('Winbit | Retiro aprobado |')
       expect(mail.to).to eq(['john@example.com'])
     end
 
     it 'renders the body' do
-      expect(mail.body.encoded).to match(/John Doe/)
-      expect(mail.body.encoded).to match(/Retiro Aprobado/)
+      expect(mail.body.encoded).to match(/aprobada/)
+      expect(mail.body.encoded).to match(/Monto enviado/)
     end
 
     it 'includes withdrawal trading fee details when provided' do
@@ -131,14 +130,33 @@ RSpec.describe InvestorMailer, type: :mailer do
     let(:mail) { described_class.withdrawal_rejected(investor, withdrawal_request, reason) }
 
     it 'renders the headers' do
-      expect(mail.subject).to eq('Retiro rechazado')
+      expect(mail.subject).to start_with('Winbit | Retiro rechazado |')
       expect(mail.to).to eq(['john@example.com'])
     end
 
     it 'renders the body' do
-      expect(mail.body.encoded).to match(/John Doe/)
-      expect(mail.body.encoded).to match(/Retiro Rechazado/)
+      expect(mail.body.encoded).to match(/rechazada/)
       expect(mail.body.encoded).to match(/Lemontag incorrecto/)
+      expect(mail.body.encoded).to match(/saldo no fue modificado/)
+    end
+  end
+
+  describe '#deposit_created with TRANSFER_ARS' do
+    let(:ars_request) do
+      InvestorRequest.create!(
+        investor: investor,
+        request_type: 'DEPOSIT',
+        amount: 150_000,
+        method: 'TRANSFER_ARS',
+        status: 'PENDING',
+        requested_at: Time.current
+      )
+    end
+    let(:mail) { described_class.deposit_created(investor, ars_request) }
+
+    it 'uses ARS in the subject amount' do
+      expect(mail.subject).to include('ARS')
+      expect(mail.subject).not_to include('USDT')
     end
   end
 end
