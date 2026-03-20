@@ -66,7 +66,9 @@ describe("AdminsPage", () => {
     const user = userEvent.setup();
     renderWithRouter(<AdminsPage />);
 
-    await waitFor(() => expect(api.getAdminAdmins).toHaveBeenCalledTimes(1));
+    await waitFor(() => {
+      expect(screen.getAllByText("admin1@test.com").length).toBeGreaterThan(0);
+    });
 
     await user.click(screen.getByRole("button", { name: /\+ Agregar Admin/i }));
     await user.type(
@@ -92,7 +94,9 @@ describe("AdminsPage", () => {
     const user = userEvent.setup();
     renderWithRouter(<AdminsPage />);
 
-    await waitFor(() => expect(api.getAdminAdmins).toHaveBeenCalledTimes(1));
+    await waitFor(() => {
+      expect(screen.getAllByText("admin1@test.com").length).toBeGreaterThan(0);
+    });
 
     const deleteButtons = screen.getAllByTitle("Eliminar");
     await user.click(deleteButtons[0]);

@@ -9,15 +9,16 @@ class InvestorMailer < ApplicationMailer
   def deposit_created(investor, request)
     @investor = investor
     @request = request
-    @amount = format_currency(request.amount)
-    @request_method = request.respond_to?(:method) ? request.send(:method) : request[:method]
-    @request_network = request.respond_to?(:network) ? request.network : request[:network]
+    @amount_label = request_amount_label(request)
+    @method_label = method_label(request)
+    @cash_request = cash_request?(request)
+    @requested_at_label = requested_at_label(request)
 
     return unless NotificationGate.should_send_to_investor?(investor.email)
 
     mail(
       to: investor.email,
-      subject: 'Depósito recibido - Pendiente de revisión'
+      subject: "Winbit | Solicitud de depósito recibida | #{@amount_label}"
     )
   end
 
@@ -25,14 +26,14 @@ class InvestorMailer < ApplicationMailer
   def deposit_approved(investor, request)
     @investor = investor
     @request = request
-    @amount = format_currency(request.amount)
-    @new_balance = format_currency(investor.portfolio&.current_balance || 0)
+    @amount_label = request_amount_label(request)
+    @new_balance_usdt = format_usdt_amount(investor.portfolio&.current_balance || 0)
 
     return unless NotificationGate.should_send_to_investor?(investor.email)
 
     mail(
       to: investor.email,
-      subject: 'Depósito aprobado - Fondos acreditados'
+      subject: "Winbit | Depósito acreditado | #{@amount_label}"
     )
   end
 
@@ -40,14 +41,15 @@ class InvestorMailer < ApplicationMailer
   def deposit_rejected(investor, request, reason = nil)
     @investor = investor
     @request = request
-    @amount = format_currency(request.amount)
-    @reason = reason || 'No se proporcionó una razón específica'
+    @amount_label = request_amount_label(request)
+    @reason = reason.presence
+    @show_reason = @reason.present?
 
     return unless NotificationGate.should_send_to_investor?(investor.email)
 
     mail(
       to: investor.email,
-      subject: 'Depósito rechazado'
+      subject: "Winbit | Depósito rechazado | #{@amount_label}"
     )
   end
 
@@ -57,15 +59,17 @@ class InvestorMailer < ApplicationMailer
   def withdrawal_created(investor, request)
     @investor = investor
     @request = request
-    @amount = format_currency(request.amount)
+    @amount_label = request_amount_label(request)
     @is_full = request.amount >= (investor.portfolio&.current_balance || 0) * 0.99
-    @request_method = request.respond_to?(:method) ? request.send(:method) : request[:method]
+    @method_label = method_label(request)
+    @cash_request = cash_request?(request)
+    @requested_at_label = requested_at_label(request)
 
     return unless NotificationGate.should_send_to_investor?(investor.email)
 
     mail(
       to: investor.email,
-      subject: 'Retiro solicitado - Pendiente de procesamiento'
+      subject: "Winbit | Solicitud de retiro recibida | #{@amount_label}"
     )
   end
 
@@ -73,19 +77,19 @@ class InvestorMailer < ApplicationMailer
   def withdrawal_approved(investor, request, withdrawal_fee = nil)
     @investor = investor
     @request = request
-    @amount = format_currency(request.amount)
+    @amount_label = request_amount_label(request)
     fee_amount = BigDecimal(withdrawal_fee&.dig(:fee_amount).presence.to_s.presence || '0')
     total_deducted = (BigDecimal(request.amount.to_s) + fee_amount).round(2, :half_up)
-    @withdrawal_fee_amount = format_currency(fee_amount)
-    @total_deducted = format_currency(total_deducted)
+    @withdrawal_fee_amount_label = format_amount_for_request(fee_amount, request)
+    @total_deducted_label = format_amount_for_request(total_deducted, request)
     @show_withdrawal_fee = fee_amount.positive?
-    @new_balance = format_currency(investor.portfolio&.current_balance || 0)
+    @new_balance_usdt = format_usdt_amount(investor.portfolio&.current_balance || 0)
 
     return unless NotificationGate.should_send_to_investor?(investor.email)
 
     mail(
       to: investor.email,
-      subject: 'Retiro aprobado - Fondos enviados'
+      subject: "Winbit | Retiro aprobado | #{@amount_label}"
     )
   end
 
@@ -93,14 +97,15 @@ class InvestorMailer < ApplicationMailer
   def withdrawal_rejected(investor, request, reason = nil)
     @investor = investor
     @request = request
-    @amount = format_currency(request.amount)
-    @reason = reason || 'No se proporcionó una razón específica'
+    @amount_label = request_amount_label(request)
+    @reason = reason.presence
+    @show_reason = @reason.present?
 
     return unless NotificationGate.should_send_to_investor?(investor.email)
 
     mail(
       to: investor.email,
-      subject: 'Retiro rechazado'
+      subject: "Winbit | Retiro rechazado | #{@amount_label}"
     )
   end
 
@@ -126,17 +131,6 @@ class InvestorMailer < ApplicationMailer
   end
 
   private
-
-  def format_currency(amount)
-    num = amount.to_f.round(2)
-    # Asegurar siempre 2 decimales con sprintf
-    formatted = sprintf('%.2f', num)
-    parts = formatted.split('.')
-    # Formatear miles con punto
-    parts[0].gsub!(/(\d)(?=(\d{3})+(?!\d))/, "\\1.")
-    # Unir con coma para decimales
-    "$#{parts[0]},#{parts[1]}"
-  end
 
   def frontend_url
     ENV.fetch('FRONTEND_URL', 'https://winbit-6579c.web.app')

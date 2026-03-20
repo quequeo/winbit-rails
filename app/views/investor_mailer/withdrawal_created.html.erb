@@ -16,32 +16,31 @@
     .header {
       background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
       color: white;
-      padding: 30px;
+      padding: 28px;
       border-radius: 10px 10px 0 0;
       text-align: center;
     }
     .content {
       background: #fff;
-      padding: 30px;
+      padding: 28px;
       border: 1px solid #e5e7eb;
       border-top: none;
     }
-    .amount {
-      font-size: 32px;
-      font-weight: bold;
-      color: #1e40af;
-      margin: 20px 0;
-      text-align: center;
+    .info-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
     }
-    .info-box {
-      background: #f9fafb;
-      padding: 20px;
-      border-radius: 8px;
-      margin: 20px 0;
-      border: 1px solid #e5e7eb;
+    .info-table th {
+      background: #f3f4f6;
+      padding: 10px 12px;
+      text-align: left;
+      font-weight: 600;
+      width: 40%;
     }
-    .info-box p {
-      margin: 8px 0;
+    .info-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #e5e7eb;
     }
     .footer {
       background: #f9fafb;
@@ -49,77 +48,75 @@
       border-radius: 0 0 10px 10px;
       border: 1px solid #e5e7eb;
       border-top: none;
-      text-align: center;
       font-size: 14px;
-      color: #6b7280;
+      color: #4b5563;
     }
-    .status {
-      display: inline-block;
-      color: #92400e;
-      padding: 4px 12px;
-      border: 2px solid #fbbf24;
-      border-radius: 4px;
-      font-weight: 600;
-      font-size: 13px;
-      background: #fef3c7;
-    }
-    .warning {
-      background: #fef3c7;
-      border-left: 4px solid #f59e0b;
-      padding: 15px;
-      border-radius: 4px;
+    .schedule {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      padding: 16px;
+      border-radius: 8px;
       margin: 20px 0;
     }
-    a {
-      color: #1e40af;
-      text-decoration: none;
-    }
+    a { color: #1e40af; }
   </style>
 </head>
 <body>
   <div class="header">
-    <h1 style="margin: 0; font-size: 24px;">Retiro Solicitado</h1>
+    <h1 style="margin: 0; font-size: 22px;">Solicitud de retiro recibida</h1>
   </div>
 
   <div class="content">
-    <p>Hola <strong><%= @investor.name %></strong>,</p>
+    <p>Se ha registrado correctamente tu solicitud de retiro, la cual se encuentra actualmente en proceso de procesamiento.</p>
 
-    <p>Hemos recibido exitosamente tu solicitud de retiro <%= @is_full ? '<strong>TOTAL</strong>' : '' %>:</p>
-
-    <div class="amount"><%= @amount %></div>
-
-    <div class="info-box">
-      <p><strong>Estado:</strong> <span class="status">PENDIENTE DE PROCESAMIENTO</span></p>
-      <p><strong>Tipo:</strong> <%= @is_full ? 'Retiro Total' : 'Retiro Parcial' %></p>
-      <p><strong>Método:</strong> <%= @request_method %></p>
+    <h2 style="font-size: 16px; margin-bottom: 8px;">Detalle de la solicitud</h2>
+    <table class="info-table">
+      <tr>
+        <th>Monto</th>
+        <td><%= @amount_label %></td>
+      </tr>
+      <tr>
+        <th>Tipo</th>
+        <td><%= @is_full ? 'Retiro total' : 'Retiro parcial' %></td>
+      </tr>
+      <tr>
+        <th>Método</th>
+        <td><%= @method_label %></td>
+      </tr>
       <% if @request.lemontag.present? %>
-        <p><strong>Lemontag:</strong> <%= @request.lemontag %></p>
+        <tr>
+          <th>Lemontag</th>
+          <td><%= @request.lemontag %></td>
+        </tr>
       <% end %>
-      <p><strong>Fecha:</strong> <%= @request.requested_at.strftime('%d/%m/%Y %H:%M') %></p>
+      <tr>
+        <th>Fecha</th>
+        <td><%= @requested_at_label %></td>
+      </tr>
+      <tr>
+        <th>Estado</th>
+        <td>Pendiente de procesamiento</td>
+      </tr>
+    </table>
+
+    <h2 style="font-size: 16px; margin-bottom: 8px;">Proceso de validación</h2>
+    <% if @cash_request %>
+      <p>El equipo de Winbit se pondrá en contacto con vos para coordinar la entrega del dinero.</p>
+      <p>Una vez finalizado este proceso, recibirás el comprobante por este mismo medio.</p>
+    <% else %>
+      <p>El equipo procederá a verificar la información de destino.</p>
+      <p>Una vez finalizado este proceso, se realizará el envío correspondiente y recibirás el comprobante por este mismo medio.</p>
+    <% end %>
+
+    <div class="schedule">
+      <strong>Horario de procesamiento</strong>
+      <p style="margin: 10px 0 0 0;">Solicitudes ingresadas hasta las <strong>16:00 h</strong> → se procesan a las <strong>18:00 h</strong> del mismo día hábil.</p>
+      <p style="margin: 8px 0 0 0;">Solicitudes posteriores → se procesan a las <strong>10:00 h</strong> del siguiente día hábil.</p>
     </div>
-
-    <div class="warning">
-      <strong>Horario de procesamiento:</strong><br>
-      Las solicitudes recibidas hasta las 17:00 (GMT-3) se ejecutan a las 18:00 (GMT-3).<br>
-      Las solicitudes ingresadas después de las 17:00 se procesan al día siguiente.
-    </div>
-
-    <h3 style="color: #1e40af;">Próximos pasos:</h3>
-    <ul>
-      <li>Nuestro equipo revisará tu solicitud</li>
-      <li>Verificaremos la información de destino</li>
-      <li>Una vez aprobado, procesaremos la transferencia</li>
-      <li>Recibirás un email de confirmación cuando los fondos sean enviados</li>
-    </ul>
-
-    <p>Si tenés alguna consulta, no dudes en contactarnos.</p>
-
-    <p>Saludos,<br><strong>Equipo Winbit</strong></p>
   </div>
 
   <div class="footer">
-    <p>Este es un email automático. Por favor no respondas a este mensaje.</p>
-    <p>Para consultas escribí a: <a href="mailto:winbit.cfds@gmail.com">winbit.cfds@gmail.com</a></p>
+    <%= render partial: 'investor_mailer/contact_footer' %>
   </div>
 </body>
 </html>

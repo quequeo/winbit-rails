@@ -16,22 +16,38 @@
     .header {
       background: linear-gradient(135deg, #059669 0%, #10b981 100%);
       color: white;
-      padding: 30px;
+      padding: 28px;
       border-radius: 10px 10px 0 0;
       text-align: center;
     }
     .content {
       background: #fff;
-      padding: 30px;
+      padding: 28px;
       border: 1px solid #e5e7eb;
       border-top: none;
     }
-    .amount {
-      font-size: 32px;
-      font-weight: bold;
-      color: #059669;
-      margin: 20px 0;
-      text-align: center;
+    .info-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+    }
+    .info-table th {
+      background: #f3f4f6;
+      padding: 10px 12px;
+      text-align: left;
+      font-weight: 600;
+      width: 40%;
+    }
+    .info-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .fee-box {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 16px;
+      margin: 16px 0;
     }
     .balance-box {
       background: #ecfdf5;
@@ -41,93 +57,69 @@
       margin: 20px 0;
       text-align: center;
     }
+    .cta-button {
+      display: inline-block;
+      background: #059669;
+      color: white !important;
+      padding: 12px 24px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: 600;
+      margin: 8px 0 0 0;
+    }
     .footer {
       background: #f9fafb;
       padding: 20px;
       border-radius: 0 0 10px 10px;
       border: 1px solid #e5e7eb;
       border-top: none;
-      text-align: center;
       font-size: 14px;
-      color: #6b7280;
+      color: #4b5563;
     }
-    .status {
-      display: inline-block;
-      background: #10b981;
-      color: white;
-      padding: 6px 14px;
-      border-radius: 4px;
-      font-weight: 600;
-      font-size: 13px;
-    }
-    .cta-button {
-      display: inline-block;
-      background: #1e40af;
-      color: white;
-      padding: 12px 24px;
-      border-radius: 6px;
-      text-decoration: none;
-      font-weight: 600;
-      margin: 20px 0;
-    }
-    .cta-button:hover {
-      background: #1e3a8a;
-    }
-    a {
-      color: #1e40af;
-      text-decoration: none;
-    }
+    a { color: #059669; }
   </style>
 </head>
 <body>
   <div class="header">
-    <h1 style="margin: 0; font-size: 24px;">Retiro Aprobado</h1>
+    <h1 style="margin: 0; font-size: 22px;">Retiro aprobado</h1>
   </div>
 
   <div class="content">
-    <p>Hola <strong><%= @investor.name %></strong>,</p>
+    <p>Tu solicitud de retiro ha sido aprobada y los fondos han sido enviados correctamente.</p>
 
-    <p>¡Tu solicitud de retiro ha sido <strong>aprobada</strong> y los fondos han sido enviados!</p>
-
-    <div class="amount"><%= @amount %></div>
-
-    <p style="text-align: center;"><span class="status">FONDOS ENVIADOS</span></p>
+    <h2 style="font-size: 16px; margin-bottom: 8px;">Detalle de la operación</h2>
+    <table class="info-table">
+      <tr>
+        <th>Monto enviado</th>
+        <td><%= @amount_label %></td>
+      </tr>
+      <tr>
+        <th>Estado</th>
+        <td>Enviado</td>
+      </tr>
+    </table>
 
     <% if @show_withdrawal_fee %>
-      <div style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px; padding:16px; margin:20px 0;">
-        <h3 style="margin-top:0; color:#111827;">Detalle del retiro</h3>
-        <p style="margin:8px 0;"><strong>Monto enviado:</strong> <%= @amount %></p>
-        <p style="margin:8px 0;"><strong>Comisión por retiro:</strong> <%= @withdrawal_fee_amount %></p>
-        <p style="margin:8px 0; border-top:1px solid #e5e7eb; padding-top:8px;"><strong>Total deducido de tu cuenta:</strong> <%= @total_deducted %></p>
+      <div class="fee-box">
+        <p style="margin: 8px 0;"><strong>Comisión por retiro:</strong> <%= @withdrawal_fee_amount_label %></p>
+        <p style="margin: 8px 0;"><strong>Total deducido de tu cuenta:</strong> <%= @total_deducted_label %></p>
       </div>
     <% end %>
 
+    <h2 style="font-size: 16px; margin-bottom: 8px;">Saldo actualizado</h2>
     <div class="balance-box">
-      <h3 style="margin-top: 0; color: #059669;">Balance Actualizado</h3>
-      <div style="font-size: 28px; font-weight: bold; color: #059669;"><%= @new_balance %></div>
+      <div style="font-size: 26px; font-weight: 700; color: #059669;"><%= @new_balance_usdt %></div>
     </div>
 
-    <p><strong>Tiempo estimado de llegada:</strong></p>
-    <ul>
-      <li><strong>Lemon Cash:</strong> Inmediato</li>
-      <li><strong>Crypto (USDT/USDC):</strong> 5-30 minutos según la red</li>
-      <li><strong>Efectivo:</strong> Según coordinación previa</li>
-    </ul>
+    <p>Podés acceder a tu panel de inversión para visualizar el saldo actualizado.</p>
 
-    <p>Ya podés ver tu balance actualizado en tu panel de inversión.</p>
-
-    <div style="text-align: center;">
-      <a href="<%= frontend_url %>/dashboard" class="cta-button">Ver mi Dashboard</a>
+    <div style="text-align: center; margin: 24px 0;">
+      <a href="<%= frontend_url %>/dashboard" class="cta-button">Ver mi panel de inversión</a>
     </div>
-
-    <p>Gracias por confiar en Winbit.</p>
-
-    <p>Saludos,<br><strong>Equipo Winbit</strong></p>
   </div>
 
   <div class="footer">
-    <p>Este es un email automático. Por favor no respondas a este mensaje.</p>
-    <p>Para consultas escribí a: <a href="mailto:winbit.cfds@gmail.com">winbit.cfds@gmail.com</a></p>
+    <%= render partial: 'investor_mailer/contact_footer' %>
   </div>
 </body>
 </html>

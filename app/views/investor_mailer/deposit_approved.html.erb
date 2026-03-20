@@ -16,22 +16,31 @@
     .header {
       background: linear-gradient(135deg, #059669 0%, #10b981 100%);
       color: white;
-      padding: 30px;
+      padding: 28px;
       border-radius: 10px 10px 0 0;
       text-align: center;
     }
     .content {
       background: #fff;
-      padding: 30px;
+      padding: 28px;
       border: 1px solid #e5e7eb;
       border-top: none;
     }
-    .amount {
-      font-size: 32px;
-      font-weight: bold;
-      color: #059669;
-      margin: 20px 0;
-      text-align: center;
+    .info-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+    }
+    .info-table th {
+      background: #f3f4f6;
+      padding: 10px 12px;
+      text-align: left;
+      font-weight: 600;
+      width: 40%;
+    }
+    .info-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #e5e7eb;
     }
     .balance-box {
       background: #ecfdf5;
@@ -41,77 +50,62 @@
       margin: 20px 0;
       text-align: center;
     }
+    .cta-button {
+      display: inline-block;
+      background: #059669;
+      color: white !important;
+      padding: 12px 24px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: 600;
+      margin: 8px 0 0 0;
+    }
     .footer {
       background: #f9fafb;
       padding: 20px;
       border-radius: 0 0 10px 10px;
       border: 1px solid #e5e7eb;
       border-top: none;
-      text-align: center;
       font-size: 14px;
-      color: #6b7280;
+      color: #4b5563;
     }
-    .status {
-      display: inline-block;
-      background: #10b981;
-      color: white;
-      padding: 6px 14px;
-      border-radius: 4px;
-      font-weight: 600;
-      font-size: 13px;
-    }
-    .cta-button {
-      display: inline-block;
-      background: #1e40af;
-      color: white;
-      padding: 12px 24px;
-      border-radius: 6px;
-      text-decoration: none;
-      font-weight: 600;
-      margin: 20px 0;
-    }
-    .cta-button:hover {
-      background: #1e3a8a;
-    }
-    a {
-      color: #1e40af;
-      text-decoration: none;
-    }
+    a { color: #059669; }
   </style>
 </head>
 <body>
   <div class="header">
-    <h1 style="margin: 0; font-size: 24px;">Depósito Aprobado</h1>
+    <h1 style="margin: 0; font-size: 22px;">Depósito acreditado</h1>
   </div>
 
   <div class="content">
-    <p>Hola <strong><%= @investor.name %></strong>,</p>
+    <p>Tu depósito fue aprobado y los fondos ya se encuentran acreditados en tu cuenta.</p>
 
-    <p>¡Excelente noticia! Tu depósito ha sido <strong>aprobado</strong> y los fondos ya están acreditados en tu cuenta.</p>
+    <h2 style="font-size: 16px; margin-bottom: 8px;">Detalle de la operación</h2>
+    <table class="info-table">
+      <tr>
+        <th>Monto</th>
+        <td><%= @amount_label %></td>
+      </tr>
+      <tr>
+        <th>Estado</th>
+        <td>Acreditado</td>
+      </tr>
+    </table>
 
-    <div class="amount"><%= @amount %></div>
-
-    <p style="text-align: center;"><span class="status">FONDOS ACREDITADOS</span></p>
-
+    <h2 style="font-size: 16px; margin-bottom: 8px;">Saldo actualizado</h2>
     <div class="balance-box">
-      <h3 style="margin-top: 0; color: #059669;">Nuevo Balance</h3>
-      <div style="font-size: 28px; font-weight: bold; color: #059669;"><%= @new_balance %></div>
+      <div style="font-size: 26px; font-weight: 700; color: #059669;"><%= @new_balance_usdt %></div>
     </div>
 
-    <p>Ya podés ver tus fondos actualizados en tu panel de inversión.</p>
+    <p>Podés visualizar el saldo actualizado en tu panel de inversión.</p>
 
-    <div style="text-align: center;">
-      <a href="<%= frontend_url %>/dashboard" class="cta-button">Ver mi Dashboard</a>
+    <div style="text-align: center; margin: 24px 0;">
+      <a href="<%= frontend_url %>/dashboard" class="cta-button">Ver mi panel de inversión</a>
     </div>
-
-    <p>Gracias por confiar en Winbit para gestionar tus inversiones.</p>
-
-    <p>Saludos,<br><strong>Equipo Winbit</strong></p>
   </div>
 
   <div class="footer">
-    <p>Este es un email automático. Por favor no respondas a este mensaje.</p>
-    <p>Para consultas escribí a: <a href="mailto:winbit.cfds@gmail.com">winbit.cfds@gmail.com</a></p>
+    <%= render partial: 'investor_mailer/contact_footer' %>
   </div>
 </body>
 </html>
