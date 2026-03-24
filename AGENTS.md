@@ -237,6 +237,38 @@ Jobs:
 
 ## 12) Protocolo Git y PRs
 
+### Flujo directo a main (cambios visuales / CSS)
+
+Para cambios visuales menores (CSS, estilos, tamaños, colores, spacing) en el frontend admin (`ui/`), se permite pushear directo a main **solo si todos los quality gates pasan**.
+
+**Pasos obligatorios antes de pushear:**
+
+```bash
+bundle exec rubocop          # RuboCop — debe pasar sin offenses
+bundle exec rspec            # RSpec — todos los tests en verde
+npm --prefix ui run test:run # Vitest frontend — todos los tests en verde
+```
+
+**Si alguno falla:** corregir el error y volver a correr los tres comandos. NUNCA pushear con errores.
+
+**Si todos pasan:**
+
+```bash
+git add -A
+git commit -m "Descripción breve del cambio"
+git push origin main
+```
+
+El push a main triggerea deploy automático a Heroku. NO correr `git push heroku main`.
+
+**Reglas:**
+- NUNCA pushear si algún quality gate falla.
+- NUNCA commitear archivos `.env` ni secretos.
+- NUNCA mencionar IA, Cursor, Claude, Copilot ni herramientas similares en commits.
+- Si el cambio toca lógica de backend (Ruby, controllers, services, models), usar el flujo de PR en vez de push directo.
+
+### Flujo completo (PR obligatorio para cambios de lógica)
+
 ### Reglas de branches
 
 - Un branch por cambio puntual y atómico.
