@@ -58,7 +58,7 @@ export const AdminLayout = () => {
   if (error) return <div className="p-6 text-error">{error}</div>;
 
   return (
-    <div className="min-h-screen bg-dark-bg">
+    <div className="min-h-screen">
       <header className="bg-dark-card border-b border-b-default">
         <div className="flex items-center justify-between px-4 py-4 md:px-6">
           <div>
