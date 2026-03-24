@@ -15,8 +15,8 @@ export const LoginPage = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-dark-bg flex items-center justify-center px-4">
-      <div className="w-full max-w-md rounded-xl bg-dark-card border border-b-default p-8">
+    <div className="min-h-screen flex items-center justify-center px-4">
+      <div className="w-full max-w-md rounded-xl admin-card border border-[rgba(101,167,165,0.25)] p-8">
         <h1 className="text-2xl font-bold text-t-primary">Winbit Admin</h1>
         <p className="text-sm text-t-muted mt-1">Ingresá con Google</p>
         {message ? (

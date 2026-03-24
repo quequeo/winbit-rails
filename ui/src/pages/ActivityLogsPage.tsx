@@ -141,14 +141,14 @@ export const ActivityLogsPage = () => {
 
   if (loading && logs.length === 0) {
     return (
-      <div className="rounded-lg bg-dark-card p-6">
+      <div className="admin-card p-6">
         <div className="text-t-muted">Cargando actividad...</div>
       </div>
     );
   }
 
   return (
-    <div className="rounded-lg bg-dark-card p-6">
+    <div className="admin-card p-6">
       {/* Header */}
       <div className="mb-6 border-b border-b-default pb-4">
         <h2 className="text-2xl font-semibold text-t-primary">

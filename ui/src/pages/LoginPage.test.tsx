@@ -101,19 +101,14 @@ describe("LoginPage", () => {
     const { container } = render(<LoginPage />);
     const mainDiv = container.querySelector(".min-h-screen");
     expect(mainDiv).toBeInTheDocument();
-    expect(mainDiv).toHaveClass(
-      "bg-dark-bg",
-      "flex",
-      "items-center",
-      "justify-center",
-    );
+    expect(mainDiv).toHaveClass("flex", "items-center", "justify-center");
   });
 
   it("renders card with dark theme", () => {
     const { container } = render(<LoginPage />);
-    const card = container.querySelector(".bg-dark-card");
+    const card = container.querySelector(".admin-card");
     expect(card).toBeInTheDocument();
-    expect(card).toHaveClass("bg-dark-card", "rounded-xl");
+    expect(card).toHaveClass("admin-card", "rounded-xl");
   });
 
   it("memoizes error message to avoid recalculation", () => {

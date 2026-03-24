@@ -115,7 +115,7 @@ export const EditAdminPage = () => {
         <h1 className="text-2xl font-bold text-t-primary">Editar Admin</h1>
       </div>
 
-      <div className="rounded-lg bg-dark-card p-6">
+      <div className="admin-card p-6">
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label className="block text-sm font-medium text-t-muted mb-1">

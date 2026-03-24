@@ -136,7 +136,7 @@ export const TradingFeesHistoryPage = () => {
         </p>
       </div>
 
-      <div className="rounded-lg bg-dark-card p-4">
+      <div className="admin-card p-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <input
             type="text"

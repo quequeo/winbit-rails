@@ -208,7 +208,7 @@ export const OperatingHistoryPage = () => {
         </div>
       ) : null}
 
-      <div className="rounded-lg bg-dark-card p-6 space-y-4">
+      <div className="admin-card p-6 space-y-4">
         <div className="flex items-center justify-between gap-3">
           <button
             type="button"
@@ -293,7 +293,7 @@ export const OperatingHistoryPage = () => {
         </div>
       </div>
 
-      <div className="rounded-lg bg-dark-card p-6 space-y-4">
+      <div className="admin-card p-6 space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold text-t-primary">Detalle diario</h2>
           <div className="text-xs text-t-dim">
@@ -383,7 +383,7 @@ export const OperatingHistoryPage = () => {
             onClick={() => setDetailOpen(false)}
           />
           <div className="flex min-h-full items-center justify-center p-4">
-            <div className="relative w-full max-w-lg overflow-hidden rounded-lg bg-dark-card-xl">
+            <div className="relative w-full max-w-lg overflow-hidden admin-card">
               <div className="border-b border-b-default px-6 py-4">
                 <h3 className="text-lg font-semibold text-t-primary">
                   Detalle del mes
