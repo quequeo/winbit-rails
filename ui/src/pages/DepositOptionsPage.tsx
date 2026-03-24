@@ -234,7 +234,7 @@ export const DepositOptionsPage = () => {
 
   if (loading) {
     return (
-      <div className="rounded-lg bg-dark-card p-6 ">
+      <div className="admin-card p-6 ">
         <div className="text-t-muted">Cargando opciones de depósito...</div>
       </div>
     );
@@ -289,7 +289,7 @@ export const DepositOptionsPage = () => {
       )}
 
       {options.length === 0 && !showForm ? (
-        <div className="rounded-lg bg-dark-card p-8 text-center ">
+        <div className="admin-card p-8 text-center ">
           <p className="text-t-dim">
             No hay opciones de depósito configuradas.
           </p>
@@ -304,7 +304,7 @@ export const DepositOptionsPage = () => {
             {options.map((opt) => (
               <div
                 key={opt.id}
-                className="w-full overflow-hidden rounded-lg bg-dark-card p-4"
+                className="w-full overflow-hidden admin-card p-4"
               >
                 {editingId === opt.id ? (
                   <DepositOptionForm
@@ -335,7 +335,7 @@ export const DepositOptionsPage = () => {
           </div>
 
           {/* Desktop: table */}
-          <div className="hidden md:block rounded-lg bg-dark-card p-6">
+          <div className="hidden md:block admin-card p-6">
             <div className="overflow-x-auto">
               <table className="min-w-full">
                 <thead>
@@ -507,7 +507,7 @@ function DepositOptionForm({
   const fields = CATEGORY_FIELDS[form.category] || [];
 
   return (
-    <div className="rounded-lg bg-dark-card p-6">
+    <div className="admin-card p-6">
       <h2 className="mb-4 text-lg font-semibold text-t-primary">{title}</h2>
       <form onSubmit={onSubmit} className="space-y-4">
         <div className="grid gap-4 sm:grid-cols-2">

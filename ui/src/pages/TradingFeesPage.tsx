@@ -800,7 +800,7 @@ export const TradingFeesPage = () => {
       {/* Confirm apply modal */}
       {confirmModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black p-4">
-          <div className="w-full max-w-md rounded-lg bg-dark-card p-6 shadow-xl">
+          <div className="w-full max-w-md admin-card p-6 shadow-xl">
             <h2 className="mb-4 text-xl font-bold text-t-primary">¿Aplicar comisión?</h2>
             <div className="mb-4 space-y-2 rounded-lg border border-purple-600/40 bg-purple-900/25 p-4">
               <div className="flex justify-between"><span className="text-sm text-t-muted">Inversor:</span><span className="text-sm font-semibold text-t-primary">{confirmModal.investor_name}</span></div>
@@ -828,7 +828,7 @@ export const TradingFeesPage = () => {
       {/* Edit modal */}
       {editModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black p-4">
-          <div className="w-full max-w-md rounded-lg bg-dark-card p-6 shadow-xl">
+          <div className="w-full max-w-md admin-card p-6 shadow-xl">
             <h2 className="mb-4 text-xl font-bold text-t-primary">Editar comisión aplicada</h2>
             {(() => {
               const currentFee = editModal.fee_amount;

@@ -14,7 +14,7 @@ export const Button = ({
   ...props
 }: Props) => {
   const base =
-    "inline-flex items-center justify-center rounded-lg font-medium transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-bg disabled:opacity-50 disabled:cursor-not-allowed";
+    "inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-bg disabled:opacity-50 disabled:cursor-not-allowed";
 
   const sizes = {
     sm: "px-3 py-2 text-sm",
@@ -22,11 +22,14 @@ export const Button = ({
   };
 
   const variants: Record<Variant, string> = {
-    default: "bg-primary text-white hover:bg-primary/80 focus:ring-primary",
+    default:
+      "bg-[rgba(101,167,165,0.2)] text-white border border-[rgba(101,167,165,0.35)] hover:bg-[rgba(101,167,165,0.3)] hover:border-[rgba(101,167,165,0.55)] focus:ring-primary",
     outline:
-      "border border-b-default bg-dark-card text-t-primary hover:border-primary hover:text-primary focus:ring-primary",
-    destructive: "bg-red-600 text-white hover:bg-red-700 focus:ring-red-600",
-    ghost: "bg-transparent text-t-muted hover:bg-primary-dim focus:ring-primary",
+      "border border-[rgba(101,167,165,0.25)] bg-dark-card text-t-primary hover:border-[rgba(101,167,165,0.55)] hover:text-primary focus:ring-primary",
+    destructive:
+      "bg-[rgba(196,107,107,0.2)] text-[#c46b6b] border border-[rgba(196,107,107,0.25)] hover:bg-[rgba(196,107,107,0.3)] focus:ring-error",
+    ghost:
+      "bg-transparent text-t-muted hover:bg-primary-dim focus:ring-primary",
   };
 
   return (

@@ -120,7 +120,7 @@ export const InvestorsPage = () => {
       </div>
 
       {showForm && (
-        <div className="rounded-lg bg-dark-card p-6">
+        <div className="admin-card p-6">
           <h2 className="text-lg font-semibold text-t-primary mb-4">
             Nuevo Inversor
           </h2>
@@ -236,7 +236,7 @@ export const InvestorsPage = () => {
         {investors.map((inv) => (
           <div
             key={inv.id}
-            className="w-full overflow-hidden rounded-lg bg-dark-card p-4"
+            className="w-full overflow-hidden admin-card p-4"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
@@ -325,7 +325,7 @@ export const InvestorsPage = () => {
       </div>
 
       {/* Desktop/tablet: table */}
-      <div className="hidden md:block rounded-lg bg-dark-card p-6">
+      <div className="hidden md:block admin-card p-6">
         <div className="overflow-x-auto">
           <table className="min-w-full">
             <thead>

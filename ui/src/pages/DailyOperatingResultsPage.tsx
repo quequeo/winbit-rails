@@ -315,7 +315,7 @@ export const DailyOperatingResultsPage = () => {
         </div>
       ) : null}
 
-      <div className="rounded-lg bg-dark-card p-6 space-y-4">
+      <div className="admin-card p-6 space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
             <label className="text-sm font-medium text-t-muted">Fecha</label>
@@ -369,7 +369,7 @@ export const DailyOperatingResultsPage = () => {
       </div>
 
       {preview ? (
-        <div className="rounded-lg bg-dark-card p-6 space-y-4">
+        <div className="admin-card p-6 space-y-4">
           <div className="flex items-start justify-between gap-4">
             <div>
               <h2 className="text-xl font-bold text-t-primary">Preview</h2>
@@ -588,7 +588,7 @@ export const DailyOperatingResultsPage = () => {
             onClick={() => setAlertOpen(false)}
           />
           <div className="flex min-h-full items-center justify-center p-4">
-            <div className="relative w-full max-w-md overflow-hidden rounded-lg bg-dark-card-xl">
+            <div className="relative w-full max-w-md overflow-hidden admin-card">
               <div className="border-b border-b-default px-6 py-4">
                 <h3 className="text-lg font-semibold text-t-primary">
                   {alertTitle || "Error"}
@@ -629,7 +629,7 @@ export const DailyOperatingResultsPage = () => {
             onClick={closeEdit}
           />
           <div className="flex min-h-full items-center justify-center p-4">
-            <div className="relative w-full max-w-2xl overflow-hidden rounded-lg bg-dark-card-xl">
+            <div className="relative w-full max-w-2xl overflow-hidden admin-card">
               <div className="border-b border-b-default px-6 py-4">
                 <h3 className="text-lg font-semibold text-t-primary">
                   Editar operativa diaria
