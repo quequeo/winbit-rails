@@ -250,7 +250,7 @@ describe("RequestsPage", () => {
         expect(api.getAdminRequests).toHaveBeenCalled();
       });
 
-      const exportBtn = screen.getByRole("button", {
+      const exportBtn = await screen.findByRole("button", {
         name: /Exportar a Excel/i,
       });
       expect(exportBtn).toBeDisabled();
