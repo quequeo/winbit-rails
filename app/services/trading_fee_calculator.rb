@@ -1,9 +1,9 @@
 class TradingFeeCalculator
   attr_reader :investor, :reference_date
 
-  def initialize(investor, reference_date: Date.current)
+  def initialize(investor, reference_date: nil)
     @investor = investor
-    @reference_date = reference_date
+    @reference_date = reference_date || inferred_reference_date
   end
 
   def calculate
@@ -39,6 +39,27 @@ class TradingFeeCalculator
   end
 
   private
+
+  def inferred_reference_date
+    latest_operating_date = PortfolioHistory
+                            .where(investor_id: investor.id, event: 'OPERATING_RESULT', status: 'COMPLETED')
+                            .maximum(:date)
+                            &.to_date
+
+    return Date.current unless latest_operating_date
+
+    months_buffer =
+      case frequency
+      when 'MONTHLY' then 1
+      when 'QUARTERLY' then 3
+      when 'SEMESTRAL' then 6
+      when 'ANNUAL' then 12
+      else 3
+      end
+
+    inferred = latest_operating_date.advance(months: months_buffer)
+    [inferred, Date.current].min
+  end
 
   def frequency
     investor.respond_to?(:trading_fee_frequency) ? investor.trading_fee_frequency : "QUARTERLY"
