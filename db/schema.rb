@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_03_06_120000) do
+ActiveRecord::Schema[8.0].define(version: 2026_04_07_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -116,6 +116,10 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_06_120000) do
     t.decimal "accumulated_return_percent", precision: 10, scale: 4, default: "0.0", null: false
     t.decimal "annual_return_usd", precision: 15, scale: 2, default: "0.0", null: false
     t.decimal "annual_return_percent", precision: 10, scale: 4, default: "0.0", null: false
+    t.decimal "strategy_return_all_usd", precision: 15, scale: 2
+    t.decimal "strategy_return_all_percent", precision: 10, scale: 4
+    t.decimal "strategy_return_ytd_usd", precision: 15, scale: 2
+    t.decimal "strategy_return_ytd_percent", precision: 10, scale: 4
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["investor_id"], name: "index_portfolios_on_investor_id", unique: true
