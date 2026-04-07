@@ -84,6 +84,7 @@ class DailyOperatingResultApplicator
         )
 
         PortfolioRecalculator.recalculate!(inv)
+        compound_strategy_returns!(inv, delta)
       end
     end
 
@@ -128,8 +129,37 @@ class DailyOperatingResultApplicator
   end
 
 
+  def compound_strategy_returns!(investor, delta)
+    portfolio = investor.portfolio
+    return unless portfolio
+    return if portfolio.strategy_return_all_percent.nil? && portfolio.strategy_return_ytd_percent.nil?
+
+    daily_factor = BigDecimal('1') + (percent / 100)
+
+    if portfolio.strategy_return_all_percent.present?
+      old_all_pct = BigDecimal(portfolio.strategy_return_all_percent.to_s)
+      new_all_pct = ((BigDecimal('1') + old_all_pct / 100) * daily_factor - BigDecimal('1')) * 100
+      new_all_usd = BigDecimal(portfolio.strategy_return_all_usd.to_s) + BigDecimal(delta.to_s)
+
+      portfolio.update!(
+        strategy_return_all_percent: new_all_pct.round(4, :half_up).to_f,
+        strategy_return_all_usd: new_all_usd.round(2, :half_up).to_f,
+      )
+    end
+
+    if portfolio.strategy_return_ytd_percent.present?
+      old_ytd_pct = BigDecimal(portfolio.strategy_return_ytd_percent.to_s)
+      new_ytd_pct = ((BigDecimal('1') + old_ytd_pct / 100) * daily_factor - BigDecimal('1')) * 100
+      new_ytd_usd = BigDecimal(portfolio.strategy_return_ytd_usd.to_s) + BigDecimal(delta.to_s)
+
+      portfolio.update!(
+        strategy_return_ytd_percent: new_ytd_pct.round(4, :half_up).to_f,
+        strategy_return_ytd_usd: new_ytd_usd.round(2, :half_up).to_f,
+      )
+    end
+  end
+
   def movement_time
-    # Operativa: antes de las 18hs (para quedar ordenado antes de depósitos/retiros del día)
     Time.zone.local(date.year, date.month, date.day, 17, 0, 0)
   end
 end
