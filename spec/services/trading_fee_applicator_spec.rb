@@ -61,6 +61,21 @@ RSpec.describe TradingFeeApplicator do
     expect(applicator.errors.join(' ')).to include('No profit')
   end
 
+  it 'does not apply periodic fee when percentage is 0' do
+    add_history(event: 'OPERATING_RESULT', amount: 100, date: Time.zone.local(2025, 11, 15, 17, 0, 0), prev: 1000, newb: 1100)
+
+    applicator = described_class.new(
+      investor,
+      fee_percentage: 0,
+      applied_by: admin,
+      period_start: Date.new(2025, 10, 1),
+      period_end: Date.new(2025, 12, 31),
+    )
+
+    expect(applicator.apply).to eq(false)
+    expect(applicator.errors.join(' ')).to include('0%')
+  end
+
   it 'fails on duplicate fee for the same period' do
     start_date = Date.new(2025, 10, 1)
     end_date = Date.new(2025, 12, 31)

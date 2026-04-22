@@ -58,8 +58,13 @@ RSpec.describe Investor, type: :model do
       expect(investor.errors[:email]).to include('has already been taken')
     end
 
-    it 'validates trading fee percentage range' do
-      investor = Investor.new(email: 'bad_fee@example.com', name: 'Bad Fee', status: 'ACTIVE', trading_fee_percentage: 0)
+    it 'allows 0 as trading fee percentage' do
+      investor = Investor.new(email: 'zero_fee@example.com', name: 'Zero Fee', status: 'ACTIVE', trading_fee_percentage: 0)
+      expect(investor).to be_valid
+    end
+
+    it 'rejects negative trading fee percentage' do
+      investor = Investor.new(email: 'bad_fee@example.com', name: 'Bad Fee', status: 'ACTIVE', trading_fee_percentage: -1)
       expect(investor).not_to be_valid
       expect(investor.errors[:trading_fee_percentage]).to be_present
     end

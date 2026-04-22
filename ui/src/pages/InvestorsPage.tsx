@@ -51,7 +51,7 @@ export const InvestorsPage = () => {
     setSubmitting(true);
     try {
       const pct = Number(formData.tradingFeePercentage);
-      if (!Number.isFinite(pct) || pct <= 0 || pct > 100) {
+      if (!Number.isFinite(pct) || pct < 0 || pct > 100) {
         alert("El porcentaje debe estar entre 0 y 100");
         return;
       }

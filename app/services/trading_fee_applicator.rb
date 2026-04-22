@@ -14,6 +14,10 @@ class TradingFeeApplicator
   def apply
     validate_inputs
     return false if errors.any?
+    if fee_percentage.zero?
+      @errors << 'Investor trading fee is 0%; periodic fee should not be applied'
+      return false
+    end
 
     if @period_start_override.present? && @period_end_override.present?
       @period_start = @period_start_override.to_date
@@ -69,7 +73,7 @@ class TradingFeeApplicator
       @errors << 'Investor must be active'
     end
 
-    if fee_percentage <= 0 || fee_percentage > 100
+    if fee_percentage < 0 || fee_percentage > 100
       @errors << 'Fee percentage must be between 0 and 100'
     end
 

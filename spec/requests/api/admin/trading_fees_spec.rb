@@ -592,7 +592,7 @@ RSpec.describe 'Admin Trading Fees API', type: :request do
       expect(PortfolioHistory.where(investor_id: inv.id, event: 'TRADING_FEE').count).to eq(1)
     end
 
-    it 'returns 422 for invalid percentage' do
+    it 'returns 422 when investor is configured with 0%' do
       inv = create_investor_with_portfolio(email: 'inv6@test.com')
 
       post '/api/admin/trading_fees', params: {
@@ -603,6 +603,8 @@ RSpec.describe 'Admin Trading Fees API', type: :request do
       }
 
       expect(response).to have_http_status(:unprocessable_content)
+      json = JSON.parse(response.body)
+      expect(json['error']).to include('0%')
     end
 
     it 'returns 422 when fee_percentage > 100' do
@@ -694,6 +696,32 @@ RSpec.describe 'Admin Trading Fees API', type: :request do
       adj = PortfolioHistory.where(investor_id: inv.id, event: 'TRADING_FEE_ADJUSTMENT').order(date: :desc).first
       expect(adj).to be_present
       expect(adj.amount.to_f).to eq(10.0) # refund
+    end
+
+    it 'allows updating an applied fee to 0% to fully refund it' do
+      inv = create_investor_with_portfolio(email: 'edit_to_zero@test.com')
+      inv.portfolio.update!(current_balance: 1100, total_invested: 1000)
+
+      add_history(inv: inv, event: 'DEPOSIT', amount: 1000, date: Time.zone.local(2025, 10, 1, 19, 0, 0), prev: 0, newb: 1000)
+      add_history(inv: inv, event: 'OPERATING_RESULT', amount: 100, date: Time.zone.local(2025, 11, 10, 17, 0, 0), prev: 1000, newb: 1100)
+
+      post '/api/admin/trading_fees', params: {
+        investor_id: inv.id,
+        period_start: '2025-10-01',
+        period_end: '2025-12-31',
+        fee_percentage: 30,
+      }
+      expect(response).to have_http_status(:created)
+      fee_id = JSON.parse(response.body)['id']
+
+      patch "/api/admin/trading_fees/#{fee_id}", params: { fee_percentage: 0, notes: 'refund all' }
+      expect(response).to have_http_status(:ok)
+
+      inv.reload
+      fee = TradingFee.find(fee_id)
+      expect(fee.fee_percentage.to_f).to eq(0.0)
+      expect(fee.fee_amount.to_f).to eq(0.0)
+      expect(inv.portfolio.current_balance.to_f).to eq(1100.0)
     end
   end
 

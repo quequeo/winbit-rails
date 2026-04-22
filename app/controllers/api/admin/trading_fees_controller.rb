@@ -128,8 +128,13 @@ module Api
       def create
         fee_percentage = params[:fee_percentage].present? ? params[:fee_percentage].to_f : @investor.trading_fee_percentage.to_f
 
-        if fee_percentage <= 0 || fee_percentage > 100
+        if fee_percentage < 0 || fee_percentage > 100
           render_error('El porcentaje debe estar entre 0 y 100', status: :unprocessable_content)
+          return
+        end
+
+        if fee_percentage.zero?
+          render_error('Este inversor tiene trading fee en 0%: no corresponde aplicar comisión periódica', status: :unprocessable_content)
           return
         end
 
@@ -216,7 +221,7 @@ module Api
         fee_percentage = params[:fee_percentage]&.to_f
         notes = params[:notes]
 
-        if fee_percentage.blank? || fee_percentage <= 0 || fee_percentage > 100
+        if fee_percentage.blank? || fee_percentage < 0 || fee_percentage > 100
           render_error('El porcentaje debe estar entre 0 y 100', status: :unprocessable_content)
           return
         end

@@ -245,6 +245,39 @@ describe("TradingFeesPage", () => {
     );
   });
 
+  it("does not calculate/apply when investor percentage is 0%", async () => {
+    const user = userEvent.setup();
+    vi.mocked(api.getTradingFeesSummary).mockResolvedValue([
+      {
+        investor_id: "inv-zero-pct",
+        investor_name: "Investor Zero Pct",
+        investor_email: "zero-pct@test.com",
+        trading_fee_frequency: "QUARTERLY",
+        investor_trading_fee_percentage: 0,
+        current_balance: 1200,
+        period_start: "2025-10-01",
+        period_end: "2025-12-31",
+        profit_amount: 100,
+        has_profit: true,
+        already_applied: false,
+        period_clipped: false,
+      },
+    ] as InvestorSummary[]);
+
+    render(<TradingFeesPage />);
+
+    await waitFor(() =>
+      expect(screen.getAllByText("Investor Zero Pct").length).toBeGreaterThan(0),
+    );
+
+    await user.click(screen.getAllByRole("button", { name: "Aplicar" })[0]);
+
+    expect(api.calculateTradingFee).not.toHaveBeenCalled();
+    expect(
+      screen.getByText("Este inversor tiene 0%: no corresponde aplicar comisión"),
+    ).toBeInTheDocument();
+  });
+
   it("clears filter when Limpiar is clicked", async () => {
     const user = userEvent.setup();
     vi.mocked(api.getTradingFeesSummary).mockResolvedValue(mockRows);
@@ -597,7 +630,7 @@ describe("TradingFeesPage", () => {
     ).toBeInTheDocument();
   });
 
-  it("validates edit percentage and handles update error", async () => {
+  it("validates negative edit percentage and allows 0%", async () => {
     const user = userEvent.setup();
     vi.mocked(api.getTradingFeesSummary).mockResolvedValue(mockRows);
     vi.mocked(api.updateTradingFee).mockRejectedValueOnce(
@@ -619,14 +652,14 @@ describe("TradingFeesPage", () => {
     const pctInput = within(modal).getByRole("spinbutton");
 
     await user.clear(pctInput);
-    await user.type(pctInput, "0");
+    await user.type(pctInput, "-1");
     await user.click(screen.getByRole("button", { name: "Guardar" }));
     expect(
       screen.getByText("El porcentaje debe estar entre 0 y 100"),
     ).toBeInTheDocument();
 
     await user.clear(pctInput);
-    await user.type(pctInput, "30");
+    await user.type(pctInput, "0");
     await user.click(screen.getByRole("button", { name: "Guardar" }));
     await waitFor(() =>
       expect(screen.getByText("Update failed")).toBeInTheDocument(),

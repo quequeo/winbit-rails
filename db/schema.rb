@@ -76,7 +76,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_07_000000) do
     t.index ["trading_fee_frequency"], name: "index_investors_on_trading_fee_frequency"
     t.check_constraint "status::text = ANY (ARRAY['ACTIVE'::character varying::text, 'INACTIVE'::character varying::text])", name: "investors_status_check"
     t.check_constraint "trading_fee_frequency::text = ANY (ARRAY['MONTHLY'::character varying, 'QUARTERLY'::character varying, 'SEMESTRAL'::character varying, 'ANNUAL'::character varying]::text[])", name: "investors_trading_fee_frequency_check"
-    t.check_constraint "trading_fee_percentage > 0::numeric AND trading_fee_percentage <= 100::numeric", name: "investors_trading_fee_percentage_check"
+    t.check_constraint "trading_fee_percentage >= 0::numeric AND trading_fee_percentage <= 100::numeric", name: "investors_trading_fee_percentage_check"
   end
 
   create_table "payment_methods", force: :cascade do |t|

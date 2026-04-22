@@ -286,8 +286,12 @@ export const TradingFeesPage = () => {
 
   const handleApplyClick = async (investor: InvestorSummary) => {
     const percentage = parseFloat(percentages[investor.investor_id] || "30");
-    if (Number.isNaN(percentage) || percentage <= 0 || percentage > 100) {
+    if (Number.isNaN(percentage) || percentage < 0 || percentage > 100) {
       setFlash({ type: "error", message: "El porcentaje debe estar entre 0 y 100" });
+      return;
+    }
+    if (percentage === 0) {
+      setFlash({ type: "error", message: "Este inversor tiene 0%: no corresponde aplicar comisión" });
       return;
     }
     try {
@@ -352,7 +356,7 @@ export const TradingFeesPage = () => {
   const handleConfirmEdit = async () => {
     if (!editModal) return;
     const nextPct = parseFloat(editPercentage || "");
-    if (Number.isNaN(nextPct) || nextPct <= 0 || nextPct > 100) {
+    if (Number.isNaN(nextPct) || nextPct < 0 || nextPct > 100) {
       setFlash({ type: "error", message: "El porcentaje debe estar entre 0 y 100" });
       return;
     }
