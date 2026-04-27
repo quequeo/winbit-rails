@@ -69,6 +69,5 @@ RSpec.describe PortfolioRecalculator do
 
       expect(described_class.negative_total_invested_blocking_message([investor])).to be_nil
     end
-
   end
 end
