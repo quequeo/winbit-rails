@@ -59,6 +59,10 @@ class DailyOperatingResultApplicator
       return false
     end
 
+    msg = PortfolioRecalculator.negative_total_invested_blocking_message(investors)
+    @errors << ('No se puede aplicar: ' + msg) if msg
+    return false if errors.any?
+
     ApplicationRecord.transaction do
       DailyOperatingResult.create!(
         date: date,

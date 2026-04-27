@@ -714,6 +714,8 @@ RSpec.describe 'Admin Trading Fees API', type: :request do
       expect(response).to have_http_status(:created)
       fee_id = JSON.parse(response.body)['id']
 
+      # Re-login after POST: session is not always carried to the next request in request specs (CI).
+      login_as(admin, scope: :user)
       patch "/api/admin/trading_fees/#{fee_id}", params: { fee_percentage: 0, notes: 'refund all' }
       expect(response).to have_http_status(:ok)
 

@@ -59,6 +59,11 @@ class DailyOperatingResultEditor
       return false
     end
 
+    investors = Investor.where(id: investor_ids).includes(:portfolio)
+    msg = PortfolioRecalculator.negative_total_invested_blocking_message(investors)
+    @errors << ('No se puede guardar: ' + msg) if msg
+    return false if errors.any?
+
     ApplicationRecord.transaction do
       result.update!(percent: new_percent, notes: notes.nil? ? result.notes : notes)
 

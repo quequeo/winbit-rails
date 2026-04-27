@@ -5,10 +5,10 @@ RSpec.describe Requests::ReverseApprovedWithdrawal, type: :service do
   let!(:investor) { Investor.create!(email: 'reverse-investor@test.com', name: 'Investor', status: 'ACTIVE') }
   # New model: investor receives full 1000, fee (27.27) is charged additionally.
   # Balance after approval: 5500 - 1000 (withdrawal) - 27.27 (fee) = 4472.73
-  # total_invested after approval: 5000 - 1000 = 4000 (fee does not reduce total_invested)
-  let!(:portfolio) { Portfolio.create!(investor: investor, current_balance: 4472.73, total_invested: 4000) }
-  # Simulate history: DEPOSIT 5000, OPERATING_RESULT 500 -> balance 5500, total_invested 5000;
-  # then WITHDRAWAL 1000, TRADING_FEE 27.27 -> balance 4472.73, total_invested 4000
+  # total_invested = sum(DEPOSIT) only → 5000 (retiros no lo bajan; fee tampoco).
+  let!(:portfolio) { Portfolio.create!(investor: investor, current_balance: 4472.73, total_invested: 5000) }
+  # Simulate history: DEPOSIT 5000, OPERATING_RESULT 500 -> balance 5500;
+  # then WITHDRAWAL 1000, TRADING_FEE 27.27 -> balance 4472.73
   let!(:prior_deposit) do
     PortfolioHistory.create!(
       investor: investor,
@@ -91,7 +91,7 @@ RSpec.describe Requests::ReverseApprovedWithdrawal, type: :service do
 
     # current_balance restored: 4472.73 + 27.27 (fee refund) + 1000 (withdrawal reversal) = 5500
     expect(portfolio.current_balance.to_f.round(2)).to eq(5500.0)
-    # total_invested restored: 4000 + 1000 = 5000
+    # total_invested sigue siendo ingresos acumulados (5000); WITHDRAWAL_REVERSAL no suma ingresos.
     expect(portfolio.total_invested.to_f.round(2)).to eq(5000.0)
     expect(fee.voided_at).to be_present
     expect(fee.voided_by_id).to eq(admin.id)

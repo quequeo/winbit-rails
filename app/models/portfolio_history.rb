@@ -1,5 +1,7 @@
 class PortfolioHistory < ApplicationRecord
-  EVENTS = %w[DEPOSIT WITHDRAWAL DEPOSIT_REVERSAL OPERATING_RESULT TRADING_FEE TRADING_FEE_ADJUSTMENT REFERRAL_COMMISSION].freeze
+  EVENTS = %w[
+    DEPOSIT WITHDRAWAL WITHDRAWAL_REVERSAL DEPOSIT_REVERSAL OPERATING_RESULT TRADING_FEE TRADING_FEE_ADJUSTMENT REFERRAL_COMMISSION
+  ].freeze
   STATUSES = %w[PENDING COMPLETED REJECTED].freeze
 
   belongs_to :investor
@@ -17,6 +19,7 @@ class PortfolioHistory < ApplicationRecord
     return if amount.blank? || event.blank?
 
     errors.add(:amount, 'must be greater than 0 for WITHDRAWAL') if event == 'WITHDRAWAL' && amount.to_d <= 0
+    errors.add(:amount, 'must be greater than 0 for WITHDRAWAL_REVERSAL') if event == 'WITHDRAWAL_REVERSAL' && amount.to_d <= 0
     errors.add(:amount, 'must be greater than 0 for DEPOSIT_REVERSAL') if event == 'DEPOSIT_REVERSAL' && amount.to_d <= 0
     errors.add(:amount, 'must be lower than 0 for TRADING_FEE') if event == 'TRADING_FEE' && amount.to_d >= 0
   end

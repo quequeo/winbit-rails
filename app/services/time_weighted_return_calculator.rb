@@ -22,8 +22,8 @@ class TimeWeightedReturnCalculator
     keyword_init: true
   )
 
-  FLOW_EVENTS = %w[DEPOSIT WITHDRAWAL DEPOSIT_REVERSAL REFERRAL_COMMISSION].freeze
-  INFLOW_EVENTS = %w[DEPOSIT REFERRAL_COMMISSION].freeze
+  FLOW_EVENTS = %w[DEPOSIT WITHDRAWAL WITHDRAWAL_REVERSAL DEPOSIT_REVERSAL REFERRAL_COMMISSION].freeze
+  INFLOW_EVENTS = %w[DEPOSIT REFERRAL_COMMISSION WITHDRAWAL_REVERSAL].freeze
 
   def self.for_investor(investor_id:, from:, to: Time.current)
     new(from: from, to: to).compute_for_investor(investor_id: investor_id)
