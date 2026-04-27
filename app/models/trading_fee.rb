@@ -11,8 +11,8 @@ class TradingFee < ApplicationRecord
   validates :period_start, presence: true
   validates :period_end, presence: true
   validates :profit_amount, presence: true, numericality: { greater_than: 0 }
-  validates :fee_percentage, presence: true, numericality: { greater_than: 0, less_than_or_equal_to: 100 }
-  validates :fee_amount, presence: true, numericality: { greater_than: 0 }
+  validates :fee_percentage, presence: true, numericality: { greater_than_or_equal_to: 0, less_than_or_equal_to: 100 }
+  validates :fee_amount, presence: true, numericality: { greater_than_or_equal_to: 0 }
   validates :applied_at, presence: true
   validates :source, presence: true, inclusion: { in: SOURCES }
 

@@ -51,7 +51,8 @@ RSpec.describe DailyOperatingResultApplicator do
   end
 
   it 'applies when raw deposits minus withdrawals is negative but sequential total_invested floors at zero' do
-    d = Date.new(2026, 5, 10)
+    # Must be <= Date.current or validate_inputs rejects the run as a future date (CI date varies).
+    d = Date.new(2020, 6, 15)
     at_time = Time.zone.local(d.year, d.month, d.day, 17, 0, 0)
     inv = create_investor(email: 'bad_history_dor@example.com')
     inv.portfolio.update!(

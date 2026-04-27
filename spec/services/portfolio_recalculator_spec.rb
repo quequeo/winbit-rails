@@ -40,7 +40,7 @@ RSpec.describe PortfolioRecalculator do
       )
       PortfolioHistory.create!(
         investor: investor, event: 'WITHDRAWAL', amount: 500.0,
-        previous_balance: 100.0, new_balance: 0.0, status: 'COMPLETED', date: t + 1.hour,
+        previous_balance: 100.0, new_balance: -400.0, status: 'COMPLETED', date: t + 1.hour,
       )
 
       b = described_class.total_invested_breakdown(investor.id)
