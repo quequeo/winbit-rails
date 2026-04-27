@@ -110,13 +110,12 @@ module Requests
             )
           end
 
-          # Keep totals consistent without requiring a full history replay.
-          # total_invested only tracks deposits/withdrawals; trading fees are a performance cost.
+          # total_invested = ingresos acumulados (depósitos + referidos − reversos); retiros no lo modifican.
           new_total_invested =
             if req.request_type == 'DEPOSIT'
               BigDecimal(portfolio.total_invested.to_s) + requested_amount
             else
-              BigDecimal(portfolio.total_invested.to_s) - requested_amount
+              BigDecimal(portfolio.total_invested.to_s)
             end
 
           portfolio.update!(

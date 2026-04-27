@@ -108,6 +108,51 @@ RSpec.describe Requests::Approve, type: :service do
         expect(history.previous_balance).to eq(5000.0)
         expect(history.new_balance).to eq(4000.0)
       end
+
+      it 'no deja total_invested por debajo de cero si el retiro incluye ganancia' do
+        inv = Investor.create!(
+          email: 'floor-total-inv@example.com',
+          name: 'Floor',
+          status: 'ACTIVE',
+          trading_fee_percentage: 0
+        )
+        p = Portfolio.create!(investor: inv, current_balance: 1200, total_invested: 1000)
+        t0 = 5.days.ago
+        t1 = 3.days.ago
+        PortfolioHistory.create!(
+          investor: inv,
+          event: 'DEPOSIT',
+          amount: 1000,
+          previous_balance: 0,
+          new_balance: 1000,
+          status: 'COMPLETED',
+          date: t0
+        )
+        PortfolioHistory.create!(
+          investor: inv,
+          event: 'OPERATING_RESULT',
+          amount: 200,
+          previous_balance: 1000,
+          new_balance: 1200,
+          status: 'COMPLETED',
+          date: t1
+        )
+
+        big_wd = InvestorRequest.create!(
+          investor: inv,
+          request_type: 'WITHDRAWAL',
+          method: 'USDC',
+          amount: 1100,
+          status: 'PENDING',
+          requested_at: Time.current
+        )
+
+        described_class.new(request_id: big_wd.id, approved_by: admin).call
+
+        p.reload
+        expect(p.current_balance.to_f).to eq(100.0)
+        expect(p.total_invested.to_f).to eq(1000.0)
+      end
     end
 
     context 'with invalid request' do

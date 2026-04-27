@@ -1,27 +1,21 @@
 namespace :portfolios do
-  desc "Recalculate total_invested for all investors (Deposits - Withdrawals)"
+  desc "Recalcula total_invested (replay secuencial con piso en 0 en retiros/reversos) y saldos desde PortfolioHistory"
   task recalculate_total_invested: :environment do
-    puts "Recalculando Total Invertido para todos los inversores..."
-    puts "Nueva lógica: Total Invertido = Depósitos - Retiros"
+    puts "Recalculando portfolios desde historial (PortfolioRecalculator)..."
     puts ""
 
-    Investor.includes(:portfolio, :portfolio_histories).find_each do |investor|
+    Investor.includes(:portfolio).find_each do |investor|
       next unless investor.portfolio
 
-      deposits = investor.portfolio_histories.where(event: 'DEPOSIT').sum(:amount).to_f
-      withdrawals = investor.portfolio_histories.where(event: 'WITHDRAWAL').sum(:amount).to_f
-      new_total_invested = deposits - withdrawals
-
       old_total = investor.portfolio.total_invested.to_f
+      PortfolioRecalculator.recalculate!(investor)
+      new_total = investor.portfolio.reload.total_invested.to_f
 
-      if old_total != new_total_invested
-        investor.portfolio.update!(total_invested: new_total_invested)
-        puts "✓ #{investor.name} (#{investor.email})"
-        puts "  Depósitos: $#{deposits}"
-        puts "  Retiros: $#{withdrawals}"
-        puts "  Antes: $#{old_total} → Ahora: $#{new_total_invested}"
-        puts ""
-      end
+      next if old_total == new_total
+
+      puts "✓ #{investor.name} (#{investor.email})"
+      puts "  total_invested Antes: $#{old_total} → Ahora: $#{new_total}"
+      puts ""
     end
 
     puts "✅ Recálculo completado"

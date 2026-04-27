@@ -4,7 +4,7 @@ Este documento describe **qué calcula Winbit** y **cómo**, para que los númer
 
 ### 1) Modelo de movimientos (fuente de la verdad)
 - **`PortfolioHistory`**: movimientos ya ejecutados (`status = COMPLETED`)
-  - `event`: `DEPOSIT`, `WITHDRAWAL`, `DEPOSIT_REVERSAL`, `OPERATING_RESULT`, `TRADING_FEE`, `TRADING_FEE_ADJUSTMENT`, `REFERRAL_COMMISSION`
+  - `event`: `DEPOSIT`, `WITHDRAWAL`, `WITHDRAWAL_REVERSAL`, `DEPOSIT_REVERSAL`, `OPERATING_RESULT`, `TRADING_FEE`, `TRADING_FEE_ADJUSTMENT`, `REFERRAL_COMMISSION`
   - `amount`: monto del movimiento (USD).  
     - Depósitos, operativa, referido y ajustes: positivos. Trading fee: negativo.
   - `previous_balance`, `new_balance`: “foto” de saldo antes/después del movimiento.
@@ -21,14 +21,14 @@ current\_balance = \sum \Delta_i
 \]
 
 donde \(\Delta_i\) depende del evento:
-- `DEPOSIT`, `OPERATING_RESULT`, `REFERRAL_COMMISSION`, `TRADING_FEE_ADJUSTMENT`: \(+amount\)
+- `DEPOSIT`, `OPERATING_RESULT`, `REFERRAL_COMMISSION`, `TRADING_FEE_ADJUSTMENT`, `WITHDRAWAL_REVERSAL`: \(+amount\)
 - `WITHDRAWAL`, `DEPOSIT_REVERSAL`, `TRADING_FEE`: \(-\lvert amount\rvert\)
 
 ### 3) Total invertido (`Portfolio.total_invested`)
-En Winbit, “total invertido” es el **neto actualmente invertido**:
+En Winbit, “total invertido” refleja **ingresos de capital** del inversor (lo depositado y bonos por referido, neto de reversos de depósito). **No** se restan los retiros (un retiro puede incluir ganancia; no reduce este acumulado).
 
 \[
-total\_invested = \sum deposits - \sum deposit\_reversals - \sum withdrawals
+total\_invested = \sum deposits + \sum referral\_commissions - \sum deposit\_reversals
 \]
 
 No descuenta trading fees (porque no son un retiro del inversor sino un costo de performance).
@@ -100,7 +100,7 @@ Servicio: `TradingFeeApplicator`. Ajuste de período: `TradingFeeCalculator.adju
 Objetivo: rentabilidad de la estrategia **independiente de depósitos/retiros**.
 
 Definición por sub-períodos (se cortan en cada flujo externo):
-- Flujos externos: `DEPOSIT`, `WITHDRAWAL`, `DEPOSIT_REVERSAL`, `REFERRAL_COMMISSION`
+- Flujos externos: `DEPOSIT`, `WITHDRAWAL`, `WITHDRAWAL_REVERSAL`, `DEPOSIT_REVERSAL`, `REFERRAL_COMMISSION`
 - Performance interna: `OPERATING_RESULT`, `TRADING_FEE`, etc. (impactan el valor pero no cortan)
 
 Para cada sub-período \(i\):

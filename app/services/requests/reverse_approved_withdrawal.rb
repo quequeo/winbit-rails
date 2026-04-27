@@ -33,20 +33,19 @@ module Requests
           running_balance = fee_refund_new_balance
         end
 
-        deposit_new_balance = running_balance + requested_amount
+        restored_balance = running_balance + requested_amount
         PortfolioHistory.create!(
           investor: req.investor,
-          event: 'DEPOSIT',
+          event: 'WITHDRAWAL_REVERSAL',
           amount: requested_amount,
           previous_balance: running_balance,
-          new_balance: deposit_new_balance,
+          new_balance: restored_balance,
           status: 'COMPLETED',
           date: Time.current
         )
 
         portfolio.update!(
           current_balance: (BigDecimal(portfolio.current_balance.to_s) + requested_amount + fee_amount).to_f,
-          total_invested: (BigDecimal(portfolio.total_invested.to_s) + requested_amount).to_f
         )
 
         req.update!(

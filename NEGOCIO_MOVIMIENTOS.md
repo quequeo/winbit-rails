@@ -14,6 +14,7 @@ Todos los movimientos ejecutados se registran en `PortfolioHistory` con `status 
 |--------|-------------|------------------|
 | `DEPOSIT` | Depósito de capital | Positivo |
 | `WITHDRAWAL` | Retiro de capital | Positivo (el descuento se aplica por `previous_balance - amount`) |
+| `WITHDRAWAL_REVERSAL` | Reversión de un retiro aprobado (solo balance; no suma a “ingresos” de `total_invested`) | Positivo |
 | `DEPOSIT_REVERSAL` | Reversión de un depósito aprobado | Positivo |
 | `OPERATING_RESULT` | Resultado operativo diario | Positivo o negativo |
 | `TRADING_FEE` | Comisión (por retiro —CST— o periódica trimestral) | Negativo |
@@ -64,7 +65,7 @@ El inversor **siempre recibe el monto solicitado**. La CST es un descuento adici
 
 ### Reversión
 
-`Requests::ReverseApprovedWithdrawal` revierte un retiro aprobado: reembolsa el fee (TRADING_FEE_ADJUSTMENT) y el capital (DEPOSIT) y ejecuta `PortfolioRecalculator`.
+`Requests::ReverseApprovedWithdrawal` revierte un retiro aprobado: reembolsa el fee (TRADING_FEE_ADJUSTMENT) y el monto del retiro como `WITHDRAWAL_REVERSAL` (no como `DEPOSIT`, para no inflar el total de ingresos) y ejecuta `PortfolioRecalculator`.
 
 ---
 

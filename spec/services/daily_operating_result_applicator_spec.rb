@@ -49,4 +49,38 @@ RSpec.describe DailyOperatingResultApplicator do
     ids = data[:investors].map { |r| r[:investor_id] }
     expect(ids).not_to include(inv.id)
   end
+
+  it 'applies when raw deposits minus withdrawals is negative but sequential total_invested floors at zero' do
+    d = Date.new(2026, 5, 10)
+    at_time = Time.zone.local(d.year, d.month, d.day, 17, 0, 0)
+    inv = create_investor(email: 'bad_history_dor@example.com')
+    inv.portfolio.update!(
+      current_balance: 50,
+      total_invested: 100,
+      accumulated_return_usd: -50,
+      accumulated_return_percent: -50.0,
+    )
+
+    PortfolioHistory.create!(
+      investor: inv, event: 'DEPOSIT', amount: 100.0,
+      previous_balance: 0, new_balance: 100.0, status: 'COMPLETED',
+      date: at_time - 3.hours,
+    )
+    PortfolioHistory.create!(
+      investor: inv, event: 'OPERATING_RESULT', amount: 500.0,
+      previous_balance: 100.0, new_balance: 600.0, status: 'COMPLETED',
+      date: at_time - 2.hours,
+    )
+    PortfolioHistory.create!(
+      investor: inv, event: 'WITHDRAWAL', amount: 550.0,
+      previous_balance: 600.0, new_balance: 50.0, status: 'COMPLETED',
+      date: at_time - 1.hour,
+    )
+
+    applicator = described_class.new(date: d, percent: 1.0, applied_by: admin)
+    expect(applicator.apply).to be(true)
+    expect(DailyOperatingResult.find_by(date: d)).to be_present
+    inv.reload
+    expect(PortfolioRecalculator.total_invested_breakdown(inv.id)[:total_invested]).to eq(BigDecimal('100'))
+  end
 end
