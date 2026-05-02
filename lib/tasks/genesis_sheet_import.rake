@@ -164,8 +164,9 @@ end
 # initial DEPOSIT entry for every investor managed by GenesisSheetApply.
 class GenesisCleanup
   # Lazy: evaluated at task run time (Time.zone is nil at rake load time).
+  # Cutoff = end of 30/04/2026 in Argentina time (ART, UTC-3).
   def self.cutoff
-    Time.zone.local(2026, 4, 30, 19, 0, 0)
+    ActiveSupport::TimeZone['America/Argentina/Buenos_Aires'].local(2026, 4, 30, 23, 59, 59)
   end
 
   def self.run!(dry:)
