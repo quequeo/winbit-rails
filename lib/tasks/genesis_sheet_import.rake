@@ -37,7 +37,7 @@ class GenesisSheetApply
   # bal_jan = balance on 2026-01-01 (used to derive 2026 USD/% strategy fields).
   ROWS = [
     { email: 'eugenio.carrio7@gmail.com',           name: 'Eugenio Carrió',         cap: 6484,  dep: 5445,  wdr: 1400,  vpcust: 3142,  last_fee: '2025-06-11', bal_jan: 6044,  dep26: 0,    wdr26: 0    },
-    { email: 'mariano.kr@gmail.com',                name: 'Mariano Krokante',       cap: 1760,  dep: 701,   wdr: 0,     vpcust: nil,   last_fee: nil,          bal_jan: nil,   dep26: nil,  wdr26: nil  },
+    { email: 'mariano.kr@gmail.com',                name: 'Mariano Krokante',       cap: 1760,  dep: 701,   wdr: 0,     vpcust: nil,   last_fee: nil,          bal_jan: 1641,  dep26: 0,    wdr26: 0    },
     { email: 'luzmeder@gmail.com',                  name: 'Luz Meder',              cap: 1482,  dep: 1463,  wdr: 600,   vpcust: 912,   last_fee: '2024-03-26', bal_jan: 1381,  dep26: 0,    wdr26: 0    },
     { email: 'gustavooscarzuccotti@gmail.com',      name: 'Gustavo Zuccotti',       cap: 597,   dep: 2823,  wdr: 3081,  vpcust: nil,   last_fee: nil,          bal_jan: 1558,  dep26: 0,    wdr26: 1021 },
     { email: 'agoscarrio@hotmail.com',              name: 'Agostina Carrió',        cap: 2105,  dep: 960,   wdr: 0,     vpcust: nil,   last_fee: nil,          bal_jan: 1962,  dep26: 0,    wdr26: 0    },
@@ -46,8 +46,8 @@ class GenesisSheetApply
     { email: 'leoneldaglio@gmail.com',              name: 'Leonel Daglio',          cap: 56525, dep: 45338, wdr: 0,     vpcust: 52690, last_fee: '2026-01-01', bal_jan: 52690, dep26: 0,    wdr26: 0    },
     { email: 'fabrabr190987@gmail.com',             name: 'Fabrizio Bruno',         cap: 7357,  dep: 5430,  wdr: 0,     vpcust: 7178,  last_fee: '2026-04-01', bal_jan: 6951,  dep26: 0,    wdr26: 0    },
     { email: 'cgiordano.ontb@gmail.com',            name: 'Camilo Giordano',        cap: 8188,  dep: 5050,  wdr: 0,     vpcust: 7989,  last_fee: '2026-04-01', bal_jan: 7736,  dep26: 0,    wdr26: 0    },
-    { email: 'manuel.giordano87@gmail.com',         name: 'Manuel Giordano',        cap: 1639,  dep: 1010,  wdr: 0,     vpcust: 1599,  last_fee: '2026-04-01', bal_jan: nil,   dep26: nil,  wdr26: nil  },
-    { email: 'serialfoodie.contact@gmail.com',      name: 'Sergio Nicolás Torres',  cap: 1030,  dep: 3266,  wdr: 3820,  vpcust: 960,   last_fee: '2026-04-21', bal_jan: nil,   dep26: nil,  wdr26: nil  },
+    { email: 'manuel.giordano87@gmail.com',         name: 'Manuel Giordano',        cap: 1639,  dep: 1010,  wdr: 0,     vpcust: 1599,  last_fee: '2026-04-01', bal_jan: 1548,  dep26: 0,    wdr26: 0    },
+    { email: 'serialfoodie.contact@gmail.com',      name: 'Sergio Nicolás Torres',  cap: 1030,  dep: 3266,  wdr: 3820,  vpcust: 960,   last_fee: '2026-04-21', bal_jan: 1991,  dep26: 0,    wdr26: 1050 },
     { email: 'daniel_genoni@hotmail.com',           name: 'Daniel Genoni',          cap: 10755, dep: 7250,  wdr: 0,     vpcust: 10492, last_fee: '2026-04-01', bal_jan: 10161, dep26: 0,    wdr26: 0    },
     { email: 'marinacolabianchi@hotmail.com',       name: 'Marina Colabianchi',     cap: 6632,  dep: 4455,  wdr: 0,     vpcust: 6470,  last_fee: '2026-04-01', bal_jan: 6265,  dep26: 0,    wdr26: 0    },
     { email: 'tuliocapparelli@gmail.com',           name: 'Tulio Capparelli',       cap: 7474,  dep: 8531,  wdr: 2900,  vpcust: 7291,  last_fee: '2026-04-01', bal_jan: 7061,  dep26: 0,    wdr26: 0    },
@@ -60,9 +60,9 @@ class GenesisSheetApply
     { email: 'vigoliana@hotmail.com',               name: 'Lia Ana Vigo',           cap: 8878,  dep: 7923,  wdr: 0,     vpcust: 8661,  last_fee: '2026-04-01', bal_jan: 8368,  dep26: 0,    wdr26: 0    },
     { email: 'julia_vigo@yahoo.com.ar',             name: 'Julia Ana Vigo',         cap: 20770, dep: 18850, wdr: 0,     vpcust: 20264, last_fee: '2026-04-01', bal_jan: 15685, dep26: 4000, wdr26: 0    },
     { email: 'lisandro.filardi.1986@gmail.com',     name: 'Lisandro Filardi',       cap: 22993, dep: 25000, wdr: 4737,  vpcust: 22433, last_fee: '2026-04-01', bal_jan: 25187, dep26: 0,    wdr26: 3500 },
-    { email: 'darioagustin2013@gmail.com',          name: 'Darío Agustín Vázquez',  cap: 3471,  dep: 3291,  wdr: 0,     vpcust: 3386,  last_fee: '2026-04-01', bal_jan: nil,   dep26: nil,  wdr26: nil  },
-    { email: 'proveedores@harasdelsurcollege.com',  name: 'Federico Martín Boero',  cap: 1460,  dep: 1400,  wdr: 0,     vpcust: 1219,  last_fee: '2026-04-01', bal_jan: nil,   dep26: nil,  wdr26: nil  },
-    { email: 'larraniaga.nicolas@gmail.com',        name: 'Nicolás Larrañaga',      cap: 5126,  dep: 5000,  wdr: 0,     vpcust: 5000,  last_fee: '2026-04-13', bal_jan: nil,   dep26: 5000, wdr26: 0    },
+    { email: 'darioagustin2013@gmail.com',          name: 'Darío Agustín Vázquez',  cap: 3471,  dep: 3291,  wdr: 0,     vpcust: 3386,  last_fee: '2026-04-01', bal_jan: 3291,  dep26: 0,    wdr26: 0    },
+    { email: 'proveedores@harasdelsurcollege.com',  name: 'Federico Martín Boero',  cap: 1460,  dep: 1400,  wdr: 0,     vpcust: 1219,  last_fee: '2026-04-01', bal_jan: 1400,  dep26: 0,    wdr26: 0    },
+    { email: 'larraniaga.nicolas@gmail.com',        name: 'Nicolás Larrañaga',      cap: 5126,  dep: 5000,  wdr: 0,     vpcust: 5000,  last_fee: '2026-04-13', bal_jan: nil,   dep26: 5000, wdr26: 0,   ytd_usd_override: 126, ytd_pct_override: 2.52 },
   ].freeze
 
   def self.run!(password:, dry:, snapshot_date:)
@@ -89,7 +89,10 @@ class GenesisSheetApply
     dep26 = BigDecimal((r[:dep26] || 0).to_s)
     wdr26 = BigDecimal((r[:wdr26] || 0).to_s)
 
-    if bal_jan
+    if r[:ytd_usd_override]
+      ytd_usd = BigDecimal(r[:ytd_usd_override].to_s).round(2, :half_up)
+      ytd_pct = r[:ytd_pct_override].to_f
+    elsif bal_jan
       ytd_usd = (cap - bal_jan + wdr26 - dep26).round(2, :half_up)
       ytd_pct = bal_jan.positive? ? ((ytd_usd / bal_jan) * 100).round(4, :half_up).to_f : 0.0
     else
