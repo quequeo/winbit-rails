@@ -163,15 +163,19 @@ end
 # Wipes all testing data before the Genesis snapshot and re-creates the
 # initial DEPOSIT entry for every investor managed by GenesisSheetApply.
 class GenesisCleanup
-  CUTOFF = Time.zone.local(2026, 4, 30, 19, 0, 0)
+  # Lazy: evaluated at task run time (Time.zone is nil at rake load time).
+  def self.cutoff
+    Time.zone.local(2026, 4, 30, 19, 0, 0)
+  end
 
   def self.run!(dry:)
-    tf_scope  = TradingFee.where('applied_at < ?', CUTOFF)
-    ph_scope  = PortfolioHistory.where('date < ?', CUTOFF)
-    dor_scope = DailyOperatingResult.where('date < ?', CUTOFF.to_date)
-    req_scope = InvestorRequest.where('requested_at < ?', CUTOFF)
+    cutoff = self.cutoff
+    tf_scope  = TradingFee.where('applied_at < ?', cutoff)
+    ph_scope  = PortfolioHistory.where('date < ?', cutoff)
+    dor_scope = DailyOperatingResult.where('date < ?', cutoff.to_date)
+    req_scope = InvestorRequest.where('requested_at < ?', cutoff)
 
-    puts "Pre-Genesis cleanup (cutoff: #{CUTOFF})#{dry ? ' (dry run)' : ''}"
+    puts "Pre-Genesis cleanup (cutoff: #{cutoff})#{dry ? ' (dry run)' : ''}"
     puts "  TradingFee:           #{tf_scope.count}"
     puts "  PortfolioHistory:     #{ph_scope.count}"
     puts "  DailyOperatingResult: #{dor_scope.count}"
@@ -193,6 +197,7 @@ class GenesisCleanup
   end
 
   def self.reseed_genesis_history!
+    cutoff = self.cutoff
     GenesisSheetApply::ROWS.each do |r|
       investor = Investor.find_by(email: r[:email])
       next unless investor
@@ -204,14 +209,14 @@ class GenesisCleanup
       InvestorRequest.create!(
         investor: investor, request_type: 'DEPOSIT', amount: dep,
         method: 'USDT', network: 'TRC20', status: 'APPROVED',
-        requested_at: CUTOFF, processed_at: CUTOFF,
+        requested_at: cutoff, processed_at: cutoff,
         notes: 'genesis sheet snapshot (post-cleanup)'
       )
 
       PortfolioHistory.create!(
         investor: investor, event: 'DEPOSIT', amount: dep,
         previous_balance: 0, new_balance: cap,
-        status: 'COMPLETED', date: CUTOFF,
+        status: 'COMPLETED', date: cutoff,
       )
 
       puts "  Reseeded genesis DEPOSIT for #{r[:email]}"
