@@ -227,30 +227,11 @@ module Api
       end
 
       def preview_pending_profit(investor, current_balance:)
-        now = Time.current
-        last_reset = PortfolioHistory
-                       .where(investor_id: investor.id, event: %w[TRADING_FEE WITHDRAWAL], status: 'COMPLETED')
-                       .where('date <= ?', now)
-                       .order(date: :desc, created_at: :desc)
-                       .first
-
-        vpcust = last_reset ? BigDecimal(last_reset.new_balance.to_s) : BigDecimal('0')
-        reset_at = last_reset&.date
-
-        inflows = if reset_at
-          PortfolioHistory
-            .where(investor_id: investor.id, event: %w[DEPOSIT REFERRAL_COMMISSION], status: 'COMPLETED')
-            .where('date > ? AND date <= ?', reset_at, now)
-            .sum(:amount)
-        else
-          PortfolioHistory
-            .where(investor_id: investor.id, event: %w[DEPOSIT REFERRAL_COMMISSION], status: 'COMPLETED')
-            .where('date <= ?', now)
-            .sum(:amount)
-        end
-
-        pending = current_balance - vpcust - BigDecimal(inflows.to_s)
-        pending.positive? ? pending : BigDecimal('0')
+        InvestorPendingProfit.pending_until(
+          investor: investor,
+          as_of: Time.current,
+          current_balance: current_balance
+        )
       end
 
       def format_name(name)

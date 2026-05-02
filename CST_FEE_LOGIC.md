@@ -77,40 +77,20 @@ fee_amount = round2(rentabilidad_acumulada × (fee_percentage / 100))
 
 ## 6) Implementación en código
 
-### 6.1) `pending_profit_until` (Requests::Approve, Api::Public::InvestorsController)
+### 6.1) `InvestorPendingProfit.pending_until` (Requests::Approve, Api::Public::InvestorsController)
 
-```ruby
-# 1. Último evento de reset (TRADING_FEE o WITHDRAWAL)
-last_reset = PortfolioHistory
-  .where(investor_id:, event: %w[TRADING_FEE WITHDRAWAL], status: 'COMPLETED')
-  .where('date <= ?', as_of)
-  .order(date: :desc, created_at: :desc)
-  .first
+Se elige el **reset más reciente** entre:
 
-vpcust = last_reset ? last_reset.new_balance : 0
-reset_at = last_reset&.date
+- el último `PortfolioHistory` con evento `TRADING_FEE` o `WITHDRAWAL` (completado), y
+- un snapshot opcional de Genesis en `portfolios.genesis_vpcust_usd` + `portfolios.genesis_fee_basis_at` (carga desde planilla).
 
-# 2. Ingresos desde el reset (DEPOSIT y REFERRAL_COMMISSION no cuentan como rentabilidad)
-inflows = if reset_at
-  PortfolioHistory
-    .where(investor_id:, event: %w[DEPOSIT REFERRAL_COMMISSION], status: 'COMPLETED')
-    .where('date > ? AND date <= ?', reset_at, as_of)
-    .sum(:amount)
-else
-  PortfolioHistory
-    .where(investor_id:, event: %w[DEPOSIT REFERRAL_COMMISSION], status: 'COMPLETED')
-    .where('date <= ?', as_of)
-    .sum(:amount)
-end
+Con ese `Vpcust` y `reset_at`, se suman ingresos (`DEPOSIT`, `REFERRAL_COMMISSION`) posteriores al reset y se calcula:
 
-# 3. Rentabilidad
-pending = current_balance - vpcust - inflows
-pending = pending > 0 ? pending : 0
-```
+`pending = current_balance - vpcust - inflows` (mínimo 0).
 
 ### 6.2) `calculate_and_apply_withdrawal_fee`
 
-- Usa `pending_profit_until` para obtener la rentabilidad acumulada.
+- Usa `InvestorPendingProfit.pending_until` para obtener la rentabilidad acumulada.
 - Si `pending_profit > 0`: `fee_amount = round2(pending_profit × percentage/100)`.
 - Valida: `requested_amount + fee_amount <= previous_balance`.
 - Crea `TradingFee` (source: WITHDRAWAL) y `PortfolioHistory` TRADING_FEE (monto negativo).
@@ -144,7 +124,8 @@ Cuando un inversor tiene fee por retiro en el medio de un período (ej. febrero)
 
 ## 10) Referencias
 
-- `app/services/requests/approve.rb` — `calculate_and_apply_withdrawal_fee`, `pending_profit_until`, `create_withdrawal_histories!`
+- `app/services/investor_pending_profit.rb` — cálculo de rentabilidad pendiente (Vpcust + Genesis opcional)
+- `app/services/requests/approve.rb` — `calculate_and_apply_withdrawal_fee`, `create_withdrawal_histories!`
 - `app/controllers/api/public/investors_controller.rb` — `preview_pending_profit`, `withdrawal_fee_preview`, `sort_history_items`
 - `app/services/trading_fee_calculator.rb` — `adjust_period_for_withdrawal_fees`
 - `../PREGUNTAS_CST.md` (workspace raíz) — Preguntas y respuestas confirmadas con el dueño.

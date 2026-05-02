@@ -32,13 +32,13 @@ class PublicInvestorShowSerializer
       accumulatedReturnPercent: p.accumulated_return_percent.to_f,
       annualReturnUSD: p.annual_return_usd.to_f,
       annualReturnPercent: p.annual_return_percent.to_f,
-      # Always expose net strategy result from historical replay.
-      # This includes internal events like TRADING_FEE and avoids stale cached fields.
-      strategyReturnYtdUSD: ytd_return.pnl_usd,
-      strategyReturnYtdPercent: ytd_return.twr_percent,
+      # Prefer portfolio snapshot (Genesis sheet + DailyOperatingResultApplicator compounding) when set;
+      # otherwise fall back to TWR replay from PortfolioHistory.
+      strategyReturnYtdUSD: p.strategy_return_ytd_usd.nil? ? ytd_return.pnl_usd : p.strategy_return_ytd_usd.to_f,
+      strategyReturnYtdPercent: p.strategy_return_ytd_percent.nil? ? ytd_return.twr_percent : p.strategy_return_ytd_percent.to_f,
       strategyReturnYtdFrom: ytd_return.effective_start_at&.to_date&.strftime('%Y-%m-%d'),
-      strategyReturnAllUSD: all_return.pnl_usd,
-      strategyReturnAllPercent: all_return.twr_percent,
+      strategyReturnAllUSD: p.strategy_return_all_usd.nil? ? all_return.pnl_usd : p.strategy_return_all_usd.to_f,
+      strategyReturnAllPercent: p.strategy_return_all_percent.nil? ? all_return.twr_percent : p.strategy_return_all_percent.to_f,
       strategyReturnAllFrom: all_return.effective_start_at&.to_date&.strftime('%Y-%m-%d'),
       updatedAt: p.updated_at
     }

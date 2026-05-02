@@ -28,6 +28,32 @@ RSpec.describe 'Public investors', type: :request do
      expect(json.dig('data', 'portfolio', 'strategyReturnAllPercent')).to be_a(Numeric)
   end
 
+  it 'GET /api/public/investor/:email prefers stored strategy fields when present' do
+    investor = Investor.create!(email: 'strategy-sheet@example.com', name: 'x', status: 'ACTIVE')
+    Portfolio.create!(
+      investor_id: investor.id,
+      current_balance: 100,
+      total_invested: 80,
+      accumulated_return_usd: 20,
+      accumulated_return_percent: 25,
+      annual_return_usd: 10,
+      annual_return_percent: 12.5,
+      strategy_return_all_usd: 50,
+      strategy_return_all_percent: 10,
+      strategy_return_ytd_usd: 5,
+      strategy_return_ytd_percent: 3,
+    )
+
+    get "/api/public/investor/#{CGI.escape(investor.email)}"
+
+    expect(response).to have_http_status(:ok)
+    json = JSON.parse(response.body)
+    expect(json.dig('data', 'portfolio', 'strategyReturnAllUSD')).to eq(50.0)
+    expect(json.dig('data', 'portfolio', 'strategyReturnAllPercent')).to eq(10.0)
+    expect(json.dig('data', 'portfolio', 'strategyReturnYtdUSD')).to eq(5.0)
+    expect(json.dig('data', 'portfolio', 'strategyReturnYtdPercent')).to eq(3.0)
+  end
+
   it 'GET /api/public/investor/:email returns 404 when missing' do
     get "/api/public/investor/#{CGI.escape('missing@example.com')}"
     expect(response).to have_http_status(:not_found)
