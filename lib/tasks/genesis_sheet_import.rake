@@ -204,23 +204,67 @@ class GenesisCleanup
       next unless investor
       next if investor.portfolio_histories.exists?
 
-      dep = BigDecimal(r[:dep].to_s)
-      cap = BigDecimal(r[:cap].to_s)
+      dep  = BigDecimal(r[:dep].to_s)
+      wdr  = BigDecimal((r[:wdr] || 0).to_s)
+      cap  = BigDecimal(r[:cap].to_s)
+      gain = (cap - dep + wdr).round(2, :half_up)
 
+      seed_marker_for!(investor, dep: dep, wdr: wdr, cap: cap, gain: gain, cutoff: cutoff)
+      puts "  Reseeded genesis for #{r[:email]} (dep=#{dep.to_f} gain=#{gain.to_f} wdr=#{wdr.to_f} cap=#{cap.to_f})"
+    end
+  end
+
+  # Builds a consistent 1-3 row Genesis marker that satisfies
+  # PortfolioHistory#completed_balance_consistency AND yields the right
+  # totals when PortfolioRecalculator replays the history later.
+  def self.seed_marker_for!(investor, dep:, wdr:, cap:, gain:, cutoff:)
+    ts_dep = cutoff - 2.seconds
+    ts_op  = cutoff - 1.second
+    ts_wd  = cutoff
+
+    running = BigDecimal('0')
+
+    if dep.positive?
       InvestorRequest.create!(
         investor: investor, request_type: 'DEPOSIT', amount: dep,
         method: 'USDT', network: 'TRC20', status: 'APPROVED',
-        requested_at: cutoff, processed_at: cutoff,
+        requested_at: ts_dep, processed_at: ts_dep,
         notes: 'genesis sheet snapshot (post-cleanup)'
       )
-
       PortfolioHistory.create!(
         investor: investor, event: 'DEPOSIT', amount: dep,
-        previous_balance: 0, new_balance: cap,
-        status: 'COMPLETED', date: cutoff,
+        previous_balance: running, new_balance: running + dep,
+        status: 'COMPLETED', date: ts_dep,
       )
-
-      puts "  Reseeded genesis DEPOSIT for #{r[:email]}"
+      running += dep
     end
+
+    unless gain.zero?
+      PortfolioHistory.create!(
+        investor: investor, event: 'OPERATING_RESULT', amount: gain,
+        previous_balance: running, new_balance: running + gain,
+        status: 'COMPLETED', date: ts_op,
+      )
+      running += gain
+    end
+
+    if wdr.positive?
+      InvestorRequest.create!(
+        investor: investor, request_type: 'WITHDRAWAL', amount: wdr,
+        method: 'USDT', network: 'TRC20', status: 'APPROVED',
+        requested_at: ts_wd, processed_at: ts_wd,
+        notes: 'genesis sheet snapshot (post-cleanup)'
+      )
+      PortfolioHistory.create!(
+        investor: investor, event: 'WITHDRAWAL', amount: wdr,
+        previous_balance: running, new_balance: running - wdr,
+        status: 'COMPLETED', date: ts_wd,
+      )
+      running -= wdr
+    end
+
+    return if (running - cap).abs <= BigDecimal('0.01')
+
+    raise "Genesis marker for #{investor.email} ended at #{running.to_f} but cap=#{cap.to_f}"
   end
 end
