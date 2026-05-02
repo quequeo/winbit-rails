@@ -143,7 +143,8 @@ class DailyOperatingResultApplicator
     if portfolio.strategy_return_all_percent.present?
       old_all_pct = BigDecimal(portfolio.strategy_return_all_percent.to_s)
       new_all_pct = ((BigDecimal('1') + old_all_pct / 100) * daily_factor - BigDecimal('1')) * 100
-      new_all_usd = BigDecimal(portfolio.strategy_return_all_usd.to_s) + BigDecimal(delta.to_s)
+      prev_all_usd = portfolio.strategy_return_all_usd.nil? ? BigDecimal('0') : BigDecimal(portfolio.strategy_return_all_usd.to_s)
+      new_all_usd = prev_all_usd + BigDecimal(delta.to_s)
 
       portfolio.update!(
         strategy_return_all_percent: new_all_pct.round(4, :half_up).to_f,
@@ -154,7 +155,8 @@ class DailyOperatingResultApplicator
     if portfolio.strategy_return_ytd_percent.present?
       old_ytd_pct = BigDecimal(portfolio.strategy_return_ytd_percent.to_s)
       new_ytd_pct = ((BigDecimal('1') + old_ytd_pct / 100) * daily_factor - BigDecimal('1')) * 100
-      new_ytd_usd = BigDecimal(portfolio.strategy_return_ytd_usd.to_s) + BigDecimal(delta.to_s)
+      prev_ytd_usd = portfolio.strategy_return_ytd_usd.nil? ? BigDecimal('0') : BigDecimal(portfolio.strategy_return_ytd_usd.to_s)
+      new_ytd_usd = prev_ytd_usd + BigDecimal(delta.to_s)
 
       portfolio.update!(
         strategy_return_ytd_percent: new_ytd_pct.round(4, :half_up).to_f,
