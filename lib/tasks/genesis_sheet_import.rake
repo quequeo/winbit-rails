@@ -23,6 +23,11 @@ namespace :investors do
       snapshot_date: Date.new(2026, 4, 30),
     )
   end
+
+  desc 'Wipe pre-Genesis test history (PortfolioHistory / TradingFee / DailyOperatingResult / InvestorRequest before 2026-04-30) and reseed Genesis DEPOSIT for managed investors'
+  task clean_pre_genesis: :environment do
+    GenesisCleanup.run!(dry: ENV['GENESIS_DRY_RUN'].to_s == '1')
+  end
 end
 
 class GenesisSheetApply
@@ -149,5 +154,64 @@ class GenesisSheetApply
       previous_balance: 0, new_balance: cap,
       status: 'COMPLETED', date: genesis_time,
     )
+  end
+end
+
+# Wipes all testing data before the Genesis snapshot and re-creates the
+# initial DEPOSIT entry for every investor managed by GenesisSheetApply.
+class GenesisCleanup
+  CUTOFF = Time.zone.local(2026, 4, 30, 19, 0, 0)
+
+  def self.run!(dry:)
+    tf_scope  = TradingFee.where('applied_at < ?', CUTOFF)
+    ph_scope  = PortfolioHistory.where('date < ?', CUTOFF)
+    dor_scope = DailyOperatingResult.where('date < ?', CUTOFF.to_date)
+    req_scope = InvestorRequest.where('requested_at < ?', CUTOFF)
+
+    puts "Pre-Genesis cleanup (cutoff: #{CUTOFF})#{dry ? ' (dry run)' : ''}"
+    puts "  TradingFee:           #{tf_scope.count}"
+    puts "  PortfolioHistory:     #{ph_scope.count}"
+    puts "  DailyOperatingResult: #{dor_scope.count}"
+    puts "  InvestorRequest:      #{req_scope.count}"
+
+    return if dry
+
+    ActiveRecord::Base.transaction do
+      tf_scope.update_all(withdrawal_request_id: nil)
+      tf_scope.delete_all
+      ph_scope.delete_all
+      dor_scope.delete_all
+      req_scope.delete_all
+
+      reseed_genesis_history!
+    end
+
+    puts 'Done.'
+  end
+
+  def self.reseed_genesis_history!
+    GenesisSheetApply::ROWS.each do |r|
+      investor = Investor.find_by(email: r[:email])
+      next unless investor
+      next if investor.portfolio_histories.exists?
+
+      dep = BigDecimal(r[:dep].to_s)
+      cap = BigDecimal(r[:cap].to_s)
+
+      InvestorRequest.create!(
+        investor: investor, request_type: 'DEPOSIT', amount: dep,
+        method: 'USDT', network: 'TRC20', status: 'APPROVED',
+        requested_at: CUTOFF, processed_at: CUTOFF,
+        notes: 'genesis sheet snapshot (post-cleanup)'
+      )
+
+      PortfolioHistory.create!(
+        investor: investor, event: 'DEPOSIT', amount: dep,
+        previous_balance: 0, new_balance: cap,
+        status: 'COMPLETED', date: CUTOFF,
+      )
+
+      puts "  Reseeded genesis DEPOSIT for #{r[:email]}"
+    end
   end
 end
