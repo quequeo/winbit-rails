@@ -96,9 +96,13 @@ class GenesisSheetApply
     vpcust = r[:vpcust].nil? ? nil : BigDecimal(r[:vpcust].to_s).to_f
 
     puts format(
-      '%<email>-40s | cap=%-9s dep=%-9s wdr=%-9s acc=%-9s ytd=%-9s vpcust=%-9s fee_at=%s',
-      email: r[:email], cap: cap.to_f, dep: dep.to_f, wdr: wdr.to_f,
-      acc: acc_usd.to_f, ytd: ytd_usd.to_f,
+      '%<email>-40s | cap=%<cap>-9s dep=%<dep>-9s wdr=%<wdr>-9s acc=%<acc>-9s ytd=%<ytd>-9s vpcust=%<vpcust>-9s fee_at=%<fee_at>s',
+      email: r[:email],
+      cap: cap.to_f,
+      dep: dep.to_f,
+      wdr: wdr.to_f,
+      acc: acc_usd.to_f,
+      ytd: ytd_usd.to_f,
       vpcust: vpcust || '—',
       fee_at: fee_at&.strftime('%Y-%m-%d') || '—'
     )
