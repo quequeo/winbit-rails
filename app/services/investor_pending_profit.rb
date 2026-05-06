@@ -66,16 +66,31 @@ class InvestorPendingProfit
   end
 
   def inflows_since(reset_at)
-    if reset_at
-      PortfolioHistory
-        .where(investor_id: @investor.id, event: %w[DEPOSIT REFERRAL_COMMISSION], status: 'COMPLETED')
-        .where('date > ? AND date <= ?', reset_at, @as_of)
-        .sum(:amount)
+    deposits = deposit_inflows_since(reset_at)
+    referrals = referral_inflows_since(reset_at)
+    deposits + referrals
+  end
+
+  def deposit_inflows_since(reset_at)
+    scope = InvestorRequest
+              .where(investor_id: @investor.id, request_type: 'DEPOSIT', status: 'APPROVED')
+              .where("COALESCE(notes, '') NOT ILIKE 'genesis sheet snapshot%'")
+    scope = if reset_at
+      scope.where('processed_at > ? AND processed_at <= ?', reset_at, @as_of)
     else
-      PortfolioHistory
-        .where(investor_id: @investor.id, event: %w[DEPOSIT REFERRAL_COMMISSION], status: 'COMPLETED')
-        .where('date <= ?', @as_of)
-        .sum(:amount)
+      scope.where('processed_at <= ?', @as_of)
     end
+    BigDecimal(scope.sum(:amount).to_s)
+  end
+
+  def referral_inflows_since(reset_at)
+    scope = PortfolioHistory
+              .where(investor_id: @investor.id, event: 'REFERRAL_COMMISSION', status: 'COMPLETED')
+    scope = if reset_at
+      scope.where('date > ? AND date <= ?', reset_at, @as_of)
+    else
+      scope.where('date <= ?', @as_of)
+    end
+    BigDecimal(scope.sum(:amount).to_s)
   end
 end

@@ -72,4 +72,34 @@ RSpec.describe InvestorPendingProfit do
 
     expect(pending).to eq(BigDecimal('200'))
   end
+
+  it 'ignores genesis seed deposits as new inflows after reset' do
+    reset_at = Time.zone.parse('2026-04-13 19:00:00')
+    as_of = Time.zone.parse('2026-05-05 18:59:59')
+
+    investor.portfolio.update!(
+      genesis_vpcust_usd: 5000,
+      genesis_fee_basis_at: reset_at,
+    )
+
+    InvestorRequest.create!(
+      investor: investor,
+      request_type: 'DEPOSIT',
+      amount: 5000,
+      method: 'USDT',
+      network: 'TRC20',
+      status: 'APPROVED',
+      requested_at: Time.zone.parse('2026-04-30 23:59:57'),
+      processed_at: Time.zone.parse('2026-04-30 23:59:57'),
+      notes: 'genesis sheet snapshot (post-cleanup)',
+    )
+
+    pending = described_class.pending_until(
+      investor: investor,
+      as_of: as_of,
+      current_balance: BigDecimal('5100.37'),
+    )
+
+    expect(pending).to eq(BigDecimal('100.37'))
+  end
 end
