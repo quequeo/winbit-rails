@@ -102,4 +102,34 @@ RSpec.describe InvestorPendingProfit do
 
     expect(pending).to eq(BigDecimal('100.37'))
   end
+
+  it 'subtracts real deposits after reset from pending profit' do
+    reset_at = Time.zone.parse('2026-04-01 19:00:00')
+    as_of = Time.zone.parse('2026-05-06 12:00:00')
+
+    investor.portfolio.update!(
+      genesis_vpcust_usd: 7989,
+      genesis_fee_basis_at: reset_at,
+    )
+
+    InvestorRequest.create!(
+      investor: investor,
+      request_type: 'DEPOSIT',
+      amount: 100,
+      method: 'USDT',
+      network: 'TRC20',
+      status: 'APPROVED',
+      requested_at: Time.zone.parse('2026-05-06 10:00:00'),
+      processed_at: Time.zone.parse('2026-05-06 10:00:00'),
+      notes: 'manual deposit',
+    )
+
+    pending = described_class.pending_until(
+      investor: investor,
+      as_of: as_of,
+      current_balance: BigDecimal('8247'),
+    )
+
+    expect(pending).to eq(BigDecimal('158'))
+  end
 end
