@@ -14,6 +14,7 @@ class PublicRequestSerializer
       lemontag: request.lemontag,
       transactionHash: request.transaction_hash,
       network: request.network,
+      walletAddress: request.wallet_address,
       notes: request.notes,
       attachmentUrl: request.attachment_url,
       requestedAt: request.requested_at,

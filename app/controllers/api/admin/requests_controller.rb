@@ -4,7 +4,9 @@ module Api
       before_action :set_request, only: [:update, :destroy, :approve, :reject]
 
       def create
-        permitted = params.permit(:investor_id, :request_type, :method, :amount, :network, :status, :requested_at, :processed_at)
+        permitted = params.permit(
+          :investor_id, :request_type, :method, :amount, :network, :wallet_address, :status, :requested_at, :processed_at
+        )
 
         investor = find_investor_by_id(id: permitted.fetch(:investor_id))
         return unless investor
@@ -19,6 +21,7 @@ module Api
           method: permitted.fetch(:method),
           amount: permitted.fetch(:amount),
           network: permitted[:network].presence,
+          wallet_address: permitted[:wallet_address].presence,
           status: 'PENDING',
           requested_at: requested_at || Time.current,
         )
@@ -54,7 +57,7 @@ module Api
       end
 
       def update
-        permitted = params.permit(:investor_id, :request_type, :method, :amount, :network, :status)
+        permitted = params.permit(:investor_id, :request_type, :method, :amount, :network, :wallet_address, :status)
 
         investor = find_investor_by_id(id: permitted.fetch(:investor_id))
         return unless investor
@@ -71,6 +74,7 @@ module Api
           method: permitted.fetch(:method),
           amount: permitted.fetch(:amount),
           network: permitted[:network].presence,
+          wallet_address: permitted[:wallet_address].presence,
           status: @request.status,
         )
 

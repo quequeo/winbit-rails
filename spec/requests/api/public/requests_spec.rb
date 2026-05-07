@@ -224,6 +224,47 @@ RSpec.describe 'Public requests', type: :request do
     expect(json.dig('data', 'type')).to eq('WITHDRAWAL')
   end
 
+  it 'POST /api/public/requests requires wallet destination for CRYPTO withdrawal' do
+    investor = Investor.create!(email: 'withdraw-crypto@example.com', name: 'wc', status: 'ACTIVE')
+    Portfolio.create!(investor_id: investor.id, current_balance: 1000, total_invested: 1000)
+
+    post '/api/public/requests',
+         params: {
+           email: investor.email,
+           type: 'WITHDRAWAL',
+           amount: 50,
+           method: 'CRYPTO',
+           network: 'TRC20'
+         },
+         as: :json
+
+    expect(response).to have_http_status(:bad_request)
+    json = JSON.parse(response.body)
+    expect(json['error']).to eq('Invalid request data')
+    expect(json.dig('details', 'wallet_address')).to be_present
+  end
+
+  it 'POST /api/public/requests stores wallet destination for CRYPTO withdrawal' do
+    investor = Investor.create!(email: 'withdraw-crypto-ok@example.com', name: 'wco', status: 'ACTIVE')
+    Portfolio.create!(investor_id: investor.id, current_balance: 1000, total_invested: 1000)
+
+    post '/api/public/requests',
+         params: {
+           email: investor.email,
+           type: 'WITHDRAWAL',
+           amount: 50,
+           method: 'CRYPTO',
+           network: 'TRC20',
+           walletAddress: 'TTvYQZ8....'
+         },
+         as: :json
+
+    expect(response).to have_http_status(:created)
+    json = JSON.parse(response.body)
+    expect(json.dig('data', 'walletAddress')).to eq('TTvYQZ8....')
+    expect(json.dig('data', 'network')).to eq('TRC20')
+  end
+
   it 'POST /api/public/requests continues when email notification fails' do
     investor = Investor.create!(email: 'mailfail@example.com', name: 'mailfail', status: 'ACTIVE')
     Portfolio.create!(investor_id: investor.id, current_balance: 100, total_invested: 100)

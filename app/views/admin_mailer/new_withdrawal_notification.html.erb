@@ -107,6 +107,18 @@
         <th>Método</th>
         <td><%= @method_label %></td>
       </tr>
+      <% if @request.network.present? %>
+        <tr>
+          <th>Red</th>
+          <td><strong><%= @request.network %></strong></td>
+        </tr>
+      <% end %>
+      <% if @request.wallet_address.present? %>
+        <tr>
+          <th>Dirección wallet</th>
+          <td style="word-break: break-all;"><code><%= @request.wallet_address %></code></td>
+        </tr>
+      <% end %>
       <% if @request.lemontag.present? %>
         <tr>
           <th>Lemontag</th>

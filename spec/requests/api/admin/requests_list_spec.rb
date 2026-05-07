@@ -51,7 +51,9 @@ RSpec.describe 'Admin requests list', type: :request do
         investor_id: investor2.id,
         request_type: 'WITHDRAWAL',
         amount: 300,
-        method: 'USDT',
+        method: 'CRYPTO',
+        network: 'TRC20',
+        wallet_address: 'TQ1...xyz',
         status: 'PENDING',
         requested_at: Time.current
       )
@@ -82,7 +84,9 @@ RSpec.describe 'Admin requests list', type: :request do
         'investorId' => investor2.id,
         'type' => 'WITHDRAWAL',
         'amount' => 300.0,
-        'method' => 'USDT',
+        'method' => 'CRYPTO',
+        'network' => 'TRC20',
+        'walletAddress' => 'TQ1...xyz',
         'status' => 'PENDING'
       )
 

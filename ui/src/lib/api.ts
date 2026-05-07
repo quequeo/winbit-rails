@@ -83,6 +83,7 @@ export const api = {
     method: string;
     amount: number;
     network?: string;
+    wallet_address?: string;
     status?: string;
     requested_at?: string;
     processed_at?: string;
@@ -99,6 +100,7 @@ export const api = {
       method: string;
       amount: number;
       network?: string;
+      wallet_address?: string;
       status?: string;
     },
   ) =>

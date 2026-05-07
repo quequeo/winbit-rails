@@ -118,6 +118,7 @@ export const RequestsPage = () => {
     method: "USDT",
     amount: "",
     network: "",
+    wallet_address: "",
     status: "PENDING",
     processed_at: "", // YYYY-MM-DD (optional, used when status=APPROVED/REJECTED)
   });
@@ -196,6 +197,7 @@ export const RequestsPage = () => {
         status: formData.status,
       };
       if (formData.network) payload.network = formData.network;
+      if (formData.wallet_address) payload.wallet_address = formData.wallet_address;
       if (formData.processed_at) {
         payload.requested_at = formData.processed_at;
         payload.processed_at = formData.processed_at;
@@ -210,6 +212,7 @@ export const RequestsPage = () => {
         method: "USDT",
         amount: "",
         network: "",
+        wallet_address: "",
         status: "PENDING",
         processed_at: "",
       });
@@ -230,6 +233,7 @@ export const RequestsPage = () => {
       method: "USDT",
       amount: "",
       network: "",
+      wallet_address: "",
       status: "PENDING",
       processed_at: "",
     });
@@ -362,6 +366,18 @@ export const RequestsPage = () => {
                   <option value="ERC20">ERC20</option>
                   <option value="POLYGON">POLYGON</option>
                 </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-t-muted mb-1">
+                  Dirección wallet (opcional)
+                </label>
+                <Input
+                  value={formData.wallet_address}
+                  onChange={(e) =>
+                    setFormData({ ...formData, wallet_address: e.target.value })
+                  }
+                  placeholder="0x... / T..."
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-t-muted mb-1">
@@ -537,10 +553,18 @@ export const RequestsPage = () => {
               <span className="text-xs text-t-muted">
                 {formatMethod(r.method)}
               </span>
+              {r.network ? (
+                <span className="text-xs text-t-dim">Red: {r.network}</span>
+              ) : null}
               <span className="ml-auto font-mono text-sm font-semibold text-t-primary">
                 {formatCurrencyAR(Number(r.amount))}
               </span>
             </div>
+            {r.walletAddress ? (
+              <p className="mt-2 break-all text-xs text-t-dim">
+                Wallet: {r.walletAddress}
+              </p>
+            ) : null}
 
             {r.type === "WITHDRAWAL" ? null : r.attachmentUrl ? (
               <div className="mt-3">
@@ -583,6 +607,7 @@ export const RequestsPage = () => {
                 <th className="py-2">Inversor</th>
                 <th className="py-2">Tipo</th>
                 <th className="py-2">Método</th>
+                <th className="py-2">Destino</th>
                 <th className="py-2">Monto</th>
                 <th className="py-2">Adjunto</th>
                 <th className="py-2">Estado</th>
@@ -608,6 +633,20 @@ export const RequestsPage = () => {
                     </span>
                   </td>
                   <td className="py-2">{formatMethod(r.method)}</td>
+                  <td className="py-2">
+                    {r.network || r.walletAddress ? (
+                      <div className="space-y-1">
+                        <p className="text-xs text-t-muted">{r.network || "—"}</p>
+                        {r.walletAddress ? (
+                          <p className="max-w-[260px] break-all text-xs text-t-dim">
+                            {r.walletAddress}
+                          </p>
+                        ) : null}
+                      </div>
+                    ) : (
+                      <span className="text-t-dim text-sm">—</span>
+                    )}
+                  </td>
                   <td className="py-2 font-mono font-semibold">
                     {formatCurrencyAR(Number(r.amount))}
                   </td>

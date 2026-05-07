@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_05_01_120000) do
+ActiveRecord::Schema[8.0].define(version: 2026_05_07_113000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -136,6 +136,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_05_01_120000) do
     t.string "lemontag"
     t.string "transaction_hash"
     t.string "network"
+    t.string "wallet_address"
     t.text "notes"
     t.datetime "requested_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
     t.datetime "processed_at"

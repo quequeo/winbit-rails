@@ -10,6 +10,8 @@ class AdminRequestsListItemSerializer
       type: request.request_type,
       amount: request.amount.to_f,
       method: request.method,
+      network: request.network,
+      walletAddress: request.wallet_address,
       status: request.status,
       attachmentUrl: request.attachment_url,
       requestedAt: request.requested_at,

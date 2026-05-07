@@ -33,8 +33,9 @@ RSpec.describe AdminMailer, type: :mailer do
       investor: investor,
       request_type: 'WITHDRAWAL',
       amount: 500,
-      method: 'LEMON_CASH',
-      lemontag: '@john',
+      method: 'CRYPTO',
+      network: 'TRC20',
+      wallet_address: 'TQ2abc123...',
       status: 'PENDING',
       requested_at: Time.current
     )
@@ -75,8 +76,9 @@ RSpec.describe AdminMailer, type: :mailer do
     it 'renders the body' do
       expect(mail.body.encoded).to match('John Doe')
       expect(mail.body.encoded).to match('john@example.com')
-      expect(mail.body.encoded).to match('Lemon Cash')
-      expect(mail.body.encoded).to match('@john')
+      expect(mail.body.encoded).to match('Cripto')
+      expect(mail.body.encoded).to match('TRC20')
+      expect(mail.body.encoded).to match('TQ2abc123...')
     end
 
     context 'when withdrawal is total' do

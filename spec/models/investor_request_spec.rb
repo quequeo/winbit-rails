@@ -124,6 +124,48 @@ RSpec.describe InvestorRequest, type: :model do
       expect(request).to be_valid
     end
 
+    it 'requires network for CRYPTO withdrawal' do
+      request = InvestorRequest.new(
+        investor: investor,
+        request_type: 'WITHDRAWAL',
+        method: 'CRYPTO',
+        amount: 1000,
+        wallet_address: '0xabc',
+        status: 'PENDING'
+      )
+
+      expect(request).not_to be_valid
+      expect(request.errors[:network]).to include('is required for crypto withdrawals')
+    end
+
+    it 'requires wallet_address for CRYPTO withdrawal' do
+      request = InvestorRequest.new(
+        investor: investor,
+        request_type: 'WITHDRAWAL',
+        method: 'CRYPTO',
+        amount: 1000,
+        network: 'TRC20',
+        status: 'PENDING'
+      )
+
+      expect(request).not_to be_valid
+      expect(request.errors[:wallet_address]).to include('is required for crypto withdrawals')
+    end
+
+    it 'is valid for CRYPTO withdrawal with destination data' do
+      request = InvestorRequest.new(
+        investor: investor,
+        request_type: 'WITHDRAWAL',
+        method: 'CRYPTO',
+        amount: 1000,
+        network: 'TRC20',
+        wallet_address: '0xabc',
+        status: 'PENDING'
+      )
+
+      expect(request).to be_valid
+    end
+
     it 'allows optional notes' do
       request = InvestorRequest.new(
         investor: investor,

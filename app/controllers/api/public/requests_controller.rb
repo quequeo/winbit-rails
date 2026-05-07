@@ -9,6 +9,7 @@ module Api
         amount = payload[:amount]
         method = payload[:method].to_s
         network = payload[:network]
+        wallet_address = payload[:walletAddress]
         lemontag = payload[:lemontag]
         transaction_hash = payload[:transactionHash]
         attachment_url = payload[:attachmentUrl]
@@ -49,6 +50,7 @@ module Api
           amount: amount_num,
           method: method,
           network: network,
+          wallet_address: wallet_address,
           lemontag: lemontag,
           transaction_hash: transaction_hash,
           attachment_url: attachment_url,
@@ -84,11 +86,11 @@ module Api
       def request_params
         if params[:request].present?
           params.require(:request).permit(
-            :email, :type, :amount, :method, :network, :lemontag, :transactionHash, :attachmentUrl
+            :email, :type, :amount, :method, :network, :lemontag, :transactionHash, :attachmentUrl, :walletAddress
           )
         else
           params.permit(
-            :email, :type, :amount, :method, :network, :lemontag, :transactionHash, :attachmentUrl
+            :email, :type, :amount, :method, :network, :lemontag, :transactionHash, :attachmentUrl, :walletAddress
           )
         end
       end

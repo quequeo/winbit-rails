@@ -48,6 +48,8 @@ export interface ApiRequest {
   method: string;
   amount: number;
   status: string;
+  network?: string;
+  walletAddress?: string;
   requestedAt?: string;
   processedAt?: string;
   attachmentUrl?: string;

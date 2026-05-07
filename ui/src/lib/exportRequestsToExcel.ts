@@ -30,6 +30,8 @@ export const exportRequestsToExcel = (requests: ApiRequest[]): void => {
     Email: r.investor?.email ?? "",
     Tipo: TYPE_LABELS[r.type] ?? r.type,
     Método: METHOD_LABELS[r.method] ?? r.method,
+    Red: r.network ?? "",
+    "Dirección wallet": r.walletAddress ?? "",
     Monto: formatCurrencyAR(Number(r.amount)),
     Estado: STATUS_LABELS[r.status] ?? r.status,
     "Fecha solicitud": r.requestedAt ? formatDateAR(r.requestedAt) : "",
