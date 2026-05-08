@@ -132,4 +132,45 @@ RSpec.describe InvestorPendingProfit do
 
     expect(pending).to eq(BigDecimal('158'))
   end
+
+  it 'ignores genesis snapshot withdrawals as fee reset anchors' do
+    genesis_at = Time.zone.parse('2026-04-01 19:00:00')
+    snapshot_withdrawal_at = Time.zone.parse('2026-05-01 02:59:59')
+
+    investor.portfolio.update!(
+      genesis_vpcust_usd: 14_780,
+      genesis_fee_basis_at: genesis_at,
+    )
+
+    InvestorRequest.create!(
+      investor: investor,
+      request_type: 'WITHDRAWAL',
+      amount: 19_543,
+      method: 'USDT',
+      network: 'TRC20',
+      status: 'APPROVED',
+      requested_at: snapshot_withdrawal_at,
+      processed_at: snapshot_withdrawal_at,
+      notes: 'genesis sheet snapshot (post-cleanup)',
+    )
+
+    PortfolioHistory.create!(
+      investor_id: investor.id,
+      event: 'WITHDRAWAL',
+      amount: 19_543,
+      previous_balance: 34_954,
+      new_balance: 15_411,
+      status: 'COMPLETED',
+      date: snapshot_withdrawal_at,
+    )
+
+    pending = described_class.pending_until(
+      investor: investor,
+      as_of: Time.zone.parse('2026-05-08 12:00:00'),
+      current_balance: BigDecimal('15333.94'),
+    )
+
+    # Should anchor to genesis VPCUST (14_780), not to seeded withdrawal balance (15_411)
+    expect(pending).to eq(BigDecimal('553.94'))
+  end
 end

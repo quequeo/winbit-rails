@@ -34,11 +34,7 @@ class InvestorPendingProfit
   def effective_reset
     portfolio = @investor.portfolio
 
-    history_reset = PortfolioHistory
-                      .where(investor_id: @investor.id, event: %w[TRADING_FEE WITHDRAWAL], status: 'COMPLETED')
-                      .where('date <= ?', @as_of)
-                      .order(date: :desc, created_at: :desc)
-                      .first
+    history_reset = latest_real_history_reset
 
     genesis_at = portfolio&.genesis_fee_basis_at
     genesis_v = portfolio&.genesis_vpcust_usd
@@ -63,6 +59,30 @@ class InvestorPendingProfit
     else
       [BigDecimal('0'), nil]
     end
+  end
+
+  def latest_real_history_reset
+    scope = PortfolioHistory
+              .where(investor_id: @investor.id, event: %w[TRADING_FEE WITHDRAWAL], status: 'COMPLETED')
+              .where('date <= ?', @as_of)
+              .order(date: :desc, created_at: :desc)
+
+    scope.find { |row| !genesis_snapshot_withdrawal_reset?(row) }
+  end
+
+  def genesis_snapshot_withdrawal_reset?(row)
+    return false unless row.event == 'WITHDRAWAL'
+
+    InvestorRequest
+      .where(
+        investor_id: @investor.id,
+        request_type: 'WITHDRAWAL',
+        status: 'APPROVED',
+        processed_at: row.date,
+        amount: row.amount
+      )
+      .where("COALESCE(notes, '') ILIKE 'genesis sheet snapshot%'")
+      .exists?
   end
 
   def inflows_since(reset_at)
