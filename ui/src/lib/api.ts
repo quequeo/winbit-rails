@@ -117,6 +117,10 @@ export const api = {
     }),
   rejectRequest: (id: string) =>
     request(`${ADMIN_API_PREFIX}/requests/${id}/reject`, { method: "POST" }),
+  resetRequestApprovalToPending: (id: string) =>
+    request(`${ADMIN_API_PREFIX}/requests/${id}/reset_approval_to_pending`, {
+      method: "POST",
+    }),
   getAdminAdmins: () => request(`${ADMIN_API_PREFIX}/admins`),
   createAdmin: (body: {
     email: string;

@@ -113,5 +113,4 @@ class InvestorPendingProfit
     end
     BigDecimal(scope.sum(:amount).to_s)
   end
-
 end

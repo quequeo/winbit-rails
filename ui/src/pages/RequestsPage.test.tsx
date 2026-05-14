@@ -16,10 +16,11 @@ vi.mock("../lib/api", () => ({
   api: {
     getAdminRequests: vi.fn(),
     getAdminInvestors: vi.fn(),
+    getAdminSession: vi.fn(),
     createRequest: vi.fn(),
     approveRequest: vi.fn(),
     rejectRequest: vi.fn(),
-    reverseRequest: vi.fn(),
+    resetRequestApprovalToPending: vi.fn(),
   },
 }));
 
@@ -92,6 +93,9 @@ describe("RequestsPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(api.getAdminInvestors).mockResolvedValue({ data: mockInvestors });
+    vi.mocked(api.getAdminSession).mockResolvedValue({
+      data: { email: "admin@test.com", superadmin: false },
+    });
   });
 
   describe("Listar solicitudes", () => {
@@ -560,6 +564,45 @@ describe("RequestsPage", () => {
       expect(openSpy).toHaveBeenCalledWith("blob:mock-url", "_blank");
       openSpy.mockRestore();
       vi.unstubAllGlobals();
+    });
+  });
+
+  describe("Deshacer aprobación (superadmin)", () => {
+    it("muestra el botón y llama al endpoint al confirmar", async () => {
+      vi.mocked(api.getAdminSession).mockResolvedValue({
+        data: { email: "sa@test.com", superadmin: true },
+      });
+      const oneApproved = {
+        data: {
+          requests: [
+            {
+              id: "wd-1",
+              investor: { id: "2", name: "Investor Two" },
+              type: "WITHDRAWAL",
+              method: "USDC",
+              amount: 500,
+              network: null,
+              status: "APPROVED",
+              requestedAt: "2024-01-02T15:00:00Z",
+              processedAt: "2024-01-03T10:00:00Z",
+            },
+          ],
+          pendingCount: 0,
+        },
+      };
+      vi.mocked(api.getAdminRequests).mockResolvedValue(oneApproved);
+      vi.mocked(api.resetRequestApprovalToPending).mockResolvedValue(null);
+
+      const user = userEvent.setup();
+      render(<RequestsPage />);
+
+      const buttons = await screen.findAllByRole("button", {
+        name: /Deshacer aprobación/i,
+      });
+      expect(buttons.length).toBeGreaterThan(0);
+      await user.click(buttons[0]);
+
+      expect(api.resetRequestApprovalToPending).toHaveBeenCalledWith("wd-1");
     });
   });
 });

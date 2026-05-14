@@ -260,6 +260,7 @@ Requiere sesión de admin. Usada por el backoffice.
 | DELETE | `/requests/:id` | Eliminar solicitud |
 | POST | `/requests/:id/approve` | Aprobar solicitud |
 | POST | `/requests/:id/reject` | Rechazar solicitud |
+| POST | `/requests/:id/reset_approval_to_pending` | Superadmin: deshace la aprobación (elimina los movimientos de historial generados por esa aprobación, deja la solicitud en `PENDING` y recalcula el portfolio). Solo si no hay `OPERATING_RESULT` posterior para el inversor. |
 | GET | `/deposit_options` | Opciones de depósito |
 | GET | `/daily_operating_results` | Operativa diaria |
 | POST | `/daily_operating_results` | Cargar operativa |

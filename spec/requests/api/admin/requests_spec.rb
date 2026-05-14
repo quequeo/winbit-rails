@@ -333,4 +333,70 @@ RSpec.describe 'Admin requests', type: :request do
     expect(JSON.parse(response.body)['error']).to include('No se puede eliminar')
     expect(InvestorRequest.find_by(id: req.id)).to be_present
   end
+
+  describe 'POST /api/admin/requests/:id/reset_approval_to_pending' do
+    let(:superadmin) { User.create!(email: 'sa-reset-req@test.com', role: 'SUPERADMIN') }
+
+    it 'returns forbidden for ADMIN' do
+      investor = Investor.create!(email: 'x1-reset@test.com', name: 'x', status: 'ACTIVE')
+      Portfolio.create!(investor_id: investor.id, current_balance: 100, total_invested: 100)
+      t = 2.hours.ago
+      req = InvestorRequest.create!(
+        investor_id: investor.id,
+        request_type: 'DEPOSIT',
+        amount: 100,
+        method: 'USDT',
+        status: 'APPROVED',
+        requested_at: 3.hours.ago,
+        processed_at: t
+      )
+      PortfolioHistory.create!(
+        investor_id: investor.id,
+        event: 'DEPOSIT',
+        amount: 100,
+        previous_balance: 0,
+        new_balance: 100,
+        status: 'COMPLETED',
+        date: t
+      )
+
+      post "/api/admin/requests/#{req.id}/reset_approval_to_pending"
+
+      expect(response).to have_http_status(:forbidden)
+    end
+
+    it 'resets approved deposit to PENDING for SUPERADMIN' do
+      sign_in superadmin, scope: :user
+
+      investor = Investor.create!(email: 'x2-reset@test.com', name: 'x2', status: 'ACTIVE')
+      Portfolio.create!(investor_id: investor.id, current_balance: 100, total_invested: 100)
+      t = Time.zone.local(2026, 5, 14, 12, 0, 0)
+      req = InvestorRequest.create!(
+        investor_id: investor.id,
+        request_type: 'DEPOSIT',
+        amount: 100,
+        method: 'USDT',
+        status: 'APPROVED',
+        requested_at: t - 1.hour,
+        processed_at: t
+      )
+      PortfolioHistory.create!(
+        investor_id: investor.id,
+        event: 'DEPOSIT',
+        amount: 100,
+        previous_balance: 0,
+        new_balance: 100,
+        status: 'COMPLETED',
+        date: t
+      )
+
+      post "/api/admin/requests/#{req.id}/reset_approval_to_pending"
+
+      expect(response).to have_http_status(:no_content)
+      req.reload
+      expect(req.status).to eq('PENDING')
+      expect(req.processed_at).to be_nil
+      expect(ActivityLog.find_by(user: superadmin, action: 'reset_request_approval')).to be_present
+    end
+  end
 end

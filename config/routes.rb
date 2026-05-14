@@ -46,6 +46,7 @@ Rails.application.routes.draw do
       delete 'requests/:id', to: 'requests#destroy', format: false
       post 'requests/:id/approve', to: 'requests#approve', format: false
       post 'requests/:id/reject', to: 'requests#reject', format: false
+      post 'requests/:id/reset_approval_to_pending', to: 'requests#reset_approval_to_pending', format: false
       resources :admins, only: [:index, :create, :update, :destroy], format: false
 
       resources :deposit_options, only: [:index, :create, :update, :destroy], format: false do
@@ -89,6 +90,7 @@ Rails.application.routes.draw do
         delete 'requests/:id', to: 'requests#destroy', format: false
         post 'requests/:id/approve', to: 'requests#approve', format: false
         post 'requests/:id/reject', to: 'requests#reject', format: false
+        post 'requests/:id/reset_approval_to_pending', to: 'requests#reset_approval_to_pending', format: false
         resources :admins, only: [:index, :create, :update, :destroy], format: false
 
         resources :deposit_options, only: [:index, :create, :update, :destroy], format: false do

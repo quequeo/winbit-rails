@@ -1,7 +1,8 @@
 module Api
   module Admin
     class RequestsController < BaseController
-      before_action :set_request, only: [:update, :destroy, :approve, :reject]
+      before_action :set_request, only: [:update, :destroy, :approve, :reject, :reset_approval_to_pending]
+      before_action :require_superadmin!, only: [:reset_approval_to_pending]
 
       def create
         permitted = params.permit(
@@ -142,6 +143,25 @@ module Api
           metadata: {
             request_type: @request.request_type,
             amount: @request.amount.to_f
+          }
+        )
+
+        head :no_content
+      rescue StandardError => e
+        render_error(e.message, status: :bad_request)
+      end
+
+      def reset_approval_to_pending
+        Requests::ResetApprovedRequestToPending.new(request_id: @request.id).call
+
+        ActivityLogger.log(
+          user: current_user,
+          action: 'reset_request_approval',
+          target: @request.reload,
+          metadata: {
+            request_type: @request.request_type,
+            amount: @request.amount.to_f,
+            method: @request.method,
           }
         )
 

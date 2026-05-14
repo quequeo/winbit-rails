@@ -111,6 +111,7 @@ export const RequestsPage = () => {
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [isSuperadmin, setIsSuperadmin] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     investor_id: "",
@@ -153,6 +154,13 @@ export const RequestsPage = () => {
   useEffect(() => {
     load();
     api
+      .getAdminSession()
+      .then((res) => {
+        const r = res as { data?: { superadmin?: boolean } };
+        setIsSuperadmin(Boolean(r?.data?.superadmin));
+      })
+      .catch(() => {});
+    api
       .getAdminInvestors()
       .then((res) =>
         setInvestors((res as { data?: ApiInvestor[] } | null)?.data ?? []),
@@ -176,6 +184,22 @@ export const RequestsPage = () => {
     try {
       setBusyId(id);
       await api.rejectRequest(id);
+      load();
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Error");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const resetApprovalToPending = async (id: string) => {
+    const ok = window.confirm(
+      "¿Deshacer esta aprobación? Se eliminan del historial los movimientos generados por esta aprobación (incluida la comisión de retiro si hubiera) y la solicitud vuelve a pendiente para corregir el monto. Solo usar si no hay operativa diaria posterior para este inversor.",
+    );
+    if (!ok) return;
+    try {
+      setBusyId(id);
+      await api.resetRequestApprovalToPending(id);
       load();
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Error");
@@ -593,6 +617,19 @@ export const RequestsPage = () => {
                 </Button>
               </div>
             )}
+            {r.status === "APPROVED" && isSuperadmin ? (
+              <div className="mt-4">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => resetApprovalToPending(r.id)}
+                  disabled={busyId === r.id}
+                  className="w-full"
+                >
+                  Deshacer aprobación
+                </Button>
+              </div>
+            ) : null}
           </div>
         ))}
       </div>
@@ -700,6 +737,16 @@ export const RequestsPage = () => {
                         </Button>
                       </div>
                     )}
+                    {r.status === "APPROVED" && isSuperadmin ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => resetApprovalToPending(r.id)}
+                        disabled={busyId === r.id}
+                      >
+                        Deshacer aprobación
+                      </Button>
+                    ) : null}
                   </td>
                 </tr>
               ))}
