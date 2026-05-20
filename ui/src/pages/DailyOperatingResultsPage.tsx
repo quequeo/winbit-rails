@@ -324,8 +324,8 @@ export const DailyOperatingResultsPage = () => {
         <div>
           <h1 className="text-3xl font-bold text-t-primary">Operativa diaria</h1>
           <p className="mt-1 text-sm text-t-muted">
-            Cargá el resultado operativo del día (porcentaje). Se aplica a todos
-            los inversores activos con capital.
+            Cargá el resultado del día en monto USD o porcentaje. Se aplica a
+            todos los inversores activos con capital.
           </p>
         </div>
       </div>
