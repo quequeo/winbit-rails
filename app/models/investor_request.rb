@@ -29,6 +29,7 @@ class InvestorRequest < ApplicationRecord
 
   validate :network_allowed
   validate :crypto_withdrawal_destination_required
+  validate :lemontag_required_for_lemon_cash
 
   private
 
@@ -43,5 +44,13 @@ class InvestorRequest < ApplicationRecord
 
     errors.add(:network, 'is required for crypto withdrawals') if network.blank?
     errors.add(:wallet_address, 'is required for crypto withdrawals') if wallet_address.blank?
+  end
+
+  def lemontag_required_for_lemon_cash
+    return unless request_type == 'WITHDRAWAL'
+    return unless method == 'LEMON_CASH'
+    return if lemontag.present?
+
+    errors.add(:lemontag, 'is required for Lemon Cash')
   end
 end

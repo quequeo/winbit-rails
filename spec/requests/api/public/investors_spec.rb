@@ -469,7 +469,8 @@ RSpec.describe 'Public investors', type: :request do
     investor = Investor.create!(email: 'pending-rejected@example.com', name: 'pr', status: 'ACTIVE')
     InvestorRequest.create!(
       investor: investor, request_type: 'DEPOSIT', amount: 100, method: 'USDT',
-      status: 'PENDING', requested_at: Time.current
+      status: 'PENDING', requested_at: Time.current,
+      attachment_url: 'https://example.com/receipt.jpg'
     )
     InvestorRequest.create!(
       investor: investor, request_type: 'WITHDRAWAL', amount: 50, method: 'USDT',
@@ -482,6 +483,42 @@ RSpec.describe 'Public investors', type: :request do
     items = JSON.parse(response.body)['data']
     statuses = items.map { |it| it['status'] }
     expect(statuses).to include('PENDING', 'REJECTED')
+
+    pending_deposit = items.find { |it| it['status'] == 'PENDING' && it['event'] == 'DEPOSIT' }
+    expect(pending_deposit['attachmentUrl']).to eq('https://example.com/receipt.jpg')
+  end
+
+  it 'GET /api/public/investor/:email/history includes attachmentUrl on approved deposits' do
+    investor = Investor.create!(email: 'deposit-attach@example.com', name: 'da', status: 'ACTIVE')
+    Portfolio.create!(investor: investor, current_balance: 0, total_invested: 0)
+    processed_at = Time.utc(2026, 3, 10, 18, 0, 0)
+
+    InvestorRequest.create!(
+      investor: investor,
+      request_type: 'DEPOSIT',
+      amount: 250,
+      method: 'USDT',
+      status: 'APPROVED',
+      requested_at: processed_at - 1.hour,
+      processed_at: processed_at,
+      attachment_url: 'https://example.com/approved.jpg'
+    )
+
+    PortfolioHistory.create!(
+      investor: investor,
+      event: 'DEPOSIT',
+      amount: 250,
+      previous_balance: 0,
+      new_balance: 250,
+      status: 'COMPLETED',
+      date: processed_at
+    )
+
+    get "/api/public/investor/#{CGI.escape(investor.email)}/history"
+
+    expect(response).to have_http_status(:ok)
+    deposit = JSON.parse(response.body)['data'].find { |it| it['event'] == 'DEPOSIT' }
+    expect(deposit['attachmentUrl']).to eq('https://example.com/approved.jpg')
   end
 
   it 'GET /api/public/investor/:email/history uses timestamp fallback for TRADING_FEE matching' do

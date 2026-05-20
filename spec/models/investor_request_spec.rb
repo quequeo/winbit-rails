@@ -166,6 +166,32 @@ RSpec.describe InvestorRequest, type: :model do
       expect(request).to be_valid
     end
 
+    it 'requires lemontag for LEMON_CASH' do
+      request = InvestorRequest.new(
+        investor: investor,
+        request_type: 'WITHDRAWAL',
+        method: 'LEMON_CASH',
+        amount: 1000,
+        status: 'PENDING'
+      )
+
+      expect(request).not_to be_valid
+      expect(request.errors[:lemontag]).to include('is required for Lemon Cash')
+    end
+
+    it 'is valid for LEMON_CASH with lemontag' do
+      request = InvestorRequest.new(
+        investor: investor,
+        request_type: 'WITHDRAWAL',
+        method: 'LEMON_CASH',
+        amount: 1000,
+        lemontag: '$usuario',
+        status: 'PENDING'
+      )
+
+      expect(request).to be_valid
+    end
+
     it 'allows optional notes' do
       request = InvestorRequest.new(
         investor: investor,

@@ -244,6 +244,44 @@ RSpec.describe 'Public requests', type: :request do
     expect(json.dig('details', 'wallet_address')).to be_present
   end
 
+  it 'POST /api/public/requests requires lemontag for LEMON_CASH withdrawal' do
+    investor = Investor.create!(email: 'lemon-wd@example.com', name: 'lw', status: 'ACTIVE')
+    Portfolio.create!(investor_id: investor.id, current_balance: 1000, total_invested: 1000)
+
+    post '/api/public/requests',
+         params: {
+           email: investor.email,
+           type: 'WITHDRAWAL',
+           amount: 50,
+           method: 'LEMON_CASH',
+         },
+         as: :json
+
+    expect(response).to have_http_status(:bad_request)
+    json = JSON.parse(response.body)
+    expect(json.dig('details', 'lemontag')).to be_present
+  end
+
+  it 'POST /api/public/requests creates LEMON_CASH withdrawal with lemontag' do
+    investor = Investor.create!(email: 'lemon-ok@example.com', name: 'lo', status: 'ACTIVE')
+    Portfolio.create!(investor_id: investor.id, current_balance: 1000, total_invested: 1000)
+
+    post '/api/public/requests',
+         params: {
+           email: investor.email,
+           type: 'WITHDRAWAL',
+           amount: 50,
+           method: 'LEMON_CASH',
+           lemontag: '$winbit_user',
+         },
+         as: :json
+
+    expect(response).to have_http_status(:created)
+    json = JSON.parse(response.body)
+    expect(json.dig('data', 'lemontag')).to eq('$winbit_user')
+    expect(json.dig('data', 'method')).to eq('LEMON_CASH')
+  end
+
   it 'POST /api/public/requests stores wallet destination for CRYPTO withdrawal' do
     investor = Investor.create!(email: 'withdraw-crypto-ok@example.com', name: 'wco', status: 'ACTIVE')
     Portfolio.create!(investor_id: investor.id, current_balance: 1000, total_invested: 1000)

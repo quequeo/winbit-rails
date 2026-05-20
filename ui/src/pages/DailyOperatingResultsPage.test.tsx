@@ -35,6 +35,10 @@ vi.mock("../components/ui/DatePicker", () => ({
   ),
 }));
 
+async function usePercentInput(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByRole("button", { name: "Porcentaje" }));
+}
+
 describe("DailyOperatingResultsPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -67,6 +71,7 @@ describe("DailyOperatingResultsPage", () => {
 
     render(<DailyOperatingResultsPage />);
 
+    await usePercentInput(user);
     const percentInput = screen.getByPlaceholderText("Ej: 0,10");
     await user.clear(percentInput);
     await user.type(percentInput, "0,10");
@@ -111,6 +116,7 @@ describe("DailyOperatingResultsPage", () => {
 
     render(<DailyOperatingResultsPage />);
 
+    await usePercentInput(user);
     const percentInput = screen.getByPlaceholderText("Ej: 0,10");
     await user.clear(percentInput);
     await user.type(percentInput, "0,01");
@@ -138,6 +144,7 @@ describe("DailyOperatingResultsPage", () => {
 
     render(<DailyOperatingResultsPage />);
 
+    await usePercentInput(user);
     await user.clear(screen.getByPlaceholderText("Ej: 0,10"));
     await user.type(screen.getByPlaceholderText("Ej: 0,10"), "0,10");
     await user.click(screen.getByRole("button", { name: /Previsualizar/i }));
@@ -148,10 +155,42 @@ describe("DailyOperatingResultsPage", () => {
     });
   });
 
+  it("previews using amount in USD and sends amount_usd to API", async () => {
+    const user = userEvent.setup();
+    vi.mocked(api.previewDailyOperatingResult).mockResolvedValueOnce({
+      data: {
+        date: "2025-12-31",
+        percent: 0.6,
+        amount_usd: 600,
+        percent_derived_from_amount_usd: true,
+        investors_count: 1,
+        total_before: 100_000,
+        total_delta: 600,
+        total_after: 100_600,
+        investors: [],
+      },
+    });
+
+    render(<DailyOperatingResultsPage />);
+
+    const usdInput = screen.getByPlaceholderText("Ej: 600 o -600");
+    await user.clear(usdInput);
+    await user.type(usdInput, "600");
+    await user.click(screen.getByRole("button", { name: /Previsualizar/i }));
+
+    await waitFor(() => {
+      expect(api.previewDailyOperatingResult).toHaveBeenCalledWith(
+        expect.objectContaining({ amount_usd: 600 }),
+      );
+      expect(screen.getByText(/calculado desde USD/i)).toBeInTheDocument();
+    });
+  });
+
   it("shows alert for invalid percent", async () => {
     const user = userEvent.setup();
     render(<DailyOperatingResultsPage />);
 
+    await usePercentInput(user);
     await user.clear(screen.getByPlaceholderText("Ej: 0,10"));
     await user.click(screen.getByRole("button", { name: /Previsualizar/i }));
 
@@ -185,6 +224,7 @@ describe("DailyOperatingResultsPage", () => {
 
     render(<DailyOperatingResultsPage />);
 
+    await usePercentInput(user);
     await user.clear(screen.getByPlaceholderText("Ej: 0,10"));
     await user.type(screen.getByPlaceholderText("Ej: 0,10"), "0,10");
     await user.click(screen.getByRole("button", { name: /Previsualizar/i }));
@@ -228,6 +268,7 @@ describe("DailyOperatingResultsPage", () => {
 
     render(<DailyOperatingResultsPage />);
 
+    await usePercentInput(user);
     await user.clear(screen.getByPlaceholderText("Ej: 0,10"));
     await user.type(screen.getByPlaceholderText("Ej: 0,10"), "0,10");
     await user.click(screen.getByRole("button", { name: /Previsualizar/i }));
@@ -405,7 +446,7 @@ describe("DailyOperatingResultsPage", () => {
       expect(screen.getByText("Editar operativa diaria")).toBeInTheDocument(),
     );
 
-    const editPercentInput = screen.getAllByPlaceholderText("Ej: 0,10")[1];
+    const editPercentInput = screen.getByPlaceholderText("Ej: 0,10");
     await user.clear(editPercentInput);
     await user.type(editPercentInput, "2,00");
     await user.click(
@@ -470,7 +511,11 @@ describe("DailyOperatingResultsPage", () => {
     );
     await user.click(screen.getByRole("button", { name: "Editar" }));
 
-    const editPercentInput = screen.getAllByPlaceholderText("Ej: 0,10")[1];
+    await waitFor(() =>
+      expect(screen.getByText("Editar operativa diaria")).toBeInTheDocument(),
+    );
+
+    const editPercentInput = screen.getByPlaceholderText("Ej: 0,10");
     await user.clear(editPercentInput);
     await user.type(editPercentInput, "0,50");
     await user.click(

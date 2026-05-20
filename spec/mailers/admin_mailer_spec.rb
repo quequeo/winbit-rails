@@ -76,7 +76,7 @@ RSpec.describe AdminMailer, type: :mailer do
     it 'renders the body' do
       expect(mail.body.encoded).to match('John Doe')
       expect(mail.body.encoded).to match('john@example.com')
-      expect(mail.body.encoded).to match('Cripto')
+      expect(mail.body.encoded).to match('Crypto')
       expect(mail.body.encoded).to match('TRC20')
       expect(mail.body.encoded).to match('TQ2abc123...')
     end
@@ -88,6 +88,7 @@ RSpec.describe AdminMailer, type: :mailer do
           request_type: 'WITHDRAWAL',
           amount: 9900,
           method: 'LEMON_CASH',
+          lemontag: '$totaluser',
           status: 'PENDING',
           requested_at: Time.current
         )

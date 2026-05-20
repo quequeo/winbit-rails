@@ -84,6 +84,7 @@ export const api = {
     amount: number;
     network?: string;
     wallet_address?: string;
+    lemontag?: string;
     status?: string;
     requested_at?: string;
     processed_at?: string;
@@ -101,6 +102,7 @@ export const api = {
       amount: number;
       network?: string;
       wallet_address?: string;
+      lemontag?: string;
       status?: string;
     },
   ) =>
@@ -245,12 +247,15 @@ export const api = {
   },
   previewDailyOperatingResult: (params: {
     date: string;
-    percent: number;
+    percent?: number;
+    amount_usd?: number;
     notes?: string;
   }) => {
     const qs = new URLSearchParams();
     qs.set("date", params.date);
-    qs.set("percent", params.percent.toString());
+    if (params.percent !== undefined) qs.set("percent", params.percent.toString());
+    if (params.amount_usd !== undefined)
+      qs.set("amount_usd", params.amount_usd.toString());
     if (params.notes) qs.set("notes", params.notes);
     return request(
       `${ADMIN_API_PREFIX}/daily_operating_results/preview?${qs.toString()}`,
@@ -258,7 +263,8 @@ export const api = {
   },
   createDailyOperatingResult: (body: {
     date: string;
-    percent: number;
+    percent?: number;
+    amount_usd?: number;
     notes?: string;
   }) =>
     request(`${ADMIN_API_PREFIX}/daily_operating_results`, {

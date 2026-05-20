@@ -18,12 +18,16 @@ type PreviewRow = {
 type PreviewData = {
   date: string;
   percent: number;
+  amount_usd?: number | null;
+  percent_derived_from_amount_usd?: boolean;
   investors_count: number;
   total_before: number;
   total_delta: number;
   total_after: number;
   investors: PreviewRow[];
 };
+
+type InputMode = "percent" | "usd";
 
 type EditPreviewInvestorRow = {
   investor_id: string;
@@ -55,7 +59,9 @@ const todayISO = () => {
 
 export const DailyOperatingResultsPage = () => {
   const [date, setDate] = useState(todayISO());
+  const [inputMode, setInputMode] = useState<InputMode>("usd");
   const [percent, setPercent] = useState<string>("0,00");
+  const [amountUsd, setAmountUsd] = useState<string>("0,00");
   const [notes, setNotes] = useState<string>("");
   const [loadingPreview, setLoadingPreview] = useState(false);
   const [preview, setPreview] = useState<PreviewData | null>(null);
@@ -110,13 +116,23 @@ export const DailyOperatingResultsPage = () => {
     loadHistory(historyPage);
   }, [historyPage, loadHistory]);
 
-  const parsedPercent = useMemo(() => {
-    const cleaned = percent.replace(/%/g, "").trim();
+  const parseLocalizedNumber = (raw: string) => {
+    const cleaned = raw.replace(/%/g, "").trim();
     if (!cleaned) return null;
     const normalized = cleaned.replace(/\./g, "").replace(/,/g, ".");
     const n = Number(normalized);
     return Number.isFinite(n) ? n : null;
-  }, [percent]);
+  };
+
+  const parsedPercent = useMemo(
+    () => (inputMode === "percent" ? parseLocalizedNumber(percent) : null),
+    [inputMode, percent],
+  );
+
+  const parsedAmountUsd = useMemo(
+    () => (inputMode === "usd" ? parseLocalizedNumber(amountUsd) : null),
+    [inputMode, amountUsd],
+  );
 
   const showAlert = (title: string, message: string) => {
     setAlertTitle(title);
@@ -153,10 +169,17 @@ export const DailyOperatingResultsPage = () => {
       );
       return;
     }
-    if (parsedPercent === null) {
+    if (inputMode === "percent" && parsedPercent === null) {
       showAlert(
         "Porcentaje inválido",
         "Ingresá un porcentaje válido (ej: 0,10).",
+      );
+      return;
+    }
+    if (inputMode === "usd" && parsedAmountUsd === null) {
+      showAlert(
+        "Monto inválido",
+        "Ingresá un monto en USD válido (ej: 600 o -600).",
       );
       return;
     }
@@ -166,7 +189,9 @@ export const DailyOperatingResultsPage = () => {
       setNotice(null);
       const res = await api.previewDailyOperatingResult({
         date,
-        percent: parsedPercent,
+        ...(inputMode === "percent"
+          ? { percent: parsedPercent ?? undefined }
+          : { amount_usd: parsedAmountUsd ?? undefined }),
         notes: notes || undefined,
       });
       setPreview(res?.data as PreviewData);
@@ -183,7 +208,8 @@ export const DailyOperatingResultsPage = () => {
 
   const apply = async () => {
     if (!preview) return;
-    if (parsedPercent === null) return;
+    if (inputMode === "percent" && parsedPercent === null) return;
+    if (inputMode === "usd" && parsedAmountUsd === null) return;
     if (preview.investors_count <= 0) {
       showAlert(
         "Sin impacto",
@@ -196,7 +222,9 @@ export const DailyOperatingResultsPage = () => {
       setApplying(true);
       await api.createDailyOperatingResult({
         date,
-        percent: parsedPercent,
+        ...(inputMode === "percent"
+          ? { percent: parsedPercent ?? undefined }
+          : { amount_usd: parsedAmountUsd ?? undefined }),
         notes: notes || undefined,
       });
       setNotice({ type: "success", message: "Operativa diaria aplicada." });
@@ -321,18 +349,55 @@ export const DailyOperatingResultsPage = () => {
             <label className="text-sm font-medium text-t-muted">Fecha</label>
             <DatePicker value={date} onChange={setDate} />
           </div>
-          <div className="space-y-2">
+          <div className="space-y-2 md:col-span-2">
             <label className="text-sm font-medium text-t-muted">
-              Resultado (%)
+              Resultado del día
             </label>
-            <Input
-              type="text"
-              value={percent}
-              onChange={(e) => setPercent(e.target.value)}
-              placeholder="Ej: 0,10"
-            />
+            <div className="mb-2 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setInputMode("usd")}
+                className={
+                  `rounded-lg border px-3 py-1.5 text-sm transition-colors ` +
+                  (inputMode === "usd"
+                    ? "border-b-accent bg-primary-dim text-t-primary"
+                    : "border-b-default text-t-muted hover:border-b-accent")
+                }
+              >
+                Monto USD
+              </button>
+              <button
+                type="button"
+                onClick={() => setInputMode("percent")}
+                className={
+                  `rounded-lg border px-3 py-1.5 text-sm transition-colors ` +
+                  (inputMode === "percent"
+                    ? "border-b-accent bg-primary-dim text-t-primary"
+                    : "border-b-default text-t-muted hover:border-b-accent")
+                }
+              >
+                Porcentaje
+              </button>
+            </div>
+            {inputMode === "usd" ? (
+              <Input
+                type="text"
+                value={amountUsd}
+                onChange={(e) => setAmountUsd(e.target.value)}
+                placeholder="Ej: 600 o -600"
+              />
+            ) : (
+              <Input
+                type="text"
+                value={percent}
+                onChange={(e) => setPercent(e.target.value)}
+                placeholder="Ej: 0,10"
+              />
+            )}
             <p className="text-xs text-t-dim">
-              Se redondea a 2 decimales en el impacto por inversor.
+              {inputMode === "usd"
+                ? "Ganancia o pérdida total del día en USD. El sistema calcula el % sobre el capital al cierre (17:00)."
+                : "Se redondea a 2 decimales en el impacto por inversor."}
             </p>
           </div>
           <div className="space-y-2">
@@ -383,6 +448,20 @@ export const DailyOperatingResultsPage = () => {
               <p className="mt-1 text-sm text-t-muted">
                 Inversores impactados:{" "}
                 <span className="font-semibold">{preview.investors_count}</span>
+              </p>
+              <p className="mt-1 text-sm text-t-muted">
+                Resultado:{" "}
+                <span className="font-semibold">
+                  {formatNumberAR(preview.percent)}%
+                </span>
+                {preview.percent_derived_from_amount_usd &&
+                preview.amount_usd != null ? (
+                  <span className="text-t-dim">
+                    {" "}
+                    (calculado desde USD{" "}
+                    {formatNumberAR(preview.amount_usd)})
+                  </span>
+                ) : null}
               </p>
             </div>
             <Button

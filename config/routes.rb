@@ -14,6 +14,7 @@ Rails.application.routes.draw do
       get 'investor/*email', to: 'investors#show', format: false
       get 'wallets', to: 'wallets#index', format: false
       get 'deposit_options', to: 'deposit_options#index', format: false
+      get 'payment_methods', to: 'payment_methods#index', format: false
       post 'requests', to: 'requests#create', format: false
 
       scope :v1 do
@@ -25,6 +26,7 @@ Rails.application.routes.draw do
         get 'investor/*email', to: 'investors#show', format: false
         get 'wallets', to: 'wallets#index', format: false
         get 'deposit_options', to: 'deposit_options#index', format: false
+        get 'payment_methods', to: 'payment_methods#index', format: false
         post 'requests', to: 'requests#create', format: false
       end
     end

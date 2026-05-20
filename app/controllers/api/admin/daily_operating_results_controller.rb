@@ -77,11 +77,11 @@ module Api
 
       def preview
         date = parse_date_param(params[:date])
-        percent = params[:percent]
 
         applicator = DailyOperatingResultApplicator.new(
           date: date,
-          percent: percent,
+          percent: params[:percent],
+          amount_usd: params[:amount_usd],
           applied_by: current_user,
           notes: params[:notes]
         )
@@ -97,11 +97,11 @@ module Api
 
       def create
         date = parse_date_param(params[:date])
-        percent = params[:percent]
 
         applicator = DailyOperatingResultApplicator.new(
           date: date,
-          percent: percent,
+          percent: params[:percent],
+          amount_usd: params[:amount_usd],
           applied_by: current_user,
           notes: params[:notes]
         )
@@ -112,7 +112,11 @@ module Api
             user: current_user,
             action: 'apply_daily_operating_result',
             target: result,
-            metadata: { date: date.to_s, percent: percent.to_f }
+            metadata: {
+              date: date.to_s,
+              percent: result.percent.to_f,
+              amount_usd: params[:amount_usd].presence&.to_f,
+            }
           )
           render json: { data: DailyOperatingResultSerializer.new(result).as_json }, status: :created
         else

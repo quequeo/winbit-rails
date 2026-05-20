@@ -101,7 +101,7 @@ module Api
       def approved_requests_for(investor)
         investor.investor_requests
                 .where(status: 'APPROVED')
-                .select(:id, :request_type, :method, :processed_at)
+                .select(:id, :request_type, :method, :processed_at, :attachment_url)
                 .to_a
       end
 
@@ -136,6 +136,7 @@ module Api
         if %w[WITHDRAWAL DEPOSIT].include?(history.event)
           req = find_request_for_history(approved_requests, history)
           extra[:method] = req&.method
+          extra[:attachmentUrl] = req&.attachment_url if history.event == 'DEPOSIT' && req&.attachment_url.present?
         end
 
         if history.event == 'DEPOSIT_REVERSAL'

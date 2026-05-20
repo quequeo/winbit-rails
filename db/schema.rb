@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_05_07_113000) do
+ActiveRecord::Schema[8.0].define(version: 2026_05_15_120001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -59,8 +59,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_05_07_113000) do
     t.datetime "updated_at", null: false
     t.index ["active", "position"], name: "index_deposit_options_on_active_and_position"
     t.index ["category"], name: "index_deposit_options_on_category"
-    t.check_constraint "category::text = ANY (ARRAY['CASH_ARS'::character varying, 'CASH_USD'::character varying, 'BANK_ARS'::character varying, 'LEMON'::character varying, 'CRYPTO'::character varying, 'SWIFT'::character varying]::text[])", name: "deposit_options_category_check"
-    t.check_constraint "currency::text = ANY (ARRAY['ARS'::character varying, 'USD'::character varying, 'USDT'::character varying, 'USDC'::character varying]::text[])", name: "deposit_options_currency_check"
+    t.check_constraint "category::text = ANY (ARRAY['CASH_ARS'::character varying::text, 'CASH_USD'::character varying::text, 'BANK_ARS'::character varying::text, 'LEMON'::character varying::text, 'CRYPTO'::character varying::text, 'SWIFT'::character varying::text])", name: "deposit_options_category_check"
+    t.check_constraint "currency::text = ANY (ARRAY['ARS'::character varying::text, 'USD'::character varying::text, 'USDT'::character varying::text, 'USDC'::character varying::text])", name: "deposit_options_currency_check"
   end
 
   create_table "investors", id: :string, force: :cascade do |t|
@@ -75,7 +75,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_05_07_113000) do
     t.index ["email"], name: "index_investors_on_email", unique: true
     t.index ["trading_fee_frequency"], name: "index_investors_on_trading_fee_frequency"
     t.check_constraint "status::text = ANY (ARRAY['ACTIVE'::character varying::text, 'INACTIVE'::character varying::text])", name: "investors_status_check"
-    t.check_constraint "trading_fee_frequency::text = ANY (ARRAY['MONTHLY'::character varying, 'QUARTERLY'::character varying, 'SEMESTRAL'::character varying, 'ANNUAL'::character varying]::text[])", name: "investors_trading_fee_frequency_check"
+    t.check_constraint "trading_fee_frequency::text = ANY (ARRAY['MONTHLY'::character varying::text, 'QUARTERLY'::character varying::text, 'SEMESTRAL'::character varying::text, 'ANNUAL'::character varying::text])", name: "investors_trading_fee_frequency_check"
     t.check_constraint "trading_fee_percentage >= 0::numeric AND trading_fee_percentage <= 100::numeric", name: "investors_trading_fee_percentage_check"
   end
 
@@ -176,7 +176,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_05_07_113000) do
     t.index ["voided_at"], name: "index_trading_fees_on_voided_at"
     t.index ["voided_by_id"], name: "index_trading_fees_on_voided_by_id"
     t.index ["withdrawal_request_id"], name: "index_trading_fees_on_withdrawal_request_id"
-    t.check_constraint "source::text = ANY (ARRAY['PERIODIC'::character varying, 'WITHDRAWAL'::character varying]::text[])", name: "trading_fees_source_check"
+    t.check_constraint "source::text = ANY (ARRAY['PERIODIC'::character varying::text, 'WITHDRAWAL'::character varying::text])", name: "trading_fees_source_check"
   end
 
   create_table "users", id: :string, force: :cascade do |t|

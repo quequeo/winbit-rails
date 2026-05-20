@@ -83,6 +83,7 @@ RSpec.describe InvestorMailer, type: :mailer do
           request_type: 'WITHDRAWAL',
           amount: 500,
           method: 'LEMON_CASH',
+          lemontag: '$lemonuser',
           status: 'PENDING',
           requested_at: Time.current
         )
@@ -96,6 +97,7 @@ RSpec.describe InvestorMailer, type: :mailer do
           request_type: 'WITHDRAWAL',
           amount: 500,
           method: 'LEMON_CASH',
+          lemontag: '$lemonuser',
           status: 'PENDING',
           requested_at: Time.current
         )
@@ -109,6 +111,7 @@ RSpec.describe InvestorMailer, type: :mailer do
           request_type: 'WITHDRAWAL',
           amount: 500,
           method: 'LEMON_CASH',
+          lemontag: '$lemonuser',
           status: 'PENDING',
           requested_at: Time.current
         )

@@ -120,6 +120,7 @@ export const RequestsPage = () => {
     amount: "",
     network: "",
     wallet_address: "",
+    lemontag: "",
     status: "PENDING",
     processed_at: "", // YYYY-MM-DD (optional, used when status=APPROVED/REJECTED)
   });
@@ -222,6 +223,7 @@ export const RequestsPage = () => {
       };
       if (formData.network) payload.network = formData.network;
       if (formData.wallet_address) payload.wallet_address = formData.wallet_address;
+      if (formData.lemontag) payload.lemontag = formData.lemontag;
       if (formData.processed_at) {
         payload.requested_at = formData.processed_at;
         payload.processed_at = formData.processed_at;
@@ -237,6 +239,7 @@ export const RequestsPage = () => {
         amount: "",
         network: "",
         wallet_address: "",
+        lemontag: "",
         status: "PENDING",
         processed_at: "",
       });
@@ -258,6 +261,7 @@ export const RequestsPage = () => {
       amount: "",
       network: "",
       wallet_address: "",
+      lemontag: "",
       status: "PENDING",
       processed_at: "",
     });
@@ -350,11 +354,23 @@ export const RequestsPage = () => {
                   }
                   className="w-full rounded-lg border border-b-default px-3 py-2 focus:border-primary focus:outline-none"
                 >
-                  <option value="USDT">USDT</option>
-                  <option value="USDC">USDC</option>
-                  <option value="LEMON_CASH">Lemon Cash</option>
-                  <option value="CASH">Efectivo</option>
-                  <option value="SWIFT">SWIFT</option>
+                  {formData.request_type === "WITHDRAWAL" ? (
+                    <>
+                      <option value="CRYPTO">Cripto</option>
+                      <option value="LEMON_CASH">Lemon Cash</option>
+                      <option value="CASH_USD">Efectivo USD</option>
+                      <option value="USDT">USDT</option>
+                      <option value="USDC">USDC</option>
+                    </>
+                  ) : (
+                    <>
+                      <option value="USDT">USDT</option>
+                      <option value="USDC">USDC</option>
+                      <option value="LEMON_CASH">Lemon Cash</option>
+                      <option value="CASH">Efectivo</option>
+                      <option value="SWIFT">SWIFT</option>
+                    </>
+                  )}
                 </select>
               </div>
               <div>
@@ -393,7 +409,8 @@ export const RequestsPage = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-t-muted mb-1">
-                  Dirección wallet (opcional)
+                  Dirección wallet
+                  {formData.method === "CRYPTO" ? " *" : " (opcional)"}
                 </label>
                 <Input
                   value={formData.wallet_address}
@@ -401,8 +418,24 @@ export const RequestsPage = () => {
                     setFormData({ ...formData, wallet_address: e.target.value })
                   }
                   placeholder="0x... / T..."
+                  required={formData.method === "CRYPTO"}
                 />
               </div>
+              {formData.method === "LEMON_CASH" ? (
+                <div>
+                  <label className="block text-sm font-medium text-t-muted mb-1">
+                    Lemontag *
+                  </label>
+                  <Input
+                    value={formData.lemontag}
+                    onChange={(e) =>
+                      setFormData({ ...formData, lemontag: e.target.value })
+                    }
+                    placeholder="Ej: $usuario"
+                    required
+                  />
+                </div>
+              ) : null}
               <div>
                 <label className="block text-sm font-medium text-t-muted mb-1">
                   Estado *
@@ -589,6 +622,11 @@ export const RequestsPage = () => {
                 Wallet: {r.walletAddress}
               </p>
             ) : null}
+            {r.lemontag ? (
+              <p className="mt-2 text-xs text-t-dim">
+                Lemontag: <span className="font-medium">{r.lemontag}</span>
+              </p>
+            ) : null}
 
             {r.type === "WITHDRAWAL" ? null : r.attachmentUrl ? (
               <div className="mt-3">
@@ -671,12 +709,17 @@ export const RequestsPage = () => {
                   </td>
                   <td className="py-2">{formatMethod(r.method)}</td>
                   <td className="py-2">
-                    {r.network || r.walletAddress ? (
+                    {r.network || r.walletAddress || r.lemontag ? (
                       <div className="space-y-1">
                         <p className="text-xs text-t-muted">{r.network || "—"}</p>
                         {r.walletAddress ? (
                           <p className="max-w-[260px] break-all text-xs text-t-dim">
                             {r.walletAddress}
+                          </p>
+                        ) : null}
+                        {r.lemontag ? (
+                          <p className="text-xs text-t-dim">
+                            Lemontag: {r.lemontag}
                           </p>
                         ) : null}
                       </div>

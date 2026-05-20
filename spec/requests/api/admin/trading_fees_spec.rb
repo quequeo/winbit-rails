@@ -531,6 +531,7 @@ RSpec.describe 'Admin Trading Fees API', type: :request do
 
       wd_request = InvestorRequest.create!(
         investor: inv, request_type: 'WITHDRAWAL', amount: 50, method: 'CRYPTO',
+        network: 'TRC20', wallet_address: 'TQ2abc123',
         status: 'APPROVED', requested_at: Time.zone.local(2025, 2, 15), processed_at: Time.zone.local(2025, 2, 15)
       )
 
@@ -859,6 +860,7 @@ RSpec.describe 'Admin Trading Fees API', type: :request do
 
       wd_request = InvestorRequest.create!(
         investor: inv, request_type: 'WITHDRAWAL', amount: 100, method: 'CRYPTO',
+        network: 'TRC20', wallet_address: 'TQ2abc456',
         status: 'APPROVED', requested_at: Time.zone.local(2025, 2, 15), processed_at: Time.zone.local(2025, 2, 15)
       )
 

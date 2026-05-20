@@ -12,6 +12,7 @@ class AdminRequestsListItemSerializer
       method: request.method,
       network: request.network,
       walletAddress: request.wallet_address,
+      lemontag: request.lemontag,
       status: request.status,
       attachmentUrl: request.attachment_url,
       requestedAt: request.requested_at,

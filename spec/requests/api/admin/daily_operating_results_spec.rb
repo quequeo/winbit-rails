@@ -118,6 +118,31 @@ RSpec.describe 'Admin Daily Operating Results API', type: :request do
       expect(json['data']['investors'].first).to have_key('delta')
     end
 
+    it 'derives percent from amount_usd over total capital' do
+      target_date = Date.new(2025, 6, 12)
+      at_time = Time.zone.local(target_date.year, target_date.month, target_date.day, 17, 0, 0)
+      create_investor_with_balance(balance: 100_000, at_time: at_time)
+
+      get '/api/admin/daily_operating_results/preview',
+          params: { date: '2025-06-12', amount_usd: 600 }
+
+      expect(response).to have_http_status(:ok)
+      json = JSON.parse(response.body)
+      expect(json['data']['percent']).to be_within(0.0001).of(0.6)
+      expect(json['data']['amount_usd']).to eq(600.0)
+      expect(json['data']['percent_derived_from_amount_usd']).to be(true)
+      expect(json['data']['total_delta']).to be_within(0.01).of(600.0)
+    end
+
+    it 'returns 422 when percent and amount_usd are both sent' do
+      get '/api/admin/daily_operating_results/preview',
+          params: { date: '2025-06-13', percent: 1.0, amount_usd: 100 }
+
+      expect(response).to have_http_status(:unprocessable_content)
+      json = JSON.parse(response.body)
+      expect(json['error']).to include('no ambos')
+    end
+
     it 'returns 422 for future dates' do
       future_date = Date.current + 1.day
       get '/api/admin/daily_operating_results/preview', params: { date: future_date.to_s, percent: 1.0 }

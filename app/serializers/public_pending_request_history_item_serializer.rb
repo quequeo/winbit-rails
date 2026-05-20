@@ -16,7 +16,8 @@ class PublicPendingRequestHistoryItemSerializer
       createdAt: request.requested_at,
       method: request.method,
       network: request.network,
-      notes: request.notes
+      notes: request.notes,
+      attachmentUrl: request.attachment_url
     }
   end
 

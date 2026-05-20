@@ -1,11 +1,19 @@
 require 'bigdecimal'
 
 class DailyOperatingResultApplicator
-  attr_reader :date, :percent, :applied_by, :notes, :errors
+  attr_reader :date, :applied_by, :notes, :errors
 
-  def initialize(date:, percent:, applied_by:, notes: nil)
+  def percent
+    resolved_percent
+  end
+
+  def initialize(date:, applied_by:, notes: nil, percent: nil, amount_usd: nil)
     @date = date
-    @percent = BigDecimal(percent.to_s)
+    @percent_param = percent
+    @amount_usd_param = amount_usd
+    @percent = nil
+    @percent_resolved = false
+    @percent_derived_from_amount_usd = false
     @applied_by = applied_by
     @notes = notes
     @errors = []
@@ -39,7 +47,9 @@ class DailyOperatingResultApplicator
 
     {
       date: date,
-      percent: percent.to_f,
+      percent: resolved_percent.to_f,
+      amount_usd: derived_amount_usd,
+      percent_derived_from_amount_usd: @percent_derived_from_amount_usd,
       investors_count: rows.size,
       total_before: total_before,
       total_delta: total_delta,
@@ -66,7 +76,7 @@ class DailyOperatingResultApplicator
     ApplicationRecord.transaction do
       DailyOperatingResult.create!(
         date: date,
-        percent: percent,
+        percent: resolved_percent,
         applied_by: applied_by,
         applied_at: Time.current,
         notes: notes,
@@ -110,6 +120,56 @@ class DailyOperatingResultApplicator
     if date.present? && DailyOperatingResult.exists?(date: date)
       @errors << 'Ya existe operativa diaria cargada para esa fecha'
     end
+
+    resolve_percent!
+  end
+
+  def resolve_percent!
+    return resolved_percent if @percent_resolved
+
+    @percent_resolved = true
+
+    if @percent_param.present? && @amount_usd_param.present?
+      @errors << 'Indicá porcentaje o monto en USD, no ambos'
+      return nil
+    end
+
+    if @amount_usd_param.present?
+      amount = BigDecimal(@amount_usd_param.to_s)
+      capital = total_capital_at_close
+      if capital <= 0
+        @errors << 'No hay capital total para calcular el porcentaje'
+        return nil
+      end
+
+      @percent = (amount / capital * 100).round(6, :half_up)
+      @percent_derived_from_amount_usd = true
+      return @percent
+    end
+
+    if @percent_param.present?
+      @percent = BigDecimal(@percent_param.to_s)
+      return @percent
+    end
+
+    @errors << 'Indicá el porcentaje o el monto en USD'
+    nil
+  end
+
+  def resolved_percent
+    resolve_percent! unless @percent_resolved
+    @percent
+  end
+
+  def derived_amount_usd
+    return nil unless @amount_usd_param.present?
+
+    BigDecimal(@amount_usd_param.to_s).to_f
+  end
+
+  def total_capital_at_close
+    at_time = movement_time
+    eligible_investors(at_time: at_time).sum { |inv| balance_at(inv.id, at_time) }
   end
 
   def eligible_investors(at_time:)
@@ -129,7 +189,7 @@ class DailyOperatingResultApplicator
   end
 
   def daily_delta(balance_before)
-    (balance_before * (percent / 100)).round(2, :half_up)
+    (balance_before * (resolved_percent / 100)).round(2, :half_up)
   end
 
 
@@ -138,7 +198,7 @@ class DailyOperatingResultApplicator
     return unless portfolio
     return if portfolio.strategy_return_all_percent.nil? && portfolio.strategy_return_ytd_percent.nil?
 
-    daily_factor = BigDecimal('1') + (percent / 100)
+    daily_factor = BigDecimal('1') + (resolved_percent / 100)
 
     if portfolio.strategy_return_all_percent.present?
       old_all_pct = BigDecimal(portfolio.strategy_return_all_percent.to_s)

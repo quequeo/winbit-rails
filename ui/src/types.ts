@@ -50,6 +50,7 @@ export interface ApiRequest {
   status: string;
   network?: string;
   walletAddress?: string;
+  lemontag?: string;
   requestedAt?: string;
   processedAt?: string;
   attachmentUrl?: string;
