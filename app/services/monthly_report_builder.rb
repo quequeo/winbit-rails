@@ -95,19 +95,24 @@ class MonthlyReportBuilder
     month_end = effective_month_end(month)
     flow_start = flow_start_for(month, month_start)
 
-    twr = TimeWeightedReturnCalculator.for_investor(
-      investor_id: @investor.id,
-      from: month_start.beginning_of_day,
-      to: month_end,
-    )
-
     flows = aggregate_flows(flow_start, month_end)
     end_value = portfolio_value_at(month_end)
+    previous_close = previous_row&.dig(:portfolio_value).to_f
+
+    return_usd = (
+      bd(end_value) - bd(previous_close) - bd(flows[:deposits]) + bd(flows[:withdrawals])
+    ).round(2, :half_up).to_f
+
+    return_percent = if previous_close.positive?
+                       ((return_usd / previous_close) * 100).round(2)
+    else
+                       0.0
+    end
 
     serialize_row(
       month: month,
-      return_percent: twr.twr_percent,
-      return_usd: twr.pnl_usd,
+      return_percent: return_percent,
+      return_usd: return_usd,
       deposits: flows[:deposits],
       withdrawals: flows[:withdrawals],
       service_cost: flows[:service_cost],

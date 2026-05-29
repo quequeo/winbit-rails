@@ -97,8 +97,59 @@ RSpec.describe MonthlyReportBuilder do
         expect(may_row).to be_present
         expect(may_row[:source]).to eq('platform')
         expect(may_row[:deposits]).to eq(382.29)
+        expect(may_row[:return_usd]).to be_within(0.01).of(-116.25)
+        expect(may_row[:return_percent]).to be_within(0.05).of(-1.79)
         expect(may_row[:portfolio_value]).to eq(6750.04)
         expect(report[:summary][:winbit_monthly_return_percent]).to eq(-1.78)
+        expect(report[:summary][:accumulated_2026_usd]).to be_within(0.01).of(323.75)
+        expect(report[:summary][:accumulated_2026_percent]).to be_within(0.05).of(5.36)
+      end
+    end
+
+    it 'ignores genesis operating result lump in May return usd' do
+      PortfolioHistory.delete_all
+      PortfolioHistory.create!(
+        investor: investor,
+        event: 'DEPOSIT',
+        amount: 6484,
+        previous_balance: 0,
+        new_balance: 6484,
+        date: Time.zone.local(2026, 5, 1, 19, 0, 0),
+        status: 'COMPLETED',
+      )
+      PortfolioHistory.create!(
+        investor: investor,
+        event: 'OPERATING_RESULT',
+        amount: 2322.75,
+        previous_balance: 6484,
+        new_balance: 8806.75,
+        date: Time.zone.local(2026, 5, 2, 19, 0, 0),
+        status: 'COMPLETED',
+      )
+      PortfolioHistory.create!(
+        investor: investor,
+        event: 'OPERATING_RESULT',
+        amount: -2439.0,
+        previous_balance: 8806.75,
+        new_balance: 6367.75,
+        date: Time.zone.local(2026, 5, 18, 19, 0, 0),
+        status: 'COMPLETED',
+      )
+      PortfolioHistory.create!(
+        investor: investor,
+        event: 'DEPOSIT',
+        amount: 382.29,
+        previous_balance: 6367.75,
+        new_balance: 6750.04,
+        date: may_deposit_time,
+        status: 'COMPLETED',
+      )
+
+      travel_to Time.zone.local(2026, 5, 29, 12, 0, 0) do
+        report = described_class.new(investor: investor, report_month: Date.new(2026, 5, 1)).build
+        may_row = report[:annex_rows].find { |r| r[:month] == '2026-05' }
+
+        expect(may_row[:return_usd]).to be_within(0.01).of(-116.25)
         expect(report[:summary][:accumulated_2026_usd]).to be_within(0.01).of(323.75)
       end
     end
