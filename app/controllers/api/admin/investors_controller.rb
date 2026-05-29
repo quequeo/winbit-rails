@@ -12,6 +12,11 @@ module Api
 
         investors = Investor.includes(:portfolio)
 
+        if params[:q].present?
+          term = "%#{ActiveRecord::Base.sanitize_sql_like(params[:q].strip.downcase)}%"
+          investors = investors.where('LOWER(investors.name) LIKE :term OR LOWER(investors.email) LIKE :term', term: term)
+        end
+
         case sort_by
         when 'balance'
           investors = investors.left_joins(:portfolio)

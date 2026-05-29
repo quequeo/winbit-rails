@@ -1,0 +1,62 @@
+[
+  {
+    "investor_name": "EUGENIO CARRIÓ",
+    "month": "2025-12",
+    "return_percent": null,
+    "return_usd": null,
+    "deposits": 0,
+    "withdrawals": 0,
+    "service_cost": 0,
+    "portfolio_value": 6044,
+    "opening_snapshot": true,
+    "ytd_total": false
+  },
+  {
+    "investor_name": "EUGENIO CARRIÓ",
+    "month": "2026-01",
+    "return_percent": 0,
+    "return_usd": -1,
+    "deposits": 0,
+    "withdrawals": 0,
+    "service_cost": 0,
+    "portfolio_value": 6043,
+    "opening_snapshot": false,
+    "ytd_total": false
+  },
+  {
+    "investor_name": "EUGENIO CARRIÓ",
+    "month": "2026-02",
+    "return_percent": 2,
+    "return_usd": 140,
+    "deposits": 0,
+    "withdrawals": 0,
+    "service_cost": 0,
+    "portfolio_value": 6183,
+    "opening_snapshot": false,
+    "ytd_total": false
+  },
+  {
+    "investor_name": "EUGENIO CARRIÓ",
+    "month": "2026-03",
+    "return_percent": 2.3,
+    "return_usd": 143,
+    "deposits": 0,
+    "withdrawals": 0,
+    "service_cost": 0,
+    "portfolio_value": 6325,
+    "opening_snapshot": false,
+    "ytd_total": false
+  },
+  {
+    "investor_name": "EUGENIO CARRIÓ",
+    "month": "2026-04",
+    "return_percent": 2.5,
+    "return_usd": 158,
+    "deposits": 0,
+    "withdrawals": 0,
+    "service_cost": 0,
+    "portfolio_value": 6484,
+    "opening_snapshot": false,
+    "ytd_total": false
+  }
+]

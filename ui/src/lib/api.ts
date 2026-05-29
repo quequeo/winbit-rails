@@ -57,12 +57,19 @@ export const api = {
     const suffix = qs.toString() ? `?${qs.toString()}` : "";
     return request(`${ADMIN_API_PREFIX}/dashboard${suffix}`);
   },
-  getAdminInvestors: (params?: { sort_by?: string; sort_order?: string }) => {
+  getAdminInvestors: (params?: { sort_by?: string; sort_order?: string; q?: string }) => {
     const qs = new URLSearchParams();
     if (params?.sort_by) qs.set("sort_by", params.sort_by);
     if (params?.sort_order) qs.set("sort_order", params.sort_order);
+    if (params?.q) qs.set("q", params.q);
     const suffix = qs.toString() ? `?${qs.toString()}` : "";
     return request(`${ADMIN_API_PREFIX}/investors${suffix}`);
+  },
+  getInvestorMonthlyReport: (investorId: string, month?: string) => {
+    const qs = new URLSearchParams();
+    if (month) qs.set("month", month);
+    const suffix = qs.toString() ? `?${qs.toString()}` : "";
+    return request(`${ADMIN_API_PREFIX}/investors/${investorId}/monthly_report${suffix}`);
   },
   signOut: () => request("/users/sign_out", { method: "DELETE" }),
   getAdminRequests: (params?: {

@@ -41,6 +41,18 @@ RSpec.describe 'Admin Investors API', type: :request do
       expect(json['data'].last['name']).to eq('Beta')
     end
 
+    it 'filters investors by name or email' do
+      Investor.create!(email: 'eugenio.carrio7@gmail.com', name: 'Eugenio Carrió', status: 'ACTIVE')
+      Investor.create!(email: 'other@test.com', name: 'Other Person', status: 'ACTIVE')
+
+      get '/api/admin/investors', params: { q: 'eugenio' }
+
+      expect(response).to have_http_status(:ok)
+      json = JSON.parse(response.body)
+      expect(json['data'].size).to eq(1)
+      expect(json['data'].first['email']).to eq('eugenio.carrio7@gmail.com')
+    end
+
     it 'supports sorting by balance' do
       inv1 = Investor.create!(email: 'low@test.com', name: 'Low Balance', status: 'ACTIVE')
       Portfolio.create!(investor: inv1, current_balance: 100)

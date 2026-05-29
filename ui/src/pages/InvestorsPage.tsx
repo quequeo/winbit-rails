@@ -1,11 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
+import { downloadMonthlyReportExcel } from "../lib/monthlyReportExcel";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 import { ConfirmDialog } from "../components/ui/ConfirmDialog";
 import { formatCurrencyAR } from "../lib/formatters";
-import type { ApiInvestor } from "../types";
+import type { ApiInvestor, MonthlyReport } from "../types";
 
 const frequencyLabel = (freq: string) => {
   if (freq === "MONTHLY") return "Mensual";
@@ -14,10 +15,18 @@ const frequencyLabel = (freq: string) => {
   return "Trimestral";
 };
 
+const currentMonthValue = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+};
+
 export const InvestorsPage = () => {
   const navigate = useNavigate();
   const [data, setData] = useState<{ data?: ApiInvestor[] } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [reportMonth, setReportMonth] = useState(currentMonthValue);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
@@ -35,16 +44,18 @@ export const InvestorsPage = () => {
     investor: null,
   });
 
-  const fetchInvestors = () => {
+  const fetchInvestors = (q?: string) => {
+    const params = q?.trim() ? { q: q.trim() } : {};
     api
-      .getAdminInvestors({})
+      .getAdminInvestors(params)
       .then((res) => setData(res))
       .catch((e) => setError(e.message));
   };
 
   useEffect(() => {
-    fetchInvestors();
-  }, []);
+    const timer = window.setTimeout(() => fetchInvestors(searchQuery), 300);
+    return () => window.clearTimeout(timer);
+  }, [searchQuery]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,7 +82,7 @@ export const InvestorsPage = () => {
       });
       setShowPassword(false);
       setShowForm(false);
-      fetchInvestors();
+      fetchInvestors(searchQuery);
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : "Error al crear inversor");
     } finally {
@@ -87,7 +98,7 @@ export const InvestorsPage = () => {
     if (!deleteConfirm.investor) return;
     try {
       await api.deleteInvestor(deleteConfirm.investor.id);
-      fetchInvestors();
+      fetchInvestors(searchQuery);
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : "Error al eliminar inversor");
     }
@@ -96,16 +107,31 @@ export const InvestorsPage = () => {
   const handleToggleStatus = async (investor: ApiInvestor) => {
     try {
       await api.toggleInvestorStatus(investor.id);
-      fetchInvestors();
+      fetchInvestors(searchQuery);
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : "Error al cambiar status");
     }
   };
 
+  const handleDownloadReport = async (investor: ApiInvestor) => {
+    setDownloadingId(investor.id);
+    try {
+      const res = await api.getInvestorMonthlyReport(investor.id, reportMonth);
+      downloadMonthlyReportExcel((res as { data: MonthlyReport }).data);
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Error al descargar reporte");
+    } finally {
+      setDownloadingId(null);
+    }
+  };
+
+  const investors: ApiInvestor[] = useMemo(
+    () => data?.data ?? [],
+    [data],
+  );
+
   if (error) return <div className="text-error">{error}</div>;
   if (!data) return <div className="text-t-muted">Cargando...</div>;
-
-  const investors: ApiInvestor[] = data?.data ?? [];
 
   return (
     <div className="space-y-6">
@@ -231,6 +257,49 @@ export const InvestorsPage = () => {
         </div>
       )}
 
+      <div className="admin-card p-4 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+        <div className="flex-1">
+          <label className="block text-sm font-medium text-t-muted mb-1">
+            Buscar inversor
+          </label>
+          <div className="flex gap-2">
+            <Input
+              type="search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Nombre o email..."
+              className="w-full"
+            />
+            {searchQuery ? (
+              <Button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="shrink-0 bg-dark-section hover:bg-primary-dim"
+              >
+                Limpiar
+              </Button>
+            ) : null}
+          </div>
+        </div>
+        <div className="md:w-48">
+          <label className="block text-sm font-medium text-t-muted mb-1">
+            Mes del reporte
+          </label>
+          <Input
+            type="month"
+            value={reportMonth}
+            onChange={(e) => setReportMonth(e.target.value)}
+          />
+        </div>
+      </div>
+
+      {investors.length === 0 ? (
+        <div className="admin-card p-6 text-sm text-t-muted">
+          No se encontraron inversores
+          {searchQuery.trim() ? ` para "${searchQuery.trim()}"` : ""}.
+        </div>
+      ) : null}
+
       {/* Mobile: cards */}
       <div className="grid gap-3 px-1 md:hidden">
         {investors.map((inv) => (
@@ -281,6 +350,26 @@ export const InvestorsPage = () => {
               <span>{inv.hasPassword ? "🔑 Pass" : "Google"}</span>
             </div>
             <div className="mt-3 flex gap-2">
+              <button
+                onClick={() => handleDownloadReport(inv)}
+                disabled={downloadingId === inv.id}
+                className="rounded p-2 text-primary hover:bg-primary-dim disabled:opacity-50"
+                title="Descargar reporte Excel"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 10v6m0 0l-3-3m3 3l3-3M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5 5 5M12 5v9"
+                  />
+                </svg>
+              </button>
               <button
                 onClick={() => navigate(`/investors/${String(inv.id)}/edit`)}
                 className="rounded p-2 text-primary hover:bg-primary-dim"
@@ -387,6 +476,26 @@ export const InvestorsPage = () => {
                   </td>
                   <td className="py-3 text-right">
                     <div className="flex gap-1 justify-end">
+                      <button
+                        onClick={() => handleDownloadReport(inv)}
+                        disabled={downloadingId === inv.id}
+                        className="rounded p-1.5 text-primary hover:bg-primary-dim disabled:opacity-50"
+                        title="Descargar reporte Excel"
+                      >
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 10v6m0 0l-3-3m3 3l3-3M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5 5 5M12 5v9"
+                          />
+                        </svg>
+                      </button>
                       <button
                         onClick={() =>
                           navigate(`/investors/${String(inv.id)}/edit`)

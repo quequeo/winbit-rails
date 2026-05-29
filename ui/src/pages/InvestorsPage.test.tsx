@@ -8,6 +8,7 @@ import { api } from "../lib/api";
 vi.mock("../lib/api", () => ({
   api: {
     getAdminInvestors: vi.fn(),
+    getInvestorMonthlyReport: vi.fn(),
     createInvestor: vi.fn(),
     deleteInvestor: vi.fn(),
     toggleInvestorStatus: vi.fn(),
@@ -91,6 +92,24 @@ describe("InvestorsPage", () => {
 
       await waitFor(() => {
         expect(api.getAdminInvestors).toHaveBeenCalledWith({});
+      });
+    });
+
+    it("filters investors when searching", async () => {
+      vi.mocked(api.getAdminInvestors).mockResolvedValue({ data: [mockInvestors.data[0]] });
+      const user = userEvent.setup();
+
+      renderWithRouter(<InvestorsPage />);
+
+      await waitFor(() => {
+        expect(api.getAdminInvestors).toHaveBeenCalledWith({});
+      });
+
+      const searchInput = screen.getByPlaceholderText("Nombre o email...");
+      await user.type(searchInput, "One");
+
+      await waitFor(() => {
+        expect(api.getAdminInvestors).toHaveBeenCalledWith({ q: "One" });
       });
     });
   });

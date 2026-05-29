@@ -56,3 +56,32 @@ export interface ApiRequest {
   attachmentUrl?: string;
   investor: { name: string; email: string };
 }
+
+export interface MonthlyReportAnnexRow {
+  month: string;
+  label: string;
+  returnPercent: number | null;
+  returnUsd: number | null;
+  deposits: number;
+  withdrawals: number;
+  serviceCost: number;
+  portfolioValue: number | null;
+  openingSnapshot: boolean;
+  source: string;
+}
+
+export interface MonthlyReportSummary {
+  portfolioValueUsd: number | null;
+  winbitMonthlyReturnPercent: number | null;
+  accumulatedSinceEntryUsd: number | null;
+  accumulatedSinceEntryPercent: number | null;
+  accumulated2026Usd: number | null;
+  accumulated2026Percent: number | null;
+}
+
+export interface MonthlyReport {
+  investor: { id: string; name: string; email: string };
+  reportMonth: string;
+  summary: MonthlyReportSummary;
+  annexRows: MonthlyReportAnnexRow[];
+}

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_05_15_120001) do
+ActiveRecord::Schema[8.0].define(version: 2026_05_29_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -61,6 +61,22 @@ ActiveRecord::Schema[8.0].define(version: 2026_05_15_120001) do
     t.index ["category"], name: "index_deposit_options_on_category"
     t.check_constraint "category::text = ANY (ARRAY['CASH_ARS'::character varying::text, 'CASH_USD'::character varying::text, 'BANK_ARS'::character varying::text, 'LEMON'::character varying::text, 'CRYPTO'::character varying::text, 'SWIFT'::character varying::text])", name: "deposit_options_category_check"
     t.check_constraint "currency::text = ANY (ARRAY['ARS'::character varying::text, 'USD'::character varying::text, 'USDT'::character varying::text, 'USDC'::character varying::text])", name: "deposit_options_currency_check"
+  end
+
+  create_table "investor_monthly_annex_rows", force: :cascade do |t|
+    t.string "investor_id", null: false
+    t.date "month", null: false
+    t.decimal "return_percent", precision: 10, scale: 4
+    t.decimal "return_usd", precision: 15, scale: 2
+    t.decimal "deposits", precision: 15, scale: 2, default: "0.0", null: false
+    t.decimal "withdrawals", precision: 15, scale: 2, default: "0.0", null: false
+    t.decimal "service_cost", precision: 15, scale: 2, default: "0.0", null: false
+    t.decimal "portfolio_value", precision: 15, scale: 2
+    t.boolean "opening_snapshot", default: false, null: false
+    t.string "source", default: "spreadsheet", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["investor_id", "month"], name: "index_investor_monthly_annex_rows_on_investor_id_and_month", unique: true
   end
 
   create_table "investors", id: :string, force: :cascade do |t|
@@ -213,6 +229,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_05_15_120001) do
 
   add_foreign_key "activity_logs", "users"
   add_foreign_key "daily_operating_results", "users", column: "applied_by_id"
+  add_foreign_key "investor_monthly_annex_rows", "investors"
   add_foreign_key "portfolio_histories", "investors"
   add_foreign_key "portfolios", "investors"
   add_foreign_key "requests", "investors"
