@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
-import { downloadMonthlyReportExcel } from "../lib/monthlyReportExcel";
+import { downloadMonthlyReportExcel, downloadAllInvestorsReportsExcel } from "../lib/monthlyReportExcel";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 import { ConfirmDialog } from "../components/ui/ConfirmDialog";
@@ -27,6 +27,7 @@ export const InvestorsPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [reportMonth, setReportMonth] = useState(currentMonthValue);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [downloadingAll, setDownloadingAll] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
@@ -110,6 +111,26 @@ export const InvestorsPage = () => {
       fetchInvestors(searchQuery);
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : "Error al cambiar status");
+    }
+  };
+
+  const handleDownloadAllReports = async () => {
+    setDownloadingAll(true);
+    try {
+      const allInvestorsRes = await api.getAdminInvestors({});
+      const allInvestors = (allInvestorsRes as { data: ApiInvestor[] }).data ?? [];
+      const reports: MonthlyReport[] = [];
+
+      for (const inv of allInvestors) {
+        const res = await api.getInvestorMonthlyReport(inv.id, reportMonth);
+        reports.push((res as { data: MonthlyReport }).data);
+      }
+
+      downloadAllInvestorsReportsExcel(reports, reportMonth);
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Error al descargar reportes");
+    } finally {
+      setDownloadingAll(false);
     }
   };
 
@@ -281,15 +302,25 @@ export const InvestorsPage = () => {
             ) : null}
           </div>
         </div>
-        <div className="md:w-48">
-          <label className="block text-sm font-medium text-t-muted mb-1">
-            Mes del reporte
-          </label>
-          <Input
-            type="month"
-            value={reportMonth}
-            onChange={(e) => setReportMonth(e.target.value)}
-          />
+        <div className="flex flex-col gap-2 md:flex-row md:items-end">
+          <div className="md:w-48">
+            <label className="block text-sm font-medium text-t-muted mb-1">
+              Mes del reporte
+            </label>
+            <Input
+              type="month"
+              value={reportMonth}
+              onChange={(e) => setReportMonth(e.target.value)}
+            />
+          </div>
+          <Button
+            type="button"
+            onClick={handleDownloadAllReports}
+            disabled={downloadingAll || downloadingId != null}
+            className="shrink-0 bg-dark-section hover:bg-primary-dim md:mb-0.5"
+          >
+            {downloadingAll ? "Generando..." : "Descargar todos (Excel)"}
+          </Button>
         </div>
       </div>
 
