@@ -23,7 +23,7 @@ RSpec.describe 'Admin Investor Monthly Reports API', type: :request do
 
   describe 'GET /api/admin/investors/:id/monthly_report' do
     it 'returns monthly report JSON' do
-      get "/api/admin/investors/#{investor.id}/monthly_report", params: { month: '2026-04' }
+      get "/api/admin/v1/investors/#{investor.id}/monthly_report", params: { month: '2026-04' }
 
       expect(response).to have_http_status(:ok)
       json = JSON.parse(response.body)
@@ -33,13 +33,13 @@ RSpec.describe 'Admin Investor Monthly Reports API', type: :request do
     end
 
     it 'returns 422 for invalid month' do
-      get "/api/admin/investors/#{investor.id}/monthly_report", params: { month: 'bad' }
+      get "/api/admin/v1/investors/#{investor.id}/monthly_report", params: { month: 'bad' }
 
       expect(response).to have_http_status(:unprocessable_content)
     end
 
     it 'returns 404 for unknown investor' do
-      get '/api/admin/investors/999999/monthly_report', params: { month: '2026-04' }
+      get '/api/admin/v1/investors/999999/monthly_report', params: { month: '2026-04' }
 
       expect(response).to have_http_status(:not_found)
     end
