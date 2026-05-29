@@ -9,6 +9,7 @@
     "service_cost": 0,
     "portfolio_value": 6044,
     "opening_snapshot": true,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -21,6 +22,7 @@
     "service_cost": 0,
     "portfolio_value": 6043,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -33,6 +35,7 @@
     "service_cost": 0,
     "portfolio_value": 6183,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -45,6 +48,7 @@
     "service_cost": 0,
     "portfolio_value": 6325,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -57,6 +61,7 @@
     "service_cost": 0,
     "portfolio_value": 6484,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -81,6 +86,7 @@
     "service_cost": 0,
     "portfolio_value": 1641,
     "opening_snapshot": true,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -93,6 +99,7 @@
     "service_cost": 0,
     "portfolio_value": 1641,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -105,6 +112,7 @@
     "service_cost": 0,
     "portfolio_value": 1679,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -117,6 +125,7 @@
     "service_cost": 0,
     "portfolio_value": 1717,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -129,6 +138,7 @@
     "service_cost": 0,
     "portfolio_value": 1760,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -153,6 +163,7 @@
     "service_cost": 0,
     "portfolio_value": 1381,
     "opening_snapshot": true,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -165,6 +176,7 @@
     "service_cost": 0,
     "portfolio_value": 1381,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -177,6 +189,7 @@
     "service_cost": 0,
     "portfolio_value": 1413,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -189,6 +202,7 @@
     "service_cost": 0,
     "portfolio_value": 1445,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -201,6 +215,7 @@
     "service_cost": 0,
     "portfolio_value": 1482,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -225,6 +240,7 @@
     "service_cost": 0,
     "portfolio_value": 1558,
     "opening_snapshot": true,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -237,6 +253,7 @@
     "service_cost": 0,
     "portfolio_value": 1408,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -249,6 +266,7 @@
     "service_cost": 0,
     "portfolio_value": 1288,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -261,6 +279,7 @@
     "service_cost": 0,
     "portfolio_value": 1318,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -273,6 +292,7 @@
     "service_cost": 0,
     "portfolio_value": 597,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -297,6 +317,7 @@
     "service_cost": 0,
     "portfolio_value": 1962,
     "opening_snapshot": true,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -309,6 +330,7 @@
     "service_cost": 0,
     "portfolio_value": 1962,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -321,6 +343,7 @@
     "service_cost": 0,
     "portfolio_value": 2007,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -333,6 +356,7 @@
     "service_cost": 0,
     "portfolio_value": 2053,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -345,6 +369,7 @@
     "service_cost": 0,
     "portfolio_value": 2105,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -369,6 +394,7 @@
     "service_cost": 0,
     "portfolio_value": 5886,
     "opening_snapshot": true,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -381,6 +407,7 @@
     "service_cost": 0,
     "portfolio_value": 5885,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -393,6 +420,7 @@
     "service_cost": 0,
     "portfolio_value": 6021,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -405,6 +433,7 @@
     "service_cost": 0,
     "portfolio_value": 6160,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -417,6 +446,7 @@
     "service_cost": 0,
     "portfolio_value": 6314,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -441,6 +471,7 @@
     "service_cost": 0,
     "portfolio_value": 2932,
     "opening_snapshot": true,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -453,6 +484,7 @@
     "service_cost": 0,
     "portfolio_value": 2931,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -465,6 +497,7 @@
     "service_cost": 0,
     "portfolio_value": 2999,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -477,6 +510,7 @@
     "service_cost": 0,
     "portfolio_value": 3069,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -489,6 +523,7 @@
     "service_cost": 0,
     "portfolio_value": 3145,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -513,6 +548,7 @@
     "service_cost": 0,
     "portfolio_value": 52690,
     "opening_snapshot": true,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -525,6 +561,7 @@
     "service_cost": 0,
     "portfolio_value": 52681,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -537,6 +574,7 @@
     "service_cost": 0,
     "portfolio_value": 53902,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -549,6 +587,7 @@
     "service_cost": 0,
     "portfolio_value": 55146,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -561,6 +600,7 @@
     "service_cost": 0,
     "portfolio_value": 56525,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -585,6 +625,7 @@
     "service_cost": 0,
     "portfolio_value": 6951,
     "opening_snapshot": true,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -597,6 +638,7 @@
     "service_cost": 0,
     "portfolio_value": 6950,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -609,6 +651,7 @@
     "service_cost": 0,
     "portfolio_value": 7111,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -621,6 +664,7 @@
     "service_cost": 97,
     "portfolio_value": 7178,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -633,6 +677,7 @@
     "service_cost": 0,
     "portfolio_value": 7357,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -657,6 +702,7 @@
     "service_cost": 0,
     "portfolio_value": 7736,
     "opening_snapshot": true,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -669,6 +715,7 @@
     "service_cost": 0,
     "portfolio_value": 7735,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -681,6 +728,7 @@
     "service_cost": 0,
     "portfolio_value": 7914,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -693,6 +741,7 @@
     "service_cost": 108,
     "portfolio_value": 7989,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -705,6 +754,7 @@
     "service_cost": 0,
     "portfolio_value": 8188,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -729,6 +779,7 @@
     "service_cost": 0,
     "portfolio_value": 1548,
     "opening_snapshot": true,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -741,6 +792,7 @@
     "service_cost": 0,
     "portfolio_value": 1548,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -753,6 +805,7 @@
     "service_cost": 0,
     "portfolio_value": 1584,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -765,6 +818,7 @@
     "service_cost": 22,
     "portfolio_value": 1599,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -777,6 +831,7 @@
     "service_cost": 0,
     "portfolio_value": 1639,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -801,6 +856,7 @@
     "service_cost": 0,
     "portfolio_value": 1991,
     "opening_snapshot": true,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -813,6 +869,7 @@
     "service_cost": 0,
     "portfolio_value": 1541,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -825,6 +882,7 @@
     "service_cost": 0,
     "portfolio_value": 1577,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -837,6 +895,7 @@
     "service_cost": 22,
     "portfolio_value": 1591,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -849,6 +908,7 @@
     "service_cost": 0,
     "portfolio_value": 1030,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -873,6 +933,7 @@
     "service_cost": 0,
     "portfolio_value": 10161,
     "opening_snapshot": true,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -885,6 +946,7 @@
     "service_cost": 0,
     "portfolio_value": 10159,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -897,6 +959,7 @@
     "service_cost": 0,
     "portfolio_value": 10395,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -909,6 +972,7 @@
     "service_cost": 142,
     "portfolio_value": 10492,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -921,6 +985,7 @@
     "service_cost": 0,
     "portfolio_value": 10755,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -945,6 +1010,7 @@
     "service_cost": 0,
     "portfolio_value": 6265,
     "opening_snapshot": true,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -957,6 +1023,7 @@
     "service_cost": 0,
     "portfolio_value": 6264,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -969,6 +1036,7 @@
     "service_cost": 0,
     "portfolio_value": 6410,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -981,6 +1049,7 @@
     "service_cost": 88,
     "portfolio_value": 6470,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -993,6 +1062,7 @@
     "service_cost": 0,
     "portfolio_value": 6632,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -1017,6 +1087,7 @@
     "service_cost": 0,
     "portfolio_value": 7061,
     "opening_snapshot": true,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -1029,6 +1100,7 @@
     "service_cost": 0,
     "portfolio_value": 7060,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -1041,6 +1113,7 @@
     "service_cost": 0,
     "portfolio_value": 7223,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -1053,6 +1126,7 @@
     "service_cost": 99,
     "portfolio_value": 7291,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -1065,6 +1139,7 @@
     "service_cost": 0,
     "portfolio_value": 7474,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -1089,6 +1164,7 @@
     "service_cost": 0,
     "portfolio_value": 2712,
     "opening_snapshot": true,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -1101,6 +1177,7 @@
     "service_cost": 0,
     "portfolio_value": 2712,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -1113,6 +1190,7 @@
     "service_cost": 0,
     "portfolio_value": 2775,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -1125,6 +1203,7 @@
     "service_cost": 38,
     "portfolio_value": 2801,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -1137,6 +1216,7 @@
     "service_cost": 0,
     "portfolio_value": 2871,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -1161,6 +1241,7 @@
     "service_cost": 0,
     "portfolio_value": 19806,
     "opening_snapshot": true,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -1173,6 +1254,7 @@
     "service_cost": 0,
     "portfolio_value": 19928,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -1185,6 +1267,7 @@
     "service_cost": 103,
     "portfolio_value": 15488,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -1197,6 +1280,7 @@
     "service_cost": 89,
     "portfolio_value": 15757,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -1209,6 +1293,7 @@
     "service_cost": 0,
     "portfolio_value": 15411,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -1233,6 +1318,7 @@
     "service_cost": 0,
     "portfolio_value": 21477,
     "opening_snapshot": true,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -1245,6 +1331,7 @@
     "service_cost": 0,
     "portfolio_value": 21474,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -1257,6 +1344,7 @@
     "service_cost": 0,
     "portfolio_value": 21971,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -1269,6 +1357,7 @@
     "service_cost": 0,
     "portfolio_value": 22478,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -1281,6 +1370,7 @@
     "service_cost": 0,
     "portfolio_value": 23440,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -1305,6 +1395,7 @@
     "service_cost": 0,
     "portfolio_value": 1436,
     "opening_snapshot": true,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -1317,6 +1408,7 @@
     "service_cost": 0,
     "portfolio_value": 1736,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -1329,6 +1421,7 @@
     "service_cost": 0,
     "portfolio_value": 1776,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -1341,6 +1434,7 @@
     "service_cost": 0,
     "portfolio_value": 1817,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -1353,6 +1447,7 @@
     "service_cost": 0,
     "portfolio_value": 1862,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -1377,6 +1472,7 @@
     "service_cost": 0,
     "portfolio_value": 1388,
     "opening_snapshot": true,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -1389,6 +1485,7 @@
     "service_cost": 0,
     "portfolio_value": 1388,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -1401,6 +1498,7 @@
     "service_cost": 0,
     "portfolio_value": 1420,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -1413,6 +1511,7 @@
     "service_cost": 19,
     "portfolio_value": 1434,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -1425,6 +1524,7 @@
     "service_cost": 0,
     "portfolio_value": 1469,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -1449,6 +1549,7 @@
     "service_cost": 0,
     "portfolio_value": 527,
     "opening_snapshot": true,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -1461,6 +1562,7 @@
     "service_cost": 0,
     "portfolio_value": 527,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -1473,6 +1575,7 @@
     "service_cost": 0,
     "portfolio_value": 539,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -1485,6 +1588,7 @@
     "service_cost": 7,
     "portfolio_value": 544,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -1497,6 +1601,7 @@
     "service_cost": 0,
     "portfolio_value": 558,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -1521,6 +1626,7 @@
     "service_cost": 0,
     "portfolio_value": 8368,
     "opening_snapshot": true,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -1533,6 +1639,7 @@
     "service_cost": 0,
     "portfolio_value": 8367,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -1545,6 +1652,7 @@
     "service_cost": 0,
     "portfolio_value": 8561,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -1557,6 +1665,7 @@
     "service_cost": 98,
     "portfolio_value": 8661,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -1569,6 +1678,7 @@
     "service_cost": 0,
     "portfolio_value": 8878,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -1593,6 +1703,7 @@
     "service_cost": 0,
     "portfolio_value": 15685,
     "opening_snapshot": true,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -1605,6 +1716,7 @@
     "service_cost": 0,
     "portfolio_value": 15682,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -1617,6 +1729,7 @@
     "service_cost": 0,
     "portfolio_value": 16046,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -1629,6 +1742,7 @@
     "service_cost": 193,
     "portfolio_value": 20264,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -1641,6 +1755,7 @@
     "service_cost": 0,
     "portfolio_value": 20770,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -1665,6 +1780,7 @@
     "service_cost": 0,
     "portfolio_value": 25187,
     "opening_snapshot": true,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -1677,6 +1793,7 @@
     "service_cost": 57,
     "portfolio_value": 23716,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -1689,6 +1806,7 @@
     "service_cost": 0,
     "portfolio_value": 24266,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -1701,6 +1819,7 @@
     "service_cost": 340,
     "portfolio_value": 22433,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -1713,6 +1832,7 @@
     "service_cost": 0,
     "portfolio_value": 22993,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -1729,6 +1849,19 @@
   },
   {
     "investor_name": "DARÍO VÁZQUEZ",
+    "month": "INGRESO",
+    "return_percent": null,
+    "return_usd": null,
+    "deposits": 0,
+    "withdrawals": 0,
+    "service_cost": 0,
+    "portfolio_value": 3291,
+    "opening_snapshot": true,
+    "entry_row": true,
+    "ytd_total": false
+  },
+  {
+    "investor_name": "DARÍO VÁZQUEZ",
     "month": "2026-01",
     "return_percent": -0.5,
     "return_usd": -17,
@@ -1737,6 +1870,7 @@
     "service_cost": 0,
     "portfolio_value": 3274,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -1749,6 +1883,7 @@
     "service_cost": 0,
     "portfolio_value": 3350,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -1761,6 +1896,7 @@
     "service_cost": 41,
     "portfolio_value": 3386,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -1773,6 +1909,7 @@
     "service_cost": 0,
     "portfolio_value": 3471,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -1789,6 +1926,19 @@
   },
   {
     "investor_name": "FEDERICO BOERO",
+    "month": "INGRESO",
+    "return_percent": null,
+    "return_usd": null,
+    "deposits": 0,
+    "withdrawals": 0,
+    "service_cost": 0,
+    "portfolio_value": 1200,
+    "opening_snapshot": true,
+    "entry_row": true,
+    "ytd_total": false
+  },
+  {
+    "investor_name": "FEDERICO BOERO",
     "month": "2026-03",
     "return_percent": 2.3,
     "return_usd": 26,
@@ -1797,6 +1947,7 @@
     "service_cost": 8,
     "portfolio_value": 1219,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -1809,6 +1960,7 @@
     "service_cost": 0,
     "portfolio_value": 1460,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -1825,6 +1977,19 @@
   },
   {
     "investor_name": "NICOLÁS LARRAÑAGA",
+    "month": "INGRESO",
+    "return_percent": null,
+    "return_usd": null,
+    "deposits": 0,
+    "withdrawals": 0,
+    "service_cost": 0,
+    "portfolio_value": 5000,
+    "opening_snapshot": true,
+    "entry_row": true,
+    "ytd_total": false
+  },
+  {
+    "investor_name": "NICOLÁS LARRAÑAGA",
     "month": "2026-04",
     "return_percent": 2.5,
     "return_usd": 126,
@@ -1833,6 +1998,7 @@
     "service_cost": 0,
     "portfolio_value": 5126,
     "opening_snapshot": false,
+    "entry_row": false,
     "ytd_total": false
   },
   {
@@ -1846,6 +2012,19 @@
     "portfolio_value": 126,
     "opening_snapshot": false,
     "ytd_total": true
+  },
+  {
+    "investor_name": "JAIME GARCÍA MENDEZ",
+    "month": "INGRESO",
+    "return_percent": null,
+    "return_usd": null,
+    "deposits": 0,
+    "withdrawals": 0,
+    "service_cost": 0,
+    "portfolio_value": 500,
+    "opening_snapshot": true,
+    "entry_row": true,
+    "ytd_total": false
   },
   {
     "investor_name": "JAIME GARCÍA MENDEZ",

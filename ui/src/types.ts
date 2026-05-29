@@ -67,6 +67,7 @@ export interface MonthlyReportAnnexRow {
   serviceCost: number;
   portfolioValue: number | null;
   openingSnapshot: boolean;
+  entryRow?: boolean;
   source: string;
 }
 

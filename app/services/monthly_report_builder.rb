@@ -29,9 +29,9 @@ class MonthlyReportBuilder
 
   def build
     annex_rows = build_annex_rows
-    dec_opening = annex_rows.find { |r| r[:opening_snapshot] }
+    opening_row = annex_rows.find { |r| r[:entry_row] || r[:opening_snapshot] }
     ytd_usd = compute_ytd_usd(annex_rows)
-    ytd_base = dec_opening&.dig(:portfolio_value).to_f
+    ytd_base = opening_row&.dig(:portfolio_value).to_f
 
     {
       investor: {
@@ -85,6 +85,7 @@ class MonthlyReportBuilder
         service_cost: row.service_cost.to_f,
         portfolio_value: row.portfolio_value&.to_f,
         opening_snapshot: row.opening_snapshot,
+        entry_row: row.entry_row,
         source: row.source,
       )
     end
@@ -118,6 +119,7 @@ class MonthlyReportBuilder
       service_cost: flows[:service_cost],
       portfolio_value: end_value,
       opening_snapshot: false,
+      entry_row: false,
       source: 'platform',
     )
   end
@@ -208,26 +210,34 @@ class MonthlyReportBuilder
 
   def compute_ytd_usd(annex_rows)
     annex_rows
-      .reject { |r| r[:opening_snapshot] }
+      .reject { |r| r[:opening_snapshot] || r[:entry_row] }
       .select { |r| r[:month].to_s.start_with?('2026-') && Date.parse("#{r[:month]}-01") <= @report_month }
       .sum { |r| r[:return_usd].to_f }
   end
 
   def serialize_row(month:, return_percent:, return_usd:, deposits:, withdrawals:, service_cost:,
-                    portfolio_value:, opening_snapshot:, source:)
+                    portfolio_value:, opening_snapshot:, entry_row:, source:)
     month_key = month.is_a?(Date) ? month.strftime('%Y-%m') : month.to_s
     {
       month: month_key,
-      label: MONTH_LABELS[month_key] || month_key,
-      return_percent: opening_snapshot ? nil : return_percent,
-      return_usd: opening_snapshot ? nil : return_usd,
+      label: row_label(month_key, opening_snapshot:, entry_row:),
+      return_percent: opening_snapshot || entry_row ? nil : return_percent,
+      return_usd: opening_snapshot || entry_row ? nil : return_usd,
       deposits: deposits,
       withdrawals: withdrawals,
       service_cost: service_cost,
       portfolio_value: portfolio_value,
       opening_snapshot: opening_snapshot,
+      entry_row: entry_row,
       source: source,
     }
+  end
+
+  def row_label(month_key, opening_snapshot:, entry_row:)
+    return 'INGRESO' if entry_row
+    return MONTH_LABELS[month_key] || month_key if opening_snapshot && month_key == '2025-12'
+
+    MONTH_LABELS[month_key] || month_key
   end
 
   def bd(value)

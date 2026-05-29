@@ -1,0 +1,15 @@
+[
+  {
+    "investor_name": "JAIME GARCÍA MENDEZ",
+    "month": "INGRESO",
+    "return_percent": null,
+    "return_usd": null,
+    "deposits": 0,
+    "withdrawals": 0,
+    "service_cost": 0,
+    "portfolio_value": 500,
+    "opening_snapshot": true,
+    "entry_row": true,
+    "ytd_total": false
+  }
+]

@@ -136,20 +136,23 @@ function appendAnnexBlock(
   let ytdUsd = 0;
 
   for (const annexRow of report.annexRows) {
-    const dateCell = monthToExcelDate(annexRow.month) ?? annexRow.label;
-    setCell(ws, row, 0, dateCell);
+    const firstCol =
+      annexRow.entryRow || annexRow.label === "INGRESO"
+        ? "INGRESO"
+        : monthToExcelDate(annexRow.month) ?? annexRow.label;
+    setCell(ws, row, 0, firstCol);
 
-    if (annexRow.openingSnapshot) {
-      setUsdCell(ws, row, 3, annexRow.deposits);
-      setUsdCell(ws, row, 4, annexRow.withdrawals);
-      setUsdCell(ws, row, 5, annexRow.serviceCost);
+    if (annexRow.openingSnapshot || annexRow.entryRow) {
+      setUsdCell(ws, row, 3, annexRow.deposits ?? 0);
+      setUsdCell(ws, row, 4, annexRow.withdrawals ?? 0);
+      setUsdCell(ws, row, 5, annexRow.serviceCost ?? 0);
       setUsdCell(ws, row, 6, annexRow.portfolioValue);
     } else {
       setPctCell(ws, row, 1, annexRow.returnPercent);
       setUsdCell(ws, row, 2, annexRow.returnUsd);
-      setUsdCell(ws, row, 3, annexRow.deposits);
-      setUsdCell(ws, row, 4, annexRow.withdrawals);
-      setUsdCell(ws, row, 5, annexRow.serviceCost);
+      setUsdCell(ws, row, 3, annexRow.deposits ?? 0);
+      setUsdCell(ws, row, 4, annexRow.withdrawals ?? 0);
+      setUsdCell(ws, row, 5, annexRow.serviceCost ?? 0);
       setUsdCell(ws, row, 6, annexRow.portfolioValue);
 
       if (annexRow.month.startsWith("2026-")) {

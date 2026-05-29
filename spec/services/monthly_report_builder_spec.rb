@@ -155,3 +155,38 @@ RSpec.describe MonthlyReportBuilder do
     end
   end
 end
+
+RSpec.describe MonthlyReportBuilder do
+  describe 'report for entry investor (INGRESO row)' do
+    let(:investor) do
+      Investor.create!(email: 'jaimegarciamendez@gmail.com', name: 'Jaime García Mendez', status: 'ACTIVE')
+    end
+
+    let!(:portfolio) do
+      Portfolio.create!(investor: investor, current_balance: 2776, strategy_return_all_usd: -24, strategy_return_all_percent: -4.8)
+    end
+
+    before do
+      InvestorMonthlyAnnexRow.create!(
+        investor: investor,
+        month: Date.new(2026, 4, 1),
+        portfolio_value: 500,
+        opening_snapshot: true,
+        entry_row: true,
+        source: 'spreadsheet',
+      )
+    end
+
+    it 'includes INGRESO row and uses entry balance as YTD base' do
+      travel_to Time.zone.local(2026, 5, 29, 12, 0, 0) do
+        report = described_class.new(investor: investor, report_month: Date.new(2026, 5, 1)).build
+        ingreso = report[:annex_rows].find { |r| r[:entry_row] }
+
+        expect(ingreso).to be_present
+        expect(ingreso[:label]).to eq('INGRESO')
+        expect(ingreso[:portfolio_value]).to eq(500.0)
+        expect(report[:annex_rows].map { |r| r[:label] }).to include('May-26')
+      end
+    end
+  end
+end

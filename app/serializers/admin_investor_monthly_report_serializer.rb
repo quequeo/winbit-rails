@@ -38,6 +38,7 @@ class AdminInvestorMonthlyReportSerializer
       serviceCost: row[:service_cost],
       portfolioValue: row[:portfolio_value],
       openingSnapshot: row[:opening_snapshot],
+      entryRow: row[:entry_row],
       source: row[:source],
     }
   end

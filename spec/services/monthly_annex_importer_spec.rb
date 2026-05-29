@@ -22,4 +22,15 @@ RSpec.describe MonthlyAnnexImporter do
     expect(rows.first.portfolio_value.to_f).to eq(6044)
     expect(rows.last.portfolio_value.to_f).to eq(6484)
   end
+
+  it 'imports INGRESO row for Jaime by email mapping' do
+    Investor.create!(email: 'jaimegarciamendez@gmail.com', name: 'Jaime García Mendez', status: 'ACTIVE')
+
+    importer = described_class.new(json_path: Rails.root.join('spec/fixtures/monthly_annex_jaime.json'))
+    expect(importer.import!).to be(true)
+
+    row = InvestorMonthlyAnnexRow.find_by!(entry_row: true)
+    expect(row.portfolio_value.to_f).to eq(500)
+    expect(row.month).to eq(Date.new(2026, 4, 1))
+  end
 end

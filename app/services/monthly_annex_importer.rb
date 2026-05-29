@@ -28,7 +28,11 @@ class MonthlyAnnexImporter
         next
       end
 
-      month = Date.strptime("#{row['month']}-01", '%Y-%m-%d')
+      month = if row['month'] == 'INGRESO'
+                Date.new(2026, 4, 1)
+      else
+                Date.strptime("#{row['month']}-01", '%Y-%m-%d')
+      end
 
       record = InvestorMonthlyAnnexRow.find_or_initialize_by(investor: investor, month: month)
       record.assign_attributes(
@@ -39,6 +43,7 @@ class MonthlyAnnexImporter
         service_cost: row['service_cost'] || 0,
         portfolio_value: row['portfolio_value'],
         opening_snapshot: row['opening_snapshot'] == true,
+        entry_row: row['entry_row'] == true,
         source: 'spreadsheet',
       )
       record.save!
@@ -54,10 +59,19 @@ class MonthlyAnnexImporter
     'luis m. crocci' => 'luis matias crocci',
     'dario vazquez' => 'dario agustin vazquez',
     'federico boero' => 'federico martin boero',
+    'jaime garcia mendez' => 'jaime garcia',
+  }.freeze
+
+  EMAIL_BY_SPREADSHEET = {
+    'jaime garcia mendez' => 'jaimegarciamendez@gmail.com',
   }.freeze
 
   def find_investor(spreadsheet_name, investors_by_name)
     key = normalize_name(spreadsheet_name)
+    if EMAIL_BY_SPREADSHEET[key]
+      return Investor.find_by(email: EMAIL_BY_SPREADSHEET[key])
+    end
+
     investors_by_name[key] || investors_by_name[NAME_ALIASES[key]]
   end
 
