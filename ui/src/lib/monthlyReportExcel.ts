@@ -4,8 +4,6 @@ import type { MonthlyReport } from "../types";
 const USD_FORMAT = "#,##0";
 const PCT_FORMAT = "0.0%";
 
-type CellValue = string | number | Date | null;
-
 function monthToExcelDate(monthKey: string): Date | null {
   const [y, m] = monthKey.split("-").map(Number);
   if (!y || !m) return null;
@@ -27,93 +25,62 @@ function pctToDecimalOneDec(
   return Number((oneDec / 100).toFixed(4));
 }
 
-function setCell(
-  ws: XLSX.WorkSheet,
-  row: number,
-  col: number,
-  value: CellValue,
-) {
-  if (value == null || value === "") return;
-  const ref = XLSX.utils.encode_cell({ r: row, c: col });
-  if (value instanceof Date) {
-    ws[ref] = { t: "d", v: value };
-    return;
+function cellValue(value: string | number | Date | null | undefined) {
+  if (value == null) return "";
+  return value;
+}
+
+function applyUsdFormat(ws: XLSX.WorkSheet, ref: string) {
+  const cell = ws[ref];
+  if (cell && typeof cell.v === "number") {
+    cell.z = USD_FORMAT;
   }
-  if (typeof value === "number") {
-    ws[ref] = { t: "n", v: value };
-    return;
+}
+
+function applyPctFormat(ws: XLSX.WorkSheet, ref: string) {
+  const cell = ws[ref];
+  if (cell && typeof cell.v === "number") {
+    cell.z = PCT_FORMAT;
   }
-  ws[ref] = { t: "s", v: String(value) };
 }
 
-function setUsdCell(
-  ws: XLSX.WorkSheet,
-  row: number,
-  col: number,
-  value: number | null | undefined,
-) {
-  const rounded = roundUsd(value);
-  if (rounded == null) return;
-  const ref = XLSX.utils.encode_cell({ r: row, c: col });
-  ws[ref] = { t: "n", v: rounded, z: USD_FORMAT };
-}
-
-function setPctCell(
-  ws: XLSX.WorkSheet,
-  row: number,
-  col: number,
-  valuePercentPoints: number | null | undefined,
-) {
-  const decimal = pctToDecimalOneDec(valuePercentPoints);
-  if (decimal == null) return;
-  const ref = XLSX.utils.encode_cell({ r: row, c: col });
-  ws[ref] = { t: "n", v: decimal, z: PCT_FORMAT };
-}
-
-function updateSheetRange(ws: XLSX.WorkSheet, row: number, col: number) {
-  const ref = XLSX.utils.encode_cell({ r: row, c: col });
-  if (!ws["!ref"]) {
-    ws["!ref"] = ref;
-    return;
-  }
-  const range = XLSX.utils.decode_range(ws["!ref"]);
-  if (row > range.e.r) range.e.r = row;
-  if (col > range.e.c) range.e.c = col;
-  ws["!ref"] = XLSX.utils.encode_range(range);
-}
-
-function appendSummaryRows(ws: XLSX.WorkSheet, report: MonthlyReport, startRow: number) {
-  const rows: [string, CellValue][] = [
+function buildSummarySheet(report: MonthlyReport): XLSX.WorkSheet {
+  const s = report.summary;
+  const ws = XLSX.utils.aoa_to_sheet([
     ["Reporte mensual", report.reportMonth],
     ["Inversor", report.investor.name ?? ""],
     ["Email", report.investor.email ?? ""],
     ["", ""],
-    ["Valor portafolio (USD)", null],
-    ["Rendimiento mensual Winbit (%)", null],
-    ["Acumulado desde ingreso (USD)", null],
-    ["Acumulado desde ingreso (%)", null],
-    ["Acumulado 2026 (USD)", null],
-    ["Acumulado 2026 (%)", null],
-  ];
+    ["Valor portafolio (USD)", cellValue(roundUsd(s.portfolioValueUsd))],
+    [
+      "Rendimiento mensual Winbit (%)",
+      cellValue(pctToDecimalOneDec(s.winbitMonthlyReturnPercent)),
+    ],
+    [
+      "Acumulado desde ingreso (USD)",
+      cellValue(roundUsd(s.accumulatedSinceEntryUsd)),
+    ],
+    [
+      "Acumulado desde ingreso (%)",
+      cellValue(pctToDecimalOneDec(s.accumulatedSinceEntryPercent)),
+    ],
+    ["Acumulado 2026 (USD)", cellValue(roundUsd(s.accumulated2026Usd))],
+    [
+      "Acumulado 2026 (%)",
+      cellValue(pctToDecimalOneDec(s.accumulated2026Percent)),
+    ],
+  ]);
 
-  rows.forEach((row, idx) => {
-    const r = startRow + idx;
-    setCell(ws, r, 0, row[0]);
-    if (row[1] != null) setCell(ws, r, 1, row[1]);
-    updateSheetRange(ws, r, 1);
-  });
+  applyUsdFormat(ws, "B5");
+  applyPctFormat(ws, "B6");
+  applyUsdFormat(ws, "B7");
+  applyPctFormat(ws, "B8");
+  applyUsdFormat(ws, "B9");
+  applyPctFormat(ws, "B10");
 
-  const s = report.summary;
-  const valueRow = startRow + 4;
-  setUsdCell(ws, valueRow, 1, s.portfolioValueUsd);
-  setPctCell(ws, valueRow + 1, 1, s.winbitMonthlyReturnPercent);
-  setUsdCell(ws, valueRow + 2, 1, s.accumulatedSinceEntryUsd);
-  setPctCell(ws, valueRow + 3, 1, s.accumulatedSinceEntryPercent);
-  setUsdCell(ws, valueRow + 4, 1, s.accumulated2026Usd);
-  setPctCell(ws, valueRow + 5, 1, s.accumulated2026Percent);
-  updateSheetRange(ws, valueRow + 5, 1);
+  ws["!cols"] = [{ wch: 34 }, { wch: 20 }];
 
-  return startRow + rows.length;
+  return ws;
 }
 
 function appendAnnexBlock(
@@ -121,17 +88,17 @@ function appendAnnexBlock(
   report: MonthlyReport,
   startRow: number,
 ): number {
-  let row = startRow;
-
-  setCell(ws, row, 0, (report.investor.name ?? "").toUpperCase());
-  setCell(ws, row, 1, "RDO M %");
-  setCell(ws, row, 2, "RDO M $");
-  setCell(ws, row, 3, "INGRESOS");
-  setCell(ws, row, 4, "RETIROS");
-  setCell(ws, row, 5, "CST");
-  setCell(ws, row, 6, "VALOR PORTAFOLIO");
-  updateSheetRange(ws, row, 6);
-  row += 1;
+  const blockRows: (string | number | Date)[][] = [
+    [
+      (report.investor.name ?? "").toUpperCase(),
+      "RDO M %",
+      "RDO M $",
+      "INGRESOS",
+      "RETIROS",
+      "CST",
+      "VALOR PORTAFOLIO",
+    ],
+  ];
 
   let ytdUsd = 0;
 
@@ -140,43 +107,60 @@ function appendAnnexBlock(
       annexRow.entryRow || annexRow.label === "INGRESO"
         ? "INGRESO"
         : monthToExcelDate(annexRow.month) ?? annexRow.label;
-    setCell(ws, row, 0, firstCol);
 
     if (annexRow.openingSnapshot || annexRow.entryRow) {
-      setUsdCell(ws, row, 3, annexRow.deposits ?? 0);
-      setUsdCell(ws, row, 4, annexRow.withdrawals ?? 0);
-      setUsdCell(ws, row, 5, annexRow.serviceCost ?? 0);
-      setUsdCell(ws, row, 6, annexRow.portfolioValue);
+      blockRows.push([
+        firstCol,
+        "",
+        "",
+        cellValue(roundUsd(annexRow.deposits ?? 0)),
+        cellValue(roundUsd(annexRow.withdrawals ?? 0)),
+        cellValue(roundUsd(annexRow.serviceCost ?? 0)),
+        cellValue(roundUsd(annexRow.portfolioValue)),
+      ]);
     } else {
-      setPctCell(ws, row, 1, annexRow.returnPercent);
-      setUsdCell(ws, row, 2, annexRow.returnUsd);
-      setUsdCell(ws, row, 3, annexRow.deposits ?? 0);
-      setUsdCell(ws, row, 4, annexRow.withdrawals ?? 0);
-      setUsdCell(ws, row, 5, annexRow.serviceCost ?? 0);
-      setUsdCell(ws, row, 6, annexRow.portfolioValue);
-
       if (annexRow.month.startsWith("2026-")) {
         ytdUsd += annexRow.returnUsd ?? 0;
       }
-    }
 
-    updateSheetRange(ws, row, 6);
-    row += 1;
+      blockRows.push([
+        firstCol,
+        cellValue(pctToDecimalOneDec(annexRow.returnPercent)),
+        cellValue(roundUsd(annexRow.returnUsd)),
+        cellValue(roundUsd(annexRow.deposits ?? 0)),
+        cellValue(roundUsd(annexRow.withdrawals ?? 0)),
+        cellValue(roundUsd(annexRow.serviceCost ?? 0)),
+        cellValue(roundUsd(annexRow.portfolioValue)),
+      ]);
+    }
   }
 
-  setCell(ws, row, 0, "TOTAL");
-  setUsdCell(ws, row, 2, ytdUsd);
-  setUsdCell(ws, row, 3, 0);
-  setUsdCell(ws, row, 4, 0);
-  setUsdCell(ws, row, 5, 0);
-  setUsdCell(ws, row, 6, ytdUsd);
-  updateSheetRange(ws, row, 6);
+  blockRows.push([
+    "TOTAL",
+    "",
+    cellValue(roundUsd(ytdUsd)),
+    0,
+    0,
+    0,
+    cellValue(roundUsd(ytdUsd)),
+  ]);
 
-  return row + 1;
+  XLSX.utils.sheet_add_aoa(ws, blockRows, { origin: { r: startRow, c: 0 } });
+
+  const endRow = startRow + blockRows.length - 1;
+  for (let r = startRow + 1; r <= endRow; r += 1) {
+    applyPctFormat(ws, XLSX.utils.encode_cell({ r, c: 1 }));
+    applyUsdFormat(ws, XLSX.utils.encode_cell({ r, c: 2 }));
+    applyUsdFormat(ws, XLSX.utils.encode_cell({ r, c: 3 }));
+    applyUsdFormat(ws, XLSX.utils.encode_cell({ r, c: 4 }));
+    applyUsdFormat(ws, XLSX.utils.encode_cell({ r, c: 5 }));
+    applyUsdFormat(ws, XLSX.utils.encode_cell({ r, c: 6 }));
+  }
+
+  return endRow + 1;
 }
 
 function buildResumenTableSheet(reports: MonthlyReport[]): XLSX.WorkSheet {
-  const ws: XLSX.WorkSheet = {};
   const headers = [
     "Inversor",
     "Email",
@@ -188,37 +172,60 @@ function buildResumenTableSheet(reports: MonthlyReport[]): XLSX.WorkSheet {
     "Acumulado 2026 (%)",
   ];
 
-  headers.forEach((header, col) => {
-    setCell(ws, 0, col, header);
-  });
-  updateSheetRange(ws, 0, headers.length - 1);
-
-  reports.forEach((report, idx) => {
-    const row = idx + 1;
+  const rows = reports.map((report) => {
     const s = report.summary;
-    setCell(ws, row, 0, report.investor.name ?? "");
-    setCell(ws, row, 1, report.investor.email ?? "");
-    setUsdCell(ws, row, 2, s.portfolioValueUsd);
-    setPctCell(ws, row, 3, s.winbitMonthlyReturnPercent);
-    setUsdCell(ws, row, 4, s.accumulatedSinceEntryUsd);
-    setPctCell(ws, row, 5, s.accumulatedSinceEntryPercent);
-    setUsdCell(ws, row, 6, s.accumulated2026Usd);
-    setPctCell(ws, row, 7, s.accumulated2026Percent);
-    updateSheetRange(ws, row, headers.length - 1);
+    return [
+      report.investor.name ?? "",
+      report.investor.email ?? "",
+      cellValue(roundUsd(s.portfolioValueUsd)),
+      cellValue(pctToDecimalOneDec(s.winbitMonthlyReturnPercent)),
+      cellValue(roundUsd(s.accumulatedSinceEntryUsd)),
+      cellValue(pctToDecimalOneDec(s.accumulatedSinceEntryPercent)),
+      cellValue(roundUsd(s.accumulated2026Usd)),
+      cellValue(pctToDecimalOneDec(s.accumulated2026Percent)),
+    ];
   });
+
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+
+  for (let r = 1; r <= rows.length; r += 1) {
+    applyUsdFormat(ws, XLSX.utils.encode_cell({ r, c: 2 }));
+    applyPctFormat(ws, XLSX.utils.encode_cell({ r, c: 3 }));
+    applyUsdFormat(ws, XLSX.utils.encode_cell({ r, c: 4 }));
+    applyPctFormat(ws, XLSX.utils.encode_cell({ r, c: 5 }));
+    applyUsdFormat(ws, XLSX.utils.encode_cell({ r, c: 6 }));
+    applyPctFormat(ws, XLSX.utils.encode_cell({ r, c: 7 }));
+  }
+
+  ws["!cols"] = [
+    { wch: 24 },
+    { wch: 28 },
+    { wch: 16 },
+    { wch: 18 },
+    { wch: 18 },
+    { wch: 18 },
+    { wch: 16 },
+    { wch: 16 },
+  ];
 
   return ws;
 }
 
 export function buildMonthlyReportWorkbook(report: MonthlyReport): XLSX.WorkBook {
   const wb = XLSX.utils.book_new();
-
-  const resumenWs: XLSX.WorkSheet = {};
-  appendSummaryRows(resumenWs, report, 0);
-  XLSX.utils.book_append_sheet(wb, resumenWs, "Resumen");
+  XLSX.utils.book_append_sheet(wb, buildSummarySheet(report), "Resumen");
 
   const annexWs: XLSX.WorkSheet = {};
   appendAnnexBlock(annexWs, report, 0);
+  annexWs["!cols"] = [
+    { wch: 14 },
+    { wch: 10 },
+    { wch: 10 },
+    { wch: 10 },
+    { wch: 10 },
+    { wch: 8 },
+    { wch: 16 },
+  ];
   XLSX.utils.book_append_sheet(wb, annexWs, "Anexo");
 
   return wb;
@@ -240,6 +247,15 @@ export function buildAllInvestorsWorkbook(reports: MonthlyReport[]): XLSX.WorkBo
       row += 1;
     }
   });
+  annexWs["!cols"] = [
+    { wch: 14 },
+    { wch: 10 },
+    { wch: 10 },
+    { wch: 10 },
+    { wch: 10 },
+    { wch: 8 },
+    { wch: 16 },
+  ];
   XLSX.utils.book_append_sheet(wb, annexWs, "Anexo");
 
   return wb;

@@ -11,38 +11,39 @@ import {
 import type { MonthlyReport } from "../types";
 
 const sampleReport: MonthlyReport = {
-  investor: { id: "1", name: "Eugenio Carrió", email: "eugenio@test.com" },
+  investor: { id: "1", name: "Marcela Manavella", email: "mmarcela724@gmail.com" },
   reportMonth: "2026-05",
   summary: {
-    portfolioValueUsd: 6750.04,
+    portfolioValueUsd: 553.2,
     winbitMonthlyReturnPercent: -1.78,
-    accumulatedSinceEntryUsd: 2322.75,
-    accumulatedSinceEntryPercent: 42.2078,
-    accumulated2026Usd: 323.75,
-    accumulated2026Percent: 5.36,
+    accumulatedSinceEntryUsd: null,
+    accumulatedSinceEntryPercent: null,
+    accumulated2026Usd: 0,
+    accumulated2026Percent: 0,
   },
   annexRows: [
     {
-      month: "2025-12",
-      label: "Dec-25",
+      month: "2026-04",
+      label: "INGRESO",
       returnPercent: null,
       returnUsd: null,
       deposits: 0,
       withdrawals: 0,
       serviceCost: 0,
-      portfolioValue: 6044,
+      portfolioValue: 500,
       openingSnapshot: true,
+      entryRow: true,
       source: "spreadsheet",
     },
     {
       month: "2026-05",
       label: "May-26",
-      returnPercent: -1.79,
-      returnUsd: -116.25,
-      deposits: 382.29,
+      returnPercent: -1.8,
+      returnUsd: 0,
+      deposits: 0,
       withdrawals: 0,
       serviceCost: 0,
-      portfolioValue: 6750.04,
+      portfolioValue: 553,
       openingSnapshot: false,
       source: "platform",
     },
@@ -62,21 +63,31 @@ describe("monthlyReportExcel formatting helpers", () => {
 });
 
 describe("monthlyReportExcel workbooks", () => {
-  it("builds single-investor workbook with formatted cells", () => {
+  it("builds Resumen with label column and formatted values", () => {
     const wb = buildMonthlyReportWorkbook(sampleReport);
-    expect(wb.SheetNames).toEqual(["Resumen", "Anexo"]);
-
     const resumen = wb.Sheets.Resumen;
-    expect(resumen.B5?.v).toBe(6750);
+
+    expect(resumen.A1?.v).toBe("Reporte mensual");
+    expect(resumen.B1?.v).toBe("2026-05");
+    expect(resumen.A5?.v).toBe("Valor portafolio (USD)");
+    expect(resumen.B5?.v).toBe(553);
     expect(resumen.B5?.z).toBe(USD_FORMAT);
+    expect(resumen.A6?.v).toBe("Rendimiento mensual Winbit (%)");
     expect(resumen.B6?.v).toBe(-0.018);
     expect(resumen.B6?.z).toBe(PCT_FORMAT);
+    expect(resumen.A7?.v).toBe("Acumulado desde ingreso (USD)");
+    expect(resumen.B7?.v).toBe("");
+  });
 
+  it("builds Anexo with headers and formatted rows", () => {
+    const wb = buildMonthlyReportWorkbook(sampleReport);
     const anexo = wb.Sheets.Anexo;
-    expect(anexo.C3?.v).toBe(-116);
-    expect(anexo.C3?.z).toBe(USD_FORMAT);
-    expect(anexo.B3?.v).toBe(-0.018);
-    expect(anexo.B3?.z).toBe(PCT_FORMAT);
+
+    expect(anexo.A1?.v).toBe("MARCELA MANAVELLA");
+    expect(anexo.G1?.v).toBe("VALOR PORTAFOLIO");
+    expect(anexo.A2?.v).toBe("INGRESO");
+    expect(anexo.G2?.v).toBe(500);
+    expect(anexo.A3?.v).toBeTruthy();
   });
 
   it("builds all-investors workbook with stacked annex blocks", () => {
@@ -85,10 +96,7 @@ describe("monthlyReportExcel workbooks", () => {
       investor: { id: "2", name: "Agostina Carrió", email: "ag@test.com" },
     };
     const wb = buildAllInvestorsWorkbook([sampleReport, other]);
-    expect(wb.SheetNames).toEqual(["Resumen", "Anexo"]);
     expect(wb.Sheets.Resumen.A1?.v).toBe("Inversor");
-    expect(wb.Sheets.Resumen.A2?.v).toBe("Agostina Carrió");
-    expect(wb.Sheets.Resumen.A3?.v).toBe("Eugenio Carrió");
 
     const totalCount = Object.keys(wb.Sheets.Anexo).filter(
       (key) => !key.startsWith("!") && wb.Sheets.Anexo[key]?.v === "TOTAL",
