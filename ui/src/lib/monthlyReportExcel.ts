@@ -100,7 +100,8 @@ function appendAnnexBlock(
     ],
   ];
 
-  let ytdUsd = 0;
+  const ytdUsd = report.summary.accumulated2026Usd;
+  const closingValue = report.summary.portfolioValueUsd;
 
   for (const annexRow of report.annexRows) {
     const firstCol =
@@ -119,10 +120,6 @@ function appendAnnexBlock(
         cellValue(roundUsd(annexRow.portfolioValue)),
       ]);
     } else {
-      if (annexRow.month.startsWith("2026-")) {
-        ytdUsd += annexRow.returnUsd ?? 0;
-      }
-
       blockRows.push([
         firstCol,
         cellValue(pctToDecimalOneDec(annexRow.returnPercent)),
@@ -142,7 +139,7 @@ function appendAnnexBlock(
     0,
     0,
     0,
-    cellValue(roundUsd(ytdUsd)),
+    cellValue(roundUsd(closingValue)),
   ]);
 
   XLSX.utils.sheet_add_aoa(ws, blockRows, { origin: { r: startRow, c: 0 } });

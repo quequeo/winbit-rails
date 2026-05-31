@@ -31,7 +31,18 @@ describe("InvestorsPage", () => {
         tradingFeeFrequency: "QUARTERLY",
         tradingFeePercentage: 30,
         hasPassword: false,
-        portfolio: { currentBalance: 1000, totalInvested: 800 },
+        portfolio: {
+          currentBalance: 1000,
+          totalInvested: 800,
+          strategyReturnYtdUSD: 120,
+          strategyReturnYtdPercent: 6.5,
+          strategyReturnAllUSD: 400,
+          strategyReturnAllPercent: 18.2,
+          accumulatedReturnUSD: 200,
+          accumulatedReturnPercent: 25,
+          annualReturnUSD: 120,
+          annualReturnPercent: 8.5,
+        },
       },
       {
         id: "2",
@@ -71,6 +82,19 @@ describe("InvestorsPage", () => {
       });
 
       expect(screen.getAllByText("Investor Two").length).toBeGreaterThan(0);
+    });
+
+    it("renders investor dashboard metrics from the API", async () => {
+      vi.mocked(api.getAdminInvestors).mockResolvedValue(mockInvestors);
+
+      renderWithRouter(<InvestorsPage />);
+
+      await waitFor(() => {
+        expect(screen.getAllByText("Panel inversor (mismos datos que winbit-app)").length).toBeGreaterThan(0);
+      });
+
+      expect(screen.getAllByText(/Resultado estrategia \d{4}/).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/\+6\.50%/).length).toBeGreaterThan(0);
     });
 
     it("renders error message when fetch fails", async () => {

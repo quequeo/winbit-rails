@@ -157,6 +157,45 @@ RSpec.describe MonthlyReportBuilder do
 end
 
 RSpec.describe MonthlyReportBuilder do
+  describe 'Agustina — YTD net of CST (spreadsheet months)' do
+    let(:investor) do
+      Investor.create!(email: 'aguslancia@gmail.com', name: 'Agustina Lancia', status: 'ACTIVE')
+    end
+
+    before do
+      Portfolio.create!(investor: investor, current_balance: 2871)
+      [
+        [Date.new(2025, 12, 1), nil, nil, 0, 0, 0, 2712, true],
+        [Date.new(2026, 1, 1), 0, 0, 0, 0, 0, 2712, false],
+        [Date.new(2026, 2, 1), 2, 63, 0, 0, 0, 2775, false],
+        [Date.new(2026, 3, 1), 2.3, 64, 0, 0, 38, 2801, false],
+        [Date.new(2026, 4, 1), 2.5, 70, 0, 0, 0, 2871, false],
+      ].each do |month, pct, usd, dep, wdr, cst, value, opening|
+        InvestorMonthlyAnnexRow.create!(
+          investor: investor,
+          month: month,
+          return_percent: pct,
+          return_usd: usd,
+          deposits: dep,
+          withdrawals: wdr,
+          service_cost: cst,
+          portfolio_value: value,
+          opening_snapshot: opening,
+          source: 'spreadsheet',
+        )
+      end
+    end
+
+    it 'uses net portfolio change for accumulated 2026, not gross RDO sum' do
+      report = described_class.new(investor: investor, report_month: Date.new(2026, 4, 1)).build
+
+      expect(report[:summary][:accumulated_2026_usd]).to eq(159.0)
+      expect(report[:summary][:accumulated_2026_percent]).to be_within(0.05).of(5.86)
+    end
+  end
+end
+
+RSpec.describe MonthlyReportBuilder do
   describe 'report for entry investor (INGRESO row)' do
     let(:investor) do
       Investor.create!(email: 'jaimegarciamendez@gmail.com', name: 'Jaime García Mendez', status: 'ACTIVE')

@@ -7,6 +7,12 @@ import { Input } from "../components/ui/Input";
 import { ConfirmDialog } from "../components/ui/ConfirmDialog";
 import { formatCurrencyAR } from "../lib/formatters";
 import type { ApiInvestor, MonthlyReport } from "../types";
+import {
+  InvestorDashboardMetrics,
+  InvestorDashboardTableCells,
+} from "../components/InvestorDashboardMetrics";
+
+const dashboardYear = () => new Date().getFullYear();
 
 const frequencyLabel = (freq: string) => {
   if (freq === "MONTHLY") return "Mensual";
@@ -359,19 +365,11 @@ export const InvestorsPage = () => {
                 {inv.status === "ACTIVE" ? "Activo" : "Inactivo"}
               </button>
             </div>
-            <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
-              <div>
-                <p className="text-xs text-t-dim">Capital Actual</p>
-                <p className="mt-1 font-mono font-semibold text-t-primary">
-                  {formatCurrencyAR(inv.portfolio?.currentBalance ?? 0)}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-t-dim">Total Invertido</p>
-                <p className="mt-1 font-mono font-semibold text-t-primary">
-                  {formatCurrencyAR(inv.portfolio?.totalInvested ?? 0)}
-                </p>
-              </div>
+            <div className="mt-3 border-t border-b-default pt-3">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-t-dim">
+                Panel inversor (mismos datos que winbit-app)
+              </p>
+              <InvestorDashboardMetrics portfolio={inv.portfolio} compact />
             </div>
             <div className="mt-2 flex items-center justify-between text-xs text-t-dim">
               <span>
@@ -446,14 +444,30 @@ export const InvestorsPage = () => {
 
       {/* Desktop/tablet: table */}
       <div className="hidden md:block admin-card p-6">
+        <p className="mb-4 text-sm text-t-muted">
+          Métricas del panel inversor (winbit-app) para controles y auditoría.
+        </p>
         <div className="overflow-x-auto">
-          <table className="min-w-full">
+          <table className="min-w-max w-full">
             <thead>
               <tr className="text-left text-sm text-t-dim border-b border-b-default">
-                <th className="pb-3 pr-4">Nombre</th>
+                <th className="pb-3 pr-4 sticky left-0 bg-dark-card/95">Nombre</th>
                 <th className="pb-3 pr-4">Email</th>
                 <th className="pb-3 pr-4 text-center">Status</th>
-                <th className="pb-3 pr-4 text-right">Capital Actual</th>
+                <th className="pb-3 pr-4 text-right">Capital actual</th>
+                <th className="pb-3 pr-4 text-right">Total invertido</th>
+                <th className="pb-3 pr-4 text-right">
+                  Resultado {dashboardYear()} (USD)
+                </th>
+                <th className="pb-3 pr-4 text-right">
+                  Resultado {dashboardYear()} (%)
+                </th>
+                <th className="pb-3 pr-4 text-right">Resultado hist. (USD)</th>
+                <th className="pb-3 pr-4 text-right">Resultado hist. (%)</th>
+                <th className="pb-3 pr-4 text-right">Rent. acum. (USD)</th>
+                <th className="pb-3 pr-4 text-right">Rent. acum. (%)</th>
+                <th className="pb-3 pr-4 text-right">Rent. anual (USD)</th>
+                <th className="pb-3 pr-4 text-right">Rent. anual (%)</th>
                 <th className="pb-3 pr-4 text-center">Fee</th>
                 <th className="pb-3 pr-4 text-center">Auth</th>
                 <th className="pb-3 text-right">Acciones</th>
@@ -465,7 +479,9 @@ export const InvestorsPage = () => {
                   key={inv.id}
                   className={`text-sm ${inv.status === "INACTIVE" ? "opacity-50" : ""}`}
                 >
-                  <td className="py-3 pr-4 font-medium">{inv.name}</td>
+                  <td className="py-3 pr-4 font-medium sticky left-0 bg-dark-card/95">
+                    {inv.name}
+                  </td>
                   <td className="py-3 pr-4 text-t-muted">{inv.email}</td>
                   <td className="py-3 pr-4 text-center">
                     <button
@@ -484,9 +500,10 @@ export const InvestorsPage = () => {
                       {inv.status === "ACTIVE" ? "Activo" : "Inactivo"}
                     </button>
                   </td>
-                  <td className="py-3 pr-4 text-right font-mono text-t-primary">
+                  <td className="py-3 pr-4 text-right font-mono text-xs text-t-primary whitespace-nowrap">
                     {formatCurrencyAR(inv.portfolio?.currentBalance ?? 0)}
                   </td>
+                  <InvestorDashboardTableCells portfolio={inv.portfolio} />
                   <td className="py-3 pr-4 text-center">
                     <span className="inline-flex rounded-full bg-info/15 px-2 py-0.5 text-xs font-semibold text-info">
                       {frequencyLabel(inv.tradingFeeFrequency ?? "QUARTERLY")} (

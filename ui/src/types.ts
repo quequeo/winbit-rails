@@ -9,6 +9,22 @@ export interface ApiAdmin {
   notify_withdrawal_created?: boolean;
 }
 
+export interface ApiInvestorPortfolio {
+  currentBalance?: number;
+  totalInvested?: number;
+  accumulatedReturnUSD?: number;
+  accumulatedReturnPercent?: number;
+  annualReturnUSD?: number;
+  annualReturnPercent?: number;
+  strategyReturnYtdUSD?: number;
+  strategyReturnYtdPercent?: number;
+  strategyReturnYtdFrom?: string | null;
+  strategyReturnAllUSD?: number;
+  strategyReturnAllPercent?: number;
+  strategyReturnAllFrom?: string | null;
+  updatedAt?: string;
+}
+
 export interface ApiInvestor {
   id: string;
   email: string;
@@ -17,7 +33,7 @@ export interface ApiInvestor {
   tradingFeeFrequency?: string;
   tradingFeePercentage?: number;
   hasPassword?: boolean;
-  portfolio?: { currentBalance?: number; totalInvested?: number };
+  portfolio?: ApiInvestorPortfolio;
 }
 
 export interface ApiActivityLog {

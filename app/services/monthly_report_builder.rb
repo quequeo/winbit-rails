@@ -30,7 +30,7 @@ class MonthlyReportBuilder
   def build
     annex_rows = build_annex_rows
     opening_row = annex_rows.find { |r| r[:entry_row] || r[:opening_snapshot] }
-    ytd_usd = compute_ytd_usd(annex_rows)
+    ytd_usd = compute_ytd_usd(annex_rows, opening_row:)
     ytd_base = opening_row&.dig(:portfolio_value).to_f
 
     {
@@ -208,11 +208,23 @@ class MonthlyReportBuilder
     ((factor - 1) * 100).round(2, :half_up).to_f
   end
 
-  def compute_ytd_usd(annex_rows)
-    annex_rows
-      .reject { |r| r[:opening_snapshot] || r[:entry_row] }
-      .select { |r| r[:month].to_s.start_with?('2026-') && Date.parse("#{r[:month]}-01") <= @report_month }
-      .sum { |r| r[:return_usd].to_f }
+  def compute_ytd_usd(annex_rows, opening_row:)
+    return 0.0 unless opening_row
+
+    year_rows = annex_rows
+                .reject { |r| r[:opening_snapshot] || r[:entry_row] }
+                .select { |r| r[:month].to_s.start_with?('2026-') && Date.parse("#{r[:month]}-01") <= @report_month }
+
+    return 0.0 if year_rows.empty?
+
+    base = opening_row[:portfolio_value].to_f
+    end_value = year_rows.last[:portfolio_value].to_f
+    deposits = year_rows.sum { |r| r[:deposits].to_f }
+    withdrawals = year_rows.sum { |r| r[:withdrawals].to_f }
+
+    (
+      bd(end_value) - bd(base) - bd(deposits) + bd(withdrawals)
+    ).round(2, :half_up).to_f
   end
 
   def serialize_row(month:, return_percent:, return_usd:, deposits:, withdrawals:, service_cost:,

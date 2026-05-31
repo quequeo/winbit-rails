@@ -23,11 +23,6 @@ class AdminInvestorSerializer
   attr_reader :investor
 
   def portfolio_payload
-    return nil unless investor.portfolio
-
-    {
-      currentBalance: investor.portfolio.current_balance.to_f,
-      totalInvested: investor.portfolio.total_invested.to_f
-    }
+    InvestorPortfolioDashboardPayload.build(investor: investor)
   end
 end

@@ -53,6 +53,39 @@ RSpec.describe 'Admin Investors API', type: :request do
       expect(json['data'].first['email']).to eq('eugenio.carrio7@gmail.com')
     end
 
+    it 'returns dashboard portfolio metrics matching the investor app' do
+      inv = Investor.create!(email: 'dash@test.com', name: 'Dash Test', status: 'ACTIVE')
+      Portfolio.create!(
+        investor: inv,
+        current_balance: 1500,
+        total_invested: 1200,
+        accumulated_return_usd: 300,
+        accumulated_return_percent: 25,
+        annual_return_usd: 100,
+        annual_return_percent: 8,
+        strategy_return_ytd_usd: 92.74,
+        strategy_return_ytd_percent: 6.83,
+        strategy_return_all_usd: 328.74,
+        strategy_return_all_percent: 21.92,
+      )
+
+      get '/api/admin/investors'
+
+      expect(response).to have_http_status(:ok)
+      json = JSON.parse(response.body)
+      row = json['data'].find { |i| i['email'] == 'dash@test.com' }
+      portfolio = row['portfolio']
+
+      expect(portfolio['currentBalance']).to eq(1500.0)
+      expect(portfolio['totalInvested']).to eq(1200.0)
+      expect(portfolio['strategyReturnYtdUSD']).to eq(92.74)
+      expect(portfolio['strategyReturnYtdPercent']).to eq(6.83)
+      expect(portfolio['strategyReturnAllUSD']).to eq(328.74)
+      expect(portfolio['strategyReturnAllPercent']).to eq(21.92)
+      expect(portfolio['accumulatedReturnUSD']).to eq(300.0)
+      expect(portfolio['annualReturnUSD']).to eq(100.0)
+    end
+
     it 'supports sorting by balance' do
       inv1 = Investor.create!(email: 'low@test.com', name: 'Low Balance', status: 'ACTIVE')
       Portfolio.create!(investor: inv1, current_balance: 100)
