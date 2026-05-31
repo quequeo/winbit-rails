@@ -29,9 +29,7 @@ class MonthlyReportBuilder
 
   def build
     annex_rows = build_annex_rows
-    opening_row = annex_rows.find { |r| r[:entry_row] || r[:opening_snapshot] }
-    ytd_usd = compute_ytd_usd(annex_rows, opening_row:)
-    ytd_base = opening_row&.dig(:portfolio_value).to_f
+    dashboard = InvestorPortfolioDashboardPayload.build(investor: @investor) || {}
 
     {
       investor: {
@@ -40,25 +38,33 @@ class MonthlyReportBuilder
         email: @investor.email,
       },
       report_month: @report_month.strftime('%Y-%m'),
-      summary: build_summary(annex_rows, ytd_usd, ytd_base),
+      summary: build_summary(dashboard),
       annex_rows: annex_rows,
     }
   end
 
   private
 
-  def build_summary(annex_rows, ytd_usd, ytd_base)
-    portfolio = @investor.portfolio
-    end_value = portfolio_value_at_month_end(@report_month)
-
+  def build_summary(dashboard)
     {
-      portfolio_value_usd: end_value,
+      portfolio_value_usd: portfolio_value_for_summary,
       winbit_monthly_return_percent: winbit_monthly_percent(@report_month),
-      accumulated_since_entry_usd: portfolio&.strategy_return_all_usd&.to_f,
-      accumulated_since_entry_percent: portfolio&.strategy_return_all_percent&.to_f,
-      accumulated_2026_usd: ytd_usd,
-      accumulated_2026_percent: ytd_base.positive? ? ((ytd_usd / ytd_base) * 100).round(2) : nil,
+      accumulated_since_entry_usd: dashboard[:strategyReturnAllUSD],
+      accumulated_since_entry_percent: dashboard[:strategyReturnAllPercent],
+      accumulated_2026_usd: dashboard[:strategyReturnYtdUSD],
+      accumulated_2026_percent: dashboard[:strategyReturnYtdPercent],
     }
+  end
+
+  def portfolio_value_for_summary
+    portfolio = @investor.portfolio
+    return portfolio_value_at_month_end(@report_month) unless portfolio
+
+    if @report_month == Date.current.beginning_of_month
+      portfolio.current_balance.to_f
+    else
+      portfolio_value_at_month_end(@report_month)
+    end
   end
 
   def build_annex_rows
@@ -206,25 +212,6 @@ class MonthlyReportBuilder
     end
 
     ((factor - 1) * 100).round(2, :half_up).to_f
-  end
-
-  def compute_ytd_usd(annex_rows, opening_row:)
-    return 0.0 unless opening_row
-
-    year_rows = annex_rows
-                .reject { |r| r[:opening_snapshot] || r[:entry_row] }
-                .select { |r| r[:month].to_s.start_with?('2026-') && Date.parse("#{r[:month]}-01") <= @report_month }
-
-    return 0.0 if year_rows.empty?
-
-    base = opening_row[:portfolio_value].to_f
-    end_value = year_rows.last[:portfolio_value].to_f
-    deposits = year_rows.sum { |r| r[:deposits].to_f }
-    withdrawals = year_rows.sum { |r| r[:withdrawals].to_f }
-
-    (
-      bd(end_value) - bd(base) - bd(deposits) + bd(withdrawals)
-    ).round(2, :half_up).to_f
   end
 
   def serialize_row(month:, return_percent:, return_usd:, deposits:, withdrawals:, service_cost:,

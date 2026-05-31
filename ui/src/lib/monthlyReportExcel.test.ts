@@ -4,9 +4,13 @@ import {
   buildMonthlyReportWorkbook,
   buildAllInvestorsWorkbook,
   pctToDecimalOneDec,
+  pctToDecimalTwoDec,
   roundUsd,
+  roundUsdTwoDec,
   PCT_FORMAT,
+  PCT_FORMAT_RESUMEN,
   USD_FORMAT,
+  USD_FORMAT_CENTS,
 } from "./monthlyReportExcel";
 import type { MonthlyReport } from "../types";
 
@@ -51,9 +55,15 @@ const sampleReport: MonthlyReport = {
 };
 
 describe("monthlyReportExcel formatting helpers", () => {
-  it("rounds USD to integers", () => {
+  it("rounds USD to two decimals for Resumen", () => {
+    expect(roundUsdTwoDec(6750.04)).toBe(6750.04);
+    expect(roundUsdTwoDec(-116.25)).toBe(-116.25);
     expect(roundUsd(6750.04)).toBe(6750);
-    expect(roundUsd(-116.25)).toBe(-116);
+  });
+
+  it("converts percent points to two-decimal Excel decimal for Resumen", () => {
+    expect(pctToDecimalTwoDec(6.8321)).toBe(0.0683);
+    expect(pctToDecimalTwoDec(42.2078)).toBe(0.4221);
   });
 
   it("converts percent points to one-decimal Excel decimal", () => {
@@ -70,13 +80,15 @@ describe("monthlyReportExcel workbooks", () => {
     expect(resumen.A1?.v).toBe("Reporte mensual");
     expect(resumen.B1?.v).toBe("2026-05");
     expect(resumen.A5?.v).toBe("Valor portafolio (USD)");
-    expect(resumen.B5?.v).toBe(553);
-    expect(resumen.B5?.z).toBe(USD_FORMAT);
+    expect(resumen.B5?.v).toBe(553.2);
+    expect(resumen.B5?.z).toBe(USD_FORMAT_CENTS);
     expect(resumen.A6?.v).toBe("Rendimiento mensual Winbit (%)");
     expect(resumen.B6?.v).toBe(-0.018);
     expect(resumen.B6?.z).toBe(PCT_FORMAT);
     expect(resumen.A7?.v).toBe("Acumulado desde ingreso (USD)");
     expect(resumen.B7?.v).toBe("");
+    expect(resumen.A10?.v).toBe("Acumulado 2026 (%)");
+    expect(resumen.B10?.z).toBe(PCT_FORMAT_RESUMEN);
   });
 
   it("builds Anexo with headers and formatted rows", () => {

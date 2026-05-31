@@ -13,6 +13,8 @@ RSpec.describe MonthlyReportBuilder do
       current_balance: 6750.04,
       strategy_return_all_usd: 2322.75,
       strategy_return_all_percent: 42.21,
+      strategy_return_ytd_usd: 323.75,
+      strategy_return_ytd_percent: 5.3643,
     )
   end
 
@@ -37,6 +39,10 @@ RSpec.describe MonthlyReportBuilder do
   end
 
   describe 'report for April 2026 (spreadsheet only)' do
+    before do
+      portfolio.update!(strategy_return_ytd_usd: 440, strategy_return_ytd_percent: 7.28)
+    end
+
     it 'returns annex rows and summary from imported data' do
       report = described_class.new(investor: investor, report_month: Date.new(2026, 4, 1)).build
 
@@ -157,13 +163,50 @@ RSpec.describe MonthlyReportBuilder do
 end
 
 RSpec.describe MonthlyReportBuilder do
+  describe 'summary matches investor dashboard payload' do
+    let(:investor) do
+      Investor.create!(email: 'dash@test.com', name: 'Dash Test', status: 'ACTIVE')
+    end
+
+    before do
+      Portfolio.create!(
+        investor: investor,
+        current_balance: 1828.74,
+        strategy_return_ytd_usd: 92.74,
+        strategy_return_ytd_percent: 6.8321,
+        strategy_return_all_usd: 328.74,
+        strategy_return_all_percent: 21.9167,
+      )
+    end
+
+    it 'uses the same strategy return fields as the investor panel' do
+      travel_to Time.zone.local(2026, 5, 29, 12, 0, 0) do
+        report = described_class.new(investor: investor, report_month: Date.new(2026, 5, 1)).build
+        dashboard = InvestorPortfolioDashboardPayload.build(investor: investor)
+
+        expect(report[:summary][:portfolio_value_usd]).to eq(dashboard[:currentBalance])
+        expect(report[:summary][:accumulated_since_entry_usd]).to eq(dashboard[:strategyReturnAllUSD])
+        expect(report[:summary][:accumulated_since_entry_percent]).to eq(dashboard[:strategyReturnAllPercent])
+        expect(report[:summary][:accumulated_2026_usd]).to eq(dashboard[:strategyReturnYtdUSD])
+        expect(report[:summary][:accumulated_2026_percent]).to eq(dashboard[:strategyReturnYtdPercent])
+      end
+    end
+  end
+end
+
+RSpec.describe MonthlyReportBuilder do
   describe 'Agustina — YTD net of CST (spreadsheet months)' do
     let(:investor) do
       Investor.create!(email: 'aguslancia@gmail.com', name: 'Agustina Lancia', status: 'ACTIVE')
     end
 
     before do
-      Portfolio.create!(investor: investor, current_balance: 2871)
+      Portfolio.create!(
+        investor: investor,
+        current_balance: 2871,
+        strategy_return_ytd_usd: 107.72,
+        strategy_return_ytd_percent: 3.9724,
+      )
       [
         [Date.new(2025, 12, 1), nil, nil, 0, 0, 0, 2712, true],
         [Date.new(2026, 1, 1), 0, 0, 0, 0, 0, 2712, false],
@@ -186,11 +229,12 @@ RSpec.describe MonthlyReportBuilder do
       end
     end
 
-    it 'uses net portfolio change for accumulated 2026, not gross RDO sum' do
+    it 'uses dashboard strategy return fields for accumulated 2026' do
       report = described_class.new(investor: investor, report_month: Date.new(2026, 4, 1)).build
+      dashboard = InvestorPortfolioDashboardPayload.build(investor: investor)
 
-      expect(report[:summary][:accumulated_2026_usd]).to eq(159.0)
-      expect(report[:summary][:accumulated_2026_percent]).to be_within(0.05).of(5.86)
+      expect(report[:summary][:accumulated_2026_usd]).to eq(dashboard[:strategyReturnYtdUSD])
+      expect(report[:summary][:accumulated_2026_percent]).to eq(dashboard[:strategyReturnYtdPercent])
     end
   end
 end

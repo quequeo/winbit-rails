@@ -2,7 +2,24 @@ import * as XLSX from "xlsx-js-style";
 import type { MonthlyReport } from "../types";
 
 const USD_FORMAT = "#,##0";
+const USD_FORMAT_CENTS = "#,##0.00";
 const PCT_FORMAT = "0.0%";
+const PCT_FORMAT_RESUMEN = "0.00%";
+
+function roundUsdTwoDec(value: number | null | undefined): number | null {
+  if (value == null || !Number.isFinite(value)) return null;
+  return Math.round(value * 100) / 100;
+}
+
+function pctToDecimalTwoDec(
+  valuePercentPoints: number | null | undefined,
+): number | null {
+  if (valuePercentPoints == null || !Number.isFinite(valuePercentPoints)) {
+    return null;
+  }
+  const twoDec = Math.round(valuePercentPoints * 100) / 100;
+  return Number((twoDec / 100).toFixed(6));
+}
 
 function monthToExcelDate(monthKey: string): Date | null {
   const [y, m] = monthKey.split("-").map(Number);
@@ -30,17 +47,25 @@ function cellValue(value: string | number | Date | null | undefined) {
   return value;
 }
 
-function applyUsdFormat(ws: XLSX.WorkSheet, ref: string) {
+function applyUsdFormat(
+  ws: XLSX.WorkSheet,
+  ref: string,
+  format: string = USD_FORMAT,
+) {
   const cell = ws[ref];
   if (cell && typeof cell.v === "number") {
-    cell.z = USD_FORMAT;
+    cell.z = format;
   }
 }
 
-function applyPctFormat(ws: XLSX.WorkSheet, ref: string) {
+function applyPctFormat(
+  ws: XLSX.WorkSheet,
+  ref: string,
+  format: string = PCT_FORMAT,
+) {
   const cell = ws[ref];
   if (cell && typeof cell.v === "number") {
-    cell.z = PCT_FORMAT;
+    cell.z = format;
   }
 }
 
@@ -51,32 +76,32 @@ function buildSummarySheet(report: MonthlyReport): XLSX.WorkSheet {
     ["Inversor", report.investor.name ?? ""],
     ["Email", report.investor.email ?? ""],
     ["", ""],
-    ["Valor portafolio (USD)", cellValue(roundUsd(s.portfolioValueUsd))],
+    ["Valor portafolio (USD)", cellValue(roundUsdTwoDec(s.portfolioValueUsd))],
     [
       "Rendimiento mensual Winbit (%)",
       cellValue(pctToDecimalOneDec(s.winbitMonthlyReturnPercent)),
     ],
     [
       "Acumulado desde ingreso (USD)",
-      cellValue(roundUsd(s.accumulatedSinceEntryUsd)),
+      cellValue(roundUsdTwoDec(s.accumulatedSinceEntryUsd)),
     ],
     [
       "Acumulado desde ingreso (%)",
-      cellValue(pctToDecimalOneDec(s.accumulatedSinceEntryPercent)),
+      cellValue(pctToDecimalTwoDec(s.accumulatedSinceEntryPercent)),
     ],
-    ["Acumulado 2026 (USD)", cellValue(roundUsd(s.accumulated2026Usd))],
+    ["Acumulado 2026 (USD)", cellValue(roundUsdTwoDec(s.accumulated2026Usd))],
     [
       "Acumulado 2026 (%)",
-      cellValue(pctToDecimalOneDec(s.accumulated2026Percent)),
+      cellValue(pctToDecimalTwoDec(s.accumulated2026Percent)),
     ],
   ]);
 
-  applyUsdFormat(ws, "B5");
-  applyPctFormat(ws, "B6");
-  applyUsdFormat(ws, "B7");
-  applyPctFormat(ws, "B8");
-  applyUsdFormat(ws, "B9");
-  applyPctFormat(ws, "B10");
+  applyUsdFormat(ws, "B5", USD_FORMAT_CENTS);
+  applyPctFormat(ws, "B6", PCT_FORMAT);
+  applyUsdFormat(ws, "B7", USD_FORMAT_CENTS);
+  applyPctFormat(ws, "B8", PCT_FORMAT_RESUMEN);
+  applyUsdFormat(ws, "B9", USD_FORMAT_CENTS);
+  applyPctFormat(ws, "B10", PCT_FORMAT_RESUMEN);
 
   ws["!cols"] = [{ wch: 34 }, { wch: 20 }];
 
@@ -174,24 +199,24 @@ function buildResumenTableSheet(reports: MonthlyReport[]): XLSX.WorkSheet {
     return [
       report.investor.name ?? "",
       report.investor.email ?? "",
-      cellValue(roundUsd(s.portfolioValueUsd)),
+      cellValue(roundUsdTwoDec(s.portfolioValueUsd)),
       cellValue(pctToDecimalOneDec(s.winbitMonthlyReturnPercent)),
-      cellValue(roundUsd(s.accumulatedSinceEntryUsd)),
-      cellValue(pctToDecimalOneDec(s.accumulatedSinceEntryPercent)),
-      cellValue(roundUsd(s.accumulated2026Usd)),
-      cellValue(pctToDecimalOneDec(s.accumulated2026Percent)),
+      cellValue(roundUsdTwoDec(s.accumulatedSinceEntryUsd)),
+      cellValue(pctToDecimalTwoDec(s.accumulatedSinceEntryPercent)),
+      cellValue(roundUsdTwoDec(s.accumulated2026Usd)),
+      cellValue(pctToDecimalTwoDec(s.accumulated2026Percent)),
     ];
   });
 
   const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
 
   for (let r = 1; r <= rows.length; r += 1) {
-    applyUsdFormat(ws, XLSX.utils.encode_cell({ r, c: 2 }));
-    applyPctFormat(ws, XLSX.utils.encode_cell({ r, c: 3 }));
-    applyUsdFormat(ws, XLSX.utils.encode_cell({ r, c: 4 }));
-    applyPctFormat(ws, XLSX.utils.encode_cell({ r, c: 5 }));
-    applyUsdFormat(ws, XLSX.utils.encode_cell({ r, c: 6 }));
-    applyPctFormat(ws, XLSX.utils.encode_cell({ r, c: 7 }));
+    applyUsdFormat(ws, XLSX.utils.encode_cell({ r, c: 2 }), USD_FORMAT_CENTS);
+    applyPctFormat(ws, XLSX.utils.encode_cell({ r, c: 3 }), PCT_FORMAT);
+    applyUsdFormat(ws, XLSX.utils.encode_cell({ r, c: 4 }), USD_FORMAT_CENTS);
+    applyPctFormat(ws, XLSX.utils.encode_cell({ r, c: 5 }), PCT_FORMAT_RESUMEN);
+    applyUsdFormat(ws, XLSX.utils.encode_cell({ r, c: 6 }), USD_FORMAT_CENTS);
+    applyPctFormat(ws, XLSX.utils.encode_cell({ r, c: 7 }), PCT_FORMAT_RESUMEN);
   }
 
   ws["!cols"] = [
@@ -281,4 +306,4 @@ export function downloadAllInvestorsReportsExcel(
   XLSX.writeFile(wb, `Reporte_${reportMonth}_todos_los_inversores.xlsx`);
 }
 
-export { roundUsd, pctToDecimalOneDec, USD_FORMAT, PCT_FORMAT };
+export { roundUsd, roundUsdTwoDec, pctToDecimalOneDec, pctToDecimalTwoDec, USD_FORMAT, USD_FORMAT_CENTS, PCT_FORMAT, PCT_FORMAT_RESUMEN };
