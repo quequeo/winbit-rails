@@ -1,6 +1,7 @@
 class DailyOperatingResultSerializer
-  def initialize(result)
+  def initialize(result, amount_usd: nil)
     @result = result
+    @amount_usd = amount_usd
   end
 
   def as_json(*)
@@ -8,6 +9,7 @@ class DailyOperatingResultSerializer
       id: result.id,
       date: result.date,
       percent: result.percent.to_f,
+      amount_usd: resolved_amount_usd,
       notes: result.notes,
       applied_at: result.applied_at,
       applied_by: {
@@ -22,4 +24,10 @@ class DailyOperatingResultSerializer
   private
 
   attr_reader :result
+
+  def resolved_amount_usd
+    return @amount_usd.to_f if @amount_usd
+
+    DailyOperatingUsdTotals.for_date(result.date)
+  end
 end

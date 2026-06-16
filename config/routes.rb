@@ -64,6 +64,7 @@ Rails.application.routes.draw do
       get 'daily_operating_results', to: 'daily_operating_results#index', format: false
       get 'daily_operating_results/preview', to: 'daily_operating_results#preview', format: false
       get 'daily_operating_results/monthly_summary', to: 'daily_operating_results#monthly_summary', format: false
+      get 'daily_operating_results/series', to: 'daily_operating_results#series', format: false
       get 'daily_operating_results/by_month', to: 'daily_operating_results#by_month', format: false
       post 'daily_operating_results', to: 'daily_operating_results#create', format: false
       patch 'daily_operating_results/:id', to: 'daily_operating_results#update', format: false
@@ -109,6 +110,7 @@ Rails.application.routes.draw do
         get 'daily_operating_results', to: 'daily_operating_results#index', format: false
         get 'daily_operating_results/preview', to: 'daily_operating_results#preview', format: false
         get 'daily_operating_results/monthly_summary', to: 'daily_operating_results#monthly_summary', format: false
+        get 'daily_operating_results/series', to: 'daily_operating_results#series', format: false
         get 'daily_operating_results/by_month', to: 'daily_operating_results#by_month', format: false
         post 'daily_operating_results', to: 'daily_operating_results#create', format: false
       patch 'daily_operating_results/:id', to: 'daily_operating_results#update', format: false

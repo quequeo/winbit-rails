@@ -59,6 +59,55 @@ RSpec.describe 'Admin Daily Operating Results API', type: :request do
       json = JSON.parse(response.body)
       expect(json['data'].first['notes']).to eq('Operativa con volatilidad alta')
     end
+
+    it 'includes amount_usd in list payload' do
+      day = Date.new(2025, 6, 4)
+      DailyOperatingResult.create!(
+        date: day,
+        percent: 0.2,
+        applied_by: admin,
+        applied_at: Time.current
+      )
+      PortfolioHistory.create!(
+        investor: Investor.create!(email: 'usd@test.com', name: 'USD', status: 'ACTIVE'),
+        event: 'OPERATING_RESULT',
+        amount: 150,
+        previous_balance: 1000,
+        new_balance: 1150,
+        status: 'COMPLETED',
+        date: DailyOperatingUsdTotals.movement_time(day),
+      )
+
+      get '/api/admin/daily_operating_results'
+
+      expect(response).to have_http_status(:ok)
+      json = JSON.parse(response.body)
+      row = json['data'].find { |item| item['date'] == '2025-06-04' }
+      expect(row['amount_usd']).to eq(150.0)
+    end
+  end
+
+  describe 'GET /api/admin/daily_operating_results/series' do
+    it 'returns daily percent and amount_usd for the selected window' do
+      day = Date.current.beginning_of_month
+      DailyOperatingResult.create!(date: day, percent: 0.5, applied_by: admin, applied_at: Time.current)
+      PortfolioHistory.create!(
+        investor: Investor.create!(email: 'series@test.com', name: 'Series', status: 'ACTIVE'),
+        event: 'OPERATING_RESULT',
+        amount: 75,
+        previous_balance: 1000,
+        new_balance: 1075,
+        status: 'COMPLETED',
+        date: DailyOperatingUsdTotals.movement_time(day),
+      )
+
+      get '/api/admin/daily_operating_results/series', params: { months: 1 }
+
+      expect(response).to have_http_status(:ok)
+      json = JSON.parse(response.body)
+      expect(json['data']).not_to be_empty
+      expect(json['data'].first).to include('date', 'percent', 'amount_usd')
+    end
   end
 
   describe 'GET /api/admin/daily_operating_results/monthly_summary' do
@@ -75,6 +124,7 @@ RSpec.describe 'Admin Daily Operating Results API', type: :request do
       expect(json['data'].first).to have_key('month')
       expect(json['data'].first).to have_key('days')
       expect(json['data'].first).to have_key('compounded_percent')
+      expect(json['data'].first).to have_key('total_usd')
     end
   end
 

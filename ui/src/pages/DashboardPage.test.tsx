@@ -18,7 +18,7 @@ describe("DashboardPage", () => {
   it("renders loading state initially", () => {
     vi.mocked(api.getAdminDashboard).mockReturnValue(new Promise(() => {}));
     render(<DashboardPage />);
-    expect(screen.getByText("Cargando...")).toBeInTheDocument();
+    expect(screen.getByText("Cargando dashboard...")).toBeInTheDocument();
   });
 
   it("renders dashboard data when loaded", async () => {

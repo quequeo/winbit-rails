@@ -245,6 +245,16 @@ export const api = {
       `${ADMIN_API_PREFIX}/daily_operating_results/monthly_summary${suffix}`,
     );
   },
+  getDailyOperatingSeries: (params?: { months?: number; offset?: number }) => {
+    const qs = new URLSearchParams();
+    if (params?.months) qs.set("months", params.months.toString());
+    if (params?.offset !== undefined && params.offset > 0)
+      qs.set("offset", params.offset.toString());
+    const suffix = qs.toString() ? `?${qs.toString()}` : "";
+    return request(
+      `${ADMIN_API_PREFIX}/daily_operating_results/series${suffix}`,
+    );
+  },
   getDailyOperatingByMonth: (params: { month: string }) => {
     const qs = new URLSearchParams();
     qs.set("month", params.month);

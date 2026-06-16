@@ -9,6 +9,7 @@ vi.mock("../lib/api", () => ({
     getDailyOperatingResults: vi.fn(),
     getDailyOperatingMonthlySummary: vi.fn(),
     getDailyOperatingByMonth: vi.fn(),
+    getDailyOperatingSeries: vi.fn(),
   },
 }));
 
@@ -30,6 +31,7 @@ describe("OperatingHistoryPage", () => {
       ],
       meta: { page: 1, per_page: 10, total: 1, total_pages: 1 },
     });
+    vi.mocked(api.getDailyOperatingSeries).mockResolvedValue({ data: [] });
     vi.mocked(api.getDailyOperatingMonthlySummary).mockResolvedValueOnce({
       data: [
         {
@@ -48,7 +50,7 @@ describe("OperatingHistoryPage", () => {
       expect(screen.getByText("Historial de Operativas")).toBeInTheDocument();
     });
 
-    expect(screen.getByText("Resumen por mes")).toBeInTheDocument();
+    expect(screen.getByText("Rendimiento por mes")).toBeInTheDocument();
     expect(screen.getAllByText(/Dic 2025/i).length).toBeGreaterThan(0);
     expect(screen.getByText("Detalle diario")).toBeInTheDocument();
     expect(screen.getByText("2025-12-31")).toBeInTheDocument();
@@ -61,6 +63,7 @@ describe("OperatingHistoryPage", () => {
       data: [],
       meta: { page: 1, per_page: 10, total: 0, total_pages: 1 },
     });
+    vi.mocked(api.getDailyOperatingSeries).mockResolvedValue({ data: [] });
     vi.mocked(api.getDailyOperatingMonthlySummary).mockResolvedValueOnce({
       data: [
         {
@@ -151,6 +154,8 @@ describe("OperatingHistoryPage", () => {
         ],
       });
 
+    vi.mocked(api.getDailyOperatingSeries).mockResolvedValue({ data: [] });
+
     render(<OperatingHistoryPage />);
 
     await waitFor(() =>
@@ -160,15 +165,15 @@ describe("OperatingHistoryPage", () => {
     await user.click(screen.getByTitle("Meses anteriores"));
     await waitFor(() =>
       expect(api.getDailyOperatingMonthlySummary).toHaveBeenCalledWith({
-        months: 12,
-        offset: 12,
+        months: 3,
+        offset: 3,
       }),
     );
 
     await user.click(screen.getByTitle("Meses siguientes"));
     await waitFor(() =>
       expect(api.getDailyOperatingMonthlySummary).toHaveBeenCalledWith({
-        months: 12,
+        months: 3,
         offset: 0,
       }),
     );
@@ -186,6 +191,7 @@ describe("OperatingHistoryPage", () => {
     vi.mocked(api.getDailyOperatingResults).mockRejectedValueOnce(
       new Error("History failed"),
     );
+    vi.mocked(api.getDailyOperatingSeries).mockResolvedValue({ data: [] });
     vi.mocked(api.getDailyOperatingMonthlySummary).mockResolvedValueOnce({
       data: [],
     });
@@ -203,6 +209,7 @@ describe("OperatingHistoryPage", () => {
       data: [],
       meta: { page: 1, per_page: 10, total: 0, total_pages: 1 },
     });
+    vi.mocked(api.getDailyOperatingSeries).mockResolvedValue({ data: [] });
     vi.mocked(api.getDailyOperatingMonthlySummary).mockResolvedValueOnce({
       data: [
         {

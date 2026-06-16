@@ -35,6 +35,9 @@ module Api
           start_date = end_date - (days - 1)
         end
 
+        operating_month = operating_month_summary
+        net_flows = net_flows_for_period(start_date: start_date, end_date: end_date, investor_ids: active_investor_ids)
+
         render json: {
           data: AdminDashboardSerializer.new(
             investor_count: investor_count,
@@ -44,12 +47,100 @@ module Api
             strategy_return_ytd_usd: ytd_return.pnl_usd,
             strategy_return_ytd_percent: ytd_return.twr_percent,
             strategy_return_all_usd: all_return.pnl_usd,
-            strategy_return_all_percent: all_return.twr_percent
+            strategy_return_all_percent: all_return.twr_percent,
+            operating_return_month_usd: operating_month[:total_usd],
+            operating_return_month_percent: operating_month[:compounded_percent],
+            net_deposits_usd: net_flows[:deposits_usd],
+            net_withdrawals_usd: net_flows[:withdrawals_usd],
+            net_flows_usd: net_flows[:net_usd],
+            alerts: build_alerts(active_investor_ids: active_investor_ids, pending_request_count: pending_request_count),
+            aum_concentration: aum_concentration(active_investor_ids: active_investor_ids, total_aum: total_aum),
           ).as_json
         }
       end
 
       private
+
+      def operating_month_summary
+        month_start = Date.current.beginning_of_month
+        month_end = Date.current
+        results = DailyOperatingResult.where(date: month_start..month_end).order(:date)
+        usd_by_date = DailyOperatingUsdTotals.for_dates(results.map(&:date))
+
+        factor = results.reduce(BigDecimal('1')) do |acc, result|
+          acc * (BigDecimal('1') + (BigDecimal(result.percent.to_s) / 100))
+        end
+        compounded = results.empty? ? 0.0 : ((factor - 1) * 100).round(2, :half_up).to_f
+        total_usd = results.sum { |result| usd_by_date[result.date] || 0.0 }.round(2)
+
+        { compounded_percent: compounded, total_usd: total_usd }
+      end
+
+      def net_flows_for_period(start_date:, end_date:, investor_ids:)
+        range_start_time = Time.zone.local(start_date.year, start_date.month, start_date.day, 0, 0, 0)
+        range_end_time = Time.zone.local(end_date.year, end_date.month, end_date.day, 23, 59, 59)
+
+        scope = PortfolioHistory.where(status: 'COMPLETED', investor_id: investor_ids, date: range_start_time..range_end_time)
+        deposits = scope.where(event: 'DEPOSIT').sum(:amount).to_f.round(2)
+        withdrawals = scope.where(event: 'WITHDRAWAL').sum(:amount).to_f.round(2)
+
+        {
+          deposits_usd: deposits,
+          withdrawals_usd: withdrawals,
+          net_usd: (deposits - withdrawals).round(2),
+        }
+      end
+
+      def build_alerts(active_investor_ids:, pending_request_count:)
+        alerts = []
+
+        if pending_request_count.positive?
+          oldest = InvestorRequest.where(status: 'PENDING', investor_id: active_investor_ids).minimum(:requested_at)
+          if oldest.present? && oldest < 2.days.ago
+            alerts << {
+              type: 'pending_requests_stale',
+              severity: 'warning',
+              message: "#{pending_request_count} solicitudes pendientes, la más antigua desde #{oldest.in_time_zone.strftime('%d/%m/%Y')}",
+            }
+          else
+            alerts << {
+              type: 'pending_requests',
+              severity: 'info',
+              message: "#{pending_request_count} solicitud#{'es' if pending_request_count != 1} pendiente#{'s' if pending_request_count != 1} de revisión",
+            }
+          end
+        end
+
+        unless DailyOperatingResult.exists?(date: Date.current)
+          alerts << {
+            type: 'operating_missing_today',
+            severity: 'warning',
+            message: 'Todavía no se cargó la operativa diaria de hoy',
+          }
+        end
+
+        alerts
+      end
+
+      def aum_concentration(active_investor_ids:, total_aum:, limit: 5)
+        total = total_aum.to_f
+        return [] if total <= 0
+
+        Portfolio.where(investor_id: active_investor_ids)
+                 .includes(:investor)
+                 .order(current_balance: :desc)
+                 .limit(limit)
+                 .map do |portfolio|
+          balance = portfolio.current_balance.to_f
+          {
+            investorId: portfolio.investor_id,
+            name: portfolio.investor&.name,
+            email: portfolio.investor&.email,
+            balance: balance.round(2),
+            sharePercent: ((balance / total) * 100).round(2),
+          }
+        end
+      end
 
       def aum_series(start_date:, end_date:)
         start_date = start_date.to_date

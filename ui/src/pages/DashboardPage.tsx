@@ -1,7 +1,21 @@
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../lib/api";
-import { formatCurrencyAR } from "../lib/formatters";
+import { formatCurrencyAR, formatNumberAR } from "../lib/formatters";
 import { AumLineChart, type AumPoint } from "../components/AumLineChart";
+
+type DashboardAlert = {
+  type: string;
+  severity: "info" | "warning" | "error";
+  message: string;
+};
+
+type AumConcentrationRow = {
+  investorId: string;
+  name: string;
+  email: string;
+  balance: number;
+  sharePercent: number;
+};
 
 type DashboardData = {
   data: {
@@ -13,6 +27,13 @@ type DashboardData = {
     strategyReturnYtdPercent?: number;
     strategyReturnAllUsd?: number;
     strategyReturnAllPercent?: number;
+    operatingReturnMonthUsd?: number;
+    operatingReturnMonthPercent?: number;
+    netDepositsUsd?: number;
+    netWithdrawalsUsd?: number;
+    netFlowsUsd?: number;
+    alerts?: DashboardAlert[];
+    aumConcentration?: AumConcentrationRow[];
   };
 };
 
@@ -27,11 +48,35 @@ const RANGE_OPTIONS: { key: RangeKey; label: string; days: number }[] = [
   { key: "ALL", label: "Todo", days: 0 },
 ];
 
+const alertClasses = (severity: DashboardAlert["severity"]) => {
+  if (severity === "warning") return "border-warning/30 bg-warning/10 text-warning";
+  if (severity === "error") return "border-error/30 bg-error/10 text-error";
+  return "border-primary/30 bg-primary/10 text-primary";
+};
+
 export const DashboardPage = () => {
   const [data, setData] = useState<DashboardData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [rangeKey, setRangeKey] = useState<RangeKey>("3M");
   const year = useMemo(() => new Date().getFullYear(), []);
+  const monthLabel = useMemo(() => {
+    const now = new Date();
+    const months = [
+      "Enero",
+      "Febrero",
+      "Marzo",
+      "Abril",
+      "Mayo",
+      "Junio",
+      "Julio",
+      "Agosto",
+      "Septiembre",
+      "Octubre",
+      "Noviembre",
+      "Diciembre",
+    ];
+    return `${months[now.getMonth()]} ${now.getFullYear()}`;
+  }, []);
 
   const days = useMemo(() => {
     return RANGE_OPTIONS.find((r) => r.key === rangeKey)?.days ?? 90;
@@ -58,6 +103,8 @@ export const DashboardPage = () => {
   }, [days]);
 
   const aumSeries = data?.data?.aumSeries || [];
+  const alerts = data?.data?.alerts || [];
+  const concentration = data?.data?.aumConcentration || [];
 
   const rangeSubtitle = useMemo(() => {
     const opt = RANGE_OPTIONS.find((r) => r.key === rangeKey);
@@ -67,11 +114,24 @@ export const DashboardPage = () => {
   }, [rangeKey]);
 
   if (error) return <div className="text-error">{error}</div>;
-  if (!data) return <div className="text-t-muted">Cargando...</div>;
+  if (!data) return <div className="text-t-muted">Cargando dashboard...</div>;
 
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold text-t-primary">Dashboard</h1>
+
+      {alerts.length > 0 ? (
+        <div className="space-y-2">
+          {alerts.map((alert) => (
+            <div
+              key={`${alert.type}-${alert.message}`}
+              className={`rounded-lg border px-4 py-3 text-sm ${alertClasses(alert.severity)}`}
+            >
+              {alert.message}
+            </div>
+          ))}
+        </div>
+      ) : null}
 
       <div className="grid gap-6 md:grid-cols-3">
         <div className="admin-card p-6">
@@ -101,12 +161,44 @@ export const DashboardPage = () => {
       <div className="grid gap-6 md:grid-cols-4">
         <div className="admin-card p-6">
           <p className="text-sm font-medium text-t-muted">
+            Operativa {monthLabel} (USD)
+          </p>
+          <p className="mt-2 text-2xl font-bold text-t-primary">
+            {formatCurrencyAR(data.data.operatingReturnMonthUsd ?? 0)}
+          </p>
+        </div>
+        <div className="admin-card p-6">
+          <p className="text-sm font-medium text-t-muted">
+            Operativa {monthLabel} (%)
+          </p>
+          <p className="mt-2 text-2xl font-bold text-t-primary">
+            {(data.data.operatingReturnMonthPercent ?? 0) >= 0 ? "+" : ""}
+            {formatNumberAR(data.data.operatingReturnMonthPercent ?? 0)}%
+          </p>
+        </div>
+        <div className="admin-card p-6">
+          <p className="text-sm font-medium text-t-muted">
+            Flujos netos ({rangeSubtitle})
+          </p>
+          <p className="mt-2 text-2xl font-bold text-t-primary">
+            {formatCurrencyAR(data.data.netFlowsUsd ?? 0)}
+          </p>
+          <p className="mt-2 text-xs text-t-dim">
+            Depósitos {formatCurrencyAR(data.data.netDepositsUsd ?? 0)} · Retiros{" "}
+            {formatCurrencyAR(data.data.netWithdrawalsUsd ?? 0)}
+          </p>
+        </div>
+        <div className="admin-card p-6">
+          <p className="text-sm font-medium text-t-muted">
             Resultado estrategia {year} (USD)
           </p>
           <p className="mt-2 text-2xl font-bold text-t-primary">
             {formatCurrencyAR(data.data.strategyReturnYtdUsd ?? 0)}
           </p>
         </div>
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-3">
         <div className="admin-card p-6">
           <p className="text-sm font-medium text-t-muted">
             Resultado estrategia {year} (%)
@@ -136,6 +228,43 @@ export const DashboardPage = () => {
           </p>
         </div>
       </div>
+
+      {concentration.length > 0 ? (
+        <div className="admin-card p-6">
+          <h2 className="text-lg font-semibold text-t-primary">
+            Concentración de capital
+          </h2>
+          <p className="mt-1 text-sm text-t-muted">
+            Top inversores activos por participación en el AUM.
+          </p>
+          <div className="mt-4 overflow-x-auto">
+            <table className="min-w-full">
+              <thead>
+                <tr className="text-left text-sm text-t-dim">
+                  <th className="py-2">Inversor</th>
+                  <th className="py-2">Email</th>
+                  <th className="py-2 text-right">Saldo</th>
+                  <th className="py-2 text-right">% del AUM</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-b-default">
+                {concentration.map((row) => (
+                  <tr key={row.investorId} className="text-sm">
+                    <td className="py-2 text-t-primary">{row.name}</td>
+                    <td className="py-2 text-t-muted">{row.email}</td>
+                    <td className="py-2 text-right text-t-primary">
+                      {formatCurrencyAR(row.balance)}
+                    </td>
+                    <td className="py-2 text-right text-t-muted">
+                      {formatNumberAR(row.sharePercent)}%
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : null}
 
       <div className="admin-card p-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">

@@ -3,7 +3,7 @@ import { api } from "../lib/api";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 import { ConfirmDialog } from "../components/ui/ConfirmDialog";
-import { formatDateAR, formatNumberAR } from "../lib/formatters";
+import { formatDateAR, formatCurrencyAR, formatNumberAR } from "../lib/formatters";
 import { DatePicker } from "../components/ui/DatePicker";
 
 type PreviewRow = {
@@ -79,6 +79,8 @@ export const DailyOperatingResultsPage = () => {
     id: string;
     date: string;
     percent: number;
+    amount_usd?: number;
+    notes?: string | null;
     applied_by: { name: string | null };
   };
   type HistoryMeta = {
@@ -575,6 +577,12 @@ export const DailyOperatingResultsPage = () => {
                     <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wider text-t-muted">
                       Rendimiento
                     </th>
+                    <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wider text-t-muted">
+                      Resultado USD
+                    </th>
+                    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-t-muted">
+                      Notas
+                    </th>
                     <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-t-muted">
                       Aplicado por
                     </th>
@@ -598,6 +606,14 @@ export const DailyOperatingResultsPage = () => {
                         >
                           {isPos ? "+" : ""}
                           {row.percent.toFixed(2)}%
+                        </td>
+                        <td
+                          className={`px-5 py-3 text-right text-sm font-semibold ${isPos ? "text-success" : "text-error"}`}
+                        >
+                          {formatCurrencyAR(row.amount_usd ?? 0)}
+                        </td>
+                        <td className="px-5 py-3 text-sm text-t-muted">
+                          {row.notes?.trim() || "—"}
                         </td>
                         <td className="px-5 py-3 text-sm text-t-dim">
                           {row.applied_by?.name ?? "—"}

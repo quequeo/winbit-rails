@@ -1,23 +1,32 @@
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../lib/api";
 import { Button } from "../components/ui/Button";
-import { formatNumberAR } from "../lib/formatters";
+import { formatCurrencyAR, formatNumberAR } from "../lib/formatters";
+import {
+  OperatingDualChart,
+  type OperatingChartPoint,
+} from "../components/OperatingDualChart";
+import { exportOperatingToExcel } from "../lib/exportOperatingToExcel";
 
 type HistoryRow = {
   id: string;
   date: string;
   percent: number;
+  amount_usd?: number;
   notes?: string | null;
   created_at: string;
 };
 
 type MonthlySummaryRow = {
-  month: string; // YYYY-MM
+  month: string;
   days: number;
   compounded_percent: number;
+  total_usd?: number;
   first_date: string;
   last_date: string;
 };
+
+const MONTH_WINDOW_OPTIONS = [1, 2, 3, 6, 12];
 
 const EyeIcon = ({ className }: { className?: string }) => (
   <svg
@@ -79,6 +88,9 @@ export const OperatingHistoryPage = () => {
 
   const [monthlySummary, setMonthlySummary] = useState<MonthlySummaryRow[]>([]);
   const [monthlyOffset, setMonthlyOffset] = useState(0);
+  const [monthsWindow, setMonthsWindow] = useState(3);
+  const [chartSeries, setChartSeries] = useState<OperatingChartPoint[]>([]);
+  const [exporting, setExporting] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [loadingMonthly, setLoadingMonthly] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -86,7 +98,13 @@ export const OperatingHistoryPage = () => {
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailMonth, setDetailMonth] = useState<string | null>(null);
   const [detailRows, setDetailRows] = useState<
-    { id: string; date: string; percent: number; notes?: string | null }[]
+    {
+      id: string;
+      date: string;
+      percent: number;
+      amount_usd?: number;
+      notes?: string | null;
+    }[]
   >([]);
   const [detailLoading, setDetailLoading] = useState(false);
 
@@ -116,11 +134,11 @@ export const OperatingHistoryPage = () => {
     }
   };
 
-  const loadMonthly = async (offset: number) => {
+  const loadMonthly = async (offset: number, months = monthsWindow) => {
     try {
       setLoadingMonthly(true);
       const res = (await api.getDailyOperatingMonthlySummary({
-        months: 12,
+        months,
         offset,
       })) as {
         data?: MonthlySummaryRow[];
@@ -133,16 +151,66 @@ export const OperatingHistoryPage = () => {
     }
   };
 
+  const loadChart = async (offset: number, months = monthsWindow) => {
+    try {
+      const res = (await api.getDailyOperatingSeries({ months, offset })) as {
+        data?: {
+          date: string;
+          percent: number;
+          amount_usd: number;
+        }[];
+      } | null;
+      setChartSeries(
+        (res?.data ?? []).map((row) => ({
+          date: row.date,
+          percent: row.percent,
+          amountUsd: row.amount_usd,
+        })),
+      );
+    } catch {
+      setChartSeries([]);
+    }
+  };
+
+  const handleExport = async () => {
+    try {
+      setExporting(true);
+      const res = (await api.getDailyOperatingSeries({
+        months: monthsWindow,
+        offset: monthlyOffset,
+      })) as {
+        data?: {
+          date: string;
+          percent: number;
+          amount_usd: number;
+          notes?: string | null;
+        }[];
+      } | null;
+      exportOperatingToExcel(res?.data ?? []);
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const goMonthlyOlder = () => {
-    const next = monthlyOffset + 12;
+    const next = monthlyOffset + monthsWindow;
     setMonthlyOffset(next);
     void loadMonthly(next);
+    void loadChart(next);
   };
 
   const goMonthlyNewer = () => {
-    const next = Math.max(0, monthlyOffset - 12);
+    const next = Math.max(0, monthlyOffset - monthsWindow);
     setMonthlyOffset(next);
     void loadMonthly(next);
+    void loadChart(next);
+  };
+
+  const changeMonthsWindow = (months: number) => {
+    setMonthsWindow(months);
+    setMonthlyOffset(0);
+    void loadMonthly(0, months);
+    void loadChart(0, months);
   };
 
   const openMonthDetail = async (month: string) => {
@@ -172,6 +240,7 @@ export const OperatingHistoryPage = () => {
   useEffect(() => {
     void loadHistory(1);
     void loadMonthly(0);
+    void loadChart(0);
   }, []);
 
   const cards = useMemo(() => {
@@ -189,17 +258,28 @@ export const OperatingHistoryPage = () => {
             Resumen mensual + detalle diario (paginado).
           </p>
         </div>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => {
-            void loadHistory(historyPage);
-            void loadMonthly(monthlyOffset);
-          }}
-          disabled={loadingHistory || loadingMonthly}
-        >
-          Actualizar
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              void loadHistory(historyPage);
+              void loadMonthly(monthlyOffset);
+              void loadChart(monthlyOffset);
+            }}
+            disabled={loadingHistory || loadingMonthly}
+          >
+            Actualizar
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => void handleExport()}
+            disabled={exporting}
+          >
+            {exporting ? "Exportando..." : "Exportar Excel"}
+          </Button>
+        </div>
       </div>
 
       {error ? (
@@ -209,6 +289,34 @@ export const OperatingHistoryPage = () => {
       ) : null}
 
       <div className="admin-card p-6 space-y-4">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-t-primary">
+              Rendimiento por mes
+            </h2>
+            <p className="mt-1 text-sm text-t-muted">
+              Resultado compuesto en % y USD por mes.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-t-muted" htmlFor="months-window">
+              Período:
+            </label>
+            <select
+              id="months-window"
+              value={monthsWindow}
+              onChange={(e) => changeMonthsWindow(Number(e.target.value))}
+              className="rounded-lg border border-b-default bg-dark-card px-3 py-2 text-sm text-t-primary"
+            >
+              {MONTH_WINDOW_OPTIONS.map((months) => (
+                <option key={months} value={months}>
+                  {months} {months === 1 ? "mes" : "meses"}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
         <div className="flex items-center justify-between gap-3">
           <button
             type="button"
@@ -221,14 +329,15 @@ export const OperatingHistoryPage = () => {
           </button>
 
           <div className="flex-1 text-center">
-            <h2 className="text-xl font-bold text-t-primary">Resumen por mes</h2>
-            {monthlySummary.length > 0 ? (
-              <div className="text-xs text-t-dim mt-0.5">
-                {monthLabel(monthlySummary[monthlySummary.length - 1].month)}
-                {" – "}
-                {monthLabel(monthlySummary[0].month)}
-              </div>
-            ) : null}
+            <div className="text-xs text-t-dim mt-0.5">
+              {monthlySummary.length > 0 ? (
+                <>
+                  {monthLabel(monthlySummary[monthlySummary.length - 1].month)}
+                  {" – "}
+                  {monthLabel(monthlySummary[0].month)}
+                </>
+              ) : null}
+            </div>
           </div>
 
           <button
@@ -267,6 +376,9 @@ export const OperatingHistoryPage = () => {
                       {sign}
                       {formatNumberAR(v)}%
                     </div>
+                    <div className="mt-1 text-sm font-medium">
+                      {formatCurrencyAR(m.total_usd ?? 0)}
+                    </div>
                     <div className="mt-1 text-xs opacity-80">
                       Días cargados: {m.days}
                     </div>
@@ -294,6 +406,18 @@ export const OperatingHistoryPage = () => {
       </div>
 
       <div className="admin-card p-6 space-y-4">
+        <div>
+          <h2 className="text-xl font-bold text-t-primary">
+            Evolución diaria
+          </h2>
+          <p className="mt-1 text-sm text-t-muted">
+            Resultado en USD y porcentaje para el período seleccionado.
+          </p>
+        </div>
+        <OperatingDualChart series={chartSeries} />
+      </div>
+
+      <div className="admin-card p-6 space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold text-t-primary">Detalle diario</h2>
           <div className="text-xs text-t-dim">
@@ -316,6 +440,9 @@ export const OperatingHistoryPage = () => {
                 <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-t-muted">
                   Resultado (%)
                 </th>
+                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-t-muted">
+                  Resultado (USD)
+                </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-t-muted">
                   Notas
                 </th>
@@ -326,7 +453,7 @@ export const OperatingHistoryPage = () => {
                 <tr>
                   <td
                     className="px-4 py-6 text-center text-sm text-t-dim"
-                    colSpan={3}
+                    colSpan={4}
                   >
                     {loadingHistory
                       ? "Cargando…"
@@ -341,6 +468,9 @@ export const OperatingHistoryPage = () => {
                     </td>
                     <td className="px-4 py-3 text-right text-sm text-t-primary">
                       {formatNumberAR(h.percent)}%
+                    </td>
+                    <td className="px-4 py-3 text-right text-sm text-t-primary">
+                      {formatCurrencyAR(h.amount_usd ?? 0)}
                     </td>
                     <td className="px-4 py-3 text-sm text-t-muted">
                       {h.notes || "—"}
@@ -406,6 +536,9 @@ export const OperatingHistoryPage = () => {
                           <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-t-muted">
                             Resultado (%)
                           </th>
+                          <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-t-muted">
+                            Resultado (USD)
+                          </th>
                           <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-t-muted">
                             Notas
                           </th>
@@ -416,7 +549,7 @@ export const OperatingHistoryPage = () => {
                           <tr>
                             <td
                               className="px-4 py-6 text-center text-sm text-t-dim"
-                              colSpan={3}
+                              colSpan={4}
                             >
                               No hay operativas cargadas para este mes.
                             </td>
@@ -429,6 +562,9 @@ export const OperatingHistoryPage = () => {
                               </td>
                               <td className="px-4 py-3 text-right text-sm text-t-primary">
                                 {formatNumberAR(r.percent)}%
+                              </td>
+                              <td className="px-4 py-3 text-right text-sm text-t-primary">
+                                {formatCurrencyAR(r.amount_usd ?? 0)}
                               </td>
                               <td className="px-4 py-3 text-sm text-t-muted">
                                 {r.notes || "—"}

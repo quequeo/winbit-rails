@@ -57,6 +57,13 @@ RSpec.describe 'Admin Dashboard API', type: :request do
       expect(json['data']['strategyReturnYtdPercent']).to be_a(Numeric)
       expect(json['data']['strategyReturnAllUsd']).to be_a(Numeric)
       expect(json['data']['strategyReturnAllPercent']).to be_a(Numeric)
+      expect(json['data']['operatingReturnMonthUsd']).to be_a(Numeric)
+      expect(json['data']['operatingReturnMonthPercent']).to be_a(Numeric)
+      expect(json['data']['netDepositsUsd']).to be_a(Numeric)
+      expect(json['data']['netWithdrawalsUsd']).to be_a(Numeric)
+      expect(json['data']['netFlowsUsd']).to be_a(Numeric)
+      expect(json['data']['alerts']).to be_an(Array)
+      expect(json['data']['aumConcentration']).to be_an(Array)
     end
 
     it 'clamps days to min 7 when days is too small' do
