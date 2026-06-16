@@ -1,5 +1,5 @@
 class DepositOption < ApplicationRecord
-  CATEGORIES = %w[CASH_ARS CASH_USD BANK_ARS LEMON CRYPTO SWIFT].freeze
+  CATEGORIES = %w[CASH_ARS CASH_USD BANK_ARS LEMON CRYPTO SWIFT CUSTOM].freeze
   CURRENCIES = %w[ARS USD USDT USDC].freeze
 
   validates :category, presence: true, inclusion: { in: CATEGORIES }
@@ -26,6 +26,22 @@ class DepositOption < ApplicationRecord
       validate_required_detail_keys("address", "network")
     when "SWIFT"
       validate_required_detail_keys("bank_name", "holder", "swift_code", "account_number")
+    when "CUSTOM"
+      validate_custom_fields
+    end
+  end
+
+  def validate_custom_fields
+    fields = details["fields"]
+    unless fields.is_a?(Array) && fields.any?
+      errors.add(:details, "must include at least one field for CUSTOM")
+      return
+    end
+
+    fields.each_with_index do |field, index|
+      unless field.is_a?(Hash) && field["label"].present? && field["value"].present?
+        errors.add(:details, "field #{index + 1} must have label and value")
+      end
     end
   end
 

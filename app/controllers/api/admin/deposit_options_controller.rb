@@ -88,7 +88,30 @@ module Api
       end
 
       def deposit_option_params
-        params.permit(:category, :label, :currency, :active, :position, details: {})
+        permitted = params.permit(:category, :label, :currency, :active, :position)
+        permitted[:details] = normalize_details(params[:details])
+        permitted
+      end
+
+      def normalize_details(raw)
+        return {} if raw.blank?
+
+        details = raw.permit!.to_h
+        fields = details["fields"] || details[:fields]
+        return details unless fields.is_a?(Array)
+
+        details["fields"] = fields.filter_map do |field|
+          next unless field.is_a?(Hash) || field.is_a?(ActionController::Parameters)
+
+          normalized = field.is_a?(ActionController::Parameters) ? field.permit(:label, :value).to_h : field
+          label = normalized["label"] || normalized[:label]
+          value = normalized["value"] || normalized[:value]
+          next if label.blank? && value.blank?
+
+          { "label" => label.to_s.strip, "value" => value.to_s.strip }
+        end
+
+        details
       end
     end
   end

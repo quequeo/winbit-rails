@@ -37,6 +37,38 @@ RSpec.describe DepositOption, type: :model do
       expect(option).to be_valid
     end
 
+    it 'is valid with valid CUSTOM attributes' do
+      option = DepositOption.new(
+        category: 'CUSTOM',
+        label: 'Cuenta USD EE.UU.',
+        currency: 'USD',
+        details: {
+          'fields' => [
+            { 'label' => 'Banco', 'value' => 'Mercury' },
+            { 'label' => 'Nº de cuenta', 'value' => '123456789' },
+          ],
+        }
+      )
+      expect(option).to be_valid
+    end
+
+    it 'requires at least one complete field for CUSTOM' do
+      option = DepositOption.new(category: 'CUSTOM', label: 'Cuenta', currency: 'USD', details: {})
+      expect(option).not_to be_valid
+      expect(option.errors[:details].join).to include('at least one field')
+    end
+
+    it 'requires label and value on each CUSTOM field' do
+      option = DepositOption.new(
+        category: 'CUSTOM',
+        label: 'Cuenta',
+        currency: 'USD',
+        details: { 'fields' => [{ 'label' => 'Banco', 'value' => '' }] }
+      )
+      expect(option).not_to be_valid
+      expect(option.errors[:details].join).to include('field 1')
+    end
+
     it 'is valid with valid SWIFT attributes' do
       option = DepositOption.new(
         category: 'SWIFT',

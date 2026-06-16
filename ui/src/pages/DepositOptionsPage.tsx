@@ -9,22 +9,29 @@ type DepositOption = {
   category: string;
   label: string;
   currency: string;
-  details: Record<string, string>;
+  details: Record<string, unknown>;
   active: boolean;
   createdAt: string;
   updatedAt: string;
 };
 
+type CustomField = {
+  label: string;
+  value: string;
+};
+
 const CATEGORIES = [
+  { value: "CUSTOM", label: "Personalizado" },
   { value: "CASH_USD", label: "Efectivo USD" },
   { value: "LEMON", label: "Lemon Cash" },
   { value: "CRYPTO", label: "Cripto" },
   { value: "SWIFT", label: "Transferencia internacional" },
 ];
 
-const CURRENCIES = ["USD", "USDT", "USDC"];
+const CURRENCIES = ["ARS", "USD", "USDT", "USDC"];
 
 const DEFAULT_CURRENCY: Record<string, string> = {
+  CUSTOM: "USD",
   CASH_USD: "USD",
   LEMON: "USD",
   CRYPTO: "USDT",
@@ -87,15 +94,49 @@ type FormState = {
   label: string;
   currency: string;
   active: boolean;
-  details: Record<string, string>;
+  details: Record<string, unknown>;
 };
 
-const emptyForm = (cat = "CASH_USD"): FormState => ({
+const emptyCustomFields = (): CustomField[] => [{ label: "", value: "" }];
+
+const isCustomCategory = (category: string) => category === "CUSTOM";
+
+const detailsForCategory = (category: string): Record<string, unknown> =>
+  isCustomCategory(category) ? { fields: emptyCustomFields() } : {};
+
+const parseCustomFields = (details: Record<string, unknown>): CustomField[] => {
+  const raw = details.fields;
+  if (!Array.isArray(raw) || raw.length === 0) return emptyCustomFields();
+
+  return raw.map((field) => {
+    if (!field || typeof field !== "object") return { label: "", value: "" };
+    const entry = field as Record<string, unknown>;
+    return {
+      label: String(entry.label ?? ""),
+      value: String(entry.value ?? ""),
+    };
+  });
+};
+
+const prepareDetailsForSubmit = (
+  category: string,
+  details: Record<string, unknown>,
+): Record<string, unknown> => {
+  if (!isCustomCategory(category)) return details;
+
+  const fields = parseCustomFields(details).filter(
+    (field) => field.label.trim() && field.value.trim(),
+  );
+
+  return { fields };
+};
+
+const emptyForm = (cat = "CUSTOM"): FormState => ({
   category: cat,
   label: "",
   currency: DEFAULT_CURRENCY[cat] || "USD",
   active: true,
-  details: {},
+  details: detailsForCategory(cat),
 });
 
 export const DepositOptionsPage = () => {
@@ -151,7 +192,7 @@ export const DepositOptionsPage = () => {
       ...current,
       category: cat,
       currency: DEFAULT_CURRENCY[cat] || current.currency,
-      details: {},
+      details: detailsForCategory(cat),
     });
   };
 
@@ -164,7 +205,10 @@ export const DepositOptionsPage = () => {
         category: formData.category,
         label: formData.label,
         currency: formData.currency,
-        details: formData.details,
+        details: prepareDetailsForSubmit(
+          formData.category,
+          formData.details,
+        ) as Record<string, string>,
       });
       setFormData(emptyForm());
       setShowForm(false);
@@ -199,7 +243,10 @@ export const DepositOptionsPage = () => {
         label: editForm.label,
         currency: editForm.currency,
         active: editForm.active,
-        details: editForm.details,
+        details: prepareDetailsForSubmit(
+          editForm.category,
+          editForm.details,
+        ) as Record<string, string>,
       });
       setEditingId(null);
       showSuccess("Opción actualizada exitosamente");
@@ -483,6 +530,101 @@ export const DepositOptionsPage = () => {
   );
 };
 
+function FreeformFieldsEditor({
+  fields,
+  onChange,
+}: {
+  fields: CustomField[];
+  onChange: (fields: CustomField[]) => void;
+}) {
+  const updateField = (index: number, key: keyof CustomField, value: string) => {
+    const next = fields.map((field, fieldIndex) =>
+      fieldIndex === index ? { ...field, [key]: value } : field,
+    );
+    onChange(next);
+  };
+
+  const removeField = (index: number) => {
+    if (fields.length === 1) {
+      onChange([{ label: "", value: "" }]);
+      return;
+    }
+    onChange(fields.filter((_, fieldIndex) => fieldIndex !== index));
+  };
+
+  return (
+    <div className="rounded-lg border border-b-default p-4">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <h3 className="text-sm font-semibold text-t-muted">
+          Campos personalizados
+        </h3>
+        <Button
+          type="button"
+          onClick={() => onChange([...fields, { label: "", value: "" }])}
+          className="bg-dark-section px-3 py-1.5 text-xs hover:bg-primary-dim"
+        >
+          + Agregar campo
+        </Button>
+      </div>
+      <div className="space-y-3">
+        {fields.map((field, index) => (
+          <div
+            key={`custom-field-${index}`}
+            className="grid gap-3 rounded-lg border border-b-default/70 p-3 sm:grid-cols-[1fr_1fr_auto]"
+          >
+            <div>
+              <label className="mb-1 block text-sm font-medium text-t-muted">
+                Título del campo *
+              </label>
+              <Input
+                value={field.label}
+                onChange={(e) => updateField(index, "label", e.target.value)}
+                placeholder="Ej: Nombre del banco"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-t-muted">
+                Dato *
+              </label>
+              <Input
+                value={field.value}
+                onChange={(e) => updateField(index, "value", e.target.value)}
+                placeholder="Ej: Mercury Bank"
+              />
+            </div>
+            <div className="flex items-end">
+              <button
+                type="button"
+                onClick={() => removeField(index)}
+                className="rounded p-2 text-error hover:bg-error/15"
+                title="Quitar campo"
+              >
+                <svg
+                  className="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+      <p className="mt-3 text-xs text-t-dim">
+        Agregá los datos que el cliente debe ver al depositar. Podés sumar o
+        quitar campos según el método.
+      </p>
+    </div>
+  );
+}
+
 function DepositOptionForm({
   form,
   setForm,
@@ -505,6 +647,9 @@ function DepositOptionForm({
   allowActiveEdit?: boolean;
 }) {
   const fields = CATEGORY_FIELDS[form.category] || [];
+  const customFields = isCustomCategory(form.category)
+    ? parseCustomFields(form.details)
+    : [];
 
   return (
     <div className="admin-card p-6">
@@ -575,7 +720,16 @@ function DepositOptionForm({
           )}
         </div>
 
-        {fields.length > 0 && (
+        {isCustomCategory(form.category) && (
+          <FreeformFieldsEditor
+            fields={customFields}
+            onChange={(nextFields) =>
+              setForm({ ...form, details: { fields: nextFields } })
+            }
+          />
+        )}
+
+        {!isCustomCategory(form.category) && fields.length > 0 && (
           <div className="rounded-lg border border-b-default p-4">
             <h3 className="mb-3 text-sm font-semibold text-t-muted">
               Detalles — {categoryLabel(form.category)}
@@ -587,7 +741,7 @@ function DepositOptionForm({
                     {f.label}
                   </label>
                   <Input
-                    value={form.details[f.key] || ""}
+                    value={String(form.details[f.key] ?? "")}
                     onChange={(e) =>
                       setForm({
                         ...form,
@@ -703,15 +857,36 @@ function DetailsPreview({
   details,
   category,
 }: {
-  details: Record<string, string>;
+  details: Record<string, unknown>;
   category: string;
 }) {
+  if (isCustomCategory(category)) {
+    const entries = parseCustomFields(details).filter(
+      (field) => field.label.trim() && field.value.trim(),
+    );
+
+    if (entries.length === 0) {
+      return <span className="text-xs text-t-dim">Sin detalles</span>;
+    }
+
+    return (
+      <div className="space-y-1">
+        {entries.map((entry, index) => (
+          <p key={`${entry.label}-${index}`} className="text-xs text-t-muted">
+            <span className="font-medium">{entry.label}:</span> {entry.value}
+          </p>
+        ))}
+      </div>
+    );
+  }
+
+  const legacyDetails = details as Record<string, string>;
   const fields = CATEGORY_FIELDS[category] || [];
   const entries = fields
-    .filter((f) => details[f.key])
+    .filter((f) => legacyDetails[f.key])
     .map((f) => ({
       label: f.label.replace(" *", "").replace(" (opcional)", ""),
-      value: details[f.key],
+      value: legacyDetails[f.key],
     }));
 
   if (entries.length === 0) {

@@ -371,7 +371,7 @@ export const api = {
     category: string;
     label: string;
     currency: string;
-    details: Record<string, string>;
+    details: Record<string, unknown>;
     position?: number;
   }) =>
     request(`${ADMIN_API_PREFIX}/deposit_options`, {
@@ -385,7 +385,7 @@ export const api = {
       label?: string;
       currency?: string;
       active?: boolean;
-      details?: Record<string, string>;
+      details?: Record<string, unknown>;
       position?: number;
     },
   ) =>

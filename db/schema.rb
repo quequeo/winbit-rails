@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_05_29_120000) do
+ActiveRecord::Schema[8.0].define(version: 2026_06_16_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -59,7 +59,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_05_29_120000) do
     t.datetime "updated_at", null: false
     t.index ["active", "position"], name: "index_deposit_options_on_active_and_position"
     t.index ["category"], name: "index_deposit_options_on_category"
-    t.check_constraint "category::text = ANY (ARRAY['CASH_ARS'::character varying::text, 'CASH_USD'::character varying::text, 'BANK_ARS'::character varying::text, 'LEMON'::character varying::text, 'CRYPTO'::character varying::text, 'SWIFT'::character varying::text])", name: "deposit_options_category_check"
+    t.check_constraint "category::text = ANY (ARRAY['CASH_ARS'::character varying, 'CASH_USD'::character varying, 'BANK_ARS'::character varying, 'LEMON'::character varying, 'CRYPTO'::character varying, 'SWIFT'::character varying, 'CUSTOM'::character varying]::text[])", name: "deposit_options_category_check"
     t.check_constraint "currency::text = ANY (ARRAY['ARS'::character varying::text, 'USD'::character varying::text, 'USDT'::character varying::text, 'USDC'::character varying::text])", name: "deposit_options_currency_check"
   end
 
@@ -76,6 +76,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_05_29_120000) do
     t.string "source", default: "spreadsheet", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "entry_row", default: false, null: false
     t.index ["investor_id", "month"], name: "index_investor_monthly_annex_rows_on_investor_id_and_month", unique: true
   end
 

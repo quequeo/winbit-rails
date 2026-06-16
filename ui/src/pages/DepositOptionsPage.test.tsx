@@ -446,6 +446,27 @@ describe("DepositOptionsPage", () => {
       expect(api.createDepositOption).not.toHaveBeenCalled();
     });
 
+    it("shows custom fields editor by default", async () => {
+      vi.mocked(api.getDepositOptions).mockResolvedValue({ data: [] });
+
+      const user = userEvent.setup();
+      render(<DepositOptionsPage />);
+
+      await waitFor(() => {
+        expect(api.getDepositOptions).toHaveBeenCalled();
+      });
+
+      const addButton = await screen.findByRole("button", {
+        name: /Nueva opción/i,
+      });
+      await user.click(addButton);
+
+      expect(screen.getByText("Campos personalizados")).toBeInTheDocument();
+      expect(
+        screen.getByPlaceholderText("Ej: Nombre del banco"),
+      ).toBeInTheDocument();
+    });
+
     it("shows dynamic fields when category changes", async () => {
       vi.mocked(api.getDepositOptions).mockResolvedValue({ data: [] });
 
@@ -461,14 +482,12 @@ describe("DepositOptionsPage", () => {
       });
       await user.click(addButton);
 
-      // Default is CASH_USD - select SWIFT
       const categorySelect = screen.getAllByRole("combobox")[0];
       await user.selectOptions(categorySelect, "SWIFT");
 
       expect(screen.getByPlaceholderText("Ej: Mercury")).toBeInTheDocument();
       expect(screen.getByPlaceholderText("Ej: Winbit LLC")).toBeInTheDocument();
 
-      // Switch to CRYPTO
       await user.selectOptions(categorySelect, "CRYPTO");
 
       expect(screen.getByPlaceholderText(/TF7j33wo/)).toBeInTheDocument();

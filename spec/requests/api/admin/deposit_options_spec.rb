@@ -41,6 +41,41 @@ RSpec.describe 'Admin Deposit Options API', type: :request do
   end
 
   describe 'POST /api/admin/deposit_options' do
+    it 'creates a new CUSTOM deposit option with freeform fields' do
+      post '/api/admin/deposit_options', params: {
+        category: 'CUSTOM',
+        label: 'Cuenta USD EE.UU.',
+        currency: 'USD',
+        position: 3,
+        details: {
+          fields: [
+            { label: 'Banco', value: 'Mercury' },
+            { label: 'Titular', value: 'Winbit LLC' },
+            { label: 'Nº de cuenta', value: '123456789' },
+          ],
+        },
+      }
+
+      expect(response).to have_http_status(:created)
+      json = JSON.parse(response.body)
+      expect(json['data']['category']).to eq('CUSTOM')
+      expect(json['data']['details']['fields'].size).to eq(3)
+      expect(json['data']['details']['fields'][0]['label']).to eq('Banco')
+    end
+
+    it 'returns 422 for CUSTOM without fields' do
+      post '/api/admin/deposit_options', params: {
+        category: 'CUSTOM',
+        label: 'Cuenta',
+        currency: 'USD',
+        details: {},
+      }
+
+      expect(response).to have_http_status(:unprocessable_content)
+      json = JSON.parse(response.body)
+      expect(json['error']).to include('field')
+    end
+
     it 'creates a new deposit option' do
       post '/api/admin/deposit_options', params: {
         category: 'LEMON',
