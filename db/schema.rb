@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_06_16_120000) do
+ActiveRecord::Schema[8.0].define(version: 2026_06_17_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -168,6 +168,25 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_16_120000) do
     t.check_constraint "status::text = ANY (ARRAY['PENDING'::character varying::text, 'APPROVED'::character varying::text, 'REJECTED'::character varying::text, 'REVERSED'::character varying::text])", name: "requests_status_check"
   end
 
+  create_table "strategy_operations", id: :string, force: :cascade do |t|
+    t.date "operation_date", null: false
+    t.string "asset", null: false
+    t.string "timeframe"
+    t.string "direction"
+    t.string "result_label"
+    t.decimal "result_usd", precision: 12, scale: 2
+    t.decimal "ratio", precision: 8, scale: 4
+    t.string "opened_at"
+    t.string "closed_at"
+    t.text "notes"
+    t.string "source", default: "manual", null: false
+    t.string "created_by_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["operation_date", "asset"], name: "index_strategy_operations_on_operation_date_and_asset"
+    t.index ["operation_date"], name: "index_strategy_operations_on_operation_date"
+  end
+
   create_table "trading_fees", id: :string, force: :cascade do |t|
     t.string "investor_id", null: false
     t.string "applied_by_id", null: false
@@ -235,6 +254,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_16_120000) do
   add_foreign_key "portfolios", "investors"
   add_foreign_key "requests", "investors"
   add_foreign_key "requests", "users", column: "reversed_by_id"
+  add_foreign_key "strategy_operations", "users", column: "created_by_id"
   add_foreign_key "trading_fees", "investors"
   add_foreign_key "trading_fees", "requests", column: "withdrawal_request_id"
   add_foreign_key "trading_fees", "users", column: "applied_by_id"

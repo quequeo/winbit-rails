@@ -409,4 +409,34 @@ export const api = {
     request(`${ADMIN_API_PREFIX}/deposit_options/${id}/toggle_active`, {
       method: "POST",
     }),
+  getStrategyOperations: (params?: {
+    from?: string;
+    to?: string;
+    page?: number;
+    per_page?: number;
+  }) => {
+    const qs = new URLSearchParams();
+    if (params?.from) qs.set("from", params.from);
+    if (params?.to) qs.set("to", params.to);
+    if (params?.page) qs.set("page", params.page.toString());
+    if (params?.per_page) qs.set("per_page", params.per_page.toString());
+    const suffix = qs.toString() ? `?${qs.toString()}` : "";
+    return request(`${ADMIN_API_PREFIX}/strategy_operations${suffix}`);
+  },
+  createStrategyOperation: (body: {
+    operation_date: string;
+    asset: string;
+    timeframe?: string;
+    direction?: string;
+    result_label?: string;
+    result_usd?: number;
+    ratio?: number;
+    opened_at?: string;
+    closed_at?: string;
+    notes?: string;
+  }) =>
+    request(`${ADMIN_API_PREFIX}/strategy_operations`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
 };

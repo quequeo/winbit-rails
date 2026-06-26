@@ -1,12 +1,14 @@
 import { useSearchParams } from "react-router-dom";
 import { DailyOperatingResultsPage } from "./DailyOperatingResultsPage";
 import { OperatingHistoryPage } from "./OperatingHistoryPage";
+import { StrategyOperationsPage } from "./StrategyOperationsPage";
 
-type Tab = "diaria" | "historial";
+type Tab = "diaria" | "historial" | "operaciones";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "diaria", label: "Operativa Diaria" },
   { id: "historial", label: "Historial de Operativas" },
+  { id: "operaciones", label: "Operaciones (detalle)" },
 ];
 
 export const OperativaHubPage = () => {
@@ -40,6 +42,7 @@ export const OperativaHubPage = () => {
 
       {activeTab === "diaria" && <DailyOperatingResultsPage />}
       {activeTab === "historial" && <OperatingHistoryPage />}
+      {activeTab === "operaciones" && <StrategyOperationsPage />}
     </div>
   );
 };

@@ -70,6 +70,11 @@ Rails.application.routes.draw do
       patch 'daily_operating_results/:id', to: 'daily_operating_results#update', format: false
       get 'daily_operating_results/:id/edit_preview', to: 'daily_operating_results#edit_preview', format: false
 
+      get 'strategy_operations', to: 'strategy_operations#index', format: false
+      post 'strategy_operations', to: 'strategy_operations#create', format: false
+      patch 'strategy_operations/:id', to: 'strategy_operations#update', format: false
+      delete 'strategy_operations/:id', to: 'strategy_operations#destroy', format: false
+
       get 'trading_fees', to: 'trading_fees#index', format: false
       post 'trading_fees', to: 'trading_fees#create', format: false
       patch 'trading_fees/:id', to: 'trading_fees#update', format: false
@@ -115,6 +120,11 @@ Rails.application.routes.draw do
         post 'daily_operating_results', to: 'daily_operating_results#create', format: false
       patch 'daily_operating_results/:id', to: 'daily_operating_results#update', format: false
       get 'daily_operating_results/:id/edit_preview', to: 'daily_operating_results#edit_preview', format: false
+
+        get 'strategy_operations', to: 'strategy_operations#index', format: false
+        post 'strategy_operations', to: 'strategy_operations#create', format: false
+        patch 'strategy_operations/:id', to: 'strategy_operations#update', format: false
+        delete 'strategy_operations/:id', to: 'strategy_operations#destroy', format: false
 
         get 'trading_fees', to: 'trading_fees#index', format: false
         post 'trading_fees', to: 'trading_fees#create', format: false
