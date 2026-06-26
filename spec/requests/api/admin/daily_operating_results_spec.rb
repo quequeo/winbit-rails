@@ -216,6 +216,30 @@ RSpec.describe 'Admin Daily Operating Results API', type: :request do
       expect(PortfolioHistory.where(investor_id: inv.id, event: 'OPERATING_RESULT').count).to eq(1)
     end
 
+    it 'stores strategy operation detail when provided' do
+      target_date = Date.new(2025, 6, 6)
+      at_time = Time.zone.local(target_date.year, target_date.month, target_date.day, 17, 0, 0)
+      create_investor_with_balance(balance: 1000, at_time: at_time)
+
+      post '/api/admin/daily_operating_results',
+           params: {
+             date: '2025-06-06',
+             percent: 1.0,
+             strategy_operation: {
+               asset: 'NQ',
+               direction: 'SHORT',
+               result_label: 'POSITIVO',
+               result_usd: 850,
+             },
+           },
+           as: :json
+
+      expect(response).to have_http_status(:created)
+      operation = StrategyOperation.find_by!(operation_date: target_date)
+      expect(operation.asset).to eq('NQ')
+      expect(operation.result_usd).to eq(850.0)
+    end
+
     it 'returns 409 on duplicate date' do
       target_date = Date.new(2025, 6, 5)
       DailyOperatingResult.create!(date: target_date, percent: 0.1, applied_by: admin, applied_at: Time.current)

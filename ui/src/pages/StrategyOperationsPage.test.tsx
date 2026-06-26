@@ -6,17 +6,12 @@ import { api } from "../lib/api";
 vi.mock("../lib/api", () => ({
   api: {
     getStrategyOperations: vi.fn(),
-    getAdminSession: vi.fn(),
-    createStrategyOperation: vi.fn(),
   },
 }));
 
 describe("StrategyOperationsPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(api.getAdminSession).mockResolvedValue({
-      data: { superadmin: true },
-    });
     vi.mocked(api.getStrategyOperations).mockResolvedValue({
       data: [
         {

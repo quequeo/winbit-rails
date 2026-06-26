@@ -283,6 +283,17 @@ export const api = {
     percent?: number;
     amount_usd?: number;
     notes?: string;
+    strategy_operation?: {
+      asset?: string;
+      timeframe?: string;
+      direction?: string;
+      result_label?: string;
+      result_usd?: number;
+      ratio?: number;
+      opened_at?: string;
+      closed_at?: string;
+      notes?: string;
+    };
   }) =>
     request(`${ADMIN_API_PREFIX}/daily_operating_results`, {
       method: "POST",
@@ -300,7 +311,21 @@ export const api = {
   },
   updateDailyOperatingResult: (
     id: string,
-    body: { percent: number; notes?: string },
+    body: {
+      percent: number;
+      notes?: string;
+      strategy_operation?: {
+        asset?: string;
+        timeframe?: string;
+        direction?: string;
+        result_label?: string;
+        result_usd?: number;
+        ratio?: number;
+        opened_at?: string;
+        closed_at?: string;
+        notes?: string;
+      };
+    },
   ) =>
     request(`${ADMIN_API_PREFIX}/daily_operating_results/${id}`, {
       method: "PATCH",

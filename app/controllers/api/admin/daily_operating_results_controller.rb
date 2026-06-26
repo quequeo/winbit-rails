@@ -141,6 +141,16 @@ module Api
 
         if applicator.apply
           result = DailyOperatingResult.find_by!(date: date)
+          upsert = StrategyOperations::UpsertForDate.new(
+            date: date,
+            created_by: current_user,
+            params: strategy_operation_params,
+          )
+          unless upsert.call
+            render_error(upsert.error || 'No se pudo guardar el detalle de la operación', status: :unprocessable_content)
+            return
+          end
+
           ActivityLogger.log(
             user: current_user,
             action: 'apply_daily_operating_result',
@@ -188,6 +198,16 @@ module Api
         )
 
         if editor.apply
+          upsert = StrategyOperations::UpsertForDate.new(
+            date: result.date,
+            created_by: current_user,
+            params: strategy_operation_params,
+          )
+          unless upsert.call
+            render_error(upsert.error || 'No se pudo guardar el detalle de la operación', status: :unprocessable_content)
+            return
+          end
+
           render json: { data: DailyOperatingResultSerializer.new(result.reload).as_json }
         else
           render_error(editor.errors.join(', '), status: :unprocessable_content)
@@ -195,6 +215,23 @@ module Api
       end
 
       private
+
+      def strategy_operation_params
+        raw = params[:strategy_operation]
+        return nil if raw.blank?
+
+        raw.permit(
+          :asset,
+          :timeframe,
+          :direction,
+          :result_label,
+          :result_usd,
+          :ratio,
+          :opened_at,
+          :closed_at,
+          :notes,
+        )
+      end
     end
   end
 end

@@ -5,6 +5,15 @@ import { Input } from "../components/ui/Input";
 import { ConfirmDialog } from "../components/ui/ConfirmDialog";
 import { formatDateAR, formatCurrencyAR, formatNumberAR } from "../lib/formatters";
 import { DatePicker } from "../components/ui/DatePicker";
+import {
+  StrategyOperationFields,
+  emptyStrategyOperationForm,
+  type StrategyOperationFormValues,
+} from "../components/StrategyOperationFields";
+import {
+  buildStrategyOperationPayload,
+  mapStrategyOperationToForm,
+} from "../lib/strategyOperationForm";
 
 type PreviewRow = {
   investor_id: string;
@@ -63,6 +72,11 @@ export const DailyOperatingResultsPage = () => {
   const [percent, setPercent] = useState<string>("0,00");
   const [amountUsd, setAmountUsd] = useState<string>("0,00");
   const [notes, setNotes] = useState<string>("");
+  const [strategyForm, setStrategyForm] = useState<StrategyOperationFormValues>(
+    emptyStrategyOperationForm(),
+  );
+  const [editStrategyForm, setEditStrategyForm] =
+    useState<StrategyOperationFormValues>(emptyStrategyOperationForm());
   const [loadingPreview, setLoadingPreview] = useState(false);
   const [preview, setPreview] = useState<PreviewData | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -117,6 +131,39 @@ export const DailyOperatingResultsPage = () => {
   useEffect(() => {
     loadHistory(historyPage);
   }, [historyPage, loadHistory]);
+
+  const loadStrategyForDate = useCallback(async (isoDate: string) => {
+    if (!isoDate || !/^\d{4}-\d{2}-\d{2}$/.test(isoDate)) {
+      setStrategyForm(emptyStrategyOperationForm());
+      return;
+    }
+    try {
+      const res = (await api.getStrategyOperations({
+        from: isoDate,
+        to: isoDate,
+        per_page: 200,
+      })) as {
+        data?: Array<{
+          asset: string;
+          timeframe?: string | null;
+          direction?: string | null;
+          resultLabel?: string | null;
+          resultUsd?: number | null;
+          ratio?: number | null;
+          openedAt?: string | null;
+          closedAt?: string | null;
+          notes?: string | null;
+        }>;
+      };
+      setStrategyForm(mapStrategyOperationToForm(res?.data?.[0]));
+    } catch {
+      setStrategyForm(emptyStrategyOperationForm());
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadStrategyForDate(date);
+  }, [date, loadStrategyForDate]);
 
   const parseLocalizedNumber = (raw: string) => {
     const cleaned = raw.replace(/%/g, "").trim();
@@ -228,6 +275,7 @@ export const DailyOperatingResultsPage = () => {
           ? { percent: parsedPercent ?? undefined }
           : { amount_usd: parsedAmountUsd ?? undefined }),
         notes: notes || undefined,
+        strategy_operation: buildStrategyOperationPayload(strategyForm),
       });
       setNotice({ type: "success", message: "Operativa diaria aplicada." });
       setConfirmOpen(false);
@@ -258,6 +306,18 @@ export const DailyOperatingResultsPage = () => {
     setEditNotes("");
     setEditPreview(null);
     setEditConfirmOpen(false);
+    void api
+      .getStrategyOperations({
+        from: row.date,
+        to: row.date,
+        per_page: 200,
+      })
+      .then((res) => {
+        const data = (res as { data?: Parameters<typeof mapStrategyOperationToForm>[0][] })
+          ?.data;
+        setEditStrategyForm(mapStrategyOperationToForm(data?.[0]));
+      })
+      .catch(() => setEditStrategyForm(emptyStrategyOperationForm()));
   };
 
   const closeEdit = () => {
@@ -303,6 +363,7 @@ export const DailyOperatingResultsPage = () => {
       await api.updateDailyOperatingResult(editRow.id, {
         percent: editParsedPercent,
         notes: editNotes || undefined,
+        strategy_operation: buildStrategyOperationPayload(editStrategyForm),
       });
       setNotice({
         type: "success",
@@ -326,8 +387,9 @@ export const DailyOperatingResultsPage = () => {
         <div>
           <h1 className="text-3xl font-bold text-t-primary">Operativa diaria</h1>
           <p className="mt-1 text-sm text-t-muted">
-            Cargá el resultado del día en monto USD o porcentaje. Se aplica a
-            todos los inversores activos con capital.
+            Cargá el resultado del día y el detalle de la operación. La rentabilidad
+            aplicada a inversores es la de arriba; el detalle aparece en Operaciones
+            (detalle).
           </p>
         </div>
       </div>
@@ -414,6 +476,12 @@ export const DailyOperatingResultsPage = () => {
             />
           </div>
         </div>
+
+        <StrategyOperationFields
+          values={strategyForm}
+          onChange={setStrategyForm}
+          idPrefix="daily-strategy"
+        />
 
         <div className="flex gap-3 justify-end">
           <Button
@@ -762,6 +830,12 @@ export const DailyOperatingResultsPage = () => {
                     />
                   </div>
                 </div>
+
+                <StrategyOperationFields
+                  values={editStrategyForm}
+                  onChange={setEditStrategyForm}
+                  idPrefix="edit-strategy"
+                />
 
                 <div className="flex gap-3 justify-end">
                   <Button
