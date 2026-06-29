@@ -14,4 +14,23 @@ namespace :strategy_operations do
       abort importer.errors.join(', ')
     end
   end
+
+  desc 'Clear invalid opened_at/closed_at values (e.g. prices imported by mistake from Excel)'
+  task sanitize_times: :environment do
+    cleared = 0
+    StrategyOperation.find_each do |operation|
+      attrs = {}
+      unless StrategyOperation.valid_time?(operation.opened_at)
+        attrs[:opened_at] = nil if operation.opened_at.present?
+      end
+      unless StrategyOperation.valid_time?(operation.closed_at)
+        attrs[:closed_at] = nil if operation.closed_at.present?
+      end
+      next if attrs.empty?
+
+      operation.update_columns(attrs)
+      cleared += 1
+    end
+    puts "Sanitized #{cleared} operations"
+  end
 end

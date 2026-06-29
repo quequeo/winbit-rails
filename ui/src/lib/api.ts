@@ -288,7 +288,6 @@ export const api = {
       timeframe?: string;
       direction?: string;
       result_label?: string;
-      result_usd?: number;
       ratio?: number;
       opened_at?: string;
       closed_at?: string;

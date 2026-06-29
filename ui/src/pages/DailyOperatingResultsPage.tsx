@@ -13,6 +13,7 @@ import {
 import {
   buildStrategyOperationPayload,
   mapStrategyOperationToForm,
+  validateStrategyOperationForm,
 } from "../lib/strategyOperationForm";
 
 type PreviewRow = {
@@ -71,7 +72,6 @@ export const DailyOperatingResultsPage = () => {
   const [inputMode, setInputMode] = useState<InputMode>("usd");
   const [percent, setPercent] = useState<string>("0,00");
   const [amountUsd, setAmountUsd] = useState<string>("0,00");
-  const [notes, setNotes] = useState<string>("");
   const [strategyForm, setStrategyForm] = useState<StrategyOperationFormValues>(
     emptyStrategyOperationForm(),
   );
@@ -94,7 +94,6 @@ export const DailyOperatingResultsPage = () => {
     date: string;
     percent: number;
     amount_usd?: number;
-    notes?: string | null;
     applied_by: { name: string | null };
   };
   type HistoryMeta = {
@@ -110,7 +109,6 @@ export const DailyOperatingResultsPage = () => {
 
   const [editRow, setEditRow] = useState<HistoryRow | null>(null);
   const [editPercent, setEditPercent] = useState<string>("");
-  const [editNotes, setEditNotes] = useState<string>("");
   const [editPreview, setEditPreview] = useState<EditPreviewData | null>(null);
   const [loadingEditPreview, setLoadingEditPreview] = useState(false);
   const [editConfirmOpen, setEditConfirmOpen] = useState(false);
@@ -233,6 +231,12 @@ export const DailyOperatingResultsPage = () => {
       return;
     }
 
+    const strategyError = validateStrategyOperationForm(strategyForm);
+    if (strategyError) {
+      showAlert("Detalle de operación", strategyError);
+      return;
+    }
+
     try {
       setLoadingPreview(true);
       setNotice(null);
@@ -241,7 +245,6 @@ export const DailyOperatingResultsPage = () => {
         ...(inputMode === "percent"
           ? { percent: parsedPercent ?? undefined }
           : { amount_usd: parsedAmountUsd ?? undefined }),
-        notes: notes || undefined,
       });
       setPreview(res?.data as PreviewData);
     } catch (e: unknown) {
@@ -267,6 +270,12 @@ export const DailyOperatingResultsPage = () => {
       return;
     }
 
+    const strategyError = validateStrategyOperationForm(strategyForm);
+    if (strategyError) {
+      showAlert("Detalle de operación", strategyError);
+      return;
+    }
+
     try {
       setApplying(true);
       await api.createDailyOperatingResult({
@@ -274,7 +283,6 @@ export const DailyOperatingResultsPage = () => {
         ...(inputMode === "percent"
           ? { percent: parsedPercent ?? undefined }
           : { amount_usd: parsedAmountUsd ?? undefined }),
-        notes: notes || undefined,
         strategy_operation: buildStrategyOperationPayload(strategyForm),
       });
       setNotice({ type: "success", message: "Operativa diaria aplicada." });
@@ -303,7 +311,6 @@ export const DailyOperatingResultsPage = () => {
   const openEdit = (row: HistoryRow) => {
     setEditRow(row);
     setEditPercent(row.percent.toFixed(2));
-    setEditNotes("");
     setEditPreview(null);
     setEditConfirmOpen(false);
     void api
@@ -358,11 +365,17 @@ export const DailyOperatingResultsPage = () => {
 
   const applyEdit = async () => {
     if (!editRow || editParsedPercent === null) return;
+
+    const strategyError = validateStrategyOperationForm(editStrategyForm);
+    if (strategyError) {
+      showAlert("Detalle de operación", strategyError);
+      return;
+    }
+
     try {
       setEditApplying(true);
       await api.updateDailyOperatingResult(editRow.id, {
         percent: editParsedPercent,
-        notes: editNotes || undefined,
         strategy_operation: buildStrategyOperationPayload(editStrategyForm),
       });
       setNotice({
@@ -463,17 +476,6 @@ export const DailyOperatingResultsPage = () => {
                 ? "Ganancia o pérdida total del día en USD. El sistema calcula el % sobre el capital al cierre (17:00)."
                 : "Se redondea a 2 decimales en el impacto por inversor."}
             </p>
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-t-muted">
-              Notas (opcional)
-            </label>
-            <Input
-              type="text"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder=""
-            />
           </div>
         </div>
 
@@ -649,9 +651,6 @@ export const DailyOperatingResultsPage = () => {
                       Resultado USD
                     </th>
                     <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-t-muted">
-                      Notas
-                    </th>
-                    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-t-muted">
                       Aplicado por
                     </th>
                     <th className="px-5 py-3 text-center text-xs font-semibold uppercase tracking-wider text-t-muted">
@@ -679,9 +678,6 @@ export const DailyOperatingResultsPage = () => {
                           className={`px-5 py-3 text-right text-sm font-semibold ${isPos ? "text-success" : "text-error"}`}
                         >
                           {formatCurrencyAR(row.amount_usd ?? 0)}
-                        </td>
-                        <td className="px-5 py-3 text-sm text-t-muted">
-                          {row.notes?.trim() || "—"}
                         </td>
                         <td className="px-5 py-3 text-sm text-t-dim">
                           {row.applied_by?.name ?? "—"}
@@ -806,29 +802,16 @@ export const DailyOperatingResultsPage = () => {
                 </p>
               </div>
               <div className="px-6 py-4 space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-t-muted">
-                      Nuevo porcentaje (%)
-                    </label>
-                    <Input
-                      type="text"
-                      value={editPercent}
-                      onChange={(e) => setEditPercent(e.target.value)}
-                      placeholder="Ej: 0,10"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-t-muted">
-                      Notas (opcional)
-                    </label>
-                    <Input
-                      type="text"
-                      value={editNotes}
-                      onChange={(e) => setEditNotes(e.target.value)}
-                      placeholder=""
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-t-muted">
+                    Nuevo porcentaje (%)
+                  </label>
+                  <Input
+                    type="text"
+                    value={editPercent}
+                    onChange={(e) => setEditPercent(e.target.value)}
+                    placeholder="Ej: 0,10"
+                  />
                 </div>
 
                 <StrategyOperationFields

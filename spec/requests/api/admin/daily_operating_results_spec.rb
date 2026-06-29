@@ -226,18 +226,19 @@ RSpec.describe 'Admin Daily Operating Results API', type: :request do
              date: '2025-06-06',
              percent: 1.0,
              strategy_operation: {
-               asset: 'NQ',
+               asset: 'MNQ',
                direction: 'SHORT',
                result_label: 'POSITIVO',
-               result_usd: 850,
+               opened_at: '12:08',
+               closed_at: '12:10',
              },
            },
            as: :json
 
       expect(response).to have_http_status(:created)
       operation = StrategyOperation.find_by!(operation_date: target_date)
-      expect(operation.asset).to eq('NQ')
-      expect(operation.result_usd).to eq(850.0)
+      expect(operation.asset).to eq('MNQ')
+      expect(operation.result_usd).to eq(10.0)
     end
 
     it 'returns 409 on duplicate date' do

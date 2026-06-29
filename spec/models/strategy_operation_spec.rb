@@ -8,7 +8,10 @@ RSpec.describe StrategyOperation, type: :model do
   it 'is valid with required attributes' do
     operation = described_class.new(
       operation_date: Date.new(2026, 5, 4),
-      asset: 'NQ',
+      asset: 'MNQ',
+      result_label: 'POSITIVO',
+      opened_at: '12:08',
+      closed_at: '12:10',
       created_by: admin,
       source: 'manual',
     )

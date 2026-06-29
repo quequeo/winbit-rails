@@ -1,12 +1,16 @@
 import { Input } from "../components/ui/Input";
 import { Select } from "../components/ui/Select";
 
+export const STRATEGY_ASSETS = ["MNQ", "MBT", "MYM", "MES"] as const;
+export const STRATEGY_RESULT_LABELS = ["POSITIVO", "NEGATIVO", "BE+", "BE-"] as const;
+
+const TIME_FORMAT = /^([01]\d|2[0-3]):[0-5]\d$/;
+
 export type StrategyOperationFormValues = {
   asset: string;
   timeframe: string;
   direction: string;
   result_label: string;
-  result_usd: string;
   ratio: string;
   opened_at: string;
   closed_at: string;
@@ -18,12 +22,16 @@ export const emptyStrategyOperationForm = (): StrategyOperationFormValues => ({
   timeframe: "",
   direction: "",
   result_label: "",
-  result_usd: "",
   ratio: "",
   opened_at: "",
   closed_at: "",
   notes: "",
 });
+
+const toTimeInputValue = (value?: string | null) => {
+  const text = (value || "").trim();
+  return TIME_FORMAT.test(text) ? text : "";
+};
 
 type Props = {
   values: StrategyOperationFormValues;
@@ -47,25 +55,28 @@ export const StrategyOperationFields = ({
           Detalle de la operación
         </h3>
         <p className="mt-1 text-xs text-t-dim">
-          Se guarda en Operaciones (detalle). La rentabilidad que ven los
-          inversores sigue siendo la de arriba.
+          Se guarda en Operaciones (detalle). El USD del trade coincide con el
+          monto USD del día cargado arriba.
         </p>
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <div className="space-y-2">
-          <label className="text-sm font-medium text-t-muted" htmlFor={`${idPrefix}-asset`}>
-            Activo
-          </label>
-          <Input
-            id={`${idPrefix}-asset`}
+          <label className="text-sm font-medium text-t-muted">Activo</label>
+          <Select
             value={values.asset}
-            onChange={(e) => set("asset", e.target.value)}
-            placeholder="NQ, MES, BTC..."
+            onChange={(value) => set("asset", value)}
+            options={[
+              { value: "", label: "Seleccionar..." },
+              ...STRATEGY_ASSETS.map((asset) => ({ value: asset, label: asset })),
+            ]}
           />
         </div>
         <div className="space-y-2">
-          <label className="text-sm font-medium text-t-muted" htmlFor={`${idPrefix}-timeframe`}>
+          <label
+            className="text-sm font-medium text-t-muted"
+            htmlFor={`${idPrefix}-timeframe`}
+          >
             Temporalidad
           </label>
           <Input
@@ -88,52 +99,54 @@ export const StrategyOperationFields = ({
           />
         </div>
         <div className="space-y-2">
-          <label className="text-sm font-medium text-t-muted" htmlFor={`${idPrefix}-opened`}>
+          <label
+            className="text-sm font-medium text-t-muted"
+            htmlFor={`${idPrefix}-opened`}
+          >
             Apertura
           </label>
           <Input
             id={`${idPrefix}-opened`}
+            type="time"
             value={values.opened_at}
             onChange={(e) => set("opened_at", e.target.value)}
-            placeholder="12:08"
+            required={Boolean(values.asset)}
           />
         </div>
         <div className="space-y-2">
-          <label className="text-sm font-medium text-t-muted" htmlFor={`${idPrefix}-closed`}>
+          <label
+            className="text-sm font-medium text-t-muted"
+            htmlFor={`${idPrefix}-closed`}
+          >
             Cierre
           </label>
           <Input
             id={`${idPrefix}-closed`}
+            type="time"
             value={values.closed_at}
             onChange={(e) => set("closed_at", e.target.value)}
-            placeholder="12:10"
+            required={Boolean(values.asset)}
           />
         </div>
         <div className="space-y-2">
-          <label className="text-sm font-medium text-t-muted" htmlFor={`${idPrefix}-result`}>
-            Resultado
-          </label>
-          <Input
-            id={`${idPrefix}-result`}
+          <label className="text-sm font-medium text-t-muted">Resultado</label>
+          <Select
             value={values.result_label}
-            onChange={(e) => set("result_label", e.target.value)}
-            placeholder="POSITIVO, NEGATIVO, BE+..."
+            onChange={(value) => set("result_label", value)}
+            options={[
+              { value: "", label: "Seleccionar..." },
+              ...STRATEGY_RESULT_LABELS.map((label) => ({
+                value: label,
+                label,
+              })),
+            ]}
           />
         </div>
         <div className="space-y-2">
-          <label className="text-sm font-medium text-t-muted" htmlFor={`${idPrefix}-usd`}>
-            USD (trade)
-          </label>
-          <Input
-            id={`${idPrefix}-usd`}
-            type="text"
-            value={values.result_usd}
-            onChange={(e) => set("result_usd", e.target.value)}
-            placeholder="850 o -712"
-          />
-        </div>
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-t-muted" htmlFor={`${idPrefix}-ratio`}>
+          <label
+            className="text-sm font-medium text-t-muted"
+            htmlFor={`${idPrefix}-ratio`}
+          >
             Ratio
           </label>
           <Input
@@ -145,7 +158,10 @@ export const StrategyOperationFields = ({
           />
         </div>
         <div className="space-y-2 md:col-span-3">
-          <label className="text-sm font-medium text-t-muted" htmlFor={`${idPrefix}-notes`}>
+          <label
+            className="text-sm font-medium text-t-muted"
+            htmlFor={`${idPrefix}-notes`}
+          >
             Observaciones
           </label>
           <textarea
@@ -160,4 +176,40 @@ export const StrategyOperationFields = ({
       </div>
     </div>
   );
+};
+
+export const mapApiRowToStrategyForm = (
+  row?: {
+    asset?: string;
+    timeframe?: string | null;
+    direction?: string | null;
+    resultLabel?: string | null;
+    ratio?: number | null;
+    openedAt?: string | null;
+    closedAt?: string | null;
+    notes?: string | null;
+  } | null,
+): StrategyOperationFormValues => {
+  if (!row) return emptyStrategyOperationForm();
+
+  const asset = STRATEGY_ASSETS.includes(row.asset as (typeof STRATEGY_ASSETS)[number])
+    ? row.asset!
+    : "";
+
+  const resultLabel = STRATEGY_RESULT_LABELS.includes(
+    row.resultLabel as (typeof STRATEGY_RESULT_LABELS)[number],
+  )
+    ? row.resultLabel!
+    : "";
+
+  return {
+    asset,
+    timeframe: row.timeframe || "",
+    direction: row.direction || "",
+    result_label: resultLabel,
+    ratio: row.ratio != null ? String(row.ratio).replace(".", ",") : "",
+    opened_at: toTimeInputValue(row.openedAt),
+    closed_at: toTimeInputValue(row.closedAt),
+    notes: row.notes || "",
+  };
 };

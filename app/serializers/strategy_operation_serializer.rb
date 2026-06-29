@@ -13,8 +13,8 @@ class StrategyOperationSerializer
       resultLabel: operation.result_label,
       resultUsd: operation.result_usd&.to_f,
       ratio: operation.ratio&.to_f,
-      openedAt: operation.opened_at,
-      closedAt: operation.closed_at,
+      openedAt: time_or_nil(operation.opened_at),
+      closedAt: time_or_nil(operation.closed_at),
       notes: operation.notes,
       source: operation.source,
       createdBy: operation.created_by&.name,
@@ -26,4 +26,12 @@ class StrategyOperationSerializer
   private
 
   attr_reader :operation
+
+  def time_or_nil(value)
+    text = value.to_s.strip
+    return nil if text.blank?
+    return text if StrategyOperation.valid_time?(text)
+
+    nil
+  end
 end

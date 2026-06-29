@@ -6,6 +6,7 @@ import {
   exportStrategyOperationsToExcel,
   type StrategyOperationExportRow,
 } from "../lib/exportStrategyOperationsToExcel";
+import { formatStrategyOperationTime } from "../lib/formatStrategyOperationTime";
 import { formatCurrencyAR, formatDateAR, formatNumberAR } from "../lib/formatters";
 import {
   strategyOperationTone,
@@ -214,10 +215,10 @@ export const StrategyOperationsPage = () => {
                       {row.timeframe || "—"}
                     </td>
                     <td className="px-4 py-3 text-sm text-t-muted">
-                      {row.openedAt || "—"}
+                      {formatStrategyOperationTime(row.openedAt)}
                     </td>
                     <td className="px-4 py-3 text-sm text-t-muted">
-                      {row.closedAt || "—"}
+                      {formatStrategyOperationTime(row.closedAt)}
                     </td>
                     <td className={`px-4 py-3 text-sm font-semibold ${toneClass}`}>
                       {row.resultLabel || "—"}

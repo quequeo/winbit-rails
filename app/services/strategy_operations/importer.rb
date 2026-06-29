@@ -71,12 +71,20 @@ module StrategyOperations
         result_label: row.result_label,
         result_usd: row.result_usd&.to_f,
         ratio: row.ratio&.to_f,
-        opened_at: row.opened_at,
-        closed_at: row.closed_at,
+        opened_at: sanitize_time(row.opened_at),
+        closed_at: sanitize_time(row.closed_at),
         notes: row.notes,
         source: 'import',
         created_by: created_by,
       }
+    end
+
+    def sanitize_time(value)
+      text = value.to_s.strip
+      return nil if text.blank?
+      return text if StrategyOperation.valid_time?(text)
+
+      nil
     end
   end
 end

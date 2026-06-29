@@ -64,8 +64,8 @@ module StrategyOperations
         timeframe: cell_value(sheet, row_number, 2).to_s.strip.presence,
         month_label: cell_value(sheet, row_number, 3).to_s.strip.presence,
         operation_date: operation_date,
-        opened_at: cell_value(sheet, row_number, 6).to_s.strip.presence,
-        closed_at: cell_value(sheet, row_number, 7).to_s.strip.presence,
+        opened_at: parse_time_cell(sheet, row_number, 6),
+        closed_at: parse_time_cell(sheet, row_number, 7),
         result_label: cell_value(sheet, row_number, 8).to_s.strip.presence,
         result_usd: parse_decimal(cell_value(sheet, row_number, 9)),
         ratio: parse_decimal(cell_value(sheet, row_number, 10)),
@@ -78,6 +78,44 @@ module StrategyOperations
       sheet.cell(row_number, column_number)
     rescue StandardError
       nil
+    end
+
+    def parse_time_cell(sheet, row_number, column_number)
+      value = cell_value(sheet, row_number, column_number)
+      return nil if value.nil?
+
+      cell_type = sheet.celltype(row_number, column_number)
+      if cell_type == :time
+        formatted = sheet.formatted_value(row_number, column_number).to_s.strip
+        normalized = normalize_time_string(formatted)
+        return normalized if normalized
+      end
+
+      text = value.to_s.strip
+      return text if StrategyOperation.valid_time?(text)
+
+      normalized = normalize_time_string(text)
+      return normalized if normalized
+
+      if text.match?(/\A\d+\z/)
+        seconds = text.to_i
+        return format('%02d:%02d', seconds / 3600, (seconds % 3600) / 60)
+      end
+
+      nil
+    rescue StandardError
+      nil
+    end
+
+    def normalize_time_string(text)
+      match = text.to_s.strip.match(/\A(\d{1,2}):(\d{1,2})(?::\d{1,2})?\z/)
+      return nil unless match
+
+      hour = match[1].to_i
+      minute = match[2].to_i
+      return nil if hour > 23 || minute > 59
+
+      format('%02d:%02d', hour, minute)
     end
 
     def parse_operation_date(text)

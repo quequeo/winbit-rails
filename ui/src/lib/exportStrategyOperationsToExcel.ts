@@ -1,4 +1,5 @@
 import * as XLSX from "xlsx";
+import { formatStrategyOperationTime } from "./formatStrategyOperationTime";
 import { formatCurrencyAR, formatDateAR, formatNumberAR } from "./formatters";
 
 export type StrategyOperationExportRow = {
@@ -22,8 +23,8 @@ export const exportStrategyOperationsToExcel = (
     Fecha: formatDateAR(row.operationDate, { time: false }),
     Activo: row.asset,
     Temporalidad: row.timeframe || "",
-    Apertura: row.openedAt || "",
-    Cierre: row.closedAt || "",
+    Apertura: formatStrategyOperationTime(row.openedAt, ""),
+    Cierre: formatStrategyOperationTime(row.closedAt, ""),
     Resultado: row.resultLabel || "",
     USD: row.resultUsd != null ? formatCurrencyAR(row.resultUsd) : "",
     Ratio: row.ratio != null ? formatNumberAR(row.ratio) : "",

@@ -10,5 +10,7 @@ RSpec.describe StrategyOperations::SpreadsheetParser do
     expect(rows.length).to eq(38)
     expect(rows.map(&:operation_date).uniq).to include(Date.new(2026, 5, 4), Date.new(2026, 6, 24))
     expect(rows.first.asset).to eq('MYM')
+    expect(rows.first.opened_at).to eq('12:08')
+    expect(rows.first.closed_at).to eq('12:10')
   end
 end

@@ -145,6 +145,7 @@ module Api
             date: date,
             created_by: current_user,
             params: strategy_operation_params,
+            result_usd: DailyOperatingUsdTotals.for_date(date),
           )
           unless upsert.call
             render_error(upsert.error || 'No se pudo guardar el detalle de la operación', status: :unprocessable_content)
@@ -202,6 +203,7 @@ module Api
             date: result.date,
             created_by: current_user,
             params: strategy_operation_params,
+            result_usd: DailyOperatingUsdTotals.for_date(result.date),
           )
           unless upsert.call
             render_error(upsert.error || 'No se pudo guardar el detalle de la operación', status: :unprocessable_content)
@@ -225,7 +227,6 @@ module Api
           :timeframe,
           :direction,
           :result_label,
-          :result_usd,
           :ratio,
           :opened_at,
           :closed_at,

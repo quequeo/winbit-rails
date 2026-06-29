@@ -13,7 +13,10 @@ RSpec.describe 'Admin strategy operations', type: :request do
     it 'returns operations list' do
       StrategyOperation.create!(
         operation_date: Date.new(2026, 5, 4),
-        asset: 'NQ',
+        asset: 'MNQ',
+        result_label: 'POSITIVO',
+        opened_at: '12:08',
+        closed_at: '12:10',
         created_by: admin,
         source: 'manual',
       )
@@ -23,7 +26,7 @@ RSpec.describe 'Admin strategy operations', type: :request do
       expect(response).to have_http_status(:ok)
       json = JSON.parse(response.body)
       expect(json['data'].length).to eq(1)
-      expect(json['data'].first['asset']).to eq('NQ')
+      expect(json['data'].first['asset']).to eq('MNQ')
     end
   end
 

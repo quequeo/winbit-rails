@@ -14,6 +14,7 @@ vi.mock("../lib/api", () => ({
         data: [],
         meta: { page: 1, per_page: 20, total: 0, total_pages: 0 },
       }),
+    getStrategyOperations: vi.fn().mockResolvedValue({ data: [] }),
     editPreviewDailyOperatingResult: vi.fn(),
     updateDailyOperatingResult: vi.fn(),
   },
