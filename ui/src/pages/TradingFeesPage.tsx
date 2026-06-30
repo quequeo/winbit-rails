@@ -3,6 +3,12 @@ import { api } from "../lib/api";
 import { ConfirmDialog } from "../components/ui/ConfirmDialog";
 import { Select } from "../components/ui/Select";
 import { formatDateAR, formatCurrencyAR } from "../lib/formatters";
+import {
+  buildMonthOptions,
+  buildQuarterOptions,
+  buildSemesterOptions,
+  buildYearOptions,
+} from "../lib/tradingFeePeriodOptions";
 
 type Frequency = "MONTHLY" | "QUARTERLY" | "SEMESTRAL" | "ANNUAL";
 
@@ -13,80 +19,6 @@ const FREQUENCY_OPTIONS: { value: "per_investor" | Frequency; label: string }[] 
   { value: "SEMESTRAL", label: "Semestral" },
   { value: "ANNUAL", label: "Anual" },
 ];
-
-const buildMonthOptions = () => {
-  const opts: { value: string; label: string; start: string; end: string }[] = [];
-  const now = new Date();
-  const base = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-  for (let i = 0; i < 12; i++) {
-    const d = new Date(base.getFullYear(), base.getMonth() - i, 1);
-    const y = d.getFullYear();
-    const m = d.getMonth() + 1;
-    const lastDay = new Date(y, m, 0).getDate();
-    const start = `${y}-${String(m).padStart(2, "0")}-01`;
-    const end = `${y}-${String(m).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
-    const names = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
-    opts.push({ value: `${start}|${end}`, label: `${names[m - 1]} ${y}`, start, end });
-  }
-  return opts;
-};
-
-const buildQuarterOptions = () => {
-  const opts: { value: string; label: string; start: string; end: string }[] = [];
-  const now = new Date();
-  const curQ = Math.floor(now.getMonth() / 3) + 1;
-  let y = now.getFullYear();
-  let q = curQ - 1;
-  if (q <= 0) { q = 4; y -= 1; }
-  for (let i = 0; i < 8; i++) {
-    let qy = y;
-    let qq = q - i;
-    while (qq <= 0) { qq += 4; qy -= 1; }
-    const sm = (qq - 1) * 3 + 1;
-    const em = qq * 3;
-    const start = `${qy}-${String(sm).padStart(2, "0")}-01`;
-    const lastDay = new Date(qy, em, 0).getDate();
-    const end = `${qy}-${String(em).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
-    opts.push({ value: `${start}|${end}`, label: `Q${qq} ${qy}`, start, end });
-  }
-  return opts;
-};
-
-const buildSemesterOptions = () => {
-  const opts: { value: string; label: string; start: string; end: string }[] = [];
-  const now = new Date();
-  let y = now.getFullYear();
-  let s = now.getMonth() < 6 ? 2 : 1;
-  if (s === 1) { y -= 1; s = 2; } else { s = 1; }
-  for (let i = 0; i < 4; i++) {
-    let sy = y;
-    let ss = s;
-    for (let j = 0; j < i; j++) {
-      ss -= 1;
-      if (ss <= 0) { ss = 2; sy -= 1; }
-    }
-    const sm = ss === 1 ? 1 : 7;
-    const em = ss === 1 ? 6 : 12;
-    const start = `${sy}-${String(sm).padStart(2, "0")}-01`;
-    const lastDay = new Date(sy, em, 0).getDate();
-    const end = `${sy}-${String(em).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
-    const label = ss === 1 ? `1er Sem ${sy}` : `2do Sem ${sy}`;
-    opts.push({ value: `${start}|${end}`, label, start, end });
-  }
-  return opts;
-};
-
-const buildYearOptions = () => {
-  const opts: { value: string; label: string; start: string; end: string }[] = [];
-  const now = new Date();
-  for (let i = 1; i <= 3; i++) {
-    const y = now.getFullYear() - i;
-    const start = `${y}-01-01`;
-    const end = `${y}-12-31`;
-    opts.push({ value: `${start}|${end}`, label: `${y}`, start, end });
-  }
-  return opts;
-};
 
 export type WithdrawalFeeInfo = {
   fee_amount: number;

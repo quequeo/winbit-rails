@@ -25,6 +25,25 @@ RSpec.describe TradingFeeCalculator do
     expect(result[:period_end]).to eq(Date.new(2025, 12, 31))
   end
 
+  it 'returns current quarter on the last day of the quarter (Q2 on 30 Jun)' do
+    make_history(event: 'OPERATING_RESULT', amount: 40, date: Time.zone.local(2026, 6, 15, 17, 0, 0))
+
+    calc = described_class.new(investor, reference_date: Date.new(2026, 6, 30))
+    result = calc.calculate
+
+    expect(result[:period_start]).to eq(Date.new(2026, 4, 1))
+    expect(result[:period_end]).to eq(Date.new(2026, 6, 30))
+    expect(result[:profit_amount]).to eq(40.0)
+  end
+
+  it 'returns previous quarter before the quarter last day' do
+    calc = described_class.new(investor, reference_date: Date.new(2026, 6, 29))
+    result = calc.calculate
+
+    expect(result[:period_start]).to eq(Date.new(2026, 1, 1))
+    expect(result[:period_end]).to eq(Date.new(2026, 3, 31))
+  end
+
   it 'sums OPERATING_RESULT within the calculated period (COMPLETED only)' do
     make_history(event: 'OPERATING_RESULT', amount: 10, date: Time.zone.local(2025, 10, 10, 12, 0, 0))
     make_history(event: 'OPERATING_RESULT', amount: 5, date: Time.zone.local(2025, 12, 31, 16, 0, 0))

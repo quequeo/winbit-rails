@@ -78,53 +78,61 @@ class TradingFeeCalculator
   end
 
   # MONTHLY: último mes calendario cerrado.
-  # Ej: si hoy es 21/01/2026 -> 01/12/2025..31/12/2025
-  def last_completed_month_start
-    (reference_date.beginning_of_month - 1.month).beginning_of_month.to_date
-  end
-
   def last_completed_month_end
+    current_month_end = reference_date.end_of_month.to_date
+    return current_month_end if reference_date.to_date >= current_month_end
+
     (reference_date.beginning_of_month - 1.day).to_date
   end
 
-  # QUARTERLY: último trimestre cerrado.
-  # Ej: si hoy es 21/01/2026 -> 01/10/2025..31/12/2025
-  def last_completed_quarter_start
-    (reference_date.beginning_of_quarter - 3.months).beginning_of_quarter.to_date
+  def last_completed_month_start
+    last_completed_month_end.beginning_of_month.to_date
   end
 
+  # QUARTERLY: último trimestre cerrado.
+  # Si reference_date es el último día del trimestre en curso (o posterior dentro del mismo trimestre),
+  # ese trimestre ya se considera cerrado (ej: 30/06 -> Q2 del año).
   def last_completed_quarter_end
+    current_quarter_end = reference_date.end_of_quarter.to_date
+    return current_quarter_end if reference_date.to_date >= current_quarter_end
+
     (reference_date.beginning_of_quarter - 1.day).to_date
   end
 
-  # SEMESTRAL: último semestre cerrado.
-  # Semestres: Ene-Jun y Jul-Dic.
-  # Ej: si hoy es 21/01/2026 -> 01/07/2025..31/12/2025
-  # Ej: si hoy es 15/08/2026 -> 01/01/2026..30/06/2026
-  def last_completed_semester_start
-    if reference_date.month <= 6
-      Date.new(reference_date.year - 1, 7, 1)
-    else
-      Date.new(reference_date.year, 1, 1)
-    end
+  def last_completed_quarter_start
+    last_completed_quarter_end.beginning_of_quarter.to_date
   end
 
+  # SEMESTRAL: último semestre cerrado (Ene-Jun / Jul-Dic).
   def last_completed_semester_end
-    if reference_date.month <= 6
-      Date.new(reference_date.year - 1, 12, 31)
+    h1_end = Date.new(reference_date.year, 6, 30)
+    h2_end = Date.new(reference_date.year, 12, 31)
+
+    return h2_end if reference_date.to_date >= h2_end
+    return h1_end if reference_date.to_date >= h1_end
+
+    Date.new(reference_date.year - 1, 12, 31)
+  end
+
+  def last_completed_semester_start
+    end_date = last_completed_semester_end
+    if end_date.month == 6
+      Date.new(end_date.year, 1, 1)
     else
-      Date.new(reference_date.year, 6, 30)
+      Date.new(end_date.year, 7, 1)
     end
   end
 
   # ANNUAL: último año calendario cerrado.
-  # Ej: si hoy es 21/01/2026 -> 01/01/2025..31/12/2025
-  def last_completed_year_start
-    Date.new(reference_date.year - 1, 1, 1)
+  def last_completed_year_end
+    current_year_end = Date.new(reference_date.year, 12, 31)
+    return current_year_end if reference_date.to_date >= current_year_end
+
+    Date.new(reference_date.year - 1, 12, 31)
   end
 
-  def last_completed_year_end
-    Date.new(reference_date.year - 1, 12, 31)
+  def last_completed_year_start
+    Date.new(last_completed_year_end.year, 1, 1)
   end
 
   def default_period_start

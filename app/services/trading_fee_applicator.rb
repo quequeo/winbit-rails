@@ -173,8 +173,13 @@ class TradingFeeApplicator
       previous_balance: portfolio.current_balance,
       new_balance: portfolio.current_balance - fee_amount,
       status: 'COMPLETED',
-      date: Time.current
+      date: trading_fee_event_date
     )
+  end
+
+  def trading_fee_event_date
+    closing = @period_end.in_time_zone.change(hour: 17, min: 0, sec: 0)
+    [closing, Time.current].min
   end
 
   def update_portfolio_balance

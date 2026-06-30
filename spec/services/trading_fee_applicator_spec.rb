@@ -33,7 +33,9 @@ RSpec.describe TradingFeeApplicator do
       period_end: end_date,
     )
 
-    expect(applicator.apply).to eq(true)
+    travel_to Time.zone.local(2026, 1, 15, 10, 0, 0) do
+      expect(applicator.apply).to eq(true)
+    end
 
     fee = TradingFee.find_by!(investor_id: investor.id, period_start: start_date, period_end: end_date)
     expect(fee.profit_amount.to_f).to eq(100.0)
@@ -46,6 +48,30 @@ RSpec.describe TradingFeeApplicator do
     last = PortfolioHistory.where(investor_id: investor.id, event: 'TRADING_FEE').order(date: :desc).first
     expect(last).to be_present
     expect(last.amount.to_f).to eq(-30.0)
+    expect(last.date).to eq(Time.zone.local(2025, 12, 31, 17, 0, 0))
+  end
+
+  it 'books trading fee on period end when applied after the period closes' do
+    start_date = Date.new(2026, 4, 1)
+    end_date = Date.new(2026, 6, 30)
+
+    add_history(event: 'DEPOSIT', amount: 1000, date: Time.zone.local(2026, 4, 1, 19, 0, 0), prev: 0, newb: 1000)
+    add_history(event: 'OPERATING_RESULT', amount: 100, date: Time.zone.local(2026, 6, 15, 17, 0, 0), prev: 1000, newb: 1100)
+
+    travel_to Time.zone.local(2026, 7, 1, 9, 0, 0) do
+      applicator = described_class.new(
+        investor,
+        fee_percentage: 30,
+        applied_by: admin,
+        period_start: start_date,
+        period_end: end_date,
+      )
+
+      expect(applicator.apply).to eq(true)
+
+      last = PortfolioHistory.where(investor_id: investor.id, event: 'TRADING_FEE').order(date: :desc).first
+      expect(last.date).to eq(Time.zone.local(2026, 6, 30, 17, 0, 0))
+    end
   end
 
   it 'fails when profit is <= 0' do
