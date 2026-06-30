@@ -112,6 +112,28 @@ RSpec.describe MonthlyReportBuilder do
       end
     end
 
+    it 'reports gross RDO M when CST was charged in the month' do
+      PortfolioHistory.create!(
+        investor: investor,
+        event: 'TRADING_FEE',
+        amount: -30,
+        previous_balance: 6750.04,
+        new_balance: 6720.04,
+        date: Time.zone.local(2026, 5, 28, 19, 0, 0),
+        status: 'COMPLETED',
+      )
+
+      travel_to Time.zone.local(2026, 5, 29, 12, 0, 0) do
+        report = described_class.new(investor: investor, report_month: Date.new(2026, 5, 1)).build
+        may_row = report[:annex_rows].find { |r| r[:month] == '2026-05' }
+
+        expect(may_row[:service_cost]).to eq(30.0)
+        expect(may_row[:return_usd]).to be_within(0.01).of(-116.25)
+        expect(may_row[:return_usd]).not_to be_within(0.01).of(-146.25)
+        expect(may_row[:return_percent]).to be_within(0.05).of(-1.79)
+      end
+    end
+
     it 'ignores genesis operating result lump in May return usd' do
       PortfolioHistory.delete_all
       PortfolioHistory.create!(

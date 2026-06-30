@@ -102,6 +102,51 @@ describe("monthlyReportExcel workbooks", () => {
     expect(anexo.A3?.v).toBeTruthy();
   });
 
+  it("TOTAL row sums gross RDO, CST and portfolio delta", () => {
+    const report: MonthlyReport = {
+      ...sampleReport,
+      summary: {
+        ...sampleReport.summary,
+        portfolioValueUsd: 7293,
+      },
+      annexRows: [
+        {
+          month: "2025-12",
+          label: "Dec-25",
+          returnPercent: null,
+          returnUsd: null,
+          deposits: 0,
+          withdrawals: 0,
+          serviceCost: 0,
+          portfolioValue: 6951,
+          openingSnapshot: true,
+          entryRow: false,
+          source: "spreadsheet",
+        },
+        {
+          month: "2026-06",
+          label: "Jun-26",
+          returnPercent: 1.6,
+          returnUsd: 117,
+          deposits: 0,
+          withdrawals: 0,
+          serviceCost: 49,
+          portfolioValue: 7293,
+          openingSnapshot: false,
+          entryRow: false,
+          source: "platform",
+        },
+      ],
+    };
+
+    const wb = buildMonthlyReportWorkbook(report);
+    const anexo = wb.Sheets.Anexo;
+
+    expect(anexo.C4?.v).toBe(117);
+    expect(anexo.F4?.v).toBe(49);
+    expect(anexo.G4?.v).toBe(342);
+  });
+
   it("builds all-investors workbook with stacked annex blocks", () => {
     const other: MonthlyReport = {
       ...sampleReport,

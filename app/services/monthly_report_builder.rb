@@ -106,20 +106,23 @@ class MonthlyReportBuilder
     end_value = portfolio_value_at(month_end)
     previous_close = previous_row&.dig(:portfolio_value).to_f
 
-    return_usd = (
+    net_return_usd = (
       bd(end_value) - bd(previous_close) - bd(flows[:deposits]) + bd(flows[:withdrawals])
-    ).round(2, :half_up).to_f
+    ).round(2, :half_up)
+
+    # RDO M $ / % = gross Winbit return; CST is shown separately in its own column.
+    gross_return_usd = (net_return_usd + bd(flows[:service_cost])).round(2, :half_up)
 
     return_percent = if previous_close.positive?
-                       ((return_usd / previous_close) * 100).round(2)
-    else
-                       0.0
-    end
+                       ((gross_return_usd / bd(previous_close)) * 100).round(2, :half_up)
+                     else
+                       BigDecimal('0')
+                     end
 
     serialize_row(
       month: month,
-      return_percent: return_percent,
-      return_usd: return_usd,
+      return_percent: return_percent.to_f,
+      return_usd: gross_return_usd.to_f,
       deposits: flows[:deposits],
       withdrawals: flows[:withdrawals],
       service_cost: flows[:service_cost],

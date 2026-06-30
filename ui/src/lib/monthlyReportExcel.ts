@@ -125,7 +125,6 @@ function appendAnnexBlock(
     ],
   ];
 
-  const ytdUsd = report.summary.accumulated2026Usd;
   const closingValue = report.summary.portfolioValueUsd;
 
   for (const annexRow of report.annexRows) {
@@ -157,14 +156,42 @@ function appendAnnexBlock(
     }
   }
 
+  const rowsForTotals = report.annexRows.filter(
+    (row) => !row.openingSnapshot && !row.entryRow,
+  );
+  const totalReturnUsd = rowsForTotals.reduce(
+    (acc, row) => acc + (row.returnUsd ?? 0),
+    0,
+  );
+  const totalDeposits = rowsForTotals.reduce(
+    (acc, row) => acc + (row.deposits ?? 0),
+    0,
+  );
+  const totalWithdrawals = rowsForTotals.reduce(
+    (acc, row) => acc + (row.withdrawals ?? 0),
+    0,
+  );
+  const totalCst = rowsForTotals.reduce(
+    (acc, row) => acc + (row.serviceCost ?? 0),
+    0,
+  );
+  const openingRow = report.annexRows.find(
+    (row) => row.openingSnapshot || row.entryRow,
+  );
+  const openingValue = openingRow?.portfolioValue ?? 0;
+  const portfolioDelta =
+    closingValue != null && Number.isFinite(closingValue)
+      ? closingValue - openingValue
+      : null;
+
   blockRows.push([
     "TOTAL",
     "",
-    cellValue(roundUsd(ytdUsd)),
-    0,
-    0,
-    0,
-    cellValue(roundUsd(closingValue)),
+    cellValue(roundUsd(totalReturnUsd)),
+    cellValue(roundUsd(totalDeposits)),
+    cellValue(roundUsd(totalWithdrawals)),
+    cellValue(roundUsd(totalCst)),
+    cellValue(roundUsd(portfolioDelta)),
   ]);
 
   XLSX.utils.sheet_add_aoa(ws, blockRows, { origin: { r: startRow, c: 0 } });
