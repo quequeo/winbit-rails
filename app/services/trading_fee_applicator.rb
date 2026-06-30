@@ -26,10 +26,7 @@ class TradingFeeApplicator
       validate_period_for_investor
       return false if errors.any?
 
-      @profit_amount = PortfolioHistory.where(investor_id: investor.id, event: 'OPERATING_RESULT', status: 'COMPLETED')
-                                     .where(date: @period_start.beginning_of_day..@period_end.end_of_day)
-                                     .sum(:amount)
-                                     .to_f
+      @profit_amount = vpcust_profit_amount
     else
       calculator = TradingFeeCalculator.new(investor)
       calculation = calculator.calculate
@@ -180,6 +177,18 @@ class TradingFeeApplicator
   def trading_fee_event_date
     closing = @period_end.in_time_zone.change(hour: 17, min: 0, sec: 0)
     [closing, Time.current].min
+  end
+
+  def vpcust_as_of
+    trading_fee_event_date
+  end
+
+  def vpcust_profit_amount
+    InvestorPendingProfit.fee_basis_snapshot(
+      investor: investor,
+      as_of: vpcust_as_of,
+      current_balance: investor.portfolio&.current_balance || 0
+    )[:profit_amount]
   end
 
   def update_portfolio_balance

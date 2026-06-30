@@ -34,6 +34,8 @@ export type InvestorSummary = {
   trading_fee_frequency?: Frequency;
   investor_trading_fee_percentage?: number;
   current_balance: number;
+  vpcust_usd?: number;
+  inflows_usd?: number;
   period_start: string;
   period_end: string;
   profit_amount: number;
@@ -353,10 +355,10 @@ export const TradingFeesPage = () => {
     const wf = inv.withdrawal_fee_in_period;
     return (
       <span
-        title={`Período recortado: se cobró ${formatCurrencyAR(wf.fee_amount)} por retiro el ${formatDate(wf.fee_date)}`}
+        title={`Fee por retiro en el período: ${formatCurrencyAR(wf.fee_amount)} el ${formatDate(wf.fee_date)}`}
         className="ml-1 inline-flex items-center rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-amber-800 align-middle cursor-help"
       >
-        Recortado
+        Retiro
       </span>
     );
   };
@@ -464,6 +466,31 @@ export const TradingFeesPage = () => {
                 </span>
               </div>
 
+              <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <div>
+                  <div className="text-[11px] font-medium uppercase tracking-wide text-t-dim">Cap. act.</div>
+                  <div className="mt-1 text-sm font-medium text-t-primary">{formatCurrencyAR(investor.current_balance)}</div>
+                </div>
+                <div>
+                  <div className="text-[11px] font-medium uppercase tracking-wide text-t-dim">VPCUST</div>
+                  <div className="mt-1 text-sm font-medium text-t-primary">{formatCurrencyAR(investor.vpcust_usd ?? 0)}</div>
+                </div>
+                <div>
+                  <div className="text-[11px] font-medium uppercase tracking-wide text-t-dim">Ingresos</div>
+                  <div className="mt-1 text-sm font-medium text-t-primary">{formatCurrencyAR(investor.inflows_usd ?? 0)}</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-[11px] font-medium uppercase tracking-wide text-t-dim">RENT</div>
+                  <div className="mt-1">
+                    {investor.has_profit ? (
+                      <span className="text-sm font-semibold text-success">{formatCurrencyAR(investor.profit_amount)}</span>
+                    ) : (
+                      <span className="text-sm text-t-dim">Sin rent</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
               <div className="mt-3 grid grid-cols-2 gap-3">
                 <div>
                   <div className="text-[11px] font-medium uppercase tracking-wide text-t-dim">Período</div>
@@ -476,17 +503,9 @@ export const TradingFeesPage = () => {
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-[11px] font-medium uppercase tracking-wide text-t-dim">Rendimientos</div>
-                  <div className="mt-1">
-                    {investor.has_profit ? (
-                      <span className="text-sm font-semibold text-success">{formatCurrencyAR(investor.profit_amount)}</span>
-                    ) : (
-                      <span className="text-sm text-t-dim">Sin ganancias</span>
-                    )}
-                  </div>
                   {Array.isArray(investor.monthly_profits) && investor.monthly_profits.length > 0 ? (
-                    <button type="button" className="mt-1 inline-flex items-center justify-end gap-1 text-xs text-t-dim hover:text-t-muted" onClick={() => setDetailModal(investor)}>
-                      <span>Detalle</span>
+                    <button type="button" className="inline-flex items-center justify-end gap-1 text-xs text-t-dim hover:text-t-muted" onClick={() => setDetailModal(investor)}>
+                      <span>Detalle operativa</span>
                       <svg aria-hidden viewBox="0 0 24 24" className="h-4 w-4 text-t-dim" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" />
                         <circle cx="12" cy="12" r="3" />
@@ -550,7 +569,10 @@ export const TradingFeesPage = () => {
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-t-muted">Inversor</th>
               <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-t-muted">Período</th>
-              <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-t-muted">Rendimientos</th>
+              <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-t-muted">Cap. act.</th>
+              <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-t-muted">VPCUST</th>
+              <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-t-muted">Ingresos</th>
+              <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-t-muted">RENT</th>
               <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider text-t-muted">%</th>
               <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-t-muted">Comisión</th>
               <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider text-t-muted">Acción</th>
@@ -584,12 +606,15 @@ export const TradingFeesPage = () => {
                       {formatDate(investor.period_start)} al {formatDate(investor.period_end)}
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-right text-sm">
+                  <td className="px-4 py-4 text-right text-sm text-t-primary">{formatCurrencyAR(investor.current_balance)}</td>
+                  <td className="px-4 py-4 text-right text-sm text-t-primary">{formatCurrencyAR(investor.vpcust_usd ?? 0)}</td>
+                  <td className="px-4 py-4 text-right text-sm text-t-primary">{formatCurrencyAR(investor.inflows_usd ?? 0)}</td>
+                  <td className="px-4 py-4 text-right text-sm">
                     <div className="flex flex-col items-end gap-1">
                       {investor.has_profit ? (
                         <span className="font-semibold text-success">{formatCurrencyAR(investor.profit_amount)}</span>
                       ) : (
-                        <span className="text-t-dim">Sin ganancias</span>
+                        <span className="text-t-dim">Sin rent</span>
                       )}
                       {Array.isArray(investor.monthly_profits) && investor.monthly_profits.length > 0 ? (
                         <button type="button" className="inline-flex items-center gap-1 text-xs text-t-dim hover:text-t-muted" onClick={() => setDetailModal(investor)}>
@@ -687,15 +712,27 @@ export const TradingFeesPage = () => {
                   </div>
                   {detailModal.period_clipped ? (
                     <p className="mt-2 text-xs text-amber-700">
-                      El período fue recortado porque ya se cobró comisión por retiro. Solo se muestran los rendimientos desde el {formatDate(detailModal.period_start)}.
+                      Hubo comisión por retiro en este período. RENT se calcula con VPCUST (desde el último cobro), no sumando operativas del trimestre.
                     </p>
                   ) : null}
                 </div>
               ) : null}
 
-              <div className="rounded-xl border border-b-default bg-dark-section p-4">
+              <div className="rounded-xl border border-b-default bg-dark-section p-4 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-t-muted">Total período</span>
+                  <span className="text-sm font-medium text-t-muted">Cap. act.</span>
+                  <span className="text-sm font-semibold text-t-primary">{formatCurrencyAR(detailModal.current_balance)}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-t-muted">VPCUST</span>
+                  <span className="text-sm font-semibold text-t-primary">{formatCurrencyAR(detailModal.vpcust_usd ?? 0)}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-t-muted">Ingresos</span>
+                  <span className="text-sm font-semibold text-t-primary">{formatCurrencyAR(detailModal.inflows_usd ?? 0)}</span>
+                </div>
+                <div className="flex items-center justify-between border-t border-b-default pt-2">
+                  <span className="text-sm font-medium text-t-muted">RENT</span>
                   <span className={(detailModal.profit_amount ?? 0) > 0 ? "text-sm font-semibold text-success" : (detailModal.profit_amount ?? 0) < 0 ? "text-sm font-semibold text-error" : "text-sm font-semibold text-t-muted"}>
                     {formatCurrencyAR(detailModal.profit_amount ?? 0)}
                   </span>

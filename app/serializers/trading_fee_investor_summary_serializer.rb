@@ -1,10 +1,12 @@
 class TradingFeeInvestorSummarySerializer
-  def initialize(investor:, period_start:, period_end:, profit_amount:, monthly_profits:, existing_fee:, canonical_period_start: nil, withdrawal_fee_info: nil)
+  def initialize(investor:, period_start:, period_end:, profit_amount:, monthly_profits:, existing_fee:, vpcust_usd: nil, inflows_usd: nil, canonical_period_start: nil, withdrawal_fee_info: nil)
     @investor = investor
     @period_start = period_start
     @period_end = period_end
     @canonical_period_start = canonical_period_start
     @profit_amount = profit_amount
+    @vpcust_usd = vpcust_usd
+    @inflows_usd = inflows_usd
     @monthly_profits = monthly_profits
     @existing_fee = existing_fee
     @withdrawal_fee_info = withdrawal_fee_info
@@ -18,6 +20,8 @@ class TradingFeeInvestorSummarySerializer
       trading_fee_frequency: investor.trading_fee_frequency,
       investor_trading_fee_percentage: investor.trading_fee_percentage.to_f,
       current_balance: investor.portfolio&.current_balance || 0,
+      vpcust_usd: vpcust_usd,
+      inflows_usd: inflows_usd,
       period_start: period_start,
       period_end: period_end,
       profit_amount: profit_amount,
@@ -29,8 +33,7 @@ class TradingFeeInvestorSummarySerializer
       monthly_profits: monthly_profits
     }
 
-    result[:period_clipped] = canonical_period_start.present? &&
-                               period_start.to_date != canonical_period_start.to_date
+    result[:period_clipped] = withdrawal_fee_info.present?
 
     if withdrawal_fee_info.present?
       result[:withdrawal_fee_in_period] = withdrawal_fee_info
@@ -41,5 +44,5 @@ class TradingFeeInvestorSummarySerializer
 
   private
 
-  attr_reader :investor, :period_start, :period_end, :canonical_period_start, :profit_amount, :monthly_profits, :existing_fee, :withdrawal_fee_info
+  attr_reader :investor, :period_start, :period_end, :canonical_period_start, :profit_amount, :vpcust_usd, :inflows_usd, :monthly_profits, :existing_fee, :withdrawal_fee_info
 end

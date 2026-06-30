@@ -27,6 +27,20 @@ RSpec.describe 'Admin Trading Fees API', type: :request do
       status: status,
       date: date,
     )
+
+    inv.portfolio.update!(current_balance: newb) if newb
+
+    if event == 'DEPOSIT' && status == 'COMPLETED'
+      InvestorRequest.create!(
+        investor: inv,
+        request_type: 'DEPOSIT',
+        amount: amount,
+        method: 'USDT',
+        status: 'APPROVED',
+        requested_at: date,
+        processed_at: date
+      )
+    end
   end
 
   describe 'GET /api/admin/trading_fees' do
@@ -521,7 +535,7 @@ RSpec.describe 'Admin Trading Fees API', type: :request do
       expect(json['period_end']).to be_present
     end
 
-    it 'accepts clipped period when MONTHLY investor has withdrawal fee' do
+    it 'accepts clipped period when MONTHLY investor has withdrawal fee (profit via Vpcust)' do
       inv = create_investor_with_portfolio(email: 'inv_clipped_calc@test.com')
       inv.update!(trading_fee_frequency: 'MONTHLY')
       inv.portfolio.update!(current_balance: 1050, total_invested: 1000)
@@ -561,6 +575,8 @@ RSpec.describe 'Admin Trading Fees API', type: :request do
       expect(response).to have_http_status(:ok)
       json = JSON.parse(response.body)
       expect(json['profit_amount']).to eq(50.0)
+      expect(json['vpcust_usd']).to eq(0.0)
+      expect(json['inflows_usd']).to eq(1000.0)
       expect(json['period_start']).to eq('2025-02-16')
       expect(json['period_end']).to eq('2025-02-28')
     end
@@ -850,7 +866,7 @@ RSpec.describe 'Admin Trading Fees API', type: :request do
       expect(ids).not_to include(quarterly_inv.id)
     end
 
-    it 'returns withdrawal_fee_in_period and period_clipped when period was clipped' do
+    it 'returns withdrawal_fee_in_period when fee por retiro exists in period' do
       inv = create_investor_with_portfolio(email: 'clipped@test.com')
       inv.update!(trading_fee_frequency: 'MONTHLY')
       inv.portfolio.update!(current_balance: 1500, total_invested: 1000)
@@ -890,7 +906,7 @@ RSpec.describe 'Admin Trading Fees API', type: :request do
       row = json.find { |r| r['investor_id'] == inv.id }
       expect(row).to be_present
       expect(row['period_clipped']).to eq(true)
-      expect(row['period_start']).to eq('2025-02-16')
+      expect(row['period_start']).to eq('2025-02-01')
       expect(row['period_end']).to eq('2025-02-28')
 
       wf = row['withdrawal_fee_in_period']

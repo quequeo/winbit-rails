@@ -7,8 +7,11 @@ class TradingFeeCalculator
   end
 
   def calculate
+    basis = fee_basis
     {
-      profit_amount: profit_amount,
+      profit_amount: basis[:profit_amount],
+      vpcust_usd: basis[:vpcust_usd],
+      inflows_usd: basis[:inflows_usd],
       period_start: period_start,
       period_end: period_end
     }
@@ -160,20 +163,16 @@ class TradingFeeCalculator
   end
 
   def effective_period_start
-    @effective_period_start ||= self.class.adjust_period_for_withdrawal_fees(
-      investor, default_period_start, default_period_end
-    ).first
+    @effective_period_start ||= default_period_start
   end
 
   def effective_period_end
-    @effective_period_end ||= self.class.adjust_period_for_withdrawal_fees(
-      investor, default_period_start, default_period_end
-    ).last
+    @effective_period_end ||= default_period_end
   end
 
   # Para mostrar el período en UI:
   # - si ya existe un fee que solapa con el período efectivo, mostramos ese
-  # - si no, mostramos el período efectivo (ajustado por fees por retiro)
+  # - si no, mostramos el período calendario cerrado
   def period_start
     @period_start ||= begin
       fee = last_periodic_fee_overlapping(effective_period_start, effective_period_end)
@@ -188,19 +187,16 @@ class TradingFeeCalculator
     end
   end
 
+  def fee_basis
+    @fee_basis ||= InvestorPendingProfit.fee_basis_snapshot(
+      investor: investor,
+      as_of: Time.current,
+      current_balance: investor.portfolio&.current_balance || 0
+    )
+  end
+
   def profit_amount
-    @profit_amount ||= begin
-      return 0.0 if effective_period_start >= effective_period_end
-
-      range = effective_period_start.beginning_of_day..effective_period_end.end_of_day
-
-      PortfolioHistory.where(investor_id: investor.id)
-                     .where(event: 'OPERATING_RESULT')
-                     .where(status: 'COMPLETED')
-                     .where(date: range)
-                     .sum(:amount)
-                     .to_f
-    end
+    fee_basis[:profit_amount]
   end
 
   def last_periodic_fee_overlapping(start_date, end_date)

@@ -15,6 +15,20 @@ RSpec.describe TradingFeeApplicator do
       status: 'COMPLETED',
       date: date,
     )
+
+    portfolio.update!(current_balance: newb)
+
+    if event == 'DEPOSIT'
+      InvestorRequest.create!(
+        investor: investor,
+        request_type: 'DEPOSIT',
+        amount: amount,
+        method: 'USDT',
+        status: 'APPROVED',
+        requested_at: date,
+        processed_at: date
+      )
+    end
   end
 
   it 'applies trading fee for an overridden period and updates portfolio + creates history' do
@@ -75,6 +89,8 @@ RSpec.describe TradingFeeApplicator do
   end
 
   it 'fails when profit is <= 0' do
+    portfolio.update!(current_balance: 0)
+
     applicator = described_class.new(
       investor,
       fee_percentage: 30,

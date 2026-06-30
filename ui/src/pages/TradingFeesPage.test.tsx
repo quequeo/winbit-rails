@@ -578,7 +578,7 @@ describe("TradingFeesPage", () => {
 
     expect(screen.getAllByText("Semestral").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Mensual").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Sin ganancias").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Sin rent").length).toBeGreaterThan(0);
     expect(screen.getAllByText("No corresponde").length).toBeGreaterThan(0);
     expect(screen.queryAllByRole("button", { name: /Detalle/i }).length).toBe(
       0,
@@ -751,7 +751,7 @@ describe("TradingFeesPage", () => {
       expect(screen.getAllByText("Investor Clipped").length).toBeGreaterThan(0);
     });
 
-    expect(screen.getAllByText("Recortado").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Retiro").length).toBeGreaterThan(0);
 
     await user.click(screen.getAllByRole("button", { name: /Detalle/i })[0]);
     await waitFor(() =>
@@ -759,7 +759,7 @@ describe("TradingFeesPage", () => {
     );
 
     expect(screen.getByText("Fee por retiro cobrado en el período")).toBeInTheDocument();
-    expect(screen.getByText(/recortado porque ya se cobró/)).toBeInTheDocument();
+    expect(screen.getByText(/Hubo comisión por retiro en este período/)).toBeInTheDocument();
   });
 
   it("uses desktop delete action with applied fee id and shows zero total in detail modal", async () => {

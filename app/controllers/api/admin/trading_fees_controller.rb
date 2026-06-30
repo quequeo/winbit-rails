@@ -35,16 +35,18 @@ module Api
           ok = validate_period_for_investor!(@investor, start_date, end_date)
           return unless ok
 
-          adj_start, adj_end = TradingFeeCalculator.adjust_period_for_withdrawal_fees(@investor, start_date, end_date)
-          profit_amount = profits_for(@investor, adj_start, adj_end)
-          existing_fee = overlapping_periodic_fee(@investor, adj_start, adj_end)
+          basis = fee_basis_for(@investor, period_end: end_date)
+          profit_amount = basis[:profit_amount]
+          existing_fee = overlapping_periodic_fee(@investor, start_date, end_date)
 
           if existing_fee
             render json: {
               error: 'Trading fee ya aplicado para este período',
-              period_start: adj_start,
-              period_end: adj_end,
+              period_start: start_date,
+              period_end: end_date,
               profit_amount: profit_amount,
+              vpcust_usd: basis[:vpcust_usd],
+              inflows_usd: basis[:inflows_usd],
               fee_percentage: existing_fee.fee_percentage,
               fee_amount: existing_fee.fee_amount,
               already_applied: true
@@ -52,12 +54,14 @@ module Api
             return
           end
 
-          if profit_amount <= 0 || adj_start >= adj_end
+          if profit_amount <= 0
             render json: {
               error: 'No hay ganancias en el período',
-              period_start: adj_start,
-              period_end: adj_end,
-              profit_amount: 0
+              period_start: start_date,
+              period_end: end_date,
+              profit_amount: 0,
+              vpcust_usd: basis[:vpcust_usd],
+              inflows_usd: basis[:inflows_usd]
             }, status: :unprocessable_content
             return
           end
@@ -68,9 +72,11 @@ module Api
           render json: {
             investor_id: @investor.id,
             investor_name: @investor.name,
-            period_start: adj_start,
-            period_end: adj_end,
+            period_start: start_date,
+            period_end: end_date,
             profit_amount: profit_amount,
+            vpcust_usd: basis[:vpcust_usd],
+            inflows_usd: basis[:inflows_usd],
             fee_percentage: fee_percentage,
             fee_amount: fee_amount,
             current_balance: @investor.portfolio.current_balance,
@@ -117,6 +123,8 @@ module Api
           period_start: result[:period_start],
           period_end: result[:period_end],
           profit_amount: result[:profit_amount],
+          vpcust_usd: result[:vpcust_usd],
+          inflows_usd: result[:inflows_usd],
           fee_percentage: fee_percentage,
           fee_amount: fee_amount,
           current_balance: @investor.portfolio.current_balance,
@@ -144,8 +152,7 @@ module Api
           ok = validate_period_for_investor!(@investor, start_date, end_date)
           return unless ok
 
-          adj_start, adj_end = TradingFeeCalculator.adjust_period_for_withdrawal_fees(@investor, start_date, end_date)
-          if overlapping_periodic_fee(@investor, adj_start, adj_end)
+          if overlapping_periodic_fee(@investor, start_date, end_date)
             render_error('Trading fee ya aplicado para este período', status: :conflict)
             return
           end
@@ -155,12 +162,12 @@ module Api
             fee_percentage: fee_percentage,
             applied_by: current_user,
             notes: params[:notes],
-            period_start: adj_start,
-            period_end: adj_end
+            period_start: start_date,
+            period_end: end_date
           )
 
           if applicator.apply
-            fee = TradingFee.where(investor_id: @investor.id, period_start: adj_start, period_end: adj_end).order(applied_at: :desc).first
+            fee = TradingFee.where(investor_id: @investor.id, period_start: start_date, period_end: end_date).order(applied_at: :desc).first
 
             ActivityLogger.log(
               user: current_user,
@@ -349,19 +356,20 @@ module Api
 
         summary = investors.map do |investor|
           if start_date && end_date
-            adj_start, adj_end = TradingFeeCalculator.adjust_period_for_withdrawal_fees(investor, start_date, end_date)
-            profit_amount = profits_for(investor, adj_start, adj_end)
-            existing_fee = overlapping_periodic_fee(investor, adj_start, adj_end)
+            basis = fee_basis_for(investor, period_end: end_date)
+            existing_fee = overlapping_periodic_fee(investor, start_date, end_date)
             existing_fee = nil if existing_fee.present? && !fee_backed_by_history?(existing_fee)
             withdrawal_fee_info = withdrawal_fee_in_period(investor, start_date, end_date)
 
             TradingFeeInvestorSummarySerializer.new(
               investor: investor,
-              period_start: adj_start,
-              period_end: adj_end,
+              period_start: start_date,
+              period_end: end_date,
               canonical_period_start: start_date.to_date,
-              profit_amount: profit_amount,
-              monthly_profits: monthly_breakdown_for(investor, adj_start, adj_end),
+              profit_amount: basis[:profit_amount],
+              vpcust_usd: basis[:vpcust_usd],
+              inflows_usd: basis[:inflows_usd],
+              monthly_profits: monthly_breakdown_for(investor, start_date, end_date),
               existing_fee: existing_fee,
               withdrawal_fee_info: withdrawal_fee_info
             ).as_json
@@ -376,17 +384,18 @@ module Api
             )
             existing_fee = nil if existing_fee.present? && !fee_backed_by_history?(existing_fee)
 
-            canonical_start = TradingFeeCalculator.new(investor).send(:default_period_start)
-            default_start = canonical_start
-            default_end = TradingFeeCalculator.new(investor).send(:default_period_end)
+            default_start = result[:period_start]
+            default_end = result[:period_end]
             withdrawal_fee_info = withdrawal_fee_in_period(investor, default_start, default_end)
 
             TradingFeeInvestorSummarySerializer.new(
               investor: investor,
               period_start: result[:period_start],
               period_end: result[:period_end],
-              canonical_period_start: canonical_start,
+              canonical_period_start: default_start,
               profit_amount: result[:profit_amount],
+              vpcust_usd: result[:vpcust_usd],
+              inflows_usd: result[:inflows_usd],
               monthly_profits: monthly_breakdown_for(investor, result[:period_start], result[:period_end]),
               existing_fee: existing_fee,
               withdrawal_fee_info: withdrawal_fee_info
@@ -522,16 +531,21 @@ module Api
         (deposits - withdrawals).round(2)
       end
 
-      def profits_for(investor, start_date, end_date)
-        return 0.0 if start_date.blank? || end_date.blank? || start_date >= end_date
+      def fee_basis_for(investor, period_end: nil)
+        as_of = vpcust_as_of_for(period_end)
 
-        range = start_date.to_date.beginning_of_day..end_date.to_date.end_of_day
+        InvestorPendingProfit.fee_basis_snapshot(
+          investor: investor,
+          as_of: as_of,
+          current_balance: investor.portfolio&.current_balance || 0
+        )
+      end
 
-        PortfolioHistory.where(investor_id: investor.id)
-                       .where(event: 'OPERATING_RESULT', status: 'COMPLETED')
-                       .where(date: range)
-                       .sum(:amount)
-                       .to_f
+      def vpcust_as_of_for(period_end)
+        return Time.current if period_end.blank?
+
+        closing = period_end.to_date.in_time_zone.change(hour: 17, min: 0, sec: 0)
+        [closing, Time.current].min
       end
 
       def overlapping_periodic_fee(investor, start_date, end_date)

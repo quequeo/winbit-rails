@@ -16,6 +16,23 @@ class InvestorPendingProfit
     { vpcust: vpcust, reset_at: reset_at }
   end
 
+  # Vpcust basis for periodic trading fees: CAP ACT − VPCUST − INGRESOS = RENT.
+  def self.fee_basis_snapshot(investor:, as_of: nil, current_balance: nil)
+    as_of ||= Time.current
+    balance = BigDecimal((current_balance || investor.portfolio&.current_balance || 0).to_s)
+    instance = new(investor: investor, as_of: as_of, current_balance: balance)
+    vpcust, reset_at = instance.send(:effective_reset)
+    inflows = instance.send(:inflows_since, reset_at)
+    rent = instance.compute_pending
+
+    {
+      current_balance: balance.to_f,
+      vpcust_usd: vpcust.to_f,
+      inflows_usd: inflows.to_f,
+      profit_amount: rent.to_f
+    }
+  end
+
   def initialize(investor:, as_of:, current_balance:)
     @investor = investor
     @as_of = as_of
