@@ -57,20 +57,7 @@ namespace :boero do
     old_amount = BigDecimal(dep.amount.to_s)
     delta = target - old_amount
 
-    puts "Update InvestorRequest #{dep.id}: #{old_amount} -> #{target} (delta #{delta})"
-
-    history = PortfolioHistory.where(investor_id: inv.id, event: 'DEPOSIT', status: 'COMPLETED')
-                              .where('date >= ? AND date <= ?', dep.processed_at - 1.day, dep.processed_at + 1.day)
-                              .order(date: :desc)
-                              .first
-
-    if history
-      puts "Update PortfolioHistory #{history.id}: amount #{history.amount} -> #{target}, new_balance +#{delta}"
-    else
-      puts 'No matching DEPOSIT PortfolioHistory found (request only)'
-    end
-
-    puts "Update portfolio balance #{portfolio.current_balance} -> #{portfolio.current_balance.to_d + delta}"
+    puts "Update InvestorRequest #{dep.id}: #{old_amount} -> #{target} (inflows only; balance unchanged)"
 
     if ENV['DRY_RUN'].to_s == '1'
       puts 'DRY_RUN=1 — no changes written'
@@ -79,14 +66,50 @@ namespace :boero do
 
     ApplicationRecord.transaction do
       dep.update!(amount: target.to_f)
+    end
 
+    basis = InvestorPendingProfit.fee_basis_snapshot(
+      investor: inv.reload,
+      as_of: Time.current,
+      current_balance: inv.portfolio.current_balance
+    )
+    puts "Done. basis=#{basis.inspect}"
+  end
+
+  desc 'Revert mistaken +200 on Boero balance/history; keep InvestorRequest inflows at 400'
+  task revert_balance_inflation: :environment do
+    inv = Investor.find_by!(email: 'proveedores@harasdelsurcollege.com')
+    portfolio = inv.portfolio
+    target_balance = BigDecimal('1657.81')
+
+    dep = InvestorRequest.find_by!(
+      investor_id: inv.id,
+      request_type: 'DEPOSIT',
+      status: 'APPROVED',
+      amount: 400
+    )
+
+    history = PortfolioHistory.where(investor_id: inv.id, event: 'DEPOSIT', status: 'COMPLETED')
+                              .where('date >= ? AND date <= ?', dep.processed_at - 1.day, dep.processed_at + 1.day)
+                              .order(date: :desc)
+                              .first
+
+    puts "current balance=#{portfolio.current_balance} target=#{target_balance}"
+    puts "history=#{history&.id} amount=#{history&.amount} new_balance=#{history&.new_balance}"
+
+    if ENV['DRY_RUN'].to_s == '1'
+      puts 'DRY_RUN=1 — no changes written'
+      next
+    end
+
+    ApplicationRecord.transaction do
       if history
-        new_balance = BigDecimal(history.new_balance.to_s) + delta
-        previous_balance = BigDecimal(history.previous_balance.to_s)
-        history.update!(amount: target.to_f, new_balance: new_balance.to_f)
+        history.update!(
+          amount: 200.0,
+          new_balance: BigDecimal(history.new_balance.to_s) - BigDecimal('200')
+        )
       end
-
-      portfolio.update!(current_balance: portfolio.current_balance.to_d + delta)
+      portfolio.update!(current_balance: target_balance.to_f)
     end
 
     basis = InvestorPendingProfit.fee_basis_snapshot(
