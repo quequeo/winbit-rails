@@ -129,6 +129,7 @@ module Requests
       begin
         if req.request_type == 'DEPOSIT'
           InvestorMailer.deposit_approved(req.investor, req).deliver_later
+          AdminMailer.deposit_approved_notification(req).deliver_later
         elsif req.request_type == 'WITHDRAWAL'
           InvestorMailer.withdrawal_approved(req.investor, req, withdrawal_fee).deliver_later
           AdminMailer.withdrawal_approved_notification(req, withdrawal_fee).deliver_later

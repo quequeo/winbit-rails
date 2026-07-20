@@ -40,6 +40,22 @@ class AdminMailer < ApplicationMailer
     )
   end
 
+  # Email cuando se aprueba un depósito.
+  def deposit_approved_notification(request)
+    @request = request
+    @investor = request.investor
+    @amount = format_currency(request.amount)
+    @amount_label = request_amount_label(request)
+    @method_label = method_label(request)
+    @new_balance_usdt = format_usdt_amount(@investor.portfolio&.current_balance || 0)
+    @review_url = backoffice_url('/requests')
+
+    mail(
+      to: operations_inbox,
+      subject: "Depósito aprobado de #{@investor.name} - #{@amount}"
+    )
+  end
+
   # Email cuando se aprueba un retiro y se aplica fee por retiro.
   def withdrawal_approved_notification(request, withdrawal_fee = nil)
     @request = request

@@ -103,6 +103,35 @@ RSpec.describe AdminMailer, type: :mailer do
     end
   end
 
+  describe '#deposit_approved_notification' do
+    before { portfolio.update!(current_balance: 11000) }
+
+    let(:approved_deposit) do
+      InvestorRequest.create!(
+        investor: investor,
+        request_type: 'DEPOSIT',
+        amount: 1000,
+        method: 'USDT',
+        network: 'TRC20',
+        status: 'APPROVED',
+        requested_at: Time.current,
+        processed_at: Time.current
+      )
+    end
+    let(:mail) { described_class.deposit_approved_notification(approved_deposit) }
+
+    it 'renders the headers' do
+      expect(mail.subject).to match('Depósito aprobado de John Doe')
+      expect(mail.to).to eq(['winbit.cfds@gmail.com'])
+    end
+
+    it 'renders the body with deposit details' do
+      expect(mail.body.encoded).to match('John Doe')
+      expect(mail.body.encoded).to match('USDT')
+      expect(mail.body.encoded).to match('11.000,00 USDT')
+    end
+  end
+
   describe '#withdrawal_approved_notification' do
     let(:approved_withdrawal) do
       InvestorRequest.create!(
