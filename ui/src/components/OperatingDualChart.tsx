@@ -29,7 +29,6 @@ export const OperatingDualChart = ({
   series: OperatingChartPoint[];
 }) => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
 
   const width = 900;
   const height = 280;
@@ -93,7 +92,6 @@ export const OperatingDualChart = ({
 
     if (!closest) return;
     setHoveredIndex(closest.index);
-    setTooltipPosition({ x: e.clientX + 12, y: e.clientY - 12 });
   };
 
   if (series.length < 1) {
@@ -105,6 +103,12 @@ export const OperatingDualChart = ({
   }
 
   const hovered = hoveredIndex === null ? null : bars[hoveredIndex];
+  const tooltipLeftPct = hovered
+    ? ((hovered.x + barWidth / 2) / width) * 100
+    : 0;
+  const tooltipTopPct = hovered
+    ? Math.max(4, ((hovered.y - 8) / height) * 100)
+    : 0;
 
   return (
     <div className="relative w-full">
@@ -119,79 +123,84 @@ export const OperatingDualChart = ({
         </span>
       </div>
 
-      <svg
-        viewBox={`0 0 ${width} ${height}`}
-        className="h-72 w-full"
-        role="img"
-        aria-label="Resultado diario de operativa en columnas USD"
-        preserveAspectRatio="none"
-        onMouseMove={handleMouseMove}
-        onMouseLeave={() => setHoveredIndex(null)}
-      >
-        {usdTicks.map((value) => {
-          const y =
-            padY + (1 - (value - minUsd) / usdRange) * (height - padY * 2);
-          return (
-            <g key={`usd-${value}`}>
-              <line
-                x1={padX}
-                y1={y}
-                x2={width - padRight}
-                y2={y}
-                stroke="rgba(255,255,255,0.08)"
-                strokeWidth="1"
-              />
-              <text x={6} y={y + 3} fontSize="10" fill="#888888">
-                {formatUsdTick(value)}
-              </text>
-            </g>
-          );
-        })}
-
-        <line
-          x1={padX}
-          y1={zeroY}
-          x2={width - padRight}
-          y2={zeroY}
-          stroke="rgba(255,255,255,0.25)"
-          strokeWidth="1"
-        />
-
-        {bars.map((bar) => {
-          const positive = bar.amountUsd >= 0;
-          const isHovered = hoveredIndex === bar.index;
-          return (
-            <rect
-              key={bar.date}
-              x={bar.x}
-              y={bar.y}
-              width={barWidth}
-              height={bar.height}
-              rx={1.5}
-              fill={positive ? "#9dd4cb" : "#d48080"}
-              opacity={isHovered ? 1 : 0.85}
-            />
-          );
-        })}
-      </svg>
-
-      {hovered ? (
-        <div
-          className="fixed z-50 rounded-lg bg-gray-900 px-3 py-2 text-xs text-white shadow-lg pointer-events-none"
-          style={{ left: tooltipPosition.x, top: tooltipPosition.y }}
+      <div className="relative w-full">
+        <svg
+          viewBox={`0 0 ${width} ${height}`}
+          className="h-72 w-full"
+          role="img"
+          aria-label="Resultado diario de operativa en columnas USD"
+          preserveAspectRatio="none"
+          onMouseMove={handleMouseMove}
+          onMouseLeave={() => setHoveredIndex(null)}
         >
-          <div className="font-semibold">
-            {formatDateAR(hovered.date, { time: false })}
+          {usdTicks.map((value) => {
+            const y =
+              padY + (1 - (value - minUsd) / usdRange) * (height - padY * 2);
+            return (
+              <g key={`usd-${value}`}>
+                <line
+                  x1={padX}
+                  y1={y}
+                  x2={width - padRight}
+                  y2={y}
+                  stroke="rgba(255,255,255,0.08)"
+                  strokeWidth="1"
+                />
+                <text x={6} y={y + 3} fontSize="10" fill="#888888">
+                  {formatUsdTick(value)}
+                </text>
+              </g>
+            );
+          })}
+
+          <line
+            x1={padX}
+            y1={zeroY}
+            x2={width - padRight}
+            y2={zeroY}
+            stroke="rgba(255,255,255,0.25)"
+            strokeWidth="1"
+          />
+
+          {bars.map((bar) => {
+            const positive = bar.amountUsd >= 0;
+            const isHovered = hoveredIndex === bar.index;
+            return (
+              <rect
+                key={bar.date}
+                x={bar.x}
+                y={bar.y}
+                width={barWidth}
+                height={bar.height}
+                rx={1.5}
+                fill={positive ? "#9dd4cb" : "#d48080"}
+                opacity={isHovered ? 1 : 0.85}
+              />
+            );
+          })}
+        </svg>
+
+        {hovered ? (
+          <div
+            className="pointer-events-none absolute z-20 -translate-x-1/2 -translate-y-full rounded-lg bg-gray-900 px-3 py-2 text-xs text-white shadow-lg"
+            style={{
+              left: `${tooltipLeftPct}%`,
+              top: `${tooltipTopPct}%`,
+            }}
+          >
+            <div className="font-semibold">
+              {formatDateAR(hovered.date, { time: false })}
+            </div>
+            <div className="mt-1 text-primary">
+              {formatCurrencyAR(hovered.amountUsd)}
+            </div>
+            <div className="text-warning">
+              {hovered.percent >= 0 ? "+" : ""}
+              {formatNumberAR(hovered.percent)}%
+            </div>
           </div>
-          <div className="mt-1 text-primary">
-            {formatCurrencyAR(hovered.amountUsd)}
-          </div>
-          <div className="text-warning">
-            {hovered.percent >= 0 ? "+" : ""}
-            {formatNumberAR(hovered.percent)}%
-          </div>
-        </div>
-      ) : null}
+        ) : null}
+      </div>
 
       <div className="mt-2 flex items-center justify-between text-xs text-t-dim">
         <span>{formatDateAR(series[0]?.date || "", { time: false })}</span>

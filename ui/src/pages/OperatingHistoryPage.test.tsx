@@ -10,6 +10,7 @@ vi.mock("../lib/api", () => ({
     getDailyOperatingMonthlySummary: vi.fn(),
     getDailyOperatingByMonth: vi.fn(),
     getDailyOperatingSeries: vi.fn(),
+    getStrategyOperations: vi.fn(),
   },
 }));
 
@@ -20,6 +21,7 @@ vi.mock("../lib/exportOperatingToExcel", () => ({
 describe("OperatingHistoryPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(api.getStrategyOperations).mockResolvedValue({ data: [] });
   });
 
   it("loads monthly summary and daily history", async () => {
@@ -284,13 +286,13 @@ describe("OperatingHistoryPage", () => {
     render(<OperatingHistoryPage />);
 
     await waitFor(() =>
-      expect(screen.getByLabelText("Desde")).toBeInTheDocument(),
+      expect(document.getElementById("export-from")).toBeInTheDocument(),
     );
 
-    fireEvent.change(screen.getByLabelText("Desde"), {
+    fireEvent.change(document.getElementById("export-from") as HTMLInputElement, {
       target: { value: "2026-03-01" },
     });
-    fireEvent.change(screen.getByLabelText("Hasta"), {
+    fireEvent.change(document.getElementById("export-to") as HTMLInputElement, {
       target: { value: "2026-03-31" },
     });
     await user.click(screen.getByRole("button", { name: "Descargar Excel" }));
@@ -311,6 +313,65 @@ describe("OperatingHistoryPage", () => {
         ],
         "2026-03-01_2026-03-31",
       );
+    });
+  });
+
+  it("filters chart range and shows strategy result counts", async () => {
+    const user = userEvent.setup();
+    const { fireEvent } = await import("@testing-library/react");
+
+    vi.mocked(api.getDailyOperatingResults).mockResolvedValue({
+      data: [],
+      meta: { page: 1, per_page: 10, total: 0, total_pages: 1 },
+    } as never);
+    vi.mocked(api.getDailyOperatingMonthlySummary).mockResolvedValue({
+      data: [],
+    } as never);
+    vi.mocked(api.getDailyOperatingSeries)
+      .mockResolvedValueOnce({ data: [] })
+      .mockResolvedValueOnce({
+        data: [{ date: "2026-07-01", percent: 0.2, amount_usd: 50 }],
+      });
+    vi.mocked(api.getStrategyOperations)
+      .mockResolvedValueOnce({ data: [] })
+      .mockResolvedValueOnce({
+        data: [
+          { resultLabel: "POSITIVO" },
+          { resultLabel: "NEGATIVO" },
+          { resultLabel: "BE+" },
+          { resultLabel: "BE-" },
+          { resultLabel: "BE-" },
+        ],
+      });
+
+    render(<OperatingHistoryPage />);
+
+    await waitFor(() =>
+      expect(screen.getByText("Evolución diaria")).toBeInTheDocument(),
+    );
+
+    fireEvent.change(document.getElementById("chart-from") as HTMLInputElement, {
+      target: { value: "2026-07-01" },
+    });
+    fireEvent.change(document.getElementById("chart-to") as HTMLInputElement, {
+      target: { value: "2026-07-31" },
+    });
+    await user.click(screen.getByRole("button", { name: "Aplicar" }));
+
+    await waitFor(() => {
+      expect(api.getDailyOperatingSeries).toHaveBeenCalledWith({
+        from: "2026-07-01",
+        to: "2026-07-31",
+      });
+      expect(api.getStrategyOperations).toHaveBeenCalledWith({
+        from: "2026-07-01",
+        to: "2026-07-31",
+        per_page: 200,
+      });
+      expect(screen.getByText("Positivos").parentElement).toHaveTextContent("1");
+      expect(screen.getByText("Negativos").parentElement).toHaveTextContent("1");
+      expect(screen.getByText("BE+").parentElement).toHaveTextContent("1");
+      expect(screen.getByText("BE-").parentElement).toHaveTextContent("2");
     });
   });
 });

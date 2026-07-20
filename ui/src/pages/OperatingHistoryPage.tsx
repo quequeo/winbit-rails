@@ -7,6 +7,10 @@ import {
   type OperatingChartPoint,
 } from "../components/OperatingDualChart";
 import { exportOperatingToExcel } from "../lib/exportOperatingToExcel";
+import {
+  countStrategyResults,
+  type StrategyResultCounts,
+} from "../lib/strategyOperationTone";
 
 type HistoryRow = {
   id: string;
@@ -90,6 +94,13 @@ export const OperatingHistoryPage = () => {
   const [monthlyOffset, setMonthlyOffset] = useState(0);
   const [monthsWindow, setMonthsWindow] = useState(3);
   const [chartSeries, setChartSeries] = useState<OperatingChartPoint[]>([]);
+  const [resultCounts, setResultCounts] = useState<StrategyResultCounts>({
+    positive: 0,
+    negative: 0,
+    bePlus: 0,
+    beMinus: 0,
+  });
+  const [loadingChart, setLoadingChart] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [loadingMonthly, setLoadingMonthly] = useState(false);
@@ -100,6 +111,14 @@ export const OperatingHistoryPage = () => {
     return d.toISOString().slice(0, 10);
   });
   const [exportTo, setExportTo] = useState(() =>
+    new Date().toISOString().slice(0, 10),
+  );
+  const [chartFrom, setChartFrom] = useState(() => {
+    const d = new Date();
+    d.setMonth(d.getMonth() - 2);
+    return d.toISOString().slice(0, 10);
+  });
+  const [chartTo, setChartTo] = useState(() =>
     new Date().toISOString().slice(0, 10),
   );
 
@@ -159,24 +178,50 @@ export const OperatingHistoryPage = () => {
     }
   };
 
-  const loadChart = async (offset: number, months = monthsWindow) => {
+  const loadChartRange = async (from = chartFrom, to = chartTo) => {
+    if (!from || !to) {
+      setError("Completá desde y hasta para el gráfico.");
+      return;
+    }
+    if (from > to) {
+      setError("La fecha desde no puede ser posterior a la fecha hasta.");
+      return;
+    }
     try {
-      const res = (await api.getDailyOperatingSeries({ months, offset })) as {
-        data?: {
-          date: string;
-          percent: number;
-          amount_usd: number;
-        }[];
-      } | null;
+      setLoadingChart(true);
+      setError(null);
+      const [seriesRes, opsRes] = await Promise.all([
+        api.getDailyOperatingSeries({ from, to }) as Promise<{
+          data?: {
+            date: string;
+            percent: number;
+            amount_usd: number;
+          }[];
+        } | null>,
+        api.getStrategyOperations({
+          from,
+          to,
+          per_page: 200,
+        }) as Promise<{
+          data?: { resultLabel?: string | null }[];
+        } | null>,
+      ]);
       setChartSeries(
-        (res?.data ?? []).map((row) => ({
+        (seriesRes?.data ?? []).map((row) => ({
           date: row.date,
           percent: row.percent,
           amountUsd: row.amount_usd,
         })),
       );
-    } catch {
+      setResultCounts(countStrategyResults(opsRes?.data ?? []));
+    } catch (e: unknown) {
       setChartSeries([]);
+      setResultCounts({ positive: 0, negative: 0, bePlus: 0, beMinus: 0 });
+      setError(
+        e instanceof Error ? e.message : "Error al cargar evolución diaria",
+      );
+    } finally {
+      setLoadingChart(false);
     }
   };
 
@@ -220,21 +265,18 @@ export const OperatingHistoryPage = () => {
     const next = monthlyOffset + monthsWindow;
     setMonthlyOffset(next);
     void loadMonthly(next);
-    void loadChart(next);
   };
 
   const goMonthlyNewer = () => {
     const next = Math.max(0, monthlyOffset - monthsWindow);
     setMonthlyOffset(next);
     void loadMonthly(next);
-    void loadChart(next);
   };
 
   const changeMonthsWindow = (months: number) => {
     setMonthsWindow(months);
     setMonthlyOffset(0);
     void loadMonthly(0, months);
-    void loadChart(0, months);
   };
 
   const openMonthDetail = async (month: string) => {
@@ -264,7 +306,7 @@ export const OperatingHistoryPage = () => {
   useEffect(() => {
     void loadHistory(1);
     void loadMonthly(0);
-    void loadChart(0);
+    void loadChartRange();
   }, []);
 
   const cards = useMemo(() => {
@@ -324,9 +366,9 @@ export const OperatingHistoryPage = () => {
               onClick={() => {
                 void loadHistory(historyPage);
                 void loadMonthly(monthlyOffset);
-                void loadChart(monthlyOffset);
+                void loadChartRange();
               }}
-              disabled={loadingHistory || loadingMonthly}
+              disabled={loadingHistory || loadingMonthly || loadingChart}
             >
               Actualizar
             </Button>
@@ -458,14 +500,89 @@ export const OperatingHistoryPage = () => {
       </div>
 
       <div className="admin-card p-6 space-y-4">
-        <div>
-          <h2 className="text-xl font-bold text-t-primary">
-            Evolución diaria
-          </h2>
-          <p className="mt-1 text-sm text-t-muted">
-            Resultado en USD y porcentaje para el período seleccionado.
-          </p>
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-t-primary">
+              Evolución diaria
+            </h2>
+            <p className="mt-1 text-sm text-t-muted">
+              Resultado en USD y conteo de resultados de operaciones para el
+              período seleccionado.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-end gap-2">
+            <div>
+              <label
+                className="mb-1 block text-xs text-t-dim"
+                htmlFor="chart-from"
+              >
+                Desde
+              </label>
+              <input
+                id="chart-from"
+                type="date"
+                value={chartFrom}
+                onChange={(e) => setChartFrom(e.target.value)}
+                className="rounded-lg border border-b-default bg-dark-card px-3 py-2 text-sm text-t-primary"
+              />
+            </div>
+            <div>
+              <label
+                className="mb-1 block text-xs text-t-dim"
+                htmlFor="chart-to"
+              >
+                Hasta
+              </label>
+              <input
+                id="chart-to"
+                type="date"
+                value={chartTo}
+                onChange={(e) => setChartTo(e.target.value)}
+                className="rounded-lg border border-b-default bg-dark-card px-3 py-2 text-sm text-t-primary"
+              />
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => void loadChartRange()}
+              disabled={loadingChart}
+            >
+              {loadingChart ? "Cargando..." : "Aplicar"}
+            </Button>
+          </div>
         </div>
+
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="rounded-lg border border-b-default bg-dark-section px-3 py-3">
+            <p className="text-xs uppercase tracking-wide text-t-dim">
+              Positivos
+            </p>
+            <p className="mt-1 text-xl font-semibold text-success">
+              {resultCounts.positive}
+            </p>
+          </div>
+          <div className="rounded-lg border border-b-default bg-dark-section px-3 py-3">
+            <p className="text-xs uppercase tracking-wide text-t-dim">
+              Negativos
+            </p>
+            <p className="mt-1 text-xl font-semibold text-error">
+              {resultCounts.negative}
+            </p>
+          </div>
+          <div className="rounded-lg border border-b-default bg-dark-section px-3 py-3">
+            <p className="text-xs uppercase tracking-wide text-t-dim">BE+</p>
+            <p className="mt-1 text-xl font-semibold text-t-dim">
+              {resultCounts.bePlus}
+            </p>
+          </div>
+          <div className="rounded-lg border border-b-default bg-dark-section px-3 py-3">
+            <p className="text-xs uppercase tracking-wide text-t-dim">BE-</p>
+            <p className="mt-1 text-xl font-semibold text-t-dim">
+              {resultCounts.beMinus}
+            </p>
+          </div>
+        </div>
+
         <OperatingDualChart series={chartSeries} />
       </div>
 
