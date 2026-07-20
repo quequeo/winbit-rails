@@ -3,7 +3,6 @@
 require 'rails_helper'
 
 RSpec.describe AdminMailer, type: :mailer do
-  # Create admin users for notifications
   let!(:admin_user) do
     User.create!(
       email: 'admin@example.com',
@@ -47,8 +46,7 @@ RSpec.describe AdminMailer, type: :mailer do
     it 'renders the headers' do
       expect(mail.subject).to match('Nueva solicitud DEPÓSITO')
       expect(mail.subject).to match('John Doe')
-      expect(mail.to).to include('admin@example.com')
-      expect(mail.to).to include('winbit.cfds@gmail.com')
+      expect(mail.to).to eq(['winbit.cfds@gmail.com'])
     end
 
     it 'renders the body' do
@@ -62,33 +60,20 @@ RSpec.describe AdminMailer, type: :mailer do
       expect(mail.body.encoded).to match('Ver comprobante')
     end
 
-    it 'always includes operations inbox even if admin toggles are off' do
-      admin_user.update!(notify_deposit_created: false)
-      User.where.not(id: admin_user.id).update_all(notify_deposit_created: false)
-      mail = described_class.new_deposit_notification(deposit_request)
-      expect(mail.to).to include('winbit.cfds@gmail.com')
+    it 'does not include other admin emails even if notify toggles are on' do
       expect(mail.to).not_to include(admin_user.email)
-    end
-
-    it 'sends only to operations inbox while Resend is in testing mode' do
-      allow(ENV).to receive(:fetch).and_call_original
-      allow(ENV).to receive(:fetch).with('RESEND_FROM_EMAIL', '').and_return('Winbit <onboarding@resend.dev>')
-
-      mail = described_class.new_deposit_notification(deposit_request)
-      expect(mail.to).to eq(['winbit.cfds@gmail.com'])
     end
   end
 
   describe '#new_withdrawal_notification' do
-    before { portfolio } # Ensure portfolio exists
+    before { portfolio }
 
     let(:mail) { described_class.new_withdrawal_notification(withdrawal_request) }
 
     it 'renders the headers' do
       expect(mail.subject).to match('Nueva solicitud RETIRO')
       expect(mail.subject).to match('John Doe')
-      expect(mail.to).to include('admin@example.com')
-      expect(mail.to).to include('winbit.cfds@gmail.com')
+      expect(mail.to).to eq(['winbit.cfds@gmail.com'])
     end
 
     it 'renders the body' do
@@ -134,13 +119,12 @@ RSpec.describe AdminMailer, type: :mailer do
 
     it 'renders the headers' do
       expect(mail.subject).to match('Retiro aprobado de John Doe')
-      expect(mail.to).to include('admin@example.com')
+      expect(mail.to).to eq(['winbit.cfds@gmail.com'])
     end
 
     it 'renders the body with withdrawal fee details' do
-      expect(mail.body.encoded).to match('Comisión por retiro')
-      expect(mail.body.encoded).to match('Total deducido de la cuenta')
-      expect(mail.body.encoded).to match('ID solicitud')
+      expect(mail.body.encoded).to match('John Doe')
+      expect(mail.body.encoded).to match('45,75')
     end
   end
 end

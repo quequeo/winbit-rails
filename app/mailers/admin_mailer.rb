@@ -14,11 +14,8 @@ class AdminMailer < ApplicationMailer
     @method_label = method_label(request)
     @requested_at_label = requested_at_label(request)
 
-    admin_emails = notification_recipients(User.notify_deposits)
-    return if admin_emails.empty?
-
     mail(
-      to: admin_emails,
+      to: operations_inbox,
       subject: "[Winbit] Nueva solicitud DEPÓSITO · #{@investor.name} · #{@amount_label}"
     )
   end
@@ -37,11 +34,8 @@ class AdminMailer < ApplicationMailer
     @requested_at_label = requested_at_label(request)
     @is_full = request.amount >= (@investor.portfolio&.current_balance || 0) * 0.99
 
-    admin_emails = notification_recipients(User.notify_withdrawals)
-    return if admin_emails.empty?
-
     mail(
-      to: admin_emails,
+      to: operations_inbox,
       subject: "[Winbit] Nueva solicitud RETIRO · #{@investor.name} · #{@amount_label}"
     )
   end
@@ -58,34 +52,15 @@ class AdminMailer < ApplicationMailer
     @show_withdrawal_fee = fee_amount.positive?
     @review_url = backoffice_url('/requests')
 
-    admin_emails = User.notify_withdrawals.pluck(:email)
-    return if admin_emails.empty?
-
     mail(
-      to: admin_emails,
+      to: operations_inbox,
       subject: "Retiro aprobado de #{@investor.name} - #{@amount}"
     )
   end
 
   private
 
-  # Always include the operations inbox so investor-created requests are never missed,
-  # even if per-admin toggles were turned off.
-  #
-  # Resend's free/testing mode rejects the entire message if ANY recipient is not the
-  # account email. While we still send from onboarding@resend.dev, deliver only to the
-  # operations inbox so alerts actually arrive.
-  def notification_recipients(scope)
-    if resend_testing_mode?
-      return [OPERATIONS_INBOX.downcase]
-    end
-
-    emails = scope.pluck(:email).map { |e| e.to_s.strip.downcase }.reject(&:blank?)
-    emails << OPERATIONS_INBOX.downcase
-    emails.uniq
-  end
-
-  def resend_testing_mode?
-    ENV.fetch('RESEND_FROM_EMAIL', '').include?('onboarding@resend.dev')
+  def operations_inbox
+    [OPERATIONS_INBOX.downcase]
   end
 end
