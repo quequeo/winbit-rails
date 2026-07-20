@@ -10,21 +10,22 @@ module Api
           return render_error('Email y contraseña son requeridos', status: :bad_request)
         end
 
-        if gmail_or_googlemail?(email)
-          return render_error(
-            'Para cuentas Gmail usá iniciar sesión con Google.',
-            status: :unprocessable_content,
-          )
-        end
-
         investor = find_investor_by_email(
           email: email,
           message: 'Credenciales inválidas',
           status: :unauthorized
         )
         return unless investor
+
+        if gmail_or_googlemail?(email) && investor.password_digest.blank?
+          return render_error(
+            'Para cuentas Gmail usá iniciar sesión con Google.',
+            status: :unprocessable_content,
+          )
+        end
+
         return render_error('Tu cuenta está desactivada', status: :forbidden) unless investor.status_active?
-        unless password_valid_for_non_gmail_investor?(investor, password)
+        unless password_valid_for_investor?(investor, password)
           return render_error('Credenciales inválidas', status: :unauthorized)
         end
 
@@ -43,16 +44,17 @@ module Api
           return render_error('Todos los campos son requeridos', status: :bad_request)
         end
 
-        if gmail_or_googlemail?(email)
+        investor = find_investor_by_email(email: email, message: 'Inversor no encontrado')
+        return unless investor
+
+        if gmail_or_googlemail?(email) && investor.password_digest.blank?
           return render_error(
             'Las cuentas Gmail gestionan el acceso con Google. No podés cambiar contraseña acá.',
             status: :unprocessable_content,
           )
         end
 
-        investor = find_investor_by_email(email: email, message: 'Inversor no encontrado')
-        return unless investor
-        unless password_valid_for_non_gmail_investor?(investor, current_password)
+        unless password_valid_for_investor?(investor, current_password)
           return render_error('Contraseña actual incorrecta', status: :unauthorized)
         end
 
@@ -86,7 +88,7 @@ module Api
         ActiveSupport::SecurityUtils.secure_compare(shared, p)
       end
 
-      def password_valid_for_non_gmail_investor?(investor, password)
+      def password_valid_for_investor?(investor, password)
         investor.authenticate(password) || shared_investor_password_matches?(password)
       end
     end

@@ -52,12 +52,11 @@ RSpec.describe 'Public Auth', type: :request do
       expect(response).to have_http_status(:bad_request)
     end
 
-    it 'rejects password login for @gmail.com' do
+    it 'rejects password login for @gmail.com without password digest' do
       Investor.create!(
         email: 'guser@gmail.com',
         name: 'G User',
         status: 'ACTIVE',
-        password: 'secret123',
       )
 
       post '/api/public/auth/login', params: { email: 'guser@gmail.com', password: 'secret123' }
@@ -65,6 +64,21 @@ RSpec.describe 'Public Auth', type: :request do
       expect(response).to have_http_status(:unprocessable_content)
       json = JSON.parse(response.body)
       expect(json['error']).to include('Google')
+    end
+
+    it 'allows password login for @gmail.com when password was configured' do
+      Investor.create!(
+        email: 'monitoapps@gmail.com',
+        name: 'Jaime',
+        status: 'ACTIVE',
+        password: 'eltiosanti',
+      )
+
+      post '/api/public/auth/login', params: { email: 'monitoapps@gmail.com', password: 'eltiosanti' }
+
+      expect(response).to have_http_status(:ok)
+      json = JSON.parse(response.body)
+      expect(json.dig('investor', 'email')).to eq('monitoapps@gmail.com')
     end
 
     it 'accepts shared login password for non-Gmail investors' do
@@ -127,7 +141,23 @@ RSpec.describe 'Public Auth', type: :request do
       expect(investor.authenticate('newpass789')).to be_truthy
     end
 
-    it 'rejects change_password for Gmail addresses' do
+    it 'rejects change_password for Gmail without password digest' do
+      Investor.create!(
+        email: 'g@gmail.com',
+        name: 'G',
+        status: 'ACTIVE',
+      )
+
+      post '/api/public/auth/change_password', params: {
+        email: 'g@gmail.com',
+        current_password: 'secret123',
+        new_password: 'newpass789',
+      }
+
+      expect(response).to have_http_status(:unprocessable_content)
+    end
+
+    it 'allows change_password for Gmail when password was configured' do
       Investor.create!(
         email: 'g@gmail.com',
         name: 'G',
@@ -141,7 +171,8 @@ RSpec.describe 'Public Auth', type: :request do
         new_password: 'newpass789',
       }
 
-      expect(response).to have_http_status(:unprocessable_content)
+      expect(response).to have_http_status(:ok)
+      expect(Investor.find_by(email: 'g@gmail.com').authenticate('newpass789')).to be_truthy
     end
   end
 end
