@@ -69,6 +69,14 @@ RSpec.describe AdminMailer, type: :mailer do
       expect(mail.to).to include('winbit.cfds@gmail.com')
       expect(mail.to).not_to include(admin_user.email)
     end
+
+    it 'sends only to operations inbox while Resend is in testing mode' do
+      allow(ENV).to receive(:fetch).and_call_original
+      allow(ENV).to receive(:fetch).with('RESEND_FROM_EMAIL', '').and_return('Winbit <onboarding@resend.dev>')
+
+      mail = described_class.new_deposit_notification(deposit_request)
+      expect(mail.to).to eq(['winbit.cfds@gmail.com'])
+    end
   end
 
   describe '#new_withdrawal_notification' do

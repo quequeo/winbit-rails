@@ -71,9 +71,21 @@ class AdminMailer < ApplicationMailer
 
   # Always include the operations inbox so investor-created requests are never missed,
   # even if per-admin toggles were turned off.
+  #
+  # Resend's free/testing mode rejects the entire message if ANY recipient is not the
+  # account email. While we still send from onboarding@resend.dev, deliver only to the
+  # operations inbox so alerts actually arrive.
   def notification_recipients(scope)
+    if resend_testing_mode?
+      return [OPERATIONS_INBOX.downcase]
+    end
+
     emails = scope.pluck(:email).map { |e| e.to_s.strip.downcase }.reject(&:blank?)
     emails << OPERATIONS_INBOX.downcase
     emails.uniq
+  end
+
+  def resend_testing_mode?
+    ENV.fetch('RESEND_FROM_EMAIL', '').include?('onboarding@resend.dev')
   end
 end
