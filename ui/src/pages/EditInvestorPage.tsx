@@ -209,60 +209,55 @@ export const EditInvestorPage = () => {
             />
           </div>
 
-          {investor?.hasPassword ? (
-            <div>
-              <label className="block text-sm font-medium text-t-muted mb-1">
-                Nueva contraseña
-                <span className="ml-2 text-xs text-info font-normal">
-                  (tiene contraseña)
-                </span>
-              </label>
-              <div className="relative">
-                <Input
-                  type={showNewPassword ? "text" : "password"}
-                  value={form.newPassword}
-                  onChange={(e) =>
-                    setForm({ ...form, newPassword: e.target.value })
-                  }
-                  placeholder="Dejar vacío para no cambiar"
-                  minLength={6}
-                  className="pr-10"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowNewPassword((v) => !v)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-t-dim hover:text-t-primary focus:outline-none focus:ring-2 focus:ring-primary"
-                  title={showNewPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
-                  aria-label={showNewPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
-                >
-                  {showNewPassword ? (
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden>
-                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-                      <line x1="1" y1="1" x2="23" y2="23" />
-                    </svg>
-                  ) : (
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden>
-                      <path d="M2.5 12s3.5-7 9.5-7 9.5 7 9.5 7-3.5 7-9.5 7-9.5-7-9.5-7Z" />
-                      <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" />
-                    </svg>
-                  )}
-                </button>
-              </div>
-              <p className="mt-1 text-xs text-t-dim">
-                Mínimo 6 caracteres. Solo se actualiza si completás este campo.
-              </p>
+          <div>
+            <label className="block text-sm font-medium text-t-muted mb-1">
+              {investor?.hasPassword ? "Nueva contraseña" : "Contraseña"}
+              <span className="ml-2 text-xs text-info font-normal">
+                {investor?.hasPassword
+                  ? "(tiene contraseña)"
+                  : "(hoy solo Google — podés agregar password)"}
+              </span>
+            </label>
+            <div className="relative">
+              <Input
+                type={showNewPassword ? "text" : "password"}
+                value={form.newPassword}
+                onChange={(e) =>
+                  setForm({ ...form, newPassword: e.target.value })
+                }
+                placeholder={
+                  investor?.hasPassword
+                    ? "Dejar vacío para no cambiar"
+                    : "Mínimo 6 caracteres"
+                }
+                minLength={6}
+                className="pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowNewPassword((v) => !v)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-t-dim hover:text-t-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                title={showNewPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                aria-label={showNewPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+              >
+                {showNewPassword ? (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden>
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                    <line x1="1" y1="1" x2="23" y2="23" />
+                  </svg>
+                ) : (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden>
+                    <path d="M2.5 12s3.5-7 9.5-7 9.5 7 9.5 7-3.5 7-9.5 7-9.5-7-9.5-7Z" />
+                    <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" />
+                  </svg>
+                )}
+              </button>
             </div>
-          ) : (
-            <div className="rounded-lg bg-dark-section p-4 text-sm text-t-muted">
-              <p className="font-medium text-t-muted">
-                Método de autenticación: Google
-              </p>
-              <p className="mt-1">
-                Este inversor ingresa con Google. No se puede configurar
-                contraseña.
-              </p>
-            </div>
-          )}
+            <p className="mt-1 text-xs text-t-dim">
+              Mínimo 6 caracteres. Solo se actualiza si completás este campo.
+              Con password, el inversor puede entrar con email + contraseña (además de Google).
+            </p>
+          </div>
 
           <div className="flex gap-3 pt-2">
             <Button type="submit" disabled={submitting}>
