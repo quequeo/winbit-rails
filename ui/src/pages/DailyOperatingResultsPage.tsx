@@ -96,15 +96,7 @@ export const DailyOperatingResultsPage = () => {
     amount_usd?: number;
     applied_by: { name: string | null };
   };
-  type HistoryMeta = {
-    page: number;
-    per_page: number;
-    total: number;
-    total_pages: number;
-  };
   const [historyRows, setHistoryRows] = useState<HistoryRow[]>([]);
-  const [historyMeta, setHistoryMeta] = useState<HistoryMeta | null>(null);
-  const [historyPage, setHistoryPage] = useState(1);
   const [loadingHistory, setLoadingHistory] = useState(true);
 
   const [editRow, setEditRow] = useState<HistoryRow | null>(null);
@@ -114,21 +106,20 @@ export const DailyOperatingResultsPage = () => {
   const [editConfirmOpen, setEditConfirmOpen] = useState(false);
   const [editApplying, setEditApplying] = useState(false);
 
-  const loadHistory = useCallback((p: number) => {
+  const loadHistory = useCallback(() => {
     setLoadingHistory(true);
     api
-      .getDailyOperatingResults({ page: p, per_page: 20 })
-      .then((res: { data?: HistoryRow[]; meta?: HistoryMeta } | null) => {
+      .getDailyOperatingResults({ page: 1, per_page: 20 })
+      .then((res: { data?: HistoryRow[] } | null) => {
         setHistoryRows(res?.data ?? []);
-        setHistoryMeta(res?.meta ?? null);
       })
       .catch(() => {})
       .finally(() => setLoadingHistory(false));
   }, []);
 
   useEffect(() => {
-    loadHistory(historyPage);
-  }, [historyPage, loadHistory]);
+    loadHistory();
+  }, [loadHistory]);
 
   const loadStrategyForDate = useCallback(async (isoDate: string) => {
     if (!isoDate || !/^\d{4}-\d{2}-\d{2}$/.test(isoDate)) {
@@ -150,6 +141,8 @@ export const DailyOperatingResultsPage = () => {
           ratio?: number | null;
           openedAt?: string | null;
           closedAt?: string | null;
+          entryPrice?: number | null;
+          exitPrice?: number | null;
           notes?: string | null;
         }>;
       };
@@ -288,8 +281,8 @@ export const DailyOperatingResultsPage = () => {
       setNotice({ type: "success", message: "Operativa diaria aplicada." });
       setConfirmOpen(false);
       setPreview(null);
-      setHistoryPage(1);
-      loadHistory(1);
+      loadHistory();
+
     } catch (e: unknown) {
       showAlert(
         "No se pudo aplicar",
@@ -383,8 +376,8 @@ export const DailyOperatingResultsPage = () => {
         message: "Operativa diaria editada correctamente.",
       });
       closeEdit();
-      setHistoryPage(1);
-      loadHistory(1);
+      loadHistory();
+
     } catch (e: unknown) {
       showAlert("No se pudo editar", extractErrorMessage(e, "Error al editar"));
     } finally {
@@ -621,122 +614,61 @@ export const DailyOperatingResultsPage = () => {
         </div>
       ) : null}
 
-      {/* Recent history */}
-      <div>
-        <h2 className="mb-3 text-lg font-semibold text-t-primary">
-          Últimas operativas aplicadas
-        </h2>
+      {/* Today only — full history lives in Historial tab */}
+      <div className="admin-card p-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-t-primary">
+              Operativa de hoy
+            </h2>
+            <p className="mt-1 text-sm text-t-muted">
+              El historial completo y el Excel por período están en la pestaña
+              Historial.
+            </p>
+          </div>
+          <a
+            href="/operativa?tab=historial"
+            className="inline-flex shrink-0 items-center justify-center rounded-lg border border-b-default bg-dark-section px-3 py-2 text-sm font-medium text-primary hover:bg-primary-dim"
+          >
+            Ver historial →
+          </a>
+        </div>
 
         {loadingHistory ? (
-          <div className="py-6 text-center text-sm text-t-dim">
-            Cargando...
-          </div>
-        ) : historyRows.length === 0 ? (
-          <div className="py-6 text-center text-sm text-t-dim">
-            No hay operativas registradas.
-          </div>
+          <div className="mt-3 text-sm text-t-dim">Cargando...</div>
         ) : (
-          <>
-            <div className="overflow-x-auto rounded-lg border border-b-default bg-dark-card-sm">
-              <table className="min-w-full divide-y divide-b-default">
-                <thead className="bg-dark-section">
-                  <tr>
-                    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-t-muted">
-                      Fecha
-                    </th>
-                    <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wider text-t-muted">
-                      Rendimiento
-                    </th>
-                    <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wider text-t-muted">
-                      Resultado USD
-                    </th>
-                    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-t-muted">
-                      Aplicado por
-                    </th>
-                    <th className="px-5 py-3 text-center text-xs font-semibold uppercase tracking-wider text-t-muted">
-                      Acciones
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-b-default bg-dark-card">
-                  {historyRows.map((row) => {
-                    const dateStr = formatDateAR(row.date, { time: false });
-                    const isPos = row.percent >= 0;
-                    const editable = isToday(row.date);
-                    return (
-                      <tr key={row.id} className="hover:bg-dark-section">
-                        <td className="px-5 py-3 text-sm text-t-muted">
-                          {dateStr}
-                        </td>
-                        <td
-                          className={`px-5 py-3 text-right text-sm font-semibold ${isPos ? "text-success" : "text-error"}`}
-                        >
-                          {isPos ? "+" : ""}
-                          {row.percent.toFixed(2)}%
-                        </td>
-                        <td
-                          className={`px-5 py-3 text-right text-sm font-semibold ${isPos ? "text-success" : "text-error"}`}
-                        >
-                          {formatCurrencyAR(row.amount_usd ?? 0)}
-                        </td>
-                        <td className="px-5 py-3 text-sm text-t-dim">
-                          {row.applied_by?.name ?? "—"}
-                        </td>
-                        <td className="px-5 py-3 text-center">
-                          {editable ? (
-                            <button
-                              type="button"
-                              onClick={() => openEdit(row)}
-                              className="inline-flex items-center rounded-md border border-b-default bg-dark-card px-2.5 py-1 text-xs font-medium text-t-muted hover:bg-dark-section"
-                              title="Editar operativa"
-                            >
-                              Editar
-                            </button>
-                          ) : (
-                            <span className="text-xs text-t-dim">—</span>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-
-            {historyMeta && historyMeta.total_pages > 1 ? (
-              <div className="mt-4 flex items-center justify-between">
-                <span className="text-sm text-t-muted">
-                  Página{" "}
-                  <span className="font-semibold">{historyMeta.page}</span> de{" "}
-                  <span className="font-semibold">
-                    {historyMeta.total_pages}
-                  </span>
-                  {" · "}
-                  <span className="text-t-dim">
-                    {historyMeta.total} registros
-                  </span>
-                </span>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    disabled={historyPage <= 1}
-                    onClick={() => setHistoryPage((p) => p - 1)}
-                    className="rounded border border-b-default bg-dark-card px-3 py-1.5 text-sm text-t-muted hover:bg-dark-section disabled:opacity-50"
+          (() => {
+            const todayRow = historyRows.find((row) => isToday(row.date));
+            if (!todayRow) {
+              return (
+                <p className="mt-3 text-sm text-t-dim">
+                  Todavía no hay operativa aplicada para hoy.
+                </p>
+              );
+            }
+            const isPos = todayRow.percent >= 0;
+            return (
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-b-default bg-dark-section px-4 py-3">
+                <div className="text-sm text-t-muted">
+                  {formatDateAR(todayRow.date, { time: false })}
+                  <span
+                    className={`ml-3 font-semibold ${isPos ? "text-success" : "text-error"}`}
                   >
-                    Anterior
-                  </button>
-                  <button
-                    type="button"
-                    disabled={historyPage >= historyMeta.total_pages}
-                    onClick={() => setHistoryPage((p) => p + 1)}
-                    className="rounded border border-b-default bg-dark-card px-3 py-1.5 text-sm text-t-muted hover:bg-dark-section disabled:opacity-50"
-                  >
-                    Siguiente
-                  </button>
+                    {isPos ? "+" : ""}
+                    {todayRow.percent.toFixed(2)}% ·{" "}
+                    {formatCurrencyAR(todayRow.amount_usd ?? 0)}
+                  </span>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => openEdit(todayRow)}
+                  className="inline-flex items-center rounded-md border border-b-default bg-dark-card px-2.5 py-1 text-xs font-medium text-t-muted hover:bg-dark-section"
+                >
+                  Editar
+                </button>
               </div>
-            ) : null}
-          </>
+            );
+          })()
         )}
       </div>
 

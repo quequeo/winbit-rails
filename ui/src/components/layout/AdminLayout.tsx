@@ -18,6 +18,7 @@ export const AdminLayout = () => {
   const [error, setError] = useState<string | null>(null);
   const [sessionEmail, setSessionEmail] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [pendingRequests, setPendingRequests] = useState(0);
 
   useEffect(() => {
     let isMounted = true;
@@ -38,6 +39,19 @@ export const AdminLayout = () => {
       .finally(() => {
         if (isMounted) setIsCheckingSession(false);
       });
+
+    api
+      .getAdminRequests({ status: "PENDING" })
+      .then((res) => {
+        if (!isMounted) return;
+        const r = res as {
+          data?: { pendingCount?: number; requests?: unknown[] };
+        };
+        setPendingRequests(
+          r?.data?.pendingCount ?? r?.data?.requests?.length ?? 0,
+        );
+      })
+      .catch(() => {});
 
     return () => {
       isMounted = false;
@@ -130,7 +144,14 @@ export const AdminLayout = () => {
                   : linkBase
               }
             >
-              Solicitudes
+              <span className="inline-flex items-center gap-2">
+                Solicitudes
+                {pendingRequests > 0 ? (
+                  <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-warning/20 px-1.5 py-0.5 text-[10px] font-bold text-warning">
+                    {pendingRequests > 99 ? "99+" : pendingRequests}
+                  </span>
+                ) : null}
+              </span>
             </NavLink>
             <NavLink
               to="/operativa"
@@ -210,7 +231,14 @@ export const AdminLayout = () => {
                     : "rounded-lg px-3 py-2 text-sm font-medium text-t-muted hover:bg-primary-dim"
                 }
               >
-                Solicitudes
+                <span className="inline-flex items-center gap-2">
+                  Solicitudes
+                  {pendingRequests > 0 ? (
+                    <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-warning/20 px-1.5 py-0.5 text-[10px] font-bold text-warning">
+                      {pendingRequests > 99 ? "99+" : pendingRequests}
+                    </span>
+                  ) : null}
+                </span>
               </NavLink>
               <NavLink
                 to="/operativa"

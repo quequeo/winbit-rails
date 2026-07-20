@@ -32,21 +32,15 @@ export const OperatingDualChart = ({
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
 
   const width = 900;
-  const height = 260;
+  const height = 280;
   const padX = 56;
   const padY = 22;
   const padRight = 44;
 
   const usdValues = series.map((p) => p.amountUsd);
-  const pctValues = series.map((p) => p.percent);
-
   const minUsd = Math.min(0, ...usdValues);
   const maxUsd = Math.max(1, ...usdValues);
   const usdRange = Math.max(1, maxUsd - minUsd);
-
-  const minPct = Math.min(0, ...pctValues);
-  const maxPct = Math.max(0.1, ...pctValues);
-  const pctRange = Math.max(0.1, maxPct - minPct);
 
   const usdTicks = useMemo(() => {
     const step = niceStep(usdRange / 4);
@@ -60,49 +54,40 @@ export const OperatingDualChart = ({
     return ticks.length >= 2 ? ticks : [minUsd, maxUsd];
   }, [minUsd, maxUsd, usdRange]);
 
-  const pctTicks = useMemo(() => {
-    const step = niceStep(pctRange / 4);
-    const start = Math.floor(minPct / step) * step;
-    const end = Math.ceil(maxPct / step) * step;
-    const ticks: number[] = [];
-    for (let v = start; v <= end + step * 0.5; v += step) {
-      ticks.push(Number(v.toFixed(2)));
-      if (ticks.length > 6) break;
-    }
-    return ticks.length >= 2 ? ticks : [minPct, maxPct];
-  }, [minPct, maxPct, pctRange]);
+  const zeroY = padY + (1 - (0 - minUsd) / usdRange) * (height - padY * 2);
+  const plotWidth = width - padX - padRight;
+  const barGap = series.length > 40 ? 1 : series.length > 20 ? 2 : 4;
+  const barWidth = Math.max(
+    3,
+    plotWidth / Math.max(1, series.length) - barGap,
+  );
 
-  const points = useMemo(() => {
+  const bars = useMemo(() => {
     const n = series.length;
+    const slot = plotWidth / Math.max(1, n);
     return series.map((point, idx) => {
-      const x =
-        padX + (idx / Math.max(1, n - 1)) * (width - padX - padRight);
-      const usdY =
-        padY + (1 - (point.amountUsd - minUsd) / usdRange) * (height - padY * 2);
-      const pctY =
-        padY + (1 - (point.percent - minPct) / pctRange) * (height - padY * 2);
-      return { x, usdY, pctY, ...point, index: idx };
+      const x = padX + idx * slot + (slot - barWidth) / 2;
+      const valueY =
+        padY +
+        (1 - (point.amountUsd - minUsd) / usdRange) * (height - padY * 2);
+      const y = Math.min(valueY, zeroY);
+      const h = Math.max(1, Math.abs(valueY - zeroY));
+      return { x, y, height: h, ...point, index: idx };
     });
-  }, [series, minUsd, usdRange, minPct, pctRange]);
-
-  const usdLine = points
-    .map((point) => `${point.x.toFixed(2)},${point.usdY.toFixed(2)}`)
-    .join(" ");
-  const pctLine = points
-    .map((point) => `${point.x.toFixed(2)},${point.pctY.toFixed(2)}`)
-    .join(" ");
+  }, [series, minUsd, usdRange, barWidth, zeroY, plotWidth]);
 
   const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const svgX = ((e.clientX - rect.left) / rect.width) * width;
 
-    let closest = points[0] ?? null;
+    let closest = bars[0] ?? null;
     let minDistance = Infinity;
-    points.forEach((point) => {
-      const distance = Math.abs(svgX - point.x);
+    bars.forEach((bar) => {
+      const center = bar.x + barWidth / 2;
+      const distance = Math.abs(svgX - center);
       if (distance < minDistance) {
         minDistance = distance;
-        closest = point;
+        closest = bar;
       }
     });
 
@@ -111,40 +96,41 @@ export const OperatingDualChart = ({
     setTooltipPosition({ x: e.clientX + 12, y: e.clientY - 12 });
   };
 
-  if (series.length < 2) {
+  if (series.length < 1) {
     return (
       <div className="rounded-md border border-dashed border-b-default p-6 text-sm text-t-dim">
-        Se necesitan al menos 2 días operativos para mostrar el gráfico.
+        No hay días operativos para mostrar el gráfico.
       </div>
     );
   }
 
-  const hovered = hoveredIndex === null ? null : points[hoveredIndex];
+  const hovered = hoveredIndex === null ? null : bars[hoveredIndex];
 
   return (
     <div className="relative w-full">
       <div className="mb-3 flex flex-wrap gap-4 text-xs text-t-muted">
         <span className="inline-flex items-center gap-2">
-          <span className="h-0.5 w-5 bg-primary" />
-          Resultado USD
+          <span className="h-3 w-3 rounded-sm bg-success" />
+          Resultado USD positivo
         </span>
         <span className="inline-flex items-center gap-2">
-          <span className="h-0.5 w-5 bg-warning" />
-          Resultado %
+          <span className="h-3 w-3 rounded-sm bg-error" />
+          Resultado USD negativo
         </span>
       </div>
 
       <svg
         viewBox={`0 0 ${width} ${height}`}
-        className="h-64 w-full"
+        className="h-72 w-full"
         role="img"
-        aria-label="Evolución diaria de operativa en USD y porcentaje"
+        aria-label="Resultado diario de operativa en columnas USD"
         preserveAspectRatio="none"
         onMouseMove={handleMouseMove}
         onMouseLeave={() => setHoveredIndex(null)}
       >
         {usdTicks.map((value) => {
-          const y = padY + (1 - (value - minUsd) / usdRange) * (height - padY * 2);
+          const y =
+            padY + (1 - (value - minUsd) / usdRange) * (height - padY * 2);
           return (
             <g key={`usd-${value}`}>
               <line
@@ -162,55 +148,31 @@ export const OperatingDualChart = ({
           );
         })}
 
-        {pctTicks.map((value) => {
-          const y = padY + (1 - (value - minPct) / pctRange) * (height - padY * 2);
+        <line
+          x1={padX}
+          y1={zeroY}
+          x2={width - padRight}
+          y2={zeroY}
+          stroke="rgba(255,255,255,0.25)"
+          strokeWidth="1"
+        />
+
+        {bars.map((bar) => {
+          const positive = bar.amountUsd >= 0;
+          const isHovered = hoveredIndex === bar.index;
           return (
-            <text
-              key={`pct-${value}`}
-              x={width - padRight + 6}
-              y={y + 3}
-              fontSize="10"
-              fill="#d4bf82"
-            >
-              {formatNumberAR(value)}%
-            </text>
+            <rect
+              key={bar.date}
+              x={bar.x}
+              y={bar.y}
+              width={barWidth}
+              height={bar.height}
+              rx={1.5}
+              fill={positive ? "#9dd4cb" : "#d48080"}
+              opacity={isHovered ? 1 : 0.85}
+            />
           );
         })}
-
-        <polyline
-          points={usdLine}
-          fill="none"
-          stroke="#65a7a5"
-          strokeWidth="2"
-          strokeLinejoin="round"
-          strokeLinecap="round"
-        />
-        <polyline
-          points={pctLine}
-          fill="none"
-          stroke="#d4bf82"
-          strokeWidth="2"
-          strokeLinejoin="round"
-          strokeLinecap="round"
-          strokeDasharray="6 4"
-        />
-
-        {hovered ? (
-          <>
-            <line
-              x1={hovered.x}
-              y1={padY}
-              x2={hovered.x}
-              y2={height - padY}
-              stroke="#65a7a5"
-              strokeWidth="1"
-              strokeDasharray="4 4"
-              opacity="0.5"
-            />
-            <circle cx={hovered.x} cy={hovered.usdY} r="4" fill="#65a7a5" />
-            <circle cx={hovered.x} cy={hovered.pctY} r="4" fill="#d4bf82" />
-          </>
-        ) : null}
       </svg>
 
       {hovered ? (

@@ -155,15 +155,29 @@ describe("RequestsPage", () => {
       render(<RequestsPage />);
 
       await waitFor(() => {
-        expect(api.getAdminRequests).toHaveBeenCalled();
+        expect(api.getAdminRequests).toHaveBeenCalledWith({
+          status: "PENDING",
+          type: undefined,
+          investor_id: undefined,
+        });
       });
 
       const statusSelect = screen.getByLabelText("Estado");
-      fireEvent.change(statusSelect, { target: { value: "PENDING" } });
+      fireEvent.change(statusSelect, { target: { value: "" } });
 
       await waitFor(() => {
         expect(api.getAdminRequests).toHaveBeenCalledWith({
-          status: "PENDING",
+          status: undefined,
+          type: undefined,
+          investor_id: undefined,
+        });
+      });
+
+      fireEvent.change(statusSelect, { target: { value: "APPROVED" } });
+
+      await waitFor(() => {
+        expect(api.getAdminRequests).toHaveBeenCalledWith({
+          status: "APPROVED",
           type: undefined,
           investor_id: undefined,
         });
@@ -184,7 +198,7 @@ describe("RequestsPage", () => {
 
       await waitFor(() => {
         expect(api.getAdminRequests).toHaveBeenCalledWith({
-          status: undefined,
+          status: "PENDING",
           type: "DEPOSIT",
           investor_id: undefined,
         });
@@ -212,7 +226,7 @@ describe("RequestsPage", () => {
 
       await waitFor(() => {
         expect(api.getAdminRequests).toHaveBeenCalledWith({
-          status: undefined,
+          status: "PENDING",
           type: undefined,
           investor_id: "inv-1",
         });

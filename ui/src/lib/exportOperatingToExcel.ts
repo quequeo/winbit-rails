@@ -8,7 +8,10 @@ export type OperatingExportRow = {
   notes?: string | null;
 };
 
-export const exportOperatingToExcel = (rows: OperatingExportRow[]): void => {
+export const exportOperatingToExcel = (
+  rows: OperatingExportRow[],
+  rangeLabel?: string,
+): void => {
   const sheetRows = rows.map((row) => ({
     Fecha: formatDateAR(row.date, { time: false }),
     "Resultado (%)": formatNumberAR(row.percent),
@@ -20,6 +23,8 @@ export const exportOperatingToExcel = (rows: OperatingExportRow[]): void => {
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Operativas");
 
-  const dateStr = new Date().toISOString().slice(0, 10);
-  XLSX.writeFile(wb, `operativas_${dateStr}.xlsx`);
+  const safeRange = (rangeLabel || new Date().toISOString().slice(0, 10))
+    .replace(/[^\dA-Za-z_-]+/g, "_")
+    .replace(/_+/g, "_");
+  XLSX.writeFile(wb, `operativas_${safeRange}.xlsx`);
 };

@@ -13,6 +13,10 @@ vi.mock("../lib/api", () => ({
   },
 }));
 
+vi.mock("../lib/exportOperatingToExcel", () => ({
+  exportOperatingToExcel: vi.fn(),
+}));
+
 describe("OperatingHistoryPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -247,6 +251,66 @@ describe("OperatingHistoryPage", () => {
     await user.click(screen.getByLabelText("Ver detalle"));
     await waitFor(() => {
       expect(screen.getByText("Detail failed")).toBeInTheDocument();
+    });
+  });
+
+  it("exports excel for selected date range", async () => {
+    const user = userEvent.setup();
+    const { exportOperatingToExcel } = await import(
+      "../lib/exportOperatingToExcel"
+    );
+    const { fireEvent } = await import("@testing-library/react");
+
+    vi.mocked(api.getDailyOperatingResults).mockResolvedValue({
+      data: [],
+      meta: { page: 1, per_page: 10, total: 0, total_pages: 1 },
+    } as never);
+    vi.mocked(api.getDailyOperatingMonthlySummary).mockResolvedValue({
+      data: [],
+    } as never);
+    vi.mocked(api.getDailyOperatingSeries)
+      .mockResolvedValueOnce({ data: [] })
+      .mockResolvedValueOnce({
+        data: [
+          {
+            date: "2026-03-01",
+            percent: 0.5,
+            amount_usd: 100,
+            notes: "ok",
+          },
+        ],
+      });
+
+    render(<OperatingHistoryPage />);
+
+    await waitFor(() =>
+      expect(screen.getByLabelText("Desde")).toBeInTheDocument(),
+    );
+
+    fireEvent.change(screen.getByLabelText("Desde"), {
+      target: { value: "2026-03-01" },
+    });
+    fireEvent.change(screen.getByLabelText("Hasta"), {
+      target: { value: "2026-03-31" },
+    });
+    await user.click(screen.getByRole("button", { name: "Descargar Excel" }));
+
+    await waitFor(() => {
+      expect(api.getDailyOperatingSeries).toHaveBeenCalledWith({
+        from: "2026-03-01",
+        to: "2026-03-31",
+      });
+      expect(exportOperatingToExcel).toHaveBeenCalledWith(
+        [
+          {
+            date: "2026-03-01",
+            percent: 0.5,
+            amount_usd: 100,
+            notes: "ok",
+          },
+        ],
+        "2026-03-01_2026-03-31",
+      );
     });
   });
 });

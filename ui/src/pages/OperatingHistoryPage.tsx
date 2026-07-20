@@ -94,6 +94,14 @@ export const OperatingHistoryPage = () => {
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [loadingMonthly, setLoadingMonthly] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [exportFrom, setExportFrom] = useState(() => {
+    const d = new Date();
+    d.setMonth(d.getMonth() - 2);
+    return d.toISOString().slice(0, 10);
+  });
+  const [exportTo, setExportTo] = useState(() =>
+    new Date().toISOString().slice(0, 10),
+  );
 
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailMonth, setDetailMonth] = useState<string | null>(null);
@@ -173,11 +181,20 @@ export const OperatingHistoryPage = () => {
   };
 
   const handleExport = async () => {
+    if (!exportFrom || !exportTo) {
+      setError("Completá desde y hasta para exportar.");
+      return;
+    }
+    if (exportFrom > exportTo) {
+      setError("La fecha desde no puede ser posterior a la fecha hasta.");
+      return;
+    }
     try {
       setExporting(true);
+      setError(null);
       const res = (await api.getDailyOperatingSeries({
-        months: monthsWindow,
-        offset: monthlyOffset,
+        from: exportFrom,
+        to: exportTo,
       })) as {
         data?: {
           date: string;
@@ -186,7 +203,14 @@ export const OperatingHistoryPage = () => {
           notes?: string | null;
         }[];
       } | null;
-      exportOperatingToExcel(res?.data ?? []);
+      const rows = res?.data ?? [];
+      if (rows.length === 0) {
+        setError("No hay operativas en el período seleccionado.");
+        return;
+      }
+      exportOperatingToExcel(rows, `${exportFrom}_${exportTo}`);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Error al exportar Excel");
     } finally {
       setExporting(false);
     }
@@ -258,27 +282,55 @@ export const OperatingHistoryPage = () => {
             Resumen mensual + detalle diario (paginado).
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => {
-              void loadHistory(historyPage);
-              void loadMonthly(monthlyOffset);
-              void loadChart(monthlyOffset);
-            }}
-            disabled={loadingHistory || loadingMonthly}
-          >
-            Actualizar
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => void handleExport()}
-            disabled={exporting}
-          >
-            {exporting ? "Exportando..." : "Exportar Excel"}
-          </Button>
+        <div className="flex flex-col items-stretch gap-2 sm:items-end">
+          <div className="flex flex-wrap items-end gap-2">
+            <div>
+              <label className="mb-1 block text-xs text-t-dim" htmlFor="export-from">
+                Desde
+              </label>
+              <input
+                id="export-from"
+                type="date"
+                value={exportFrom}
+                onChange={(e) => setExportFrom(e.target.value)}
+                className="rounded-lg border border-b-default bg-dark-card px-3 py-2 text-sm text-t-primary"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs text-t-dim" htmlFor="export-to">
+                Hasta
+              </label>
+              <input
+                id="export-to"
+                type="date"
+                value={exportTo}
+                onChange={(e) => setExportTo(e.target.value)}
+                className="rounded-lg border border-b-default bg-dark-card px-3 py-2 text-sm text-t-primary"
+              />
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => void handleExport()}
+              disabled={exporting}
+            >
+              {exporting ? "Exportando..." : "Descargar Excel"}
+            </Button>
+          </div>
+          <div className="flex flex-wrap gap-2 justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                void loadHistory(historyPage);
+                void loadMonthly(monthlyOffset);
+                void loadChart(monthlyOffset);
+              }}
+              disabled={loadingHistory || loadingMonthly}
+            >
+              Actualizar
+            </Button>
+          </div>
         </div>
       </div>
 

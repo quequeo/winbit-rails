@@ -245,8 +245,15 @@ export const api = {
       `${ADMIN_API_PREFIX}/daily_operating_results/monthly_summary${suffix}`,
     );
   },
-  getDailyOperatingSeries: (params?: { months?: number; offset?: number }) => {
+  getDailyOperatingSeries: (params?: {
+    months?: number;
+    offset?: number;
+    from?: string;
+    to?: string;
+  }) => {
     const qs = new URLSearchParams();
+    if (params?.from) qs.set("from", params.from);
+    if (params?.to) qs.set("to", params.to);
     if (params?.months) qs.set("months", params.months.toString());
     if (params?.offset !== undefined && params.offset > 0)
       qs.set("offset", params.offset.toString());
@@ -291,6 +298,8 @@ export const api = {
       ratio?: number;
       opened_at?: string;
       closed_at?: string;
+      entry_price?: number;
+      exit_price?: number;
       notes?: string;
     };
   }) =>
@@ -322,6 +331,8 @@ export const api = {
         ratio?: number;
         opened_at?: string;
         closed_at?: string;
+        entry_price?: number;
+        exit_price?: number;
         notes?: string;
       };
     },
@@ -457,6 +468,8 @@ export const api = {
     ratio?: number;
     opened_at?: string;
     closed_at?: string;
+    entry_price?: number;
+    exit_price?: number;
     notes?: string;
   }) =>
     request(`${ADMIN_API_PREFIX}/strategy_operations`, {

@@ -103,7 +103,7 @@ const AttachmentViewer = ({ url }: { url: string }) => {
 };
 
 export const RequestsPage = () => {
-  const [status, setStatus] = useState("");
+  const [status, setStatus] = useState("PENDING");
   const [type, setType] = useState("");
   const [investorId, setInvestorId] = useState("");
   const [data, setData] = useState<{

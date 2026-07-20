@@ -16,17 +16,16 @@ module Api
       end
 
       def series
-        months = params[:months].to_i
-        months = 3 if months <= 0
-        months = 24 if months > 24
+        start_date, end_date = series_date_range
+        unless start_date && end_date
+          render_error('Rango de fechas inválido. Usar from/to (YYYY-MM-DD) o months.', status: :unprocessable_content)
+          return
+        end
 
-        offset = params[:offset].to_i
-        offset = 0 if offset < 0
-
-        end_month = Date.current.beginning_of_month - offset.months
-        start_month = end_month - (months - 1).months
-        start_date = start_month
-        end_date = end_month.end_of_month
+        if start_date > end_date
+          render_error('La fecha desde no puede ser posterior a la fecha hasta.', status: :unprocessable_content)
+          return
+        end
 
         results = DailyOperatingResult.where(date: start_date..end_date).order(:date)
         usd_by_date = DailyOperatingUsdTotals.for_dates(results.map(&:date))
@@ -218,6 +217,32 @@ module Api
 
       private
 
+      def series_date_range
+        from_param = params[:from].presence || params[:start_date].presence
+        to_param = params[:to].presence || params[:end_date].presence
+
+        if from_param.present? || to_param.present?
+          return [nil, nil] if from_param.blank? || to_param.blank?
+
+          begin
+            return [Date.parse(from_param.to_s), Date.parse(to_param.to_s)]
+          rescue ArgumentError, TypeError
+            return [nil, nil]
+          end
+        end
+
+        months = params[:months].to_i
+        months = 3 if months <= 0
+        months = 24 if months > 24
+
+        offset = params[:offset].to_i
+        offset = 0 if offset.negative?
+
+        end_month = Date.current.beginning_of_month - offset.months
+        start_month = end_month - (months - 1).months
+        [start_month, end_month.end_of_month]
+      end
+
       def strategy_operation_params
         raw = params[:strategy_operation]
         return nil if raw.blank?
@@ -230,6 +255,8 @@ module Api
           :ratio,
           :opened_at,
           :closed_at,
+          :entry_price,
+          :exit_price,
           :notes,
         )
       end

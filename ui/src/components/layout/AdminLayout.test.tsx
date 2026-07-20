@@ -8,6 +8,7 @@ import { api } from "../../lib/api";
 vi.mock("../../lib/api", () => ({
   api: {
     getAdminSession: vi.fn(),
+    getAdminRequests: vi.fn(),
     signOut: vi.fn(),
   },
 }));
@@ -39,6 +40,9 @@ const renderWithRouter = (initialPath = "/dashboard") =>
 describe("AdminLayout", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(api.getAdminRequests).mockResolvedValue({
+      data: { pendingCount: 0, requests: [] },
+    } as never);
   });
 
   it("shows loading while checking session", () => {
@@ -55,6 +59,9 @@ describe("AdminLayout", () => {
     vi.mocked(api.getAdminSession).mockResolvedValue({
       data: { email: "admin@test.com", superadmin: false },
     } as never);
+    vi.mocked(api.getAdminRequests).mockResolvedValue({
+      data: { pendingCount: 3, requests: [] },
+    } as never);
 
     renderWithRouter();
 
@@ -67,6 +74,9 @@ describe("AdminLayout", () => {
       screen.getByRole("link", { name: "Inversores" }),
     ).toBeInTheDocument();
     expect(screen.getByText("Dashboard content")).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getAllByText("3").length).toBeGreaterThan(0),
+    );
   });
 
   it("navigates to login on Unauthorized", async () => {

@@ -108,6 +108,28 @@ RSpec.describe 'Admin Daily Operating Results API', type: :request do
       expect(json['data']).not_to be_empty
       expect(json['data'].first).to include('date', 'percent', 'amount_usd')
     end
+
+    it 'filters by from/to date range' do
+      DailyOperatingResult.create!(date: Date.new(2026, 5, 10), percent: 0.5, applied_by: admin, applied_at: Time.current)
+      DailyOperatingResult.create!(date: Date.new(2026, 5, 20), percent: -0.2, applied_by: admin, applied_at: Time.current)
+      DailyOperatingResult.create!(date: Date.new(2026, 6, 1), percent: 0.1, applied_by: admin, applied_at: Time.current)
+
+      get '/api/admin/daily_operating_results/series',
+          params: { from: '2026-05-01', to: '2026-05-31' }
+
+      expect(response).to have_http_status(:ok)
+      json = JSON.parse(response.body)
+      dates = json['data'].map { |row| row['date'] }
+      expect(dates).to include('2026-05-10', '2026-05-20')
+      expect(dates).not_to include('2026-06-01')
+    end
+
+    it 'returns 422 when from is after to' do
+      get '/api/admin/daily_operating_results/series',
+          params: { from: '2026-06-01', to: '2026-05-01' }
+
+      expect(response).to have_http_status(:unprocessable_content)
+    end
   end
 
   describe 'GET /api/admin/daily_operating_results/monthly_summary' do

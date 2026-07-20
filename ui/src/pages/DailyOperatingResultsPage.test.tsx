@@ -289,26 +289,31 @@ describe("DailyOperatingResultsPage", () => {
     });
   });
 
-  it("shows history with pagination", async () => {
+  it("shows today operating card and link to historial", async () => {
     vi.mocked(api.getDailyOperatingResults).mockResolvedValue({
       data: [
         {
           id: "1",
           date: "2025-01-15",
           percent: 0.5,
+          amount_usd: 10,
           applied_by: { name: "Admin" },
         },
       ],
-      meta: { page: 1, per_page: 20, total: 25, total_pages: 2 },
+      meta: { page: 1, per_page: 20, total: 1, total_pages: 1 },
     } as never);
 
     render(<DailyOperatingResultsPage />);
 
-    await waitFor(() => expect(screen.getByText("Admin")).toBeInTheDocument());
-    expect(screen.getByText(/Página/)).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByText("Operativa de hoy")).toBeInTheDocument(),
+    );
     expect(
-      screen.getByRole("button", { name: "Siguiente" }),
+      screen.getByText(/Todav\u00eda no hay operativa aplicada para hoy/i),
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /Ver historial/i }),
+    ).toHaveAttribute("href", "/operativa?tab=historial");
   });
 
   it("shows alert for invalid date format", async () => {
@@ -339,7 +344,7 @@ describe("DailyOperatingResultsPage", () => {
     });
   });
 
-  it("hides pagination block when there is only one history page", async () => {
+  it("shows empty today state without pagination controls", async () => {
     vi.mocked(api.getDailyOperatingResults).mockResolvedValue({
       data: [
         {
@@ -354,7 +359,11 @@ describe("DailyOperatingResultsPage", () => {
 
     render(<DailyOperatingResultsPage />);
 
-    await waitFor(() => expect(screen.getByText("Admin")).toBeInTheDocument());
+    await waitFor(() =>
+      expect(
+        screen.getByText(/Todav\u00eda no hay operativa aplicada para hoy/i),
+      ).toBeInTheDocument(),
+    );
     expect(
       screen.queryByRole("button", { name: "Anterior" }),
     ).not.toBeInTheDocument();
@@ -363,7 +372,7 @@ describe("DailyOperatingResultsPage", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("shows edit button only for today rows", async () => {
+  it("shows edit button for today operativa", async () => {
     const today = new Date();
     const todayISO = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
@@ -373,6 +382,7 @@ describe("DailyOperatingResultsPage", () => {
           id: "1",
           date: todayISO,
           percent: 0.5,
+          amount_usd: 25,
           applied_by: { name: "Admin" },
         },
         {
@@ -388,11 +398,10 @@ describe("DailyOperatingResultsPage", () => {
     render(<DailyOperatingResultsPage />);
 
     await waitFor(() =>
-      expect(screen.getAllByText("Admin").length).toBeGreaterThan(0),
+      expect(screen.getByRole("button", { name: "Editar" })).toBeInTheDocument(),
     );
 
-    const editButtons = screen.getAllByRole("button", { name: "Editar" });
-    expect(editButtons).toHaveLength(1);
+    expect(screen.getAllByRole("button", { name: "Editar" })).toHaveLength(1);
   });
 
   it("opens edit modal and runs edit preview", async () => {

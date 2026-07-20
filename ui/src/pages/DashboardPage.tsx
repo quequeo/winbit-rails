@@ -148,13 +148,24 @@ export const DashboardPage = () => {
             {formatCurrencyAR(data.data.totalAum)}
           </p>
         </div>
-        <div className="admin-card p-6">
+        <div
+          className="admin-card p-6 cursor-pointer hover:border-primary/40"
+          onClick={() => (window.location.href = "/requests")}
+          role="link"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              window.location.href = "/requests";
+            }
+          }}
+        >
           <p className="text-sm font-medium text-t-muted">
             Solicitudes Pendientes
           </p>
           <p className="mt-2 text-3xl font-bold text-t-primary">
             {data.data.pendingRequestCount}
           </p>
+          <p className="mt-2 text-xs text-primary">Ir a solicitudes →</p>
         </div>
       </div>
 

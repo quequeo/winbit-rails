@@ -2,6 +2,8 @@
 
 # Mailer para notificaciones a administradores
 class AdminMailer < ApplicationMailer
+  OPERATIONS_INBOX = 'winbit.cfds@gmail.com'
+
   # Email cuando se crea una nueva solicitud de depósito
   def new_deposit_notification(request)
     @request = request
@@ -12,13 +14,12 @@ class AdminMailer < ApplicationMailer
     @method_label = method_label(request)
     @requested_at_label = requested_at_label(request)
 
-    # Solo enviar a admins que tengan esta notificación activa
-    admin_emails = User.notify_deposits.pluck(:email)
+    admin_emails = notification_recipients(User.notify_deposits)
     return if admin_emails.empty?
 
     mail(
       to: admin_emails,
-      subject: "Depósito pendiente de aprobación | #{@investor.name} | #{@amount_label}"
+      subject: "[Winbit] Nueva solicitud DEPÓSITO · #{@investor.name} · #{@amount_label}"
     )
   end
 
@@ -36,13 +37,12 @@ class AdminMailer < ApplicationMailer
     @requested_at_label = requested_at_label(request)
     @is_full = request.amount >= (@investor.portfolio&.current_balance || 0) * 0.99
 
-    # Solo enviar a admins que tengan esta notificación activa
-    admin_emails = User.notify_withdrawals.pluck(:email)
+    admin_emails = notification_recipients(User.notify_withdrawals)
     return if admin_emails.empty?
 
     mail(
       to: admin_emails,
-      subject: "Retiro pendiente de aprobación | #{@investor.name} | #{@amount_label}"
+      subject: "[Winbit] Nueva solicitud RETIRO · #{@investor.name} · #{@amount_label}"
     )
   end
 
@@ -68,4 +68,12 @@ class AdminMailer < ApplicationMailer
   end
 
   private
+
+  # Always include the operations inbox so investor-created requests are never missed,
+  # even if per-admin toggles were turned off.
+  def notification_recipients(scope)
+    emails = scope.pluck(:email).map { |e| e.to_s.strip.downcase }.reject(&:blank?)
+    emails << OPERATIONS_INBOX.downcase
+    emails.uniq
+  end
 end

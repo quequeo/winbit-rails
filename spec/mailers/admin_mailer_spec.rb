@@ -45,9 +45,10 @@ RSpec.describe AdminMailer, type: :mailer do
     let(:mail) { described_class.new_deposit_notification(deposit_request) }
 
     it 'renders the headers' do
-      expect(mail.subject).to match('Depósito pendiente de aprobación')
+      expect(mail.subject).to match('Nueva solicitud DEPÓSITO')
       expect(mail.subject).to match('John Doe')
       expect(mail.to).to include('admin@example.com')
+      expect(mail.to).to include('winbit.cfds@gmail.com')
     end
 
     it 'renders the body' do
@@ -60,6 +61,14 @@ RSpec.describe AdminMailer, type: :mailer do
     it 'includes attachment link when present' do
       expect(mail.body.encoded).to match('Ver comprobante')
     end
+
+    it 'always includes operations inbox even if admin toggles are off' do
+      admin_user.update!(notify_deposit_created: false)
+      User.where.not(id: admin_user.id).update_all(notify_deposit_created: false)
+      mail = described_class.new_deposit_notification(deposit_request)
+      expect(mail.to).to include('winbit.cfds@gmail.com')
+      expect(mail.to).not_to include(admin_user.email)
+    end
   end
 
   describe '#new_withdrawal_notification' do
@@ -68,9 +77,10 @@ RSpec.describe AdminMailer, type: :mailer do
     let(:mail) { described_class.new_withdrawal_notification(withdrawal_request) }
 
     it 'renders the headers' do
-      expect(mail.subject).to match('Retiro pendiente de aprobación')
+      expect(mail.subject).to match('Nueva solicitud RETIRO')
       expect(mail.subject).to match('John Doe')
       expect(mail.to).to include('admin@example.com')
+      expect(mail.to).to include('winbit.cfds@gmail.com')
     end
 
     it 'renders the body' do
