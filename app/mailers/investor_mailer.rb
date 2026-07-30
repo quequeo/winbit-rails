@@ -64,6 +64,7 @@ class InvestorMailer < ApplicationMailer
     @method_label = method_label(request)
     @cash_request = cash_request?(request)
     @requested_at_label = requested_at_label(request)
+    assign_withdrawal_balance_preview(investor, request)
 
     return unless NotificationGate.should_send_to_investor?(investor.email)
 

@@ -66,7 +66,19 @@ RSpec.describe AdminMailer, type: :mailer do
   end
 
   describe '#new_withdrawal_notification' do
-    before { portfolio }
+    before do
+      portfolio
+      InvestorRequest.create!(
+        investor: investor,
+        request_type: 'DEPOSIT',
+        amount: 10_000,
+        method: 'USDT',
+        network: 'TRC20',
+        status: 'APPROVED',
+        requested_at: 10.days.ago,
+        processed_at: 10.days.ago
+      )
+    end
 
     let(:mail) { described_class.new_withdrawal_notification(withdrawal_request) }
 
@@ -82,6 +94,39 @@ RSpec.describe AdminMailer, type: :mailer do
       expect(mail.body.encoded).to match('Crypto')
       expect(mail.body.encoded).to match('TRC20')
       expect(mail.body.encoded).to match('TQ2abc123...')
+    end
+
+    it 'shows balance posterior net of commission wording, not estimado' do
+      expect(mail.body.encoded).to match('Balance posterior')
+      expect(mail.body.encoded).not_to match(/estimado/i)
+      expect(mail.body.encoded).to match('9.500,00 USDT') # 10000 - 500, no fee
+    end
+
+    context 'when there is pending profit (CST)' do
+      before do
+        investor.update!(trading_fee_percentage: 30)
+        portfolio.update!(current_balance: 10_000, total_invested: 8_000)
+        InvestorRequest.where(investor: investor, request_type: 'DEPOSIT', status: 'APPROVED').delete_all
+        InvestorRequest.create!(
+          investor: investor,
+          request_type: 'DEPOSIT',
+          amount: 8_000,
+          method: 'USDT',
+          network: 'TRC20',
+          status: 'APPROVED',
+          requested_at: 10.days.ago,
+          processed_at: 10.days.ago
+        )
+      end
+
+      it 'deducts commission from the post-withdrawal balance' do
+        # profit 2000 → fee 600 → 10000 - 500 - 600 = 8900
+        expect(mail.body.encoded).to match('Balance posterior \(neto de comisión\)')
+        expect(mail.body.encoded).to match('Comisión por servicios')
+        expect(mail.body.encoded).to match('600,00 USDT')
+        expect(mail.body.encoded).to match('8.900,00 USDT')
+        expect(mail.body.encoded).not_to match(/estimado/i)
+      end
     end
 
     context 'when withdrawal is total' do

@@ -136,9 +136,14 @@
     </table>
 
     <h3 style="margin-bottom: 8px; font-size: 15px;">Estado actual del cliente</h3>
-    <p style="margin: 0 0 8px 0;"><strong>Balance actual:</strong> <%= @current_balance_usdt %></p>
-    <% if !@is_full %>
-      <p style="margin: 0;"><strong>Balance posterior estimado:</strong> <%= @estimated_balance_usdt %></p>
+    <% if @show_balance_preview %>
+      <p style="margin: 0 0 8px 0;"><strong>Balance actual:</strong> <%= @current_balance_usdt %></p>
+      <% if @show_withdrawal_fee_preview %>
+        <p style="margin: 0 0 8px 0;"><strong>Comisión por servicios:</strong> <%= @withdrawal_fee_preview_usdt %></p>
+      <% end %>
+      <% if !@is_full %>
+        <p style="margin: 0;"><strong><%= @balance_after_label %>:</strong> <%= @balance_after_usdt %></p>
+      <% end %>
     <% end %>
 
     <div class="action">

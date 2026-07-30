@@ -99,6 +99,26 @@
       </tr>
     </table>
 
+    <% if @show_balance_preview && !@is_full %>
+      <h2 style="font-size: 16px; margin-bottom: 8px;">Impacto en tu saldo</h2>
+      <table class="info-table">
+        <tr>
+          <th>Balance actual</th>
+          <td><%= @current_balance_usdt %></td>
+        </tr>
+        <% if @show_withdrawal_fee_preview %>
+          <tr>
+            <th>Comisión por servicios</th>
+            <td><%= @withdrawal_fee_preview_usdt %></td>
+          </tr>
+        <% end %>
+        <tr>
+          <th><%= @balance_after_label %></th>
+          <td><%= @balance_after_usdt %></td>
+        </tr>
+      </table>
+    <% end %>
+
     <h2 style="font-size: 16px; margin-bottom: 8px;">Proceso de validación</h2>
     <% if @cash_request %>
       <p>El equipo de Winbit se pondrá en contacto con vos para coordinar la entrega del dinero.</p>

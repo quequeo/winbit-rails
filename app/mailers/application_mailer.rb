@@ -76,4 +76,21 @@ class ApplicationMailer < ActionMailer::Base
   def cash_request?(request)
     %w[CASH CASH_ARS CASH_USD].include?(request.method.to_s.upcase)
   end
+
+  # Assigns balance-after-withdrawal vars including CST when computable at request time.
+  def assign_withdrawal_balance_preview(investor, request)
+    preview = WithdrawalImpactPreview.call(investor: investor, amount: request.amount)
+    @show_balance_preview = preview.computable?
+    return unless @show_balance_preview
+
+    @current_balance_usdt = format_usdt_amount(preview.current_balance)
+    @withdrawal_fee_preview_usdt = format_usdt_amount(preview.fee_amount)
+    @show_withdrawal_fee_preview = preview.has_fee?
+    @balance_after_usdt = format_usdt_amount(preview.balance_after)
+    @balance_after_label = if preview.has_fee?
+      'Balance posterior (neto de comisión)'
+    else
+      'Balance posterior'
+    end
+  end
 end

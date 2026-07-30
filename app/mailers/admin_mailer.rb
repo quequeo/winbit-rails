@@ -25,14 +25,11 @@ class AdminMailer < ApplicationMailer
     @request = request
     @investor = request.investor
     @amount_label = request_amount_label(request)
-    @current_balance_usdt = format_usdt_amount(@investor.portfolio&.current_balance || 0)
-    bal = BigDecimal((@investor.portfolio&.current_balance || 0).to_s)
-    est_after = (bal - BigDecimal(request.amount.to_s)).round(2, :half_up)
-    @estimated_balance_usdt = format_usdt_amount(est_after)
     @review_url = backoffice_url("/requests")
     @method_label = method_label(request)
     @requested_at_label = requested_at_label(request)
     @is_full = request.amount >= (@investor.portfolio&.current_balance || 0) * 0.99
+    assign_withdrawal_balance_preview(@investor, request)
 
     mail(
       to: operations_inbox,
