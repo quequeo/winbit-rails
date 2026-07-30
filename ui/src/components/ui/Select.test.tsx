@@ -30,6 +30,16 @@ describe("Select", () => {
     expect(onChange).toHaveBeenCalledWith("b");
   });
 
+  it("uses opaque background on open menu so underlying content does not show through", async () => {
+    const user = userEvent.setup();
+    render(<Select value="" options={options} onChange={vi.fn()} />);
+
+    await user.click(screen.getByRole("button", { name: "Seleccionar..." }));
+    const listbox = screen.getByRole("listbox");
+    expect(listbox.className).toContain("bg-dark-bg");
+    expect(listbox.className).not.toContain("bg-dark-card");
+  });
+
   it("closes on Escape", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();

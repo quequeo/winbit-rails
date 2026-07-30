@@ -144,7 +144,7 @@ export const Select = ({
                 ref={menuRef}
                 role="listbox"
                 aria-labelledby={id}
-                className="z-[9999] max-h-64 overflow-auto rounded-md border border-b-default bg-dark-card shadow-lg"
+                className="z-[9999] max-h-64 overflow-auto rounded-md border border-b-default bg-dark-bg shadow-lg"
                 style={{
                   position: "fixed",
                   left: menuRect?.left ?? 0,
@@ -187,7 +187,7 @@ export const Select = ({
               ref={menuRef}
               role="listbox"
               aria-labelledby={id}
-              className="absolute left-0 right-0 z-50 mt-2 max-h-64 overflow-auto rounded-md border border-b-default bg-dark-card shadow-lg"
+              className="absolute left-0 right-0 z-[100] mt-2 max-h-64 overflow-auto rounded-md border border-b-default bg-dark-bg shadow-lg"
             >
               {items.map((opt) => {
                 const isSelected = String(opt.value) === String(value);
