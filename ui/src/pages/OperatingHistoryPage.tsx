@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../lib/api";
 import { Button } from "../components/ui/Button";
+import { DatePicker } from "../components/ui/DatePicker";
 import { formatCurrencyAR, formatNumberAR } from "../lib/formatters";
 import {
   OperatingDualChart,
@@ -330,24 +331,20 @@ export const OperatingHistoryPage = () => {
               <label className="mb-1 block text-xs text-t-dim" htmlFor="export-from">
                 Desde
               </label>
-              <input
+              <DatePicker
                 id="export-from"
-                type="date"
                 value={exportFrom}
-                onChange={(e) => setExportFrom(e.target.value)}
-                className="rounded-lg border border-b-default bg-dark-card px-3 py-2 text-sm text-t-primary"
+                onChange={setExportFrom}
               />
             </div>
             <div>
               <label className="mb-1 block text-xs text-t-dim" htmlFor="export-to">
                 Hasta
               </label>
-              <input
+              <DatePicker
                 id="export-to"
-                type="date"
                 value={exportTo}
-                onChange={(e) => setExportTo(e.target.value)}
-                className="rounded-lg border border-b-default bg-dark-card px-3 py-2 text-sm text-t-primary"
+                onChange={setExportTo}
               />
             </div>
             <Button
@@ -518,12 +515,10 @@ export const OperatingHistoryPage = () => {
               >
                 Desde
               </label>
-              <input
+              <DatePicker
                 id="chart-from"
-                type="date"
                 value={chartFrom}
-                onChange={(e) => setChartFrom(e.target.value)}
-                className="rounded-lg border border-b-default bg-dark-card px-3 py-2 text-sm text-t-primary"
+                onChange={setChartFrom}
               />
             </div>
             <div>
@@ -533,12 +528,10 @@ export const OperatingHistoryPage = () => {
               >
                 Hasta
               </label>
-              <input
+              <DatePicker
                 id="chart-to"
-                type="date"
                 value={chartTo}
-                onChange={(e) => setChartTo(e.target.value)}
-                className="rounded-lg border border-b-default bg-dark-card px-3 py-2 text-sm text-t-primary"
+                onChange={setChartTo}
               />
             </div>
             <Button

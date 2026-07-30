@@ -18,6 +18,24 @@ vi.mock("../lib/exportOperatingToExcel", () => ({
   exportOperatingToExcel: vi.fn(),
 }));
 
+vi.mock("../components/ui/DatePicker", () => ({
+  DatePicker: ({
+    value,
+    onChange,
+    id,
+  }: {
+    value: string;
+    onChange: (iso: string) => void;
+    id?: string;
+  }) => (
+    <input
+      id={id}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+    />
+  ),
+}));
+
 describe("OperatingHistoryPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();

@@ -18,7 +18,7 @@ describe("DatePicker", () => {
     const onChange = vi.fn();
     render(<DatePicker value="2025-01-15" onChange={onChange} />);
 
-    await user.click(screen.getByRole("button"));
+    await user.click(screen.getByRole("button", { name: "Abrir calendario" }));
 
     const grid = document.querySelector('[role="grid"]');
     expect(grid).toBeInTheDocument();
@@ -36,6 +36,19 @@ describe("DatePicker", () => {
     );
   });
 
+  it("shows month and year dropdowns in the calendar", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(<DatePicker value="2025-01-15" onChange={onChange} />);
+
+    await user.click(screen.getByRole("button", { name: "Abrir calendario" }));
+
+    expect(document.querySelector(".months_dropdown")).toBeInTheDocument();
+    expect(document.querySelector(".years_dropdown")).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: /mes|month/i })).toBeTruthy();
+    expect(screen.getByRole("combobox", { name: /año|year/i })).toBeTruthy();
+  });
+
   it("closes calendar when clicking outside", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
@@ -46,7 +59,7 @@ describe("DatePicker", () => {
       </div>,
     );
 
-    await user.click(screen.getByRole("button"));
+    await user.click(screen.getByRole("button", { name: "Abrir calendario" }));
     expect(document.querySelector('[role="grid"]')).toBeInTheDocument();
 
     fireEvent.mouseDown(screen.getByTestId("outside"));
@@ -57,7 +70,7 @@ describe("DatePicker", () => {
     const onChange = vi.fn();
     render(<DatePicker value="2025-01-15" onChange={onChange} disabled />);
 
-    const button = screen.getByRole("button");
+    const button = screen.getByRole("button", { name: "Abrir calendario" });
     expect(button).toBeDisabled();
   });
 
@@ -81,7 +94,7 @@ describe("DatePicker", () => {
     const onChange = vi.fn();
     render(<DatePicker value="" onChange={onChange} />);
 
-    await user.click(screen.getByRole("button"));
+    await user.click(screen.getByRole("button", { name: "Abrir calendario" }));
     const cells = document.querySelectorAll("button[name]");
     const dayButton = Array.from(cells).find((b) =>
       /^\d+$/.test((b as HTMLButtonElement).name || ""),
