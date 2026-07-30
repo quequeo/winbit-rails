@@ -3,6 +3,11 @@ import { api } from "../lib/api";
 import { Button } from "../components/ui/Button";
 import { Select } from "../components/ui/Select";
 import {
+  buildStrategyOperationsGptText,
+  copyTextToClipboard,
+  periodLabelForGpt,
+} from "../lib/copyStrategyOperationsForGpt";
+import {
   exportStrategyOperationsToExcel,
   type StrategyOperationExportRow,
 } from "../lib/exportStrategyOperationsToExcel";
@@ -57,11 +62,17 @@ export const StrategyOperationsPage = () => {
   const [operations, setOperations] = useState<StrategyOperation[]>([]);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
+  const [copying, setCopying] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [year, setYear] = useState("2026");
   const [month, setMonth] = useState("");
 
   const range = useMemo(() => periodRange(year, month), [year, month]);
+  const gptPeriodLabel = useMemo(
+    () => periodLabelForGpt(year, month),
+    [year, month],
+  );
 
   const loadOperations = useCallback(async () => {
     try {
@@ -108,6 +119,35 @@ export const StrategyOperationsPage = () => {
     }
   };
 
+  const handleCopyForGpt = async () => {
+    try {
+      setCopying(true);
+      setError(null);
+      const res = (await api.getStrategyOperations({
+        from: range.from,
+        to: range.to,
+        per_page: 200,
+      })) as { data?: StrategyOperation[] };
+      const rows = res?.data ?? [];
+      if (rows.length === 0) {
+        setError("No hay operaciones para copiar en el período seleccionado");
+        return;
+      }
+      const text = buildStrategyOperationsGptText(rows, gptPeriodLabel);
+      await copyTextToClipboard(text);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2500);
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "No se pudo copiar al portapapeles",
+      );
+    } finally {
+      setCopying(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -121,14 +161,24 @@ export const StrategyOperationsPage = () => {
           </p>
         </div>
 
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => void handleExport()}
-          disabled={exporting || loading}
-        >
-          {exporting ? "Exportando..." : "Descargar Excel"}
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => void handleExport()}
+            disabled={exporting || loading}
+          >
+            {exporting ? "Exportando..." : "Descargar Excel"}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => void handleCopyForGpt()}
+            disabled={copying || loading}
+          >
+            {copied ? "Copiado" : copying ? "Copiando..." : "Copiar para GPT"}
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:max-w-xl">
