@@ -32,6 +32,24 @@ type MonthlySummaryRow = {
 };
 
 const MONTH_WINDOW_OPTIONS = [1, 2, 3, 6, 12];
+const HIDE_USD_STORAGE_KEY = "operatingHistory.hideUsdAmounts";
+const USD_MASK = "••••";
+
+const readHideUsdPreference = (): boolean => {
+  try {
+    return window.localStorage.getItem(HIDE_USD_STORAGE_KEY) === "1";
+  } catch {
+    return false;
+  }
+};
+
+const writeHideUsdPreference = (hidden: boolean) => {
+  try {
+    window.localStorage.setItem(HIDE_USD_STORAGE_KEY, hidden ? "1" : "0");
+  } catch {
+    // ignore storage failures (private mode, etc.)
+  }
+};
 
 const EyeIcon = ({ className }: { className?: string }) => (
   <svg
@@ -50,6 +68,37 @@ const EyeIcon = ({ className }: { className?: string }) => (
     />
     <path
       d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+const EyeOffIcon = ({ className }: { className?: string }) => (
+  <svg
+    className={className || ""}
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden="true"
+  >
+    <path
+      d="M3 3l18 18"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+    />
+    <path
+      d="M10.6 10.6a3.5 3.5 0 0 0 4.8 4.8"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M9.9 5.2A10.4 10.4 0 0 1 12 5c6 0 9.5 7 9.5 7a16.6 16.6 0 0 1-3.2 3.9M6.1 6.1C3.9 7.7 2.5 12 2.5 12s3.5 7 9.5 7c1.3 0 2.5-.3 3.6-.7"
       stroke="currentColor"
       strokeWidth="1.8"
       strokeLinecap="round"
@@ -106,6 +155,7 @@ export const OperatingHistoryPage = () => {
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [loadingMonthly, setLoadingMonthly] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hideUsdAmounts, setHideUsdAmounts] = useState(readHideUsdPreference);
   const [exportFrom, setExportFrom] = useState(() => {
     const d = new Date();
     d.setMonth(d.getMonth() - 2);
@@ -123,18 +173,13 @@ export const OperatingHistoryPage = () => {
     new Date().toISOString().slice(0, 10),
   );
 
-  const [detailOpen, setDetailOpen] = useState(false);
-  const [detailMonth, setDetailMonth] = useState<string | null>(null);
-  const [detailRows, setDetailRows] = useState<
-    {
-      id: string;
-      date: string;
-      percent: number;
-      amount_usd?: number;
-      notes?: string | null;
-    }[]
-  >([]);
-  const [detailLoading, setDetailLoading] = useState(false);
+  const toggleHideUsdAmounts = () => {
+    setHideUsdAmounts((prev) => {
+      const next = !prev;
+      writeHideUsdPreference(next);
+      return next;
+    });
+  };
 
   const loadHistory = async (page: number) => {
     try {
@@ -278,30 +323,6 @@ export const OperatingHistoryPage = () => {
     setMonthsWindow(months);
     setMonthlyOffset(0);
     void loadMonthly(0, months);
-  };
-
-  const openMonthDetail = async (month: string) => {
-    try {
-      setDetailOpen(true);
-      setDetailMonth(month);
-      setDetailRows([]);
-      setDetailLoading(true);
-      const res = (await api.getDailyOperatingByMonth({ month })) as {
-        data?: {
-          id: string;
-          date: string;
-          percent: number;
-          notes?: string | null;
-        }[];
-      } | null;
-      setDetailRows(res?.data ?? []);
-    } catch (e: unknown) {
-      setError(
-        e instanceof Error ? e.message : "Error al cargar detalle del mes",
-      );
-    } finally {
-      setDetailLoading(false);
-    }
   };
 
   useEffect(() => {
@@ -458,31 +479,46 @@ export const OperatingHistoryPage = () => {
             const sign = v > 0 ? "+" : "";
             return (
               <div key={m.month} className={`rounded-lg border p-4 ${tone}`}>
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <div className="text-xs uppercase">
-                      {monthLabel(m.month)}
-                    </div>
-                    <div className="mt-1 text-lg font-semibold">
-                      {sign}
-                      {formatNumberAR(v)}%
-                    </div>
-                    <div className="mt-1 text-sm font-medium">
-                      {formatCurrencyAR(m.total_usd ?? 0)}
-                    </div>
-                    <div className="mt-1 text-xs opacity-80">
-                      Días cargados: {m.days}
-                    </div>
+                <div>
+                  <div className="text-xs uppercase">
+                    {monthLabel(m.month)}
                   </div>
-                  <button
-                    type="button"
-                    className="rounded-md border border-black/10 bg-dark-card/60 px-2 py-1 text-sm hover:bg-primary-dim"
-                    onClick={() => void openMonthDetail(m.month)}
-                    title="Ver"
-                    aria-label="Ver detalle"
-                  >
-                    <EyeIcon className="h-4 w-4" />
-                  </button>
+                  <div className="mt-1 text-lg font-semibold">
+                    {sign}
+                    {formatNumberAR(v)}%
+                  </div>
+                  <div className="mt-1 flex items-center gap-2 text-sm font-medium">
+                    <span>
+                      {hideUsdAmounts
+                        ? USD_MASK
+                        : formatCurrencyAR(m.total_usd ?? 0)}
+                    </span>
+                    <button
+                      type="button"
+                      className="rounded-md border border-black/10 bg-dark-card/60 p-1 text-sm hover:bg-primary-dim"
+                      onClick={toggleHideUsdAmounts}
+                      title={
+                        hideUsdAmounts
+                          ? "Mostrar importes USD"
+                          : "Ocultar importes USD"
+                      }
+                      aria-label={
+                        hideUsdAmounts
+                          ? "Mostrar importes USD"
+                          : "Ocultar importes USD"
+                      }
+                      aria-pressed={hideUsdAmounts}
+                    >
+                      {hideUsdAmounts ? (
+                        <EyeOffIcon className="h-4 w-4" />
+                      ) : (
+                        <EyeIcon className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
+                  <div className="mt-1 text-xs opacity-80">
+                    Días cargados: {m.days}
+                  </div>
                 </div>
               </div>
             );
@@ -576,7 +612,10 @@ export const OperatingHistoryPage = () => {
           </div>
         </div>
 
-        <OperatingDualChart series={chartSeries} />
+        <OperatingDualChart
+          series={chartSeries}
+          hideUsdAmounts={hideUsdAmounts}
+        />
       </div>
 
       <div className="admin-card p-6 space-y-4">
@@ -667,91 +706,6 @@ export const OperatingHistoryPage = () => {
           </Button>
         </div>
       </div>
-
-      {detailOpen ? (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div
-            className="fixed inset-0 bg-black transition-opacity"
-            onClick={() => setDetailOpen(false)}
-          />
-          <div className="flex min-h-full items-center justify-center p-4">
-            <div className="relative w-full max-w-lg overflow-hidden admin-card">
-              <div className="border-b border-b-default px-6 py-4">
-                <h3 className="text-lg font-semibold text-t-primary">
-                  Detalle del mes
-                </h3>
-                <p className="mt-1 text-sm text-t-muted">
-                  {detailMonth ? monthLabel(detailMonth) : ""}
-                </p>
-              </div>
-              <div className="px-6 py-4">
-                {detailLoading ? (
-                  <div className="text-sm text-t-muted">Cargando…</div>
-                ) : (
-                  <div className="overflow-hidden rounded-xl border border-b-default">
-                    <table className="min-w-full divide-y divide-b-default">
-                      <thead className="bg-dark-section">
-                        <tr>
-                          <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-t-muted">
-                            Fecha
-                          </th>
-                          <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-t-muted">
-                            Resultado (%)
-                          </th>
-                          <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-t-muted">
-                            Resultado (USD)
-                          </th>
-                          <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-t-muted">
-                            Notas
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-b-default bg-dark-card">
-                        {detailRows.length === 0 ? (
-                          <tr>
-                            <td
-                              className="px-4 py-6 text-center text-sm text-t-dim"
-                              colSpan={4}
-                            >
-                              No hay operativas cargadas para este mes.
-                            </td>
-                          </tr>
-                        ) : (
-                          detailRows.map((r) => (
-                            <tr key={r.id} className="hover:bg-dark-section">
-                              <td className="px-4 py-3 text-sm text-t-primary">
-                                {r.date}
-                              </td>
-                              <td className="px-4 py-3 text-right text-sm text-t-primary">
-                                {formatNumberAR(r.percent)}%
-                              </td>
-                              <td className="px-4 py-3 text-right text-sm text-t-primary">
-                                {formatCurrencyAR(r.amount_usd ?? 0)}
-                              </td>
-                              <td className="px-4 py-3 text-sm text-t-muted">
-                                {r.notes || "—"}
-                              </td>
-                            </tr>
-                          ))
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
-              <div className="flex justify-end gap-3 border-t border-b-default px-6 py-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setDetailOpen(false)}
-                >
-                  Cerrar
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      ) : null}
     </div>
   );
 };

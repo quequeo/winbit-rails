@@ -8,7 +8,6 @@ vi.mock("../lib/api", () => ({
   api: {
     getDailyOperatingResults: vi.fn(),
     getDailyOperatingMonthlySummary: vi.fn(),
-    getDailyOperatingByMonth: vi.fn(),
     getDailyOperatingSeries: vi.fn(),
     getStrategyOperations: vi.fn(),
   },
@@ -39,6 +38,7 @@ vi.mock("../components/ui/DatePicker", () => ({
 describe("OperatingHistoryPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    window.localStorage.clear();
     vi.mocked(api.getStrategyOperations).mockResolvedValue({ data: [] });
   });
 
@@ -62,6 +62,7 @@ describe("OperatingHistoryPage", () => {
           month: "2025-12",
           days: 2,
           compounded_percent: 1.23,
+          total_usd: 7239,
           first_date: "2025-12-01",
           last_date: "2025-12-31",
         },
@@ -79,51 +80,78 @@ describe("OperatingHistoryPage", () => {
     expect(screen.getByText("Detalle diario")).toBeInTheDocument();
     expect(screen.getByText("2025-12-31")).toBeInTheDocument();
     expect(screen.getByText("Cierre de año")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Ver detalle")).not.toBeInTheDocument();
   });
 
-  it("opens month detail modal", async () => {
+  it("toggles USD visibility on monthly cards and persists preference", async () => {
     const user = userEvent.setup();
-    vi.mocked(api.getDailyOperatingResults).mockResolvedValueOnce({
+    vi.mocked(api.getDailyOperatingResults).mockResolvedValue({
       data: [],
       meta: { page: 1, per_page: 10, total: 0, total_pages: 1 },
-    });
+    } as never);
     vi.mocked(api.getDailyOperatingSeries).mockResolvedValue({ data: [] });
-    vi.mocked(api.getDailyOperatingMonthlySummary).mockResolvedValueOnce({
+    vi.mocked(api.getDailyOperatingMonthlySummary).mockResolvedValue({
       data: [
         {
           month: "2025-12",
           days: 1,
-          compounded_percent: 0.5,
+          compounded_percent: 1.23,
+          total_usd: 7239,
           first_date: "2025-12-01",
           last_date: "2025-12-31",
         },
-      ],
-    });
-    vi.mocked(api.getDailyOperatingByMonth).mockResolvedValueOnce({
-      data: [
         {
-          id: "d1",
-          date: "2025-12-10",
-          percent: 0.2,
-          notes: "Ajuste intradía",
+          month: "2025-11",
+          days: 1,
+          compounded_percent: 0.5,
+          total_usd: 1200,
+          first_date: "2025-11-01",
+          last_date: "2025-11-30",
         },
       ],
-    });
+    } as never);
 
+    const { unmount } = render(<OperatingHistoryPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("$7,239.00")).toBeInTheDocument();
+    });
+    expect(screen.getByText("$1,200.00")).toBeInTheDocument();
+    expect(
+      screen.getByText((_, el) => el?.textContent === "+1.23%"),
+    ).toBeInTheDocument();
+
+    const hideButtons = screen.getAllByLabelText("Ocultar importes USD");
+    expect(hideButtons.length).toBe(2);
+    await user.click(hideButtons[0]);
+
+    await waitFor(() => {
+      expect(screen.queryByText("$7,239.00")).not.toBeInTheDocument();
+    });
+    expect(screen.queryByText("$1,200.00")).not.toBeInTheDocument();
+    expect(screen.getAllByText("••••").length).toBe(2);
+    expect(
+      screen.getByText((_, el) => el?.textContent === "+1.23%"),
+    ).toBeInTheDocument();
+    expect(window.localStorage.getItem("operatingHistory.hideUsdAmounts")).toBe(
+      "1",
+    );
+
+    unmount();
     render(<OperatingHistoryPage />);
 
     await waitFor(() => {
-      expect(screen.getAllByText(/Dic 2025/i).length).toBeGreaterThan(0);
+      expect(screen.getAllByText("••••").length).toBe(2);
     });
+    expect(screen.queryByText("$7,239.00")).not.toBeInTheDocument();
 
-    const viewBtn = screen.getByLabelText("Ver detalle");
-    await user.click(viewBtn);
-
+    await user.click(screen.getAllByLabelText("Mostrar importes USD")[0]);
     await waitFor(() => {
-      expect(screen.getByText("Detalle del mes")).toBeInTheDocument();
+      expect(screen.getByText("$7,239.00")).toBeInTheDocument();
     });
-    expect(screen.getByText("2025-12-10")).toBeInTheDocument();
-    expect(screen.getByText("Ajuste intradía")).toBeInTheDocument();
+    expect(window.localStorage.getItem("operatingHistory.hideUsdAmounts")).toBe(
+      "0",
+    );
   });
 
   it("navigates monthly summary older/newer and refreshes", async () => {
@@ -224,53 +252,6 @@ describe("OperatingHistoryPage", () => {
 
     await waitFor(() => {
       expect(screen.getByText("History failed")).toBeInTheDocument();
-    });
-  });
-
-  it("shows error when month detail fails and empty state when no detail rows", async () => {
-    const user = userEvent.setup();
-    vi.mocked(api.getDailyOperatingResults).mockResolvedValueOnce({
-      data: [],
-      meta: { page: 1, per_page: 10, total: 0, total_pages: 1 },
-    });
-    vi.mocked(api.getDailyOperatingSeries).mockResolvedValue({ data: [] });
-    vi.mocked(api.getDailyOperatingMonthlySummary).mockResolvedValueOnce({
-      data: [
-        {
-          month: "2025-12",
-          days: 1,
-          compounded_percent: 0.5,
-          first_date: "2025-12-01",
-          last_date: "2025-12-31",
-        },
-      ],
-    });
-    vi.mocked(api.getDailyOperatingByMonth).mockResolvedValueOnce({ data: [] });
-    vi.mocked(api.getDailyOperatingByMonth).mockRejectedValueOnce(
-      new Error("Detail failed"),
-    );
-
-    render(<OperatingHistoryPage />);
-
-    await waitFor(() =>
-      expect(screen.getByLabelText("Ver detalle")).toBeInTheDocument(),
-    );
-    await user.click(screen.getByLabelText("Ver detalle"));
-
-    await waitFor(() => {
-      expect(
-        screen.getByText("No hay operativas cargadas para este mes."),
-      ).toBeInTheDocument();
-    });
-
-    await user.click(screen.getByRole("button", { name: "Cerrar" }));
-    await waitFor(() =>
-      expect(screen.queryByText("Detalle del mes")).not.toBeInTheDocument(),
-    );
-
-    await user.click(screen.getByLabelText("Ver detalle"));
-    await waitFor(() => {
-      expect(screen.getByText("Detail failed")).toBeInTheDocument();
     });
   });
 

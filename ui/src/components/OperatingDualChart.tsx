@@ -25,8 +25,10 @@ const formatUsdTick = (v: number) => {
 
 export const OperatingDualChart = ({
   series,
+  hideUsdAmounts = false,
 }: {
   series: OperatingChartPoint[];
+  hideUsdAmounts?: boolean;
 }) => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
@@ -147,7 +149,7 @@ export const OperatingDualChart = ({
                   strokeWidth="1"
                 />
                 <text x={6} y={y + 3} fontSize="10" fill="#888888">
-                  {formatUsdTick(value)}
+                  {hideUsdAmounts ? "••" : formatUsdTick(value)}
                 </text>
               </g>
             );
@@ -192,7 +194,7 @@ export const OperatingDualChart = ({
               {formatDateAR(hovered.date, { time: false })}
             </div>
             <div className="mt-1 text-primary">
-              {formatCurrencyAR(hovered.amountUsd)}
+              {hideUsdAmounts ? "••••" : formatCurrencyAR(hovered.amountUsd)}
             </div>
             <div className="text-warning">
               {hovered.percent >= 0 ? "+" : ""}
