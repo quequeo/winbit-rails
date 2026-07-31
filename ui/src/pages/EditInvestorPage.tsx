@@ -265,6 +265,13 @@ export const EditInvestorPage = () => {
             </Button>
             <Button
               type="button"
+              onClick={() => navigate(`/campanas?investorId=${id}`)}
+              variant="outline"
+            >
+              Enviar email
+            </Button>
+            <Button
+              type="button"
               onClick={() => navigate("/investors")}
               className="bg-dark-section hover:bg-primary-dim"
             >

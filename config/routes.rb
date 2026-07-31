@@ -82,6 +82,10 @@ Rails.application.routes.draw do
       get 'trading_fees/calculate', to: 'trading_fees#calculate', format: false
       get 'trading_fees/investors_summary', to: 'trading_fees#investors_summary', format: false
 
+      get 'email_campaigns/preview', to: 'email_campaigns#preview', format: false
+      post 'email_campaigns/send_one', to: 'email_campaigns#send_one', format: false
+      post 'email_campaigns/send_mass', to: 'email_campaigns#send_mass', format: false
+
       scope :v1 do
         post 'auth/login', to: 'auth#login', format: false
         get 'session', to: 'session#show', format: false
@@ -132,6 +136,10 @@ Rails.application.routes.draw do
         delete 'trading_fees/:id', to: 'trading_fees#destroy', format: false
         get 'trading_fees/calculate', to: 'trading_fees#calculate', format: false
         get 'trading_fees/investors_summary', to: 'trading_fees#investors_summary', format: false
+
+        get 'email_campaigns/preview', to: 'email_campaigns#preview', format: false
+        post 'email_campaigns/send_one', to: 'email_campaigns#send_one', format: false
+        post 'email_campaigns/send_mass', to: 'email_campaigns#send_mass', format: false
       end
     end
   end

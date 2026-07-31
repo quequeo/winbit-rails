@@ -118,6 +118,27 @@ RSpec.describe InvestorMailer, type: :mailer do
         mail = described_class.withdrawal_rejected(investor, withdrawal, 'reason')
         expect(mail.message).to be_a(ActionMailer::Base::NullMail)
       end
+
+      it 'campaign_message respects gate without force' do
+        mail = described_class.campaign_message(
+          investor,
+          subject: 'Test',
+          body_html: 'Hola',
+          force: false
+        )
+        expect(mail.message).to be_a(ActionMailer::Base::NullMail)
+      end
+
+      it 'campaign_message sends with force even when gate blocks' do
+        mail = described_class.campaign_message(
+          investor,
+          subject: 'Campaña',
+          body_html: 'Hola',
+          force: true
+        )
+        expect(mail.message).not_to be_a(ActionMailer::Base::NullMail)
+        expect(mail.to).to eq(['john@example.com'])
+      end
     end
 
     describe 'whitelist with different email formats' do

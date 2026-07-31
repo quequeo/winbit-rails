@@ -267,6 +267,10 @@ Requiere sesión de admin. Usada por el backoffice.
 | POST | `/daily_operating_results` | Cargar operativa |
 | GET | `/trading_fees` | Comisiones |
 | POST | `/trading_fees` | Aplicar comisión |
+| GET | `/trading_fees/investors_summary` | Resumen comisiones por inversor |
+| GET | `/email_campaigns/preview` | Preview de campaña email (params: `month` YYYY-MM, opcional `subject`, `body`, `investor_id`). Lista inversores ACTIVE con `{{nombre}}`, `{{ganancia_usd}}`, `{{ganancia_pct}}`, etc. desde MonthlyReportBuilder. |
+| POST | `/email_campaigns/send_one` | Envía email personalizado a un inversor (`month`, `subject`, `body`, `investor_id`). Omite NotificationGate (campaña admin). |
+| POST | `/email_campaigns/send_mass` | Envía campaña a todos los ACTIVE con email (`month`, `subject`, `body`, `confirm=true`). Omite NotificationGate. Encola con `deliver_later`; fallos por destinatario no abortan el resto. |
 | GET | `/referral_commissions` | Comisiones por referido |
 | GET | `/settings` | Configuración |
 | PATCH | `/settings` | Actualizar configuración |

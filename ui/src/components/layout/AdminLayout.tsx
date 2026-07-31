@@ -137,6 +137,16 @@ export const AdminLayout = () => {
               Inversores
             </NavLink>
             <NavLink
+              to="/campanas"
+              className={({ isActive }) =>
+                isActive
+                  ? `${linkBase} border-primary text-primary`
+                  : linkBase
+              }
+            >
+              Campañas
+            </NavLink>
+            <NavLink
               to="/requests"
               className={({ isActive }) =>
                 isActive
@@ -221,6 +231,17 @@ export const AdminLayout = () => {
                 }
               >
                 Inversores
+              </NavLink>
+              <NavLink
+                to="/campanas"
+                onClick={() => setMobileMenuOpen(false)}
+                className={({ isActive }) =>
+                  isActive
+                    ? "rounded-lg bg-primary-dim px-3 py-2 text-sm font-medium text-primary"
+                    : "rounded-lg px-3 py-2 text-sm font-medium text-t-muted hover:bg-primary-dim"
+                }
+              >
+                Campañas
               </NavLink>
               <NavLink
                 to="/requests"

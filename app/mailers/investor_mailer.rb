@@ -110,6 +110,26 @@ class InvestorMailer < ApplicationMailer
     )
   end
 
+  # === CAMPAÑAS ADMIN ===
+
+  # Email de campaña personalizado (informe mensual, etc.).
+  # force: true omite NotificationGate — solo para envíos iniciados por admin.
+  def campaign_message(investor, subject:, body_html:, force: false)
+    @investor = investor
+    @body_html = body_html
+
+    unless force
+      return unless NotificationGate.should_send_to_investor?(investor.email)
+    end
+
+    return if investor.email.blank?
+
+    mail(
+      to: investor.email,
+      subject: subject.to_s
+    )
+  end
+
   # === COMISIONES DE TRADING ===
 
   # Email cuando se aplica una comisión de trading

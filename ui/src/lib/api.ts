@@ -476,4 +476,37 @@ export const api = {
       method: "POST",
       body: JSON.stringify(body),
     }),
+  previewEmailCampaign: (params: {
+    month: string;
+    subject?: string;
+    body?: string;
+    investor_id?: string;
+  }) => {
+    const qs = new URLSearchParams();
+    qs.set("month", params.month);
+    if (params.subject) qs.set("subject", params.subject);
+    if (params.body) qs.set("body", params.body);
+    if (params.investor_id) qs.set("investor_id", params.investor_id);
+    return request(`${ADMIN_API_PREFIX}/email_campaigns/preview?${qs.toString()}`);
+  },
+  sendEmailCampaignOne: (body: {
+    month: string;
+    subject: string;
+    body: string;
+    investor_id: string;
+  }) =>
+    request(`${ADMIN_API_PREFIX}/email_campaigns/send_one`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  sendEmailCampaignMass: (body: {
+    month: string;
+    subject: string;
+    body: string;
+    confirm: boolean;
+  }) =>
+    request(`${ADMIN_API_PREFIX}/email_campaigns/send_mass`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
 };
