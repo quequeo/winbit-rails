@@ -114,7 +114,8 @@ class InvestorMailer < ApplicationMailer
 
   # Email de campaña personalizado (informe mensual, etc.).
   # force: true omite NotificationGate — solo para envíos iniciados por admin.
-  def campaign_message(investor, subject:, body_html:, force: false)
+  # attachment: optional Hash/Payload with :filename, :content, :content_type (PDF/XLSX).
+  def campaign_message(investor, subject:, body_html:, force: false, attachment: nil)
     @investor = investor
     @body_html = body_html
 
@@ -123,6 +124,8 @@ class InvestorMailer < ApplicationMailer
     end
 
     return if investor.email.blank?
+
+    attach_campaign_file(attachment) if attachment.present?
 
     mail(
       to: investor.email,
@@ -155,5 +158,24 @@ class InvestorMailer < ApplicationMailer
 
   def frontend_url
     ENV.fetch('FRONTEND_URL', 'https://winbit-6579c.web.app')
+  end
+
+  def attach_campaign_file(attachment)
+    payload =
+      if attachment.respond_to?(:filename) && attachment.respond_to?(:content)
+        attachment
+      else
+        attachment = attachment.with_indifferent_access
+        EmailCampaigns::Attachment::Payload.new(
+          filename: attachment[:filename],
+          content: attachment[:content],
+          content_type: attachment[:content_type]
+        )
+      end
+
+    attachments[payload.filename] = {
+      mime_type: payload.content_type,
+      content: payload.content,
+    }
   end
 end

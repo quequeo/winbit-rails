@@ -94,6 +94,54 @@ RSpec.describe 'Admin Email Campaigns API', type: :request do
       expect(mail.body.encoded).to include('3,25%')
       expect(mail.body.encoded).to include('$100,00')
       expect(mail.body.encoded).to include('<br>')
+      expect(mail.reply_to).to eq(['winbit.cfds@gmail.com'])
+    end
+
+    it 'attaches a PDF/XLSX for that investor' do
+      xlsx = Tempfile.new(['informe-ana', '.xlsx'])
+      xlsx.write('PK fake-xlsx-bytes')
+      xlsx.rewind
+
+      post '/api/admin/v1/email_campaigns/send_one', params: {
+        month: '2026-04',
+        subject: 'Informe {{nombre}}',
+        body: 'Hola {{nombre}}',
+        investor_id: investor_a.id,
+        attachment: Rack::Test::UploadedFile.new(
+          xlsx.path,
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        ),
+      }
+
+      expect(response).to have_http_status(:ok)
+      json = JSON.parse(response.body)
+      expect(json['data']['queuedCount']).to eq(1)
+      expect(json['data']['queued'].first['attached']).to eq(true)
+      expect(ActionMailer::Base.deliveries.size).to eq(1)
+      mail = ActionMailer::Base.deliveries.last
+      expect(mail.attachments.size).to eq(1)
+      expect(mail.attachments.first.filename).to eq(File.basename(xlsx.path))
+    ensure
+      xlsx.close!
+    end
+
+    it 'rejects non PDF/XLSX attachments' do
+      txt = Tempfile.new(['bad', '.txt'])
+      txt.write('hello')
+      txt.rewind
+
+      post '/api/admin/v1/email_campaigns/send_one', params: {
+        month: '2026-04',
+        subject: 'Informe',
+        body: 'Hola',
+        investor_id: investor_a.id,
+        attachment: Rack::Test::UploadedFile.new(txt.path, 'text/plain'),
+      }
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(ActionMailer::Base.deliveries).to be_empty
+    ensure
+      txt.close!
     end
   end
 
@@ -125,6 +173,38 @@ RSpec.describe 'Admin Email Campaigns API', type: :request do
       recipients = ActionMailer::Base.deliveries.flat_map(&:to)
       expect(recipients).to contain_exactly('ana@example.com', 'bob@example.com')
       expect(recipients).not_to include('off@example.com')
+    end
+
+    it 'attaches only for investors with uploaded files' do
+      pdf = Tempfile.new(['ana', '.pdf'])
+      pdf.write('%PDF-1.4 fake')
+      pdf.rewind
+
+      perform_enqueued_jobs do
+        post '/api/admin/v1/email_campaigns/send_mass', params: {
+          month: '2026-04',
+          subject: 'Hola {{nombre}}',
+          body: 'Body',
+          confirm: true,
+          attachments: {
+            investor_a.id.to_s => Rack::Test::UploadedFile.new(pdf.path, 'application/pdf'),
+          },
+        }
+      end
+
+      expect(response).to have_http_status(:ok)
+      json = JSON.parse(response.body)
+      expect(json['data']['queuedCount']).to eq(2)
+      attached_flags = json['data']['queued'].to_h { |row| [row['investor_id'], row['attached']] }
+      expect(attached_flags[investor_a.id]).to eq(true)
+      expect(attached_flags[investor_b.id]).to eq(false)
+
+      ana_mail = ActionMailer::Base.deliveries.find { |m| m.to == ['ana@example.com'] }
+      bob_mail = ActionMailer::Base.deliveries.find { |m| m.to == ['bob@example.com'] }
+      expect(ana_mail.attachments.map(&:filename)).to eq([File.basename(pdf.path)])
+      expect(bob_mail.attachments).to be_empty
+    ensure
+      pdf.close!
     end
   end
 end

@@ -95,4 +95,42 @@ describe("CampaignsPage", () => {
 
     expect(downloadMonthlyReportExcel).toHaveBeenCalledWith(sampleReport);
   });
+
+  it("lets upload a per-investor attachment and sends it on send_one", async () => {
+    vi.mocked(api.sendEmailCampaignOne).mockResolvedValue({
+      data: { queuedCount: 1, failureCount: 0 },
+    });
+
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={["/campanas?investorId=42"]}>
+        <CampaignsPage />
+      </MemoryRouter>,
+    );
+
+    const fileInput = await screen.findByLabelText(
+      /Adjuntar archivo para Mariano Krokante/i,
+    );
+    const file = new File(["%PDF-1.4"], "mariano.pdf", {
+      type: "application/pdf",
+    });
+    await user.upload(fileInput, file);
+
+    expect(await screen.findByText("mariano.pdf")).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole("button", { name: /Enviar a este inversor/i }),
+    );
+
+    await waitFor(() => {
+      expect(api.sendEmailCampaignOne).toHaveBeenCalledWith(
+        expect.objectContaining({
+          investor_id: "42",
+          attachment: expect.any(File),
+        }),
+      );
+    });
+    const call = vi.mocked(api.sendEmailCampaignOne).mock.calls[0][0];
+    expect(call.attachment?.name).toBe("mariano.pdf");
+  });
 });

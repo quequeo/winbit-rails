@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { api } from "../lib/api";
 import { downloadMonthlyReportExcel } from "../lib/monthlyReportExcel";
@@ -20,6 +20,9 @@ Podés ver el detalle en tu panel de inversión.
 
 Saludos,
 Equipo Winbit`;
+
+const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024;
+const ALLOWED_ATTACHMENT_EXT = /\.(pdf|xlsx)$/i;
 
 const defaultCampaignMonth = () => {
   const d = new Date();
@@ -47,6 +50,19 @@ type PreviewData = {
   sampleInvestor?: { id: number | string; name: string; email: string } | null;
 };
 
+function validateAttachmentFile(file: File): string | null {
+  if (!ALLOWED_ATTACHMENT_EXT.test(file.name)) {
+    return "Solo se permiten PDF o XLSX";
+  }
+  if (file.size > MAX_ATTACHMENT_BYTES) {
+    return "El adjunto supera 10MB";
+  }
+  if (file.size === 0) {
+    return "El adjunto está vacío";
+  }
+  return null;
+}
+
 export const CampaignsPage = () => {
   const [searchParams] = useSearchParams();
   const investorIdParam = searchParams.get("investorId") || "";
@@ -63,6 +79,10 @@ export const CampaignsPage = () => {
   const [confirmMass, setConfirmMass] = useState(false);
   const [showMassDialog, setShowMassDialog] = useState(false);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [attachmentsById, setAttachmentsById] = useState<
+    Record<string, File>
+  >({});
+  const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   useEffect(() => {
     if (investorIdParam) setInvestorId(investorIdParam);
@@ -97,6 +117,37 @@ export const CampaignsPage = () => {
     : "Campaña masiva (activos)";
 
   const sampleName = preview?.sampleInvestor?.name || "—";
+  const attachmentCount = Object.keys(attachmentsById).length;
+
+  const handleAttachmentChange = (recipientId: string, file: File | null) => {
+    if (!file) {
+      setAttachmentsById((prev) => {
+        const next = { ...prev };
+        delete next[recipientId];
+        return next;
+      });
+      return;
+    }
+    const validationError = validateAttachmentFile(file);
+    if (validationError) {
+      setError(`${file.name}: ${validationError}`);
+      const input = fileInputRefs.current[recipientId];
+      if (input) input.value = "";
+      return;
+    }
+    setError(null);
+    setAttachmentsById((prev) => ({ ...prev, [recipientId]: file }));
+  };
+
+  const clearAttachment = (recipientId: string) => {
+    setAttachmentsById((prev) => {
+      const next = { ...prev };
+      delete next[recipientId];
+      return next;
+    });
+    const input = fileInputRefs.current[recipientId];
+    if (input) input.value = "";
+  };
 
   const handleSendOne = async () => {
     if (!investorId) {
@@ -107,18 +158,21 @@ export const CampaignsPage = () => {
     setError(null);
     setSuccess(null);
     try {
+      const attachment = attachmentsById[investorId] || null;
       const res = (await api.sendEmailCampaignOne({
         month,
         subject,
         body,
         investor_id: investorId,
+        attachment,
       })) as {
         data?: { queuedCount?: number; failureCount?: number };
       };
       const queued = res?.data?.queuedCount ?? 0;
       const failures = res?.data?.failureCount ?? 0;
+      const attachedNote = attachment ? ` (con adjunto ${attachment.name})` : "";
       setSuccess(
-        `Email encolado para 1 inversor (queued=${queued}, fallos=${failures}).`,
+        `Email encolado para 1 inversor${attachedNote} (queued=${queued}, fallos=${failures}).`,
       );
       await loadPreview();
     } catch (e) {
@@ -142,6 +196,7 @@ export const CampaignsPage = () => {
         subject,
         body,
         confirm: true,
+        attachmentsByInvestorId: attachmentsById,
       })) as {
         data?: {
           queuedCount?: number;
@@ -151,8 +206,12 @@ export const CampaignsPage = () => {
         };
       };
       const d = res?.data;
+      const attachedNote =
+        attachmentCount > 0
+          ? ` (${attachmentCount} con adjunto)`
+          : "";
       setSuccess(
-        `Campaña encolada: ${d?.queuedCount ?? 0} enviados, ${d?.skippedCount ?? 0} omitidos, ${d?.failureCount ?? 0} fallos (audiencia ${d?.totalAudience ?? 0}).`,
+        `Campaña encolada: ${d?.queuedCount ?? 0} enviados${attachedNote}, ${d?.skippedCount ?? 0} omitidos, ${d?.failureCount ?? 0} fallos (audiencia ${d?.totalAudience ?? 0}).`,
       );
       setConfirmMass(false);
       await loadPreview();
@@ -165,7 +224,7 @@ export const CampaignsPage = () => {
   };
 
   const recipientsPreview = useMemo(
-    () => (preview?.recipients || []).slice(0, 20),
+    () => preview?.recipients || [],
     [preview],
   );
 
@@ -194,7 +253,9 @@ export const CampaignsPage = () => {
           </h2>
           <p className="mt-1 text-sm text-t-muted">
             Informe mensual personalizado. Las campañas admin se envían aunque
-            las notificaciones globales estén desactivadas.
+            las notificaciones globales estén desactivadas. From:{" "}
+            <code className="text-t-dim">noreply@winbit.com.ar</code> · Reply-To:{" "}
+            <code className="text-t-dim">winbit.cfds@gmail.com</code>.
           </p>
         </div>
         <Link
@@ -253,6 +314,13 @@ export const CampaignsPage = () => {
               <span className="text-t-primary">
                 {loadingPreview ? "…" : audienceCount}
               </span>
+              {attachmentCount > 0 ? (
+                <>
+                  <br />
+                  Adjuntos:{" "}
+                  <span className="text-t-primary">{attachmentCount}</span>
+                </>
+              ) : null}
             </p>
           </div>
         </div>
@@ -353,7 +421,8 @@ export const CampaignsPage = () => {
             Destinatarios ({audienceCount})
           </h3>
           <p className="mb-2 text-xs text-t-dim">
-            Usá ↓ junto al nombre para descargar el Excel del mes seleccionado.
+            ↓ descarga el Excel del mes. 📎 sube un adjunto PDF/XLSX (máx.
+            10MB) por inversor; solo se envía a quienes tengan archivo.
           </p>
           <div className="max-h-96 overflow-auto">
             <table className="w-full text-sm">
@@ -361,49 +430,81 @@ export const CampaignsPage = () => {
                 <tr className="text-left text-t-dim">
                   <th className="pb-2 pr-2">Nombre</th>
                   <th className="pb-2 pr-2">USD</th>
-                  <th className="pb-2">%</th>
+                  <th className="pb-2 pr-2">%</th>
+                  <th className="pb-2">Adjunto</th>
                 </tr>
               </thead>
               <tbody>
-                {recipientsPreview.map((r) => (
-                  <tr key={String(r.id)} className="border-t border-b-default">
-                    <td className="py-2 pr-2">
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <button
-                          type="button"
-                          className="min-w-0 truncate text-left text-primary hover:underline"
-                          onClick={() => setInvestorId(String(r.id))}
-                        >
-                          {r.name}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => void handleDownloadReport(r)}
-                          disabled={downloadingId === String(r.id)}
-                          className="shrink-0 rounded px-1.5 py-0.5 text-sm font-semibold text-primary hover:bg-primary-dim disabled:opacity-50"
-                          title="Descargar reporte Excel"
-                          aria-label={`Descargar Excel de ${r.name}`}
-                        >
-                          {downloadingId === String(r.id) ? "…" : "↓"}
-                        </button>
-                      </div>
-                      <div className="text-xs text-t-dim">{r.email}</div>
-                    </td>
-                    <td className="py-2 pr-2 text-t-primary">
-                      {r.gananciaUsd ?? "—"}
-                    </td>
-                    <td className="py-2 text-t-primary">
-                      {r.gananciaPct ?? "—"}
-                    </td>
-                  </tr>
-                ))}
+                {recipientsPreview.map((r) => {
+                  const id = String(r.id);
+                  const file = attachmentsById[id];
+                  return (
+                    <tr key={id} className="border-t border-b-default">
+                      <td className="py-2 pr-2">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <button
+                            type="button"
+                            className="min-w-0 truncate text-left text-primary hover:underline"
+                            onClick={() => setInvestorId(id)}
+                          >
+                            {r.name}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => void handleDownloadReport(r)}
+                            disabled={downloadingId === id}
+                            className="shrink-0 rounded px-1.5 py-0.5 text-sm font-semibold text-primary hover:bg-primary-dim disabled:opacity-50"
+                            title="Descargar reporte Excel"
+                            aria-label={`Descargar Excel de ${r.name}`}
+                          >
+                            {downloadingId === id ? "…" : "↓"}
+                          </button>
+                        </div>
+                        <div className="text-xs text-t-dim">{r.email}</div>
+                      </td>
+                      <td className="py-2 pr-2 text-t-primary">
+                        {r.gananciaUsd ?? "—"}
+                      </td>
+                      <td className="py-2 pr-2 text-t-primary">
+                        {r.gananciaPct ?? "—"}
+                      </td>
+                      <td className="py-2">
+                        <div className="flex flex-col gap-1 min-w-[8rem]">
+                          <input
+                            ref={(el) => {
+                              fileInputRefs.current[id] = el;
+                            }}
+                            type="file"
+                            accept=".pdf,.xlsx,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                            className="block w-full max-w-[11rem] text-[11px] text-t-dim file:mr-2 file:rounded file:border-0 file:bg-primary-dim file:px-2 file:py-0.5 file:text-xs file:text-primary"
+                            aria-label={`Adjuntar archivo para ${r.name}`}
+                            onChange={(e) => {
+                              const selected = e.target.files?.[0] ?? null;
+                              handleAttachmentChange(id, selected);
+                            }}
+                          />
+                          {file ? (
+                            <div className="flex items-center gap-1 text-[11px] text-success">
+                              <span className="truncate" title={file.name}>
+                                {file.name}
+                              </span>
+                              <button
+                                type="button"
+                                className="shrink-0 text-error hover:underline"
+                                onClick={() => clearAttachment(id)}
+                                aria-label={`Quitar adjunto de ${r.name}`}
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          ) : null}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
-            {audienceCount > 20 ? (
-              <p className="mt-2 text-xs text-t-dim">
-                Mostrando 20 de {audienceCount}.
-              </p>
-            ) : null}
           </div>
         </div>
       </div>
@@ -421,7 +522,11 @@ export const CampaignsPage = () => {
           void handleSendMass();
         }}
         title="Confirmar envío masivo"
-        message={`Se encolarán emails personalizados a ${audienceCount} inversores ACTIVE del mes ${month}. ¿Continuar?`}
+        message={`Se encolarán emails personalizados a ${audienceCount} inversores ACTIVE del mes ${month}${
+          attachmentCount > 0
+            ? ` (${attachmentCount} con adjunto PDF/XLSX)`
+            : ""
+        }. ¿Continuar?`}
         confirmText="Enviar ahora"
         confirmVariant="primary"
       />

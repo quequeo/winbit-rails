@@ -42,6 +42,32 @@ async function request(path: string, options?: RequestInit) {
   return text ? JSON.parse(text) : null;
 }
 
+/** Multipart POST — do not set Content-Type (browser sets boundary). */
+async function requestForm(path: string, formData: FormData) {
+  const res = await fetch(`${API_BASE_URL}${path}`, {
+    method: "POST",
+    credentials: "include",
+    headers: { Accept: "application/json" },
+    body: formData,
+  });
+
+  if (!res.ok) {
+    if (res.status === 401) throw new Error("Unauthorized");
+    if (res.status === 403) throw new Error("Forbidden");
+
+    const contentType = res.headers.get("content-type") || "";
+    const body = contentType.includes("application/json")
+      ? JSON.stringify(await res.json())
+      : await res.text();
+    throw new Error(body || `Request failed: ${res.status}`);
+  }
+
+  if (res.status === 204) return null;
+
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
+}
+
 export const api = {
   adminLogin: (email: string, password: string) =>
     request(`${ADMIN_API_PREFIX}/auth/login`, {
@@ -494,19 +520,55 @@ export const api = {
     subject: string;
     body: string;
     investor_id: string;
-  }) =>
-    request(`${ADMIN_API_PREFIX}/email_campaigns/send_one`, {
+    attachment?: File | null;
+  }) => {
+    if (body.attachment) {
+      const form = new FormData();
+      form.append("month", body.month);
+      form.append("subject", body.subject);
+      form.append("body", body.body);
+      form.append("investor_id", body.investor_id);
+      form.append("attachment", body.attachment);
+      return requestForm(`${ADMIN_API_PREFIX}/email_campaigns/send_one`, form);
+    }
+    return request(`${ADMIN_API_PREFIX}/email_campaigns/send_one`, {
       method: "POST",
-      body: JSON.stringify(body),
-    }),
+      body: JSON.stringify({
+        month: body.month,
+        subject: body.subject,
+        body: body.body,
+        investor_id: body.investor_id,
+      }),
+    });
+  },
   sendEmailCampaignMass: (body: {
     month: string;
     subject: string;
     body: string;
     confirm: boolean;
-  }) =>
-    request(`${ADMIN_API_PREFIX}/email_campaigns/send_mass`, {
+    attachmentsByInvestorId?: Record<string, File>;
+  }) => {
+    const attachments = body.attachmentsByInvestorId || {};
+    const hasAttachments = Object.keys(attachments).length > 0;
+    if (hasAttachments) {
+      const form = new FormData();
+      form.append("month", body.month);
+      form.append("subject", body.subject);
+      form.append("body", body.body);
+      form.append("confirm", body.confirm ? "true" : "false");
+      Object.entries(attachments).forEach(([investorId, file]) => {
+        form.append(`attachments[${investorId}]`, file);
+      });
+      return requestForm(`${ADMIN_API_PREFIX}/email_campaigns/send_mass`, form);
+    }
+    return request(`${ADMIN_API_PREFIX}/email_campaigns/send_mass`, {
       method: "POST",
-      body: JSON.stringify(body),
-    }),
+      body: JSON.stringify({
+        month: body.month,
+        subject: body.subject,
+        body: body.body,
+        confirm: body.confirm,
+      }),
+    });
+  },
 };

@@ -29,6 +29,7 @@ module Api
       end
 
       # POST /api/admin/email_campaigns/send_one
+      # Optional multipart field: attachment (PDF/XLSX ≤10MB)
       def send_one
         month = parse_month_param
         return if performed?
@@ -40,18 +41,31 @@ module Api
         return if performed?
         return unless investor
 
+        attachments_by_id = {}
+        upload = params[:attachment]
+        if upload.present?
+          begin
+            attachments_by_id[investor.id.to_s] = EmailCampaigns::Attachment.from_upload(upload)
+          rescue ArgumentError => e
+            render_error(e.message, status: :unprocessable_content)
+            return
+          end
+        end
+
         result = EmailCampaigns::Send.call(
           month: month.strftime('%Y-%m'),
           subject: subject,
           body: body,
           investor_ids: [investor.id],
-          force: true
+          force: true,
+          attachments_by_investor_id: attachments_by_id
         )
 
         render json: { data: serialize_send_result(result) }
       end
 
       # POST /api/admin/email_campaigns/send_mass
+      # Optional multipart: attachments[investor_id] = file (PDF/XLSX ≤10MB each)
       def send_mass
         month = parse_month_param
         return if performed?
@@ -67,11 +81,15 @@ module Api
           return
         end
 
+        attachments_by_id = parse_mass_attachments
+        return if performed?
+
         result = EmailCampaigns::Send.call(
           month: month.strftime('%Y-%m'),
           subject: subject,
           body: body,
-          force: true
+          force: true,
+          attachments_by_investor_id: attachments_by_id
         )
 
         render json: { data: serialize_send_result(result) }
@@ -107,6 +125,29 @@ module Api
         end
 
         [subject, body]
+      end
+
+      def parse_mass_attachments
+        raw = params[:attachments]
+        return {} if raw.blank?
+
+        unless raw.respond_to?(:each)
+          render_error('attachments debe ser un mapa investor_id → archivo', status: :unprocessable_content)
+          return {}
+        end
+
+        result = {}
+        raw.each do |investor_id, upload|
+          next if upload.blank?
+
+          begin
+            result[investor_id.to_s] = EmailCampaigns::Attachment.from_upload(upload)
+          rescue ArgumentError => e
+            render_error("Adjunto inversor #{investor_id}: #{e.message}", status: :unprocessable_content)
+            return {}
+          end
+        end
+        result
       end
 
       def serialize_recipient(row)

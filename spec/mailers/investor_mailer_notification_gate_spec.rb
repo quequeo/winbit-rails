@@ -138,6 +138,24 @@ RSpec.describe InvestorMailer, type: :mailer do
         )
         expect(mail.message).not_to be_a(ActionMailer::Base::NullMail)
         expect(mail.to).to eq(['john@example.com'])
+        expect(mail.reply_to).to eq(['winbit.cfds@gmail.com'])
+      end
+
+      it 'campaign_message attaches optional file' do
+        attachment = EmailCampaigns::Attachment::Payload.new(
+          filename: 'informe.pdf',
+          content: '%PDF-1.4',
+          content_type: 'application/pdf'
+        )
+        mail = described_class.campaign_message(
+          investor,
+          subject: 'Campaña',
+          body_html: 'Hola',
+          force: true,
+          attachment: attachment
+        )
+        expect(mail.attachments.size).to eq(1)
+        expect(mail.attachments.first.filename).to eq('informe.pdf')
       end
     end
 

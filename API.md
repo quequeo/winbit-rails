@@ -269,8 +269,8 @@ Requiere sesión de admin. Usada por el backoffice.
 | POST | `/trading_fees` | Aplicar comisión |
 | GET | `/trading_fees/investors_summary` | Resumen comisiones por inversor |
 | GET | `/email_campaigns/preview` | Preview de campaña email (params: `month` YYYY-MM, opcional `subject`, `body`, `investor_id`). Lista inversores ACTIVE con `{{nombre}}`, `{{ganancia_usd}}`, `{{ganancia_pct}}`, etc. desde MonthlyReportBuilder. |
-| POST | `/email_campaigns/send_one` | Envía email personalizado a un inversor (`month`, `subject`, `body`, `investor_id`). Omite NotificationGate (campaña admin). |
-| POST | `/email_campaigns/send_mass` | Envía campaña a todos los ACTIVE con email (`month`, `subject`, `body`, `confirm=true`). Omite NotificationGate. Encola con `deliver_later`; fallos por destinatario no abortan el resto. |
+| POST | `/email_campaigns/send_one` | Envía email personalizado a un inversor (`month`, `subject`, `body`, `investor_id`). Multipart opcional: `attachment` (PDF/XLSX ≤10MB). Omite NotificationGate. From: `RESEND_FROM_EMAIL` (prod: `Winbit <noreply@winbit.com.ar>`); Reply-To: `RESEND_REPLY_TO` (default `winbit.cfds@gmail.com`). |
+| POST | `/email_campaigns/send_mass` | Envía campaña a todos los ACTIVE con email (`month`, `subject`, `body`, `confirm=true`). Multipart opcional: `attachments[investor_id]` = archivo PDF/XLSX ≤10MB por destinatario. Sin adjunto → `deliver_later`; con adjunto → `deliver_now`. Omite NotificationGate. |
 | GET | `/referral_commissions` | Comisiones por referido |
 | GET | `/settings` | Configuración |
 | PATCH | `/settings` | Actualizar configuración |
