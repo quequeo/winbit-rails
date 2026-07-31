@@ -183,6 +183,8 @@ function appendAnnexBlock(
     ytdFromSummary != null && Number.isFinite(ytdFromSummary)
       ? ytdFromSummary
       : totalReturnUsdNet;
+  // TOTAL RDO M % = Resumen "Acumulado 2026 (%)" (annex-net YTD), not a sum of monthly %.
+  const ytdPercentFromSummary = report.summary.accumulated2026Percent;
   const openingRow = report.annexRows.find(
     (row) => row.openingSnapshot || row.entryRow,
   );
@@ -194,7 +196,7 @@ function appendAnnexBlock(
 
   blockRows.push([
     "TOTAL",
-    "",
+    cellValue(pctToDecimalTwoDec(ytdPercentFromSummary)),
     cellValue(roundUsdTwoDec(totalReturnForSheet)),
     cellValue(roundUsd(totalDeposits)),
     cellValue(roundUsd(totalWithdrawals)),
@@ -207,7 +209,11 @@ function appendAnnexBlock(
   const endRow = startRow + blockRows.length - 1;
   const totalRow = endRow;
   for (let r = startRow + 1; r <= endRow; r += 1) {
-    applyPctFormat(ws, XLSX.utils.encode_cell({ r, c: 1 }));
+    applyPctFormat(
+      ws,
+      XLSX.utils.encode_cell({ r, c: 1 }),
+      r === totalRow ? PCT_FORMAT_RESUMEN : PCT_FORMAT,
+    );
     // TOTAL RDO uses cents to match Resumen "Acumulado 2026"; monthly rows stay whole USD.
     applyUsdFormat(
       ws,
