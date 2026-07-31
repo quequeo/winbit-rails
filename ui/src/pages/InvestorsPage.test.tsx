@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { InvestorsPage } from "./InvestorsPage";
 import { api } from "../lib/api";
+import { downloadMonthlyReportExcel } from "../lib/monthlyReportExcel";
 
 vi.mock("../lib/api", () => ({
   api: {
@@ -13,6 +14,11 @@ vi.mock("../lib/api", () => ({
     deleteInvestor: vi.fn(),
     toggleInvestorStatus: vi.fn(),
   },
+}));
+
+vi.mock("../lib/monthlyReportExcel", () => ({
+  downloadMonthlyReportExcel: vi.fn(),
+  downloadAllInvestorsReportsExcel: vi.fn(),
 }));
 
 global.confirm = vi.fn(() => true);
@@ -311,6 +317,47 @@ describe("InvestorsPage", () => {
       });
 
       alertSpy.mockRestore();
+    });
+  });
+
+  describe("Descargar Excel por inversor", () => {
+    const sampleReport = {
+      investor: { id: "1", name: "Investor One", email: "investor1@test.com" },
+      reportMonth: "2026-06",
+      summary: {
+        portfolioValue: 1000,
+        monthlyReturnPercent: 1.5,
+        monthlyReturnUsd: 15,
+        accumulatedReturnPercent: 10,
+        accumulatedReturnUsd: 100,
+        ytd2026ReturnPercent: 5,
+        ytd2026ReturnUsd: 50,
+      },
+      annexRows: [],
+    };
+
+    it("downloads single-investor Excel from the ↓ next to the name", async () => {
+      vi.mocked(api.getAdminInvestors).mockResolvedValue(mockInvestors);
+      vi.mocked(api.getInvestorMonthlyReport).mockResolvedValue({
+        data: sampleReport,
+      });
+
+      const user = userEvent.setup();
+      renderWithRouter(<InvestorsPage />);
+
+      const downloadBtn = await screen.findAllByRole("button", {
+        name: /Descargar Excel de Investor One/i,
+      });
+      await user.click(downloadBtn[0]);
+
+      await waitFor(() => {
+        expect(api.getInvestorMonthlyReport).toHaveBeenCalledWith(
+          "1",
+          expect.any(String),
+        );
+      });
+
+      expect(downloadMonthlyReportExcel).toHaveBeenCalledWith(sampleReport);
     });
   });
 });

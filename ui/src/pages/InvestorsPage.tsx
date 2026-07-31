@@ -346,9 +346,21 @@ export const InvestorsPage = () => {
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-t-primary">
-                  {inv.name}
-                </p>
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <p className="truncate text-sm font-semibold text-t-primary">
+                    {inv.name}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => handleDownloadReport(inv)}
+                    disabled={downloadingId === inv.id || downloadingAll}
+                    className="shrink-0 rounded px-1.5 py-0.5 text-sm font-semibold text-primary hover:bg-primary-dim disabled:opacity-50"
+                    title="Descargar reporte Excel"
+                    aria-label={`Descargar Excel de ${inv.name}`}
+                  >
+                    {downloadingId === inv.id ? "…" : "↓"}
+                  </button>
+                </div>
                 <p className="truncate mt-1 text-sm text-t-muted">
                   {inv.email}
                 </p>
@@ -379,26 +391,6 @@ export const InvestorsPage = () => {
               <span>{inv.hasPassword ? "🔑 Pass" : "Google"}</span>
             </div>
             <div className="mt-3 flex gap-2">
-              <button
-                onClick={() => handleDownloadReport(inv)}
-                disabled={downloadingId === inv.id}
-                className="rounded p-2 text-primary hover:bg-primary-dim disabled:opacity-50"
-                title="Descargar reporte Excel"
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 10v6m0 0l-3-3m3 3l3-3M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5 5 5M12 5v9"
-                  />
-                </svg>
-              </button>
               <button
                 onClick={() =>
                   navigate(`/campanas?investorId=${String(inv.id)}`)
@@ -501,7 +493,19 @@ export const InvestorsPage = () => {
                   className={`text-sm ${inv.status === "INACTIVE" ? "opacity-50" : ""}`}
                 >
                   <td className="py-3 pr-4 font-medium sticky left-0 bg-dark-card/95">
-                    {inv.name}
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span className="truncate">{inv.name}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleDownloadReport(inv)}
+                        disabled={downloadingId === inv.id || downloadingAll}
+                        className="shrink-0 rounded px-1.5 py-0.5 text-sm font-semibold text-primary hover:bg-primary-dim disabled:opacity-50"
+                        title="Descargar reporte Excel"
+                        aria-label={`Descargar Excel de ${inv.name}`}
+                      >
+                        {downloadingId === inv.id ? "…" : "↓"}
+                      </button>
+                    </div>
                   </td>
                   <td className="py-3 pr-4 text-t-muted">{inv.email}</td>
                   <td className="py-3 pr-4 text-center">
@@ -545,26 +549,6 @@ export const InvestorsPage = () => {
                   </td>
                   <td className="py-3 text-right">
                     <div className="flex gap-1 justify-end">
-                      <button
-                        onClick={() => handleDownloadReport(inv)}
-                        disabled={downloadingId === inv.id}
-                        className="rounded p-1.5 text-primary hover:bg-primary-dim disabled:opacity-50"
-                        title="Descargar reporte Excel"
-                      >
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 10v6m0 0l-3-3m3 3l3-3M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5 5 5M12 5v9"
-                          />
-                        </svg>
-                      </button>
                       <button
                         onClick={() =>
                           navigate(`/campanas?investorId=${String(inv.id)}`)

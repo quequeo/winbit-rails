@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { api } from "../lib/api";
+import { downloadMonthlyReportExcel } from "../lib/monthlyReportExcel";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 import { ConfirmDialog } from "../components/ui/ConfirmDialog";
+import type { MonthlyReport } from "../types";
 
 const DEFAULT_SUBJECT =
   "Winbit | Informe de rendimiento {{mes}}";
@@ -60,6 +62,7 @@ export const CampaignsPage = () => {
   const [success, setSuccess] = useState<string | null>(null);
   const [confirmMass, setConfirmMass] = useState(false);
   const [showMassDialog, setShowMassDialog] = useState(false);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (investorIdParam) setInvestorId(investorIdParam);
@@ -165,6 +168,22 @@ export const CampaignsPage = () => {
     () => (preview?.recipients || []).slice(0, 20),
     [preview],
   );
+
+  const handleDownloadReport = async (recipient: Recipient) => {
+    const id = String(recipient.id);
+    setDownloadingId(id);
+    setError(null);
+    try {
+      const res = await api.getInvestorMonthlyReport(id, month);
+      downloadMonthlyReportExcel((res as { data: MonthlyReport }).data);
+    } catch (e) {
+      setError(
+        e instanceof Error ? e.message : "Error al descargar reporte Excel",
+      );
+    } finally {
+      setDownloadingId(null);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -333,6 +352,9 @@ export const CampaignsPage = () => {
           <h3 className="mb-3 text-sm font-semibold text-t-primary">
             Destinatarios ({audienceCount})
           </h3>
+          <p className="mb-2 text-xs text-t-dim">
+            Usá ↓ junto al nombre para descargar el Excel del mes seleccionado.
+          </p>
           <div className="max-h-96 overflow-auto">
             <table className="w-full text-sm">
               <thead>
@@ -346,13 +368,25 @@ export const CampaignsPage = () => {
                 {recipientsPreview.map((r) => (
                   <tr key={String(r.id)} className="border-t border-b-default">
                     <td className="py-2 pr-2">
-                      <button
-                        type="button"
-                        className="text-left text-primary hover:underline"
-                        onClick={() => setInvestorId(String(r.id))}
-                      >
-                        {r.name}
-                      </button>
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <button
+                          type="button"
+                          className="min-w-0 truncate text-left text-primary hover:underline"
+                          onClick={() => setInvestorId(String(r.id))}
+                        >
+                          {r.name}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void handleDownloadReport(r)}
+                          disabled={downloadingId === String(r.id)}
+                          className="shrink-0 rounded px-1.5 py-0.5 text-sm font-semibold text-primary hover:bg-primary-dim disabled:opacity-50"
+                          title="Descargar reporte Excel"
+                          aria-label={`Descargar Excel de ${r.name}`}
+                        >
+                          {downloadingId === String(r.id) ? "…" : "↓"}
+                        </button>
+                      </div>
                       <div className="text-xs text-t-dim">{r.email}</div>
                     </td>
                     <td className="py-2 pr-2 text-t-primary">
