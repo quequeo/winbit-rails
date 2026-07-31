@@ -29,7 +29,10 @@ class MonthlyReportBuilder
 
   def build
     annex_rows = build_annex_rows
+    opening_row = annex_rows.find { |r| r[:entry_row] || r[:opening_snapshot] }
     dashboard = InvestorPortfolioDashboardPayload.build(investor: @investor) || {}
+    ytd_usd = compute_ytd_usd(annex_rows, opening_row:)
+    ytd_base = opening_row&.dig(:portfolio_value).to_f
 
     {
       investor: {
@@ -38,21 +41,25 @@ class MonthlyReportBuilder
         email: @investor.email,
       },
       report_month: @report_month.strftime('%Y-%m'),
-      summary: build_summary(dashboard),
+      summary: build_summary(dashboard, ytd_usd:, ytd_base:),
       annex_rows: annex_rows,
     }
   end
 
   private
 
-  def build_summary(dashboard)
+  def build_summary(dashboard, ytd_usd:, ytd_base:)
     {
       portfolio_value_usd: portfolio_value_for_summary,
       winbit_monthly_return_percent: winbit_monthly_percent(@report_month),
+      # Lifetime figures mirror the investor panel (strategy_return_all_*).
       accumulated_since_entry_usd: dashboard[:strategyReturnAllUSD],
       accumulated_since_entry_percent: dashboard[:strategyReturnAllPercent],
-      accumulated_2026_usd: dashboard[:strategyReturnYtdUSD],
-      accumulated_2026_percent: dashboard[:strategyReturnYtdPercent],
+      # 2026 YTD must match the annex (net of CST): same source as Anexo TOTAL RDO.
+      accumulated_2026_usd: ytd_usd,
+      accumulated_2026_percent: if ytd_base.positive?
+                                 ((bd(ytd_usd) / bd(ytd_base)) * 100).round(2, :half_up).to_f
+                               end,
     }
   end
 
@@ -215,6 +222,27 @@ class MonthlyReportBuilder
     end
 
     ((factor - 1) * 100).round(2, :half_up).to_f
+  end
+
+  # Net YTD PnL as of report month (FORMULAS.md §8): end − base − deposits + withdrawals.
+  # Equals sum(RDO M $) − sum(CST) when monthly RDO is gross and CST is separate.
+  def compute_ytd_usd(annex_rows, opening_row:)
+    return 0.0 unless opening_row
+
+    year_rows = annex_rows
+                .reject { |r| r[:opening_snapshot] || r[:entry_row] }
+                .select { |r| r[:month].to_s.start_with?("#{@report_month.year}-") && Date.parse("#{r[:month]}-01") <= @report_month }
+
+    return 0.0 if year_rows.empty?
+
+    base = opening_row[:portfolio_value].to_f
+    end_value = year_rows.last[:portfolio_value].to_f
+    deposits = year_rows.sum { |r| r[:deposits].to_f }
+    withdrawals = year_rows.sum { |r| r[:withdrawals].to_f }
+
+    (
+      bd(end_value) - bd(base) - bd(deposits) + bd(withdrawals)
+    ).round(2, :half_up).to_f
   end
 
   def serialize_row(month:, return_percent:, return_usd:, deposits:, withdrawals:, service_cost:,

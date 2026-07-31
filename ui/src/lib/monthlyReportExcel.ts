@@ -159,7 +159,9 @@ function appendAnnexBlock(
   const rowsForTotals = report.annexRows.filter(
     (row) => !row.openingSnapshot && !row.entryRow,
   );
-  const totalReturnUsd = rowsForTotals.reduce(
+  // Monthly RDO M $ is gross; CST is separate. TOTAL RDO must be net so it
+  // matches Resumen "Acumulado 2026 (USD)" (and sum(gross) − sum(CST)).
+  const totalReturnUsdGross = rowsForTotals.reduce(
     (acc, row) => acc + (row.returnUsd ?? 0),
     0,
   );
@@ -175,6 +177,12 @@ function appendAnnexBlock(
     (acc, row) => acc + (row.serviceCost ?? 0),
     0,
   );
+  const totalReturnUsdNet = totalReturnUsdGross - totalCst;
+  const ytdFromSummary = report.summary.accumulated2026Usd;
+  const totalReturnForSheet =
+    ytdFromSummary != null && Number.isFinite(ytdFromSummary)
+      ? ytdFromSummary
+      : totalReturnUsdNet;
   const openingRow = report.annexRows.find(
     (row) => row.openingSnapshot || row.entryRow,
   );
@@ -187,7 +195,7 @@ function appendAnnexBlock(
   blockRows.push([
     "TOTAL",
     "",
-    cellValue(roundUsd(totalReturnUsd)),
+    cellValue(roundUsdTwoDec(totalReturnForSheet)),
     cellValue(roundUsd(totalDeposits)),
     cellValue(roundUsd(totalWithdrawals)),
     cellValue(roundUsd(totalCst)),
@@ -197,9 +205,15 @@ function appendAnnexBlock(
   XLSX.utils.sheet_add_aoa(ws, blockRows, { origin: { r: startRow, c: 0 } });
 
   const endRow = startRow + blockRows.length - 1;
+  const totalRow = endRow;
   for (let r = startRow + 1; r <= endRow; r += 1) {
     applyPctFormat(ws, XLSX.utils.encode_cell({ r, c: 1 }));
-    applyUsdFormat(ws, XLSX.utils.encode_cell({ r, c: 2 }));
+    // TOTAL RDO uses cents to match Resumen "Acumulado 2026"; monthly rows stay whole USD.
+    applyUsdFormat(
+      ws,
+      XLSX.utils.encode_cell({ r, c: 2 }),
+      r === totalRow ? USD_FORMAT_CENTS : USD_FORMAT,
+    );
     applyUsdFormat(ws, XLSX.utils.encode_cell({ r, c: 3 }));
     applyUsdFormat(ws, XLSX.utils.encode_cell({ r, c: 4 }));
     applyUsdFormat(ws, XLSX.utils.encode_cell({ r, c: 5 }));

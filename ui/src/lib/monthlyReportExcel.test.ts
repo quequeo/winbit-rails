@@ -102,12 +102,14 @@ describe("monthlyReportExcel workbooks", () => {
     expect(anexo.A3?.v).toBeTruthy();
   });
 
-  it("TOTAL row sums gross RDO, CST and portfolio delta", () => {
+  it("TOTAL RDO is net of CST and matches Resumen acumulado 2026", () => {
     const report: MonthlyReport = {
       ...sampleReport,
       summary: {
         ...sampleReport.summary,
         portfolioValueUsd: 7293,
+        accumulated2026Usd: 68,
+        accumulated2026Percent: 0.98,
       },
       annexRows: [
         {
@@ -140,11 +142,136 @@ describe("monthlyReportExcel workbooks", () => {
     };
 
     const wb = buildMonthlyReportWorkbook(report);
+    const resumen = wb.Sheets.Resumen;
     const anexo = wb.Sheets.Anexo;
 
-    expect(anexo.C4?.v).toBe(117);
+    expect(anexo.C3?.v).toBe(117);
+    expect(anexo.A4?.v).toBe("TOTAL");
+    expect(anexo.C4?.v).toBe(68);
     expect(anexo.F4?.v).toBe(49);
     expect(anexo.G4?.v).toBe(342);
+    expect(resumen.B9?.v).toBe(68);
+    expect(anexo.C4?.v).toBe(resumen.B9?.v);
+  });
+
+  it("Fabrizio Bruno: Resumen acumulado 2026 matches Anexo TOTAL (neto), not gross RDO sum", () => {
+    const report: MonthlyReport = {
+      investor: { id: "fb", name: "Fabrizio Bruno", email: "fabrabr190987@gmail.com" },
+      reportMonth: "2026-06",
+      summary: {
+        portfolioValueUsd: 7293,
+        winbitMonthlyReturnPercent: 1.6,
+        accumulatedSinceEntryUsd: 5430,
+        accumulatedSinceEntryPercent: 73.8,
+        accumulated2026Usd: 343,
+        accumulated2026Percent: 4.93,
+      },
+      annexRows: [
+        {
+          month: "2025-12",
+          label: "Dec-25",
+          returnPercent: null,
+          returnUsd: null,
+          deposits: 0,
+          withdrawals: 0,
+          serviceCost: 0,
+          portfolioValue: 6951,
+          openingSnapshot: true,
+          entryRow: false,
+          source: "spreadsheet",
+        },
+        {
+          month: "2026-01",
+          label: "Jan-26",
+          returnPercent: 0,
+          returnUsd: -1,
+          deposits: 0,
+          withdrawals: 0,
+          serviceCost: 0,
+          portfolioValue: 6950,
+          openingSnapshot: false,
+          entryRow: false,
+          source: "spreadsheet",
+        },
+        {
+          month: "2026-02",
+          label: "Feb-26",
+          returnPercent: 2,
+          returnUsd: 161,
+          deposits: 0,
+          withdrawals: 0,
+          serviceCost: 0,
+          portfolioValue: 7111,
+          openingSnapshot: false,
+          entryRow: false,
+          source: "spreadsheet",
+        },
+        {
+          month: "2026-03",
+          label: "Mar-26",
+          returnPercent: 2.3,
+          returnUsd: 164,
+          deposits: 0,
+          withdrawals: 0,
+          serviceCost: 97,
+          portfolioValue: 7178,
+          openingSnapshot: false,
+          entryRow: false,
+          source: "spreadsheet",
+        },
+        {
+          month: "2026-04",
+          label: "Apr-26",
+          returnPercent: 2.5,
+          returnUsd: 179,
+          deposits: 0,
+          withdrawals: 0,
+          serviceCost: 0,
+          portfolioValue: 7357,
+          openingSnapshot: false,
+          entryRow: false,
+          source: "spreadsheet",
+        },
+        {
+          month: "2026-05",
+          label: "May-26",
+          returnPercent: -1.8,
+          returnUsd: -131,
+          deposits: 0,
+          withdrawals: 0,
+          serviceCost: 0,
+          portfolioValue: 7226,
+          openingSnapshot: false,
+          entryRow: false,
+          source: "platform",
+        },
+        {
+          month: "2026-06",
+          label: "Jun-26",
+          returnPercent: 1.6,
+          returnUsd: 117,
+          deposits: 0,
+          withdrawals: 0,
+          serviceCost: 49,
+          portfolioValue: 7293,
+          openingSnapshot: false,
+          entryRow: false,
+          source: "platform",
+        },
+      ],
+    };
+
+    const wb = buildMonthlyReportWorkbook(report);
+    const resumen = wb.Sheets.Resumen;
+    const anexo = wb.Sheets.Anexo;
+
+    expect(anexo.A9?.v).toBe("TOTAL");
+    expect(anexo.C9?.v).toBe(343);
+    expect(anexo.C9?.v).not.toBe(489);
+    expect(anexo.F9?.v).toBe(146);
+    expect(anexo.G9?.v).toBe(342);
+    expect(resumen.B9?.v).toBe(343);
+    expect(anexo.C9?.v).toBe(resumen.B9?.v);
   });
 
   it("builds all-investors workbook with stacked annex blocks", () => {
