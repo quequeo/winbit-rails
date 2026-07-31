@@ -330,3 +330,62 @@ RSpec.describe MonthlyReportBuilder do
     end
   end
 end
+
+RSpec.describe MonthlyReportBuilder do
+  describe 'current month includes today operativa stamped at 17:00' do
+    let(:investor) do
+      Investor.create!(email: 'today.op@test.com', name: 'Today Op', status: 'ACTIVE')
+    end
+
+    let!(:portfolio) do
+      Portfolio.create!(investor: investor, current_balance: 1010)
+    end
+
+    before do
+      InvestorMonthlyAnnexRow.create!(
+        investor: investor,
+        month: Date.new(2026, 4, 1),
+        return_percent: 0,
+        return_usd: 0,
+        portfolio_value: 1000,
+        opening_snapshot: false,
+        source: 'spreadsheet',
+      )
+    end
+
+    it 'includes today OPERATING_RESULT in RDO M % even when generated before 17:00' do
+      PortfolioHistory.create!(
+        investor: investor,
+        event: 'OPERATING_RESULT',
+        amount: 10,
+        previous_balance: 1000,
+        new_balance: 1010,
+        date: Time.zone.local(2026, 7, 31, 17, 0, 0),
+        status: 'COMPLETED',
+      )
+      DailyOperatingResult.create!(
+        date: Date.new(2026, 7, 31),
+        percent: 1.0,
+        applied_at: Time.zone.local(2026, 7, 31, 14, 0, 0),
+        applied_by: User.create!(
+          email: 'admin-today@test.com',
+          name: 'Admin',
+          role: 'SUPERADMIN',
+          provider: 'google_oauth2',
+          uid: 'today-op-admin',
+        ),
+      )
+
+      # Wall clock before the canonical 17:00 movement_time — previously excluded today.
+      travel_to Time.zone.local(2026, 7, 31, 15, 0, 0) do
+        report = described_class.new(investor: investor, report_month: Date.new(2026, 7, 1)).build
+        jul = report[:annex_rows].find { |r| r[:month] == '2026-07' }
+
+        expect(jul[:portfolio_value]).to eq(1010.0)
+        expect(jul[:return_usd]).to be_within(0.01).of(10.0)
+        expect(jul[:return_percent]).to be_within(0.01).of(1.0)
+        expect(report[:summary][:winbit_monthly_return_percent]).to eq(1.0)
+      end
+    end
+  end
+end

@@ -178,9 +178,12 @@ class MonthlyReportBuilder
     month_start.beginning_of_day
   end
 
+  # Current month: include all of today (through end_of_day), not Time.current.
+  # Daily operativa is stamped at 17:00 (movement_time); generating the report
+  # earlier in the day would otherwise exclude today's OPERATING_RESULT.
   def effective_month_end(month)
     if month == Date.current.beginning_of_month
-      Time.current
+      Date.current.end_of_day
     else
       month.end_of_month.end_of_day
     end
