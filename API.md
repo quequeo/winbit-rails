@@ -265,6 +265,10 @@ Requiere sesión de admin. Usada por el backoffice.
 | GET | `/daily_operating_results` | Operativa diaria |
 | GET | `/daily_operating_results/series` | Serie diaria (params: `months`/`offset` o `from`/`to` YYYY-MM-DD) para gráficos/Excel |
 | POST | `/daily_operating_results` | Cargar operativa |
+| GET | `/operation_day_captures` | Capturas por día: sin `date` devuelve `{date,count}`; con `date=YYYY-MM-DD` lista capturas del día |
+| GET | `/operation_day_captures/:id` | Metadata de una captura |
+| GET | `/operation_day_captures/:id/image` | Binario PNG de la captura (sesión admin) |
+| POST | `/operation_day_captures` | Superadmin: subir PNG (multipart `file`). Solo si existe `StrategyOperation` ese día. Idempotente por `original_filename` |
 | GET | `/trading_fees` | Comisiones |
 | POST | `/trading_fees` | Aplicar comisión |
 | GET | `/trading_fees/investors_summary` | Resumen comisiones por inversor |

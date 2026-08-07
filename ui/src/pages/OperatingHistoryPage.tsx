@@ -12,6 +12,10 @@ import {
   countStrategyResults,
   type StrategyResultCounts,
 } from "../lib/strategyOperationTone";
+import {
+  DayCaptureCarousel,
+  type DayCaptureItem,
+} from "../components/DayCaptureCarousel";
 
 type HistoryRow = {
   id: string;
@@ -107,6 +111,30 @@ const EyeOffIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+const CameraIcon = ({ className }: { className?: string }) => (
+  <svg
+    className={className || ""}
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden="true"
+  >
+    <path
+      d="M4.5 8.5h2.2l1.1-2h8.4l1.1 2H19.5A1.5 1.5 0 0 1 21 10v8.5a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18.5V10a1.5 1.5 0 0 1 1.5-1.5Z"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinejoin="round"
+    />
+    <circle
+      cx="12"
+      cy="14"
+      r="3.2"
+      stroke="currentColor"
+      strokeWidth="1.8"
+    />
+  </svg>
+);
+
 const monthLabel = (ym: string) => {
   const m = String(ym || "").match(/^(\d{4})-(\d{2})$/);
   if (!m) return ym;
@@ -156,6 +184,15 @@ export const OperatingHistoryPage = () => {
   const [loadingMonthly, setLoadingMonthly] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hideUsdAmounts, setHideUsdAmounts] = useState(readHideUsdPreference);
+  const [captureCounts, setCaptureCounts] = useState<Record<string, number>>(
+    {},
+  );
+  const [carouselOpen, setCarouselOpen] = useState(false);
+  const [carouselDate, setCarouselDate] = useState<string | null>(null);
+  const [carouselCaptures, setCarouselCaptures] = useState<DayCaptureItem[]>(
+    [],
+  );
+  const [loadingCaptures, setLoadingCaptures] = useState(false);
   const [exportFrom, setExportFrom] = useState(() => {
     const d = new Date();
     d.setMonth(d.getMonth() - 2);
@@ -181,6 +218,43 @@ export const OperatingHistoryPage = () => {
     });
   };
 
+  const loadCaptureCounts = async () => {
+    try {
+      const res = (await api.getOperationDayCaptureCounts()) as {
+        data?: { date: string; count: number }[];
+      } | null;
+      const next: Record<string, number> = {};
+      for (const row of res?.data ?? []) {
+        next[row.date] = row.count;
+      }
+      setCaptureCounts(next);
+    } catch {
+      // Capturas son opcionales; no bloquear el historial.
+    }
+  };
+
+  const openDayCaptures = async (date: string) => {
+    try {
+      setLoadingCaptures(true);
+      setError(null);
+      const res = (await api.getOperationDayCapturesForDate(date)) as {
+        data?: DayCaptureItem[];
+      } | null;
+      const items = res?.data ?? [];
+      if (items.length === 0) {
+        setError(`No hay capturas para ${date}.`);
+        return;
+      }
+      setCarouselDate(date);
+      setCarouselCaptures(items);
+      setCarouselOpen(true);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Error al cargar capturas");
+    } finally {
+      setLoadingCaptures(false);
+    }
+  };
+
   const loadHistory = async (page: number) => {
     try {
       setLoadingHistory(true);
@@ -200,6 +274,7 @@ export const OperatingHistoryPage = () => {
       setHistory(res?.data ?? []);
       setHistoryMeta(res?.meta ?? null);
       setHistoryPage(page);
+      void loadCaptureCounts();
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Error al cargar historial");
     } finally {
@@ -647,6 +722,9 @@ export const OperatingHistoryPage = () => {
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-t-muted">
                   Notas
                 </th>
+                <th className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-t-muted">
+                  Foto
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-b-default bg-dark-card">
@@ -654,7 +732,7 @@ export const OperatingHistoryPage = () => {
                 <tr>
                   <td
                     className="px-4 py-6 text-center text-sm text-t-dim"
-                    colSpan={4}
+                    colSpan={5}
                   >
                     {loadingHistory
                       ? "Cargando…"
@@ -675,6 +753,22 @@ export const OperatingHistoryPage = () => {
                     </td>
                     <td className="px-4 py-3 text-sm text-t-muted">
                       {h.notes || "—"}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      {(captureCounts[h.date] || 0) > 0 ? (
+                        <button
+                          type="button"
+                          className="inline-flex items-center justify-center rounded-md border border-b-accent bg-primary-dim p-1.5 text-primary hover:bg-primary/20 disabled:opacity-50"
+                          onClick={() => void openDayCaptures(h.date)}
+                          disabled={loadingCaptures}
+                          title={`Ver ${captureCounts[h.date]} captura(s)`}
+                          aria-label={`Ver capturas del ${h.date}`}
+                        >
+                          <CameraIcon className="h-4 w-4" />
+                        </button>
+                      ) : (
+                        <span className="text-xs text-t-dim">—</span>
+                      )}
                     </td>
                   </tr>
                 ))
@@ -706,6 +800,17 @@ export const OperatingHistoryPage = () => {
           </Button>
         </div>
       </div>
+
+      <DayCaptureCarousel
+        open={carouselOpen}
+        date={carouselDate || ""}
+        captures={carouselCaptures}
+        onClose={() => {
+          setCarouselOpen(false);
+          setCarouselDate(null);
+          setCarouselCaptures([]);
+        }}
+      />
     </div>
   );
 };

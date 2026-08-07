@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_06_17_120000) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_07_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -94,6 +94,21 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_17_120000) do
     t.check_constraint "status::text = ANY (ARRAY['ACTIVE'::character varying::text, 'INACTIVE'::character varying::text])", name: "investors_status_check"
     t.check_constraint "trading_fee_frequency::text = ANY (ARRAY['MONTHLY'::character varying::text, 'QUARTERLY'::character varying::text, 'SEMESTRAL'::character varying::text, 'ANNUAL'::character varying::text])", name: "investors_trading_fee_frequency_check"
     t.check_constraint "trading_fee_percentage >= 0::numeric AND trading_fee_percentage <= 100::numeric", name: "investors_trading_fee_percentage_check"
+  end
+
+  create_table "operation_day_captures", id: :string, force: :cascade do |t|
+    t.date "capture_date", null: false
+    t.string "asset"
+    t.string "result_label"
+    t.string "original_filename", null: false
+    t.string "content_type", default: "image/png", null: false
+    t.integer "byte_size", default: 0, null: false
+    t.binary "image_data", null: false
+    t.string "created_by_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["capture_date"], name: "index_operation_day_captures_on_capture_date"
+    t.index ["original_filename"], name: "index_operation_day_captures_on_original_filename", unique: true
   end
 
   create_table "payment_methods", force: :cascade do |t|
@@ -250,6 +265,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_17_120000) do
   add_foreign_key "activity_logs", "users"
   add_foreign_key "daily_operating_results", "users", column: "applied_by_id"
   add_foreign_key "investor_monthly_annex_rows", "investors"
+  add_foreign_key "operation_day_captures", "users", column: "created_by_id"
   add_foreign_key "portfolio_histories", "investors"
   add_foreign_key "portfolios", "investors"
   add_foreign_key "requests", "investors"

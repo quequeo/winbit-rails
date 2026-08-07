@@ -10,6 +10,8 @@ vi.mock("../lib/api", () => ({
     getDailyOperatingMonthlySummary: vi.fn(),
     getDailyOperatingSeries: vi.fn(),
     getStrategyOperations: vi.fn(),
+    getOperationDayCaptureCounts: vi.fn(),
+    getOperationDayCapturesForDate: vi.fn(),
   },
 }));
 
@@ -40,6 +42,10 @@ describe("OperatingHistoryPage", () => {
     vi.clearAllMocks();
     window.localStorage.clear();
     vi.mocked(api.getStrategyOperations).mockResolvedValue({ data: [] });
+    vi.mocked(api.getOperationDayCaptureCounts).mockResolvedValue({ data: [] });
+    vi.mocked(api.getOperationDayCapturesForDate).mockResolvedValue({
+      data: [],
+    });
   });
 
   it("loads monthly summary and daily history", async () => {

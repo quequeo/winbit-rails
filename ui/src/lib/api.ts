@@ -484,6 +484,17 @@ export const api = {
     const suffix = qs.toString() ? `?${qs.toString()}` : "";
     return request(`${ADMIN_API_PREFIX}/strategy_operations${suffix}`);
   },
+  getOperationDayCaptureCounts: (params?: { from?: string; to?: string }) => {
+    const qs = new URLSearchParams();
+    if (params?.from) qs.set("from", params.from);
+    if (params?.to) qs.set("to", params.to);
+    const suffix = qs.toString() ? `?${qs.toString()}` : "";
+    return request(`${ADMIN_API_PREFIX}/operation_day_captures${suffix}`);
+  },
+  getOperationDayCapturesForDate: (date: string) =>
+    request(
+      `${ADMIN_API_PREFIX}/operation_day_captures?date=${encodeURIComponent(date)}`,
+    ),
   createStrategyOperation: (body: {
     operation_date: string;
     asset: string;
