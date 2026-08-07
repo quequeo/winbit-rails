@@ -65,7 +65,12 @@ module Api
           .limit(1)
           .pick(:result_label)
         token = parsed.filename_result.to_s.strip.upcase
-        result_label = admin_label.presence || (StrategyOperation::RESULT_LABELS.include?(token) ? token : nil)
+        result_label =
+          if StrategyOperation::RESULT_LABELS.include?(admin_label.to_s)
+            admin_label
+          elsif StrategyOperation::RESULT_LABELS.include?(token)
+            token
+          end
 
         capture = OperationDayCapture.create!(
           capture_date: parsed.capture_date,

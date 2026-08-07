@@ -94,7 +94,7 @@ module OperationDayCaptures
         .limit(1)
         .pick(:result_label)
 
-      return admin_label if admin_label.present?
+      return admin_label if StrategyOperation::RESULT_LABELS.include?(admin_label.to_s)
 
       token = parsed.filename_result.to_s.strip.upcase
       return token if StrategyOperation::RESULT_LABELS.include?(token)

@@ -36,6 +36,23 @@ RSpec.describe OperationDayCaptures::BulkUploader do
     expect(OperationDayCapture.count).to eq(1)
   end
 
+  it 'leaves result_label blank when filename BE has no usable admin label' do
+    StrategyOperation.create!(
+      operation_date: Date.new(2026, 5, 19),
+      asset: 'MYM',
+      result_label: nil,
+      created_by: admin,
+      source: 'import',
+    )
+    path = write_png('MYM_19.05.26_BE.png')
+
+    uploader = described_class.new(paths: [path], created_by: admin)
+    uploader.call
+
+    expect(uploader.summary[:uploaded_count]).to eq(1)
+    expect(OperationDayCapture.last.result_label).to be_nil
+  end
+
   it 'skips days without StrategyOperation and SIMULADA files' do
     write_png('NQ_01.04.26_POSITIVO.png')
     write_png('MES_26.05.26_POSITIVASIMULADA.png')
