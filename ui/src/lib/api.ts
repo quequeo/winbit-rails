@@ -582,4 +582,50 @@ export const api = {
       }),
     });
   },
+  getMonthlyReportPdfs: (month: string) => {
+    const qs = new URLSearchParams({ month });
+    return request(`${ADMIN_API_PREFIX}/monthly_report_pdfs?${qs.toString()}`);
+  },
+  uploadMonthlyReportPdfs: (params: {
+    month: string;
+    files: File[];
+    investorId?: string;
+    preview?: boolean;
+    confirm?: boolean;
+  }) => {
+    const form = new FormData();
+    form.append("month", params.month);
+    params.files.forEach((file) => form.append("files[]", file));
+    if (params.investorId) form.append("investor_id", params.investorId);
+    if (params.preview === true) form.append("preview", "true");
+    if (params.preview === false) form.append("preview", "false");
+    if (params.confirm === true) form.append("confirm", "true");
+    if (params.confirm === false) form.append("confirm", "false");
+    return requestForm(`${ADMIN_API_PREFIX}/monthly_report_pdfs/bulk`, form);
+  },
+  downloadMonthlyReportPdfFile: async (id: string, filename: string) => {
+    const res = await fetch(
+      `${API_BASE_URL}${ADMIN_API_PREFIX}/monthly_report_pdfs/${id}/file`,
+      {
+        credentials: "include",
+        headers: { Accept: "application/pdf" },
+      },
+    );
+    if (!res.ok) {
+      if (res.status === 401) throw new Error("Unauthorized");
+      if (res.status === 403) throw new Error("Forbidden");
+      throw new Error(`Request failed: ${res.status}`);
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(url);
+  },
+  deleteMonthlyReportPdf: (id: string) =>
+    request(`${ADMIN_API_PREFIX}/monthly_report_pdfs/${id}`, {
+      method: "DELETE",
+    }),
 };

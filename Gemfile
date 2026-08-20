@@ -30,3 +30,4 @@ gem "simplecov", "~> 0.22.0", groups: [:development, :test]
 
 gem "resend", "~> 1.0"
 gem "roo", "~> 2.10"
+gem "rubyzip", "~> 2.3"

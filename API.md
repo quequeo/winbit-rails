@@ -108,6 +108,22 @@ Preview de la comisión CST para un retiro. **Query param `amount` requerido.**
 
 ---
 
+### GET /api/public/v1/investor/:email/monthly_report
+
+Descarga el PDF de reporte mensual del inversor. El PDF se sirve como `application/pdf` (stream, no URL pública permanente).
+
+**Parámetros:**
+- `email` en la URL (URL-encoded). Debe corresponder a un inversor `ACTIVE`.
+- `month` (query, opcional) formato `YYYY-MM`. Si se omite, usa el último mes cerrado (mes calendario anterior).
+
+**Respuesta 200:** binario PDF (`Content-Disposition: attachment`).
+
+**Errores:** 404 (inversor inexistente o no hay PDF para ese mes), 403 (cuenta inactiva), 422 (mes inválido).
+
+Nunca devuelve el PDF de otro inversor: el lookup es por el email de la URL.
+
+---
+
 ### GET /api/public/v1/wallets
 
 Lista de wallets habilitadas para depósitos.
@@ -275,6 +291,10 @@ Requiere sesión de admin. Usada por el backoffice.
 | GET | `/email_campaigns/preview` | Preview de campaña email (params: `month` YYYY-MM, opcional `subject`, `body`, `investor_id`). Lista inversores ACTIVE con `{{nombre}}`, `{{ganancia_usd}}`, `{{ganancia_pct}}`, etc. desde MonthlyReportBuilder. |
 | POST | `/email_campaigns/send_one` | Envía email personalizado a un inversor (`month`, `subject`, `body`, `investor_id`). Multipart opcional: `attachment` (PDF/XLSX ≤10MB). Omite NotificationGate. From: `RESEND_FROM_EMAIL` (prod: `Winbit <noreply@winbit.com.ar>`); Reply-To: `RESEND_REPLY_TO` (default `winbit.cfds@gmail.com`). |
 | POST | `/email_campaigns/send_mass` | Envía campaña a todos los ACTIVE con email (`month`, `subject`, `body`, `confirm=true`). Multipart opcional: `attachments[investor_id]` = archivo PDF/XLSX ≤10MB por destinatario. Sin adjunto → `deliver_later`; con adjunto → `deliver_now`. Omite NotificationGate. |
+| GET | `/monthly_report_pdfs` | Lista PDFs de reporte mensual por mes (`month=YYYY-MM` requerido). Devuelve `present`, `missing` y `counts`. |
+| POST | `/monthly_report_pdfs/bulk` | Carga masiva. Multipart: `month` + `files[]` (PDFs o ZIP). Por defecto es preview (`preview=true`): no escribe en DB y devuelve `assignments` (filename, parsedName, status assign/replace/skip, investor o reason). Persiste solo con `preview=false` o `confirm=true`. Asigna por nombre `Reporte julio - NOMBRE APELLIDO.pdf`. Con `investor_id` + un PDF, asigna directo a ese inversor. Máx. 15MB por PDF. |
+| GET | `/monthly_report_pdfs/:id/file` | Descarga el PDF (sesión admin). |
+| DELETE | `/monthly_report_pdfs/:id` | Elimina el PDF cargado. |
 | GET | `/referral_commissions` | Comisiones por referido |
 | GET | `/settings` | Configuración |
 | PATCH | `/settings` | Actualizar configuración |

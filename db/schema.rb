@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_07_120000) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_20_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -78,6 +78,21 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_07_120000) do
     t.datetime "updated_at", null: false
     t.boolean "entry_row", default: false, null: false
     t.index ["investor_id", "month"], name: "index_investor_monthly_annex_rows_on_investor_id_and_month", unique: true
+  end
+
+  create_table "investor_monthly_report_pdfs", id: :string, force: :cascade do |t|
+    t.string "investor_id", null: false
+    t.string "month", null: false
+    t.string "original_filename", null: false
+    t.string "content_type", default: "application/pdf", null: false
+    t.integer "byte_size", default: 0, null: false
+    t.binary "pdf_data", null: false
+    t.string "uploaded_by_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["investor_id", "month"], name: "index_investor_monthly_report_pdfs_on_investor_and_month", unique: true
+    t.index ["month"], name: "index_investor_monthly_report_pdfs_on_month"
+    t.check_constraint "month::text ~ '^[0-9]{4}-(0[1-9]|1[0-2])$'::text", name: "investor_monthly_report_pdfs_month_format"
   end
 
   create_table "investors", id: :string, force: :cascade do |t|
@@ -265,6 +280,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_07_120000) do
   add_foreign_key "activity_logs", "users"
   add_foreign_key "daily_operating_results", "users", column: "applied_by_id"
   add_foreign_key "investor_monthly_annex_rows", "investors"
+  add_foreign_key "investor_monthly_report_pdfs", "investors"
+  add_foreign_key "investor_monthly_report_pdfs", "users", column: "uploaded_by_id"
   add_foreign_key "operation_day_captures", "users", column: "created_by_id"
   add_foreign_key "portfolio_histories", "investors"
   add_foreign_key "portfolios", "investors"

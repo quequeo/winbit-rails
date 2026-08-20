@@ -17,6 +17,7 @@ const allRoutes = (
   <>
     <Route path="dashboard" element={<div>Dashboard content</div>} />
     <Route path="investors" element={<div>Investors content</div>} />
+    <Route path="reportes-pdf" element={<div>Reportes PDF content</div>} />
     <Route path="requests" element={<div>Requests content</div>} />
     <Route path="operativa" element={<div>Operativa content</div>} />
     <Route path="trading-fees" element={<div>Trading fees content</div>} />

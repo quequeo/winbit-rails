@@ -11,6 +11,7 @@ import { ComisionesHubPage } from "./pages/ComisionesHubPage";
 import { OperativaHubPage } from "./pages/OperativaHubPage";
 import { LoginPage } from "./pages/LoginPage";
 import { CampaignsPage } from "./pages/CampaignsPage";
+import { MonthlyReportPdfsPage } from "./pages/MonthlyReportPdfsPage";
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/investors" element={<InvestorsPage />} />
           <Route path="/investors/:id/edit" element={<EditInvestorPage />} />
+          <Route path="/reportes-pdf" element={<MonthlyReportPdfsPage />} />
           <Route path="/campanas" element={<CampaignsPage />} />
           <Route path="/requests" element={<RequestsPage />} />
           <Route path="/operativa" element={<OperativaHubPage />} />
