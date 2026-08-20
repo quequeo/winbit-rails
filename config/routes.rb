@@ -11,6 +11,7 @@ Rails.application.routes.draw do
 
       get 'investor/*email/history', to: 'investors#history', format: false
       get 'investor/*email/withdrawal_fee_preview', to: 'investors#withdrawal_fee_preview', format: false
+      get 'investor/*email/monthly_report', to: 'monthly_report_pdfs#show', format: false
       get 'investor/*email', to: 'investors#show', format: false
       get 'wallets', to: 'wallets#index', format: false
       get 'deposit_options', to: 'deposit_options#index', format: false
@@ -23,6 +24,7 @@ Rails.application.routes.draw do
 
         get 'investor/*email/history', to: 'investors#history', format: false
         get 'investor/*email/withdrawal_fee_preview', to: 'investors#withdrawal_fee_preview', format: false
+        get 'investor/*email/monthly_report', to: 'monthly_report_pdfs#show', format: false
         get 'investor/*email', to: 'investors#show', format: false
         get 'wallets', to: 'wallets#index', format: false
         get 'deposit_options', to: 'deposit_options#index', format: false
@@ -91,6 +93,11 @@ Rails.application.routes.draw do
       post 'email_campaigns/send_one', to: 'email_campaigns#send_one', format: false
       post 'email_campaigns/send_mass', to: 'email_campaigns#send_mass', format: false
 
+      get 'monthly_report_pdfs', to: 'investor_monthly_report_pdfs#index', format: false
+      post 'monthly_report_pdfs/bulk', to: 'investor_monthly_report_pdfs#bulk', format: false
+      get 'monthly_report_pdfs/:id/file', to: 'investor_monthly_report_pdfs#file', format: false
+      delete 'monthly_report_pdfs/:id', to: 'investor_monthly_report_pdfs#destroy', format: false
+
       scope :v1 do
         post 'auth/login', to: 'auth#login', format: false
         get 'session', to: 'session#show', format: false
@@ -150,6 +157,11 @@ Rails.application.routes.draw do
         get 'email_campaigns/preview', to: 'email_campaigns#preview', format: false
         post 'email_campaigns/send_one', to: 'email_campaigns#send_one', format: false
         post 'email_campaigns/send_mass', to: 'email_campaigns#send_mass', format: false
+
+        get 'monthly_report_pdfs', to: 'investor_monthly_report_pdfs#index', format: false
+        post 'monthly_report_pdfs/bulk', to: 'investor_monthly_report_pdfs#bulk', format: false
+        get 'monthly_report_pdfs/:id/file', to: 'investor_monthly_report_pdfs#file', format: false
+        delete 'monthly_report_pdfs/:id', to: 'investor_monthly_report_pdfs#destroy', format: false
       end
     end
   end

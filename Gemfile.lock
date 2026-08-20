@@ -450,6 +450,7 @@ DEPENDENCIES
   roo (~> 2.10)
   rspec-rails (~> 7.0)
   rubocop-rails-omakase
+  rubyzip (~> 2.3)
   simplecov (~> 0.22.0)
   solid_cable
   solid_cache

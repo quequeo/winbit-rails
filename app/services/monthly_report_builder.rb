@@ -59,7 +59,7 @@ class MonthlyReportBuilder
       accumulated_2026_usd: ytd_usd,
       accumulated_2026_percent: if ytd_base.positive?
                                  ((bd(ytd_usd) / bd(ytd_base)) * 100).round(2, :half_up).to_f
-                               end,
+                                end,
     }
   end
 
@@ -122,9 +122,9 @@ class MonthlyReportBuilder
 
     return_percent = if previous_close.positive?
                        ((gross_return_usd / bd(previous_close)) * 100).round(2, :half_up)
-                     else
+    else
                        BigDecimal('0')
-                     end
+    end
 
     serialize_row(
       month: month,
