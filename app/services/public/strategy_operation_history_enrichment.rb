@@ -14,18 +14,25 @@ module Public
     def self.extra_fields(operation)
       return {} unless operation
 
-      {
+      fields = {
         asset: operation.asset,
         contract: operation.asset,
         direction: operation.direction,
         openedAt: operation.opened_at,
         closedAt: operation.closed_at,
-        entryPrice: operation.entry_price&.to_f,
-        exitPrice: operation.exit_price&.to_f,
         ratio: operation.ratio&.to_f,
         timeframe: operation.timeframe,
         resultLabel: operation.result_label,
-      }.compact
+      }
+
+      if operation.respond_to?(:entry_price)
+        fields[:entryPrice] = operation.entry_price&.to_f
+      end
+      if operation.respond_to?(:exit_price)
+        fields[:exitPrice] = operation.exit_price&.to_f
+      end
+
+      fields.compact
     end
   end
 end
