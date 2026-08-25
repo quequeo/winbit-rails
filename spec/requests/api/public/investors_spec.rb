@@ -97,6 +97,49 @@ RSpec.describe 'Public investors', type: :request do
     expect(json['data'][1]['event']).to eq('DEPOSIT')
   end
 
+  it 'GET /api/public/investor/:email/history includes strategy operation fields for OPERATING_RESULT' do
+    investor = Investor.create!(email: 'ops@example.com', name: 'ops', status: 'ACTIVE')
+    admin = User.create!(email: 'admin-ops@example.com', name: 'Admin', role: 'ADMIN')
+    op_date = Date.new(2026, 6, 26)
+
+    StrategyOperation.create!(
+      operation_date: op_date,
+      asset: 'MNQ',
+      direction: 'LONG',
+      opened_at: '12:08',
+      closed_at: '15:30',
+      ratio: 1.1,
+      timeframe: '2m',
+      result_label: 'POSITIVO',
+      created_by: admin,
+      source: 'manual',
+    )
+
+    PortfolioHistory.create!(
+      investor_id: investor.id,
+      date: Time.zone.local(op_date.year, op_date.month, op_date.day, 17, 0, 0),
+      event: 'OPERATING_RESULT',
+      amount: 53.04,
+      previous_balance: 14_923.2,
+      new_balance: 14_976.24,
+      status: 'COMPLETED',
+    )
+
+    get "/api/public/investor/#{CGI.escape(investor.email)}/history"
+
+    expect(response).to have_http_status(:ok)
+    json = JSON.parse(response.body)
+    row = json['data'].find { |item| item['event'] == 'OPERATING_RESULT' }
+    expect(row['asset']).to eq('MNQ')
+    expect(row['contract']).to eq('MNQ')
+    expect(row['direction']).to eq('LONG')
+    expect(row['openedAt']).to eq('12:08')
+    expect(row['closedAt']).to eq('15:30')
+    expect(row['ratio']).to eq(1.1)
+    expect(row['timeframe']).to eq('2m')
+    expect(row['resultLabel']).to eq('POSITIVO')
+  end
+
   it 'GET /api/public/investor/:email/history includes tradingFeePercentage for TRADING_FEE' do
     investor = Investor.create!(email: 'fee@example.com', name: 'fee', status: 'ACTIVE')
     admin = User.create!(email: 'admin@example.com', name: 'Admin', role: 'ADMIN')

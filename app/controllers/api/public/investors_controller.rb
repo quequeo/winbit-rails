@@ -85,11 +85,13 @@ module Api
         fees = investor.trading_fees.order(applied_at: :desc).to_a
         approved_requests = approved_requests_for(investor)
         reversed_requests = reversed_requests_for(investor)
+        strategy_operations_by_date = ::Public::StrategyOperationHistoryEnrichment.index_by_date_for(investor)
         histories = serialized_histories(
           investor: investor,
           fees: fees,
           approved_requests: approved_requests,
-          reversed_requests: reversed_requests
+          reversed_requests: reversed_requests,
+          strategy_operations_by_date: strategy_operations_by_date
         )
         pending_requests = serialized_pending_requests(investor)
 
@@ -112,13 +114,14 @@ module Api
                 .to_a
       end
 
-      def serialized_histories(investor:, fees:, approved_requests:, reversed_requests: [])
+      def serialized_histories(investor:, fees:, approved_requests:, reversed_requests: [], strategy_operations_by_date: {})
         investor.portfolio_histories.order(date: :desc).map do |history|
           PublicPortfolioHistoryItemSerializer.new(history, extra: history_extra_data(
             history: history,
             fees: fees,
             approved_requests: approved_requests,
-            reversed_requests: reversed_requests
+            reversed_requests: reversed_requests,
+            strategy_operations_by_date: strategy_operations_by_date
           )).as_json
         end
       end
@@ -130,7 +133,7 @@ module Api
                 .map { |request| PublicPendingRequestHistoryItemSerializer.new(request).as_json }
       end
 
-      def history_extra_data(history:, fees:, approved_requests:, reversed_requests: [])
+      def history_extra_data(history:, fees:, approved_requests:, reversed_requests: [], strategy_operations_by_date: {})
         extra = {}
 
         if %w[WITHDRAWAL DEPOSIT].include?(history.event)
@@ -162,6 +165,11 @@ module Api
             extra[:tradingFeePeriodLabel] = period_label(fee)
             extra[:tradingFeePercentage] = fee.fee_percentage.to_f
           end
+        end
+
+        if history.event == 'OPERATING_RESULT'
+          operation = strategy_operations_by_date[history.date.to_date]
+          extra.merge!(::Public::StrategyOperationHistoryEnrichment.extra_fields(operation))
         end
 
         extra
