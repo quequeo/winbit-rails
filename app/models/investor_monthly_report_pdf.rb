@@ -30,6 +30,13 @@ class InvestorMonthlyReportPdf < ApplicationRecord
     "Reporte #{month}.pdf"
   end
 
+  def email_attachment_filename
+    month_name = InvestorMonthlyReportPdfs::Month.spanish_name(month) || month
+    year = InvestorMonthlyReportPdfs::Month.year(month)
+    label = investor.name.to_s.upcase.gsub(/[\\\/]/, ' ').squish
+    "Reporte #{month_name} #{year} - #{label}.pdf"
+  end
+
   private
 
   def pdf_data_looks_like_pdf

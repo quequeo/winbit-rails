@@ -53,4 +53,9 @@ RSpec.describe InvestorMonthlyReportPdf, type: :model do
       expect(described_class.last_closed_month).to eq('2026-07')
     end
   end
+
+  it 'builds the email attachment filename with Spanish month, year and uppercase name' do
+    report = build_report
+    expect(report.email_attachment_filename).to eq('Reporte julio 2026 - TULIO CAPPARELLI.pdf')
+  end
 end

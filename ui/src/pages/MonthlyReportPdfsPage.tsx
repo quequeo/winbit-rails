@@ -3,6 +3,9 @@ import { api } from "../lib/api";
 import { lastClosedMonth } from "../lib/lastClosedMonth";
 import { Button } from "../components/ui/Button";
 import { ConfirmDialog } from "../components/ui/ConfirmDialog";
+import { MonthlyReportEmailPanel } from "../components/MonthlyReportEmailPanel";
+
+type PageTab = "pdfs" | "enviar";
 
 type InvestorRow = {
   id: string;
@@ -78,6 +81,7 @@ const formatBytes = (n: number) => {
 const skipLabel = (reason: string) => SKIP_REASONS[reason] || reason;
 
 export const MonthlyReportPdfsPage = () => {
+  const [tab, setTab] = useState<PageTab>("pdfs");
   const [month, setMonth] = useState(lastClosedMonth);
   const [data, setData] = useState<IndexPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -236,12 +240,14 @@ export const MonthlyReportPdfsPage = () => {
         <div>
           <h1 className="text-3xl font-bold text-t-primary">Reportes PDF</h1>
           <p className="mt-1 text-sm text-t-muted">
-            Cargá los PDFs del mes cerrado. Primero se muestra a quién se
-            asignaría cada archivo; no se guarda hasta que confirmes. Nombre
-            esperado:{" "}
-            <span className="text-t-primary">
-              Reporte julio - TULIO CAPPARELLI.pdf
-            </span>
+            {tab === "pdfs"
+              ? "Cargá los PDFs del mes cerrado. Primero se muestra a quién se asignaría cada archivo; no se guarda hasta que confirmes. Nombre esperado: "
+              : "Redactá el email del mes y envialo con el PDF ya cargado. "}
+            {tab === "pdfs" ? (
+              <span className="text-t-primary">
+                Reporte julio - TULIO CAPPARELLI.pdf
+              </span>
+            ) : null}
           </p>
         </div>
         <label className="flex items-center gap-2 text-sm text-t-muted">
@@ -255,9 +261,44 @@ export const MonthlyReportPdfsPage = () => {
         </label>
       </div>
 
-      {error ? <div className="text-sm text-error">{error}</div> : null}
-      {notice ? <div className="text-sm text-success">{notice}</div> : null}
+      <div className="border-b border-b-default">
+        <nav className="-mb-px flex space-x-6">
+          <button
+            type="button"
+            onClick={() => setTab("pdfs")}
+            className={
+              tab === "pdfs"
+                ? "border-b-2 border-primary pb-3 text-sm font-semibold text-primary"
+                : "border-b-2 border-transparent pb-3 text-sm font-medium text-t-dim hover:border-b-default hover:text-t-muted"
+            }
+          >
+            PDFs
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab("enviar")}
+            className={
+              tab === "enviar"
+                ? "border-b-2 border-primary pb-3 text-sm font-semibold text-primary"
+                : "border-b-2 border-transparent pb-3 text-sm font-medium text-t-dim hover:border-b-default hover:text-t-muted"
+            }
+          >
+            Enviar emails
+          </button>
+        </nav>
+      </div>
 
+      {tab === "enviar" ? <MonthlyReportEmailPanel month={month} /> : null}
+
+      {tab === "pdfs" && error ? (
+        <div className="text-sm text-error">{error}</div>
+      ) : null}
+      {tab === "pdfs" && notice ? (
+        <div className="text-sm text-success">{notice}</div>
+      ) : null}
+
+      {tab === "pdfs" ? (
+      <>
       <div className="admin-card p-6 space-y-4">
         <div className="flex flex-wrap items-center gap-3">
           <Button
@@ -491,6 +532,8 @@ export const MonthlyReportPdfsPage = () => {
         }
         confirmText="Quitar"
       />
+      </>
+      ) : null}
     </div>
   );
 };

@@ -628,4 +628,39 @@ export const api = {
     request(`${ADMIN_API_PREFIX}/monthly_report_pdfs/${id}`, {
       method: "DELETE",
     }),
+  previewMonthlyReportEmail: (params: {
+    month: string;
+    subject?: string;
+    body?: string;
+    investor_id?: string;
+  }) => {
+    const qs = new URLSearchParams();
+    qs.set("month", params.month);
+    if (params.subject) qs.set("subject", params.subject);
+    if (params.body) qs.set("body", params.body);
+    if (params.investor_id) qs.set("investor_id", params.investor_id);
+    return request(
+      `${ADMIN_API_PREFIX}/monthly_report_emails/preview?${qs.toString()}`,
+    );
+  },
+  sendMonthlyReportEmailOne: (body: {
+    month: string;
+    subject: string;
+    body: string;
+    investor_id: string;
+  }) =>
+    request(`${ADMIN_API_PREFIX}/monthly_report_emails/send_one`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  sendMonthlyReportEmailMass: (body: {
+    month: string;
+    subject: string;
+    body: string;
+    confirm: boolean;
+  }) =>
+    request(`${ADMIN_API_PREFIX}/monthly_report_emails/send_mass`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
 };
