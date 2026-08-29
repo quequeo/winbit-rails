@@ -9,7 +9,7 @@ module Api
         month = parse_month_param(required: true)
         return if performed?
 
-        reports = InvestorMonthlyReportPdf.for_month(month).includes(:investor)
+        reports = InvestorMonthlyReportPdf.for_month(month).without_pdf_data.includes(:investor)
         reports_by_investor_id = reports.index_by(&:investor_id)
         investors = Investor.order(:name)
 

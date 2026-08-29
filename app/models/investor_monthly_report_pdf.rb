@@ -18,6 +18,7 @@ class InvestorMonthlyReportPdf < ApplicationRecord
 
   scope :for_month, ->(month) { where(month: month) }
   scope :ordered, -> { order(:month, :original_filename) }
+  scope :without_pdf_data, -> { select(column_names - [ 'pdf_data' ]) }
 
   def self.last_closed_month(today = Date.current)
     today.prev_month.strftime('%Y-%m')
