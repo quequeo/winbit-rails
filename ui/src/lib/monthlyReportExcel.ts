@@ -327,8 +327,8 @@ function buildOperationsSheet(operations: MonthlyReportOperations): XLSX.WorkShe
 
   const ws = XLSX.utils.aoa_to_sheet([
     [
-      "Operaciones del mes (Winbit, todos los inversores)",
-      "El mismo detalle de operativa aplica a todos los inversores: no es un resultado individual de esta cuenta.",
+      "Operaciones del mes",
+      "Resultado (USD) es de esta cuenta; Rendimiento (%) es el diario de Winbit, igual para todos los inversores.",
     ],
     [],
     ["Activos operados", assetsLine],
@@ -423,16 +423,9 @@ export function buildAllInvestorsWorkbook(reports: MonthlyReport[]): XLSX.WorkBo
   ];
   XLSX.utils.book_append_sheet(wb, annexWs, "Anexo");
 
-  // Operations are firm-wide (same for every investor in a given month) -
-  // one shared sheet instead of repeating the same table per investor.
-  const sharedOperations = sorted.find((r) => r.operations)?.operations;
-  if (sharedOperations) {
-    XLSX.utils.book_append_sheet(
-      wb,
-      buildOperationsSheet(sharedOperations),
-      "Operaciones",
-    );
-  }
+  // Operations are per-investor (each one's own $ result), so there's no
+  // single "Operaciones" table that fairly represents everyone in this
+  // combined workbook - it's only included in the per-investor download.
 
   return wb;
 }

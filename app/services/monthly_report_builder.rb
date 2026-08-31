@@ -90,6 +90,7 @@ class MonthlyReportBuilder
 
   def build_annex_rows
     rows = spreadsheet_rows
+    migrated_from_spreadsheet = rows.present?
     # Investors with no spreadsheet history (joined after the migration cutoff,
     # entirely native to the platform) have no opening_snapshot/entry_row to
     # anchor the YTD calculation on - without one, compute_ytd_usd always
@@ -102,7 +103,7 @@ class MonthlyReportBuilder
     month = platform_start
 
     while month <= @report_month
-      rows << build_platform_row(month, previous_row: rows.last)
+      rows << build_platform_row(month, previous_row: rows.last, migrated_from_spreadsheet:)
       month = month.next_month
     end
 
@@ -141,10 +142,10 @@ class MonthlyReportBuilder
     end
   end
 
-  def build_platform_row(month, previous_row:)
+  def build_platform_row(month, previous_row:, migrated_from_spreadsheet:)
     month_start = month.beginning_of_month
     month_end = effective_month_end(month)
-    flow_start = flow_start_for(month, month_start)
+    flow_start = flow_start_for(month, month_start, migrated_from_spreadsheet:)
 
     flows = aggregate_flows(flow_start, month_end)
     end_value = portfolio_value_at(month_end)
@@ -209,8 +210,14 @@ class MonthlyReportBuilder
     }
   end
 
-  def flow_start_for(month, month_start)
-    return POST_GENESIS_FLOW_START if month == Date.new(2026, 5, 1)
+  # The May 2026 genesis migration dumped a lump-sum "catch-up" deposit/result
+  # for every *migrated* investor dated May 1-3; excluding that window keeps
+  # it from being double-counted as real May activity. Investors with no
+  # spreadsheet history never had a genesis lump to exclude - for them this
+  # window is just their first few real days on the platform, so the normal
+  # month start applies.
+  def flow_start_for(month, month_start, migrated_from_spreadsheet:)
+    return POST_GENESIS_FLOW_START if migrated_from_spreadsheet && month == Date.new(2026, 5, 1)
 
     month_start.beginning_of_day
   end

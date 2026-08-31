@@ -4,13 +4,16 @@ require 'rails_helper'
 
 RSpec.describe MonthlyOperationsReport do
   let!(:admin) { User.create!(email: 'admin-mor@test.com', name: 'Admin', role: 'SUPERADMIN', provider: 'google_oauth2', uid: 'mor-1') }
+  let!(:investor) { Investor.create!(email: 'mor-investor@example.com', name: 'MOR Investor', status: 'ACTIVE') }
+  let!(:portfolio) { Portfolio.create!(investor: investor, current_balance: 1000, total_invested: 1000) }
 
   before do
     DailyOperatingResult.create!(date: Date.new(2026, 6, 15), percent: 1.5, applied_at: Time.zone.local(2026, 6, 15, 19, 0, 0), applied_by: admin)
 
+    # Firm-wide trades (identity/metadata only - dollar result is per-investor).
     [
-      [Date.new(2026, 6, 2), 'MNQ', 'LONG', '10:22', '10:41', 44, 0.90],
-      [Date.new(2026, 6, 15), 'MES', 'SHORT', '11:08', '11:24', -45, -1.00],
+      [Date.new(2026, 6, 2), 'MNQ', 'LONG', '10:22', '10:41', 4400, 0.90],
+      [Date.new(2026, 6, 15), 'MES', 'SHORT', '11:08', '11:24', -4500, -1.00],
       [Date.new(2026, 6, 20), 'MYM', 'LONG', '10:36', '11:02', 0, 0.0],
     ].each do |date, asset, direction, opened_at, closed_at, result_usd, ratio|
       StrategyOperation.create!(
@@ -24,12 +27,26 @@ RSpec.describe MonthlyOperationsReport do
     # Outside the queried month - must not leak in.
     StrategyOperation.create!(
       operation_date: Date.new(2026, 7, 1), asset: 'MBT', direction: 'LONG', opened_at: '10:00', closed_at: '10:10',
-      result_usd: 10, ratio: 1.0, source: 'manual', result_label: 'POSITIVO', created_by: admin
+      result_usd: 1000, ratio: 1.0, source: 'manual', result_label: 'POSITIVO', created_by: admin
     )
+
+    # This investor's own dollar result each day - distinct from the firm-level
+    # StrategyOperation.result_usd above, proving the report uses this source.
+    [
+      [Date.new(2026, 6, 2), 44],
+      [Date.new(2026, 6, 15), -45],
+      [Date.new(2026, 6, 20), 0],
+    ].each do |date, amount|
+      PortfolioHistory.create!(
+        investor: investor, event: 'OPERATING_RESULT', amount: amount,
+        previous_balance: 1000, new_balance: 1000 + amount,
+        date: Time.zone.local(date.year, date.month, date.day, 19, 0, 0), status: 'COMPLETED'
+      )
+    end
   end
 
-  it 'builds trades, asset chips and summary stats for the given month' do
-    result = described_class.call(month: '2026-06')
+  it "builds trades from the investor's own daily results, not the firm-wide trade amount" do
+    result = described_class.call(investor: investor, month: '2026-06')
 
     expect(result.trades.size).to eq(3)
     expect(result.count).to eq(3)
@@ -45,12 +62,40 @@ RSpec.describe MonthlyOperationsReport do
     )
 
     mes_trade = result.trades.find { |t| t.asset == 'MES' }
+    expect(mes_trade.result_usd).to eq(-45.0)
     expect(mes_trade.result_percent).to eq(1.5)
     expect(mes_trade.ratio).to eq(-1.0)
   end
 
   it 'accepts a Date for month' do
-    result = described_class.call(month: Date.new(2026, 6, 1))
+    result = described_class.call(investor: investor, month: Date.new(2026, 6, 1))
+    expect(result.count).to eq(3)
+  end
+
+  it 'only includes dates the investor actually has an operating result for (mid-month entry)' do
+    late_investor = Investor.create!(email: 'late-mor@example.com', name: 'Late Joiner', status: 'ACTIVE')
+    Portfolio.create!(investor: late_investor, current_balance: 500, total_invested: 500)
+    PortfolioHistory.create!(
+      investor: late_investor, event: 'OPERATING_RESULT', amount: 0,
+      previous_balance: 500, new_balance: 500,
+      date: Time.zone.local(2026, 6, 20, 19, 0, 0), status: 'COMPLETED'
+    )
+
+    result = described_class.call(investor: late_investor, month: '2026-06')
+
+    expect(result.trades.map(&:date)).to eq([Date.new(2026, 6, 20)])
+  end
+
+  it 'skips a day with no matching firm-wide trade instead of erroring' do
+    PortfolioHistory.create!(
+      investor: investor, event: 'OPERATING_RESULT', amount: 5,
+      previous_balance: 1000, new_balance: 1005,
+      date: Time.zone.local(2026, 6, 25, 19, 0, 0), status: 'COMPLETED'
+    )
+
+    result = described_class.call(investor: investor, month: '2026-06')
+
+    expect(result.trades.map(&:date)).not_to include(Date.new(2026, 6, 25))
     expect(result.count).to eq(3)
   end
 end

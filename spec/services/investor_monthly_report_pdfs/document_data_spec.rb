@@ -93,6 +93,15 @@ RSpec.describe InvestorMonthlyReportPdfs::DocumentData do
         created_by: admin,
       )
     end
+
+    # The investor's own daily result is what actually drives which trades
+    # show up (see MonthlyOperationsReport) - May 2 already exists above
+    # (negative), this one is positive so the spec covers both signs.
+    PortfolioHistory.create!(
+      investor: investor, event: 'OPERATING_RESULT', amount: 45,
+      previous_balance: 6367.75, new_balance: 6412.75,
+      date: Time.zone.local(2026, 5, 15, 19, 0, 0), status: 'COMPLETED',
+    )
   end
 
   it 'builds the full data hash consumed by the PDF template' do
@@ -126,9 +135,12 @@ RSpec.describe InvestorMonthlyReportPdfs::DocumentData do
   end
 
   it 'paginates trades beyond OPS_PAGE_LIMIT rows per page' do
-    (1..20).each do |day|
+    # Days 3-20 (18 new trades) plus the existing May 2 and May 15 trades
+    # from the outer `before` block = 20 total.
+    (3..20).each do |day|
+      date = Date.new(2026, 5, day)
       StrategyOperation.create!(
-        operation_date: Date.new(2026, 5, day),
+        operation_date: date,
         asset: 'MYM',
         direction: 'LONG',
         opened_at: '10:00',
@@ -138,6 +150,11 @@ RSpec.describe InvestorMonthlyReportPdfs::DocumentData do
         source: 'manual',
         result_label: 'POSITIVO',
         created_by: admin,
+      )
+      PortfolioHistory.create!(
+        investor: investor, event: 'OPERATING_RESULT', amount: 10,
+        previous_balance: 6484, new_balance: 6494,
+        date: Time.zone.local(2026, 5, day, 19, 0, 0), status: 'COMPLETED',
       )
     end
 

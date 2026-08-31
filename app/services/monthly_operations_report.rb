@@ -1,10 +1,17 @@
 # frozen_string_literal: true
 
-# Firm-wide "Operaciones del mes" data (StrategyOperation trades + summary
-# stats) for a given month - identical for every investor, since trades are
-# not scoped to an investor. Shared by InvestorMonthlyReportPdfs::DocumentData
-# (PDF) and Api::Admin::InvestorMonthlyReportsController (on-screen report /
-# Excel export), so both surfaces show exactly the same operations data.
+# Per-investor "Operaciones del mes" data: for each date the investor had an
+# OPERATING_RESULT in their own PortfolioHistory, look up that date's
+# StrategyOperation for the trade's identity (asset/direction/times/ratio)
+# and pair it with the investor's own dollar result for that day - the same
+# figures already shown in their portal history
+# (Public::StrategyOperationHistoryEnrichment). This means an investor who
+# joined mid-month automatically only sees operations from their own entry
+# date onward, since there's no OPERATING_RESULT for them before that.
+#
+# "RENDIMIENTO %" is the firm-wide daily percent (DailyOperatingResult),
+# identical for every investor - only the dollar result and which dates
+# appear are investor-specific.
 class MonthlyOperationsReport
   Trade = Struct.new(
     :date, :asset, :direction, :opened_at, :closed_at,
@@ -14,60 +21,71 @@ class MonthlyOperationsReport
 
   Result = Struct.new(:trades, :assets, :count, :positive, :negative, :break_even, :net_result_usd, keyword_init: true)
 
-  def self.call(month:)
-    new(month:).call
+  def self.call(investor:, month:)
+    new(investor:, month:).call
   end
 
-  def initialize(month:)
+  def initialize(investor:, month:)
+    @investor = investor
     @month = month.is_a?(String) ? Date.strptime("#{month}-01", '%Y-%m-%d') : month.to_date.beginning_of_month
   end
 
   def call
-    trades = operations.map { |op| build_trade(op) }
+    trades = daily_results.filter_map { |date, amount| build_trade(date, amount) }.sort_by(&:date)
 
     Result.new(
       trades: trades,
-      assets: asset_chips,
+      assets: asset_chips(trades),
       count: trades.size,
-      positive: trades.count { |t| t.result_usd.to_f.positive? },
-      negative: trades.count { |t| t.result_usd.to_f.negative? },
-      break_even: trades.count { |t| t.result_usd.to_f.zero? },
-      net_result_usd: trades.sum { |t| t.result_usd.to_f },
+      positive: trades.count { |t| t.result_usd.positive? },
+      negative: trades.count { |t| t.result_usd.negative? },
+      break_even: trades.count { |t| t.result_usd.zero? },
+      net_result_usd: trades.sum(&:result_usd),
     )
   end
 
   private
 
-  def operations
-    @operations ||= StrategyOperation
-                    .where(operation_date: @month.beginning_of_month..@month.end_of_month)
-                    .order(:operation_date, :opened_at)
+  # This investor's own daily $ result for the month.
+  def daily_results
+    @daily_results ||= @investor.portfolio_histories
+                                 .where(event: 'OPERATING_RESULT', date: @month.beginning_of_month..@month.end_of_month)
+                                 .pluck(:date, :amount)
+                                 .map { |date, amount| [date.to_date, amount.to_f] }
+  end
+
+  def operations_by_date
+    @operations_by_date ||= StrategyOperation
+                            .where(operation_date: daily_results.map(&:first))
+                            .index_by(&:operation_date)
   end
 
   # DailyOperatingResult holds the firm-wide daily percent return that was
   # actually applied to every investor's balance that day (one row per
   # date, same source DailyOperatingResultApplicator/PortfolioHistory use).
-  # StrategyOperation doesn't store a percent of its own.
   def daily_percents_by_date
     @daily_percents_by_date ||= DailyOperatingResult
                                  .where(date: @month.beginning_of_month..@month.end_of_month)
                                  .pluck(:date, :percent).to_h
   end
 
-  def build_trade(op)
+  def build_trade(date, amount)
+    op = operations_by_date[date]
+    return nil unless op
+
     Trade.new(
-      date: op.operation_date,
+      date: date,
       asset: op.asset,
       direction: op.direction,
       opened_at: op.opened_at,
       closed_at: op.closed_at,
-      result_usd: op.result_usd.to_f,
-      result_percent: daily_percents_by_date[op.operation_date]&.to_f,
+      result_usd: amount,
+      result_percent: daily_percents_by_date[date]&.to_f,
       ratio: op.ratio&.to_f,
     )
   end
 
-  def asset_chips
-    operations.map(&:asset).uniq.map { |code| { code: code, name: StrategyOperation::ASSET_NAMES[code] || code } }
+  def asset_chips(trades)
+    trades.map(&:asset).uniq.map { |code| { code: code, name: StrategyOperation::ASSET_NAMES[code] || code } }
   end
 end
