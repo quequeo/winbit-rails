@@ -53,7 +53,7 @@ class MonthlyOperationsReport
   # This investor's own daily $ result for the month.
   def daily_results
     @daily_results ||= @investor.portfolio_histories
-                                 .where(event: 'OPERATING_RESULT', date: @month.beginning_of_month..@month.end_of_month)
+                                 .where(event: 'OPERATING_RESULT', date: @month.beginning_of_month..@month.end_of_month.end_of_day)
                                  .pluck(:date, :amount)
                                  .map { |date, amount| [date.to_date, amount.to_f] }
   end
@@ -69,7 +69,7 @@ class MonthlyOperationsReport
   # date, same source DailyOperatingResultApplicator/PortfolioHistory use).
   def daily_percents_by_date
     @daily_percents_by_date ||= DailyOperatingResult
-                                 .where(date: @month.beginning_of_month..@month.end_of_month)
+                                 .where(date: @month.beginning_of_month..@month.end_of_month.end_of_day)
                                  .pluck(:date, :percent).to_h
   end
 
