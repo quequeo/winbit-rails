@@ -123,7 +123,7 @@ describe("monthlyReportExcel workbooks", () => {
 
     expect(resumen.A6?.v).toBe("Capital aportado (depósitos, USD)");
     expect(resumen.B6?.v).toBe(5050);
-    expect(resumen.A7?.v).toBe("Capital aportado neto (depósitos - retiros, USD)");
+    expect(resumen.A7?.v).toBe("Capital aportado neto (depósitos - retiros - comisiones, USD)");
     expect(resumen.B7?.v).toBe(4200);
     expect(resumen.A8?.v).toBe("Rendimiento mensual (USD)");
     expect(resumen.B8?.v).toBe(0);

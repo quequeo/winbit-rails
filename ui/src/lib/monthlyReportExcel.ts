@@ -84,7 +84,7 @@ function buildSummarySheet(report: MonthlyReport): XLSX.WorkSheet {
     ["Valor portafolio (USD)", cellValue(roundUsdTwoDec(s.portfolioValueUsd))],
     ["Capital aportado (depósitos, USD)", cellValue(roundUsdTwoDec(s.netContributedUsd))],
     [
-      "Capital aportado neto (depósitos - retiros, USD)",
+      "Capital aportado neto (depósitos - retiros - comisiones, USD)",
       cellValue(roundUsdTwoDec(s.netContributedAfterWithdrawalsUsd)),
     ],
     [

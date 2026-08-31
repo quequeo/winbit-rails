@@ -86,6 +86,29 @@ RSpec.describe MonthlyOperationsReport do
     expect(result.trades.map(&:date)).to eq([Date.new(2026, 6, 20)])
   end
 
+  it "classifies by the trade's result_label, not the sign of this investor's own $ amount" do
+    # A trade the system calls break-even can still net a small negative $
+    # for a given investor (proportional CST/rounding) - that must still
+    # count as break-even, not a loss.
+    StrategyOperation.create!(
+      operation_date: Date.new(2026, 6, 27), asset: 'MBT', direction: 'LONG', opened_at: '10:00', closed_at: '10:05',
+      result_usd: -12.0, ratio: 0.0, source: 'manual', result_label: 'BE-', created_by: admin
+    )
+    PortfolioHistory.create!(
+      investor: investor, event: 'OPERATING_RESULT', amount: -3.5,
+      previous_balance: 1000, new_balance: 996.5,
+      date: Time.zone.local(2026, 6, 27, 19, 0, 0), status: 'COMPLETED'
+    )
+
+    result = described_class.call(investor: investor, month: '2026-06')
+
+    be_trade = result.trades.find { |t| t.date == Date.new(2026, 6, 27) }
+    expect(be_trade.result_usd).to eq(-3.5)
+    expect(be_trade.result_label).to eq('BE-')
+    expect(result.break_even).to eq(2)
+    expect(result.negative).to eq(1)
+  end
+
   it 'skips a day with no matching firm-wide trade instead of erroring' do
     PortfolioHistory.create!(
       investor: investor, event: 'OPERATING_RESULT', amount: 5,

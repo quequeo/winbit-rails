@@ -437,4 +437,44 @@ RSpec.describe MonthlyReportBuilder do
       end
     end
   end
+
+  describe 'net_contributed_after_withdrawals_usd reconciles with the TWR return (Camilo Giordano case)' do
+    let(:investor) do
+      Investor.create!(email: 'camilo-recon@example.com', name: 'Camilo Recon', status: 'ACTIVE')
+    end
+
+    let!(:admin) { User.create!(email: 'admin-recon@test.com', name: 'Admin', role: 'SUPERADMIN', provider: 'google_oauth2', uid: 'recon-1') }
+
+    let!(:portfolio) do
+      Portfolio.create!(
+        investor: investor,
+        current_balance: 8238.41,
+        strategy_return_all_usd: 3243.35,
+        strategy_return_all_percent: 64.2405,
+      )
+    end
+
+    before do
+      PortfolioHistory.create!(
+        investor: investor, event: 'DEPOSIT', amount: 5050,
+        previous_balance: 0, new_balance: 5050,
+        date: Time.zone.local(2026, 5, 1, 19, 0, 0), status: 'COMPLETED',
+      )
+      PortfolioHistory.create!(
+        investor: investor, event: 'TRADING_FEE', amount: -54.94,
+        previous_balance: 8293.35, new_balance: 8238.41,
+        date: Time.zone.local(2026, 8, 15, 19, 0, 0), status: 'COMPLETED',
+      )
+    end
+
+    it 'makes "valor actual - capital aportado neto" equal accumulated_since_entry_usd' do
+      report = described_class.new(investor: investor, report_month: Date.new(2026, 8, 1)).build
+      summary = report[:summary]
+
+      expect(summary[:net_contributed_after_withdrawals_usd]).to eq(4995.06)
+      expect(
+        (summary[:portfolio_value_usd] - summary[:net_contributed_after_withdrawals_usd]).round(2)
+      ).to eq(summary[:accumulated_since_entry_usd])
+    end
+  end
 end
