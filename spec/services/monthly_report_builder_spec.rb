@@ -388,4 +388,51 @@ RSpec.describe MonthlyReportBuilder do
       end
     end
   end
+
+  describe 'investor with no spreadsheet history (joined natively on the platform)' do
+    let(:native_investor) do
+      Investor.create!(email: 'native@example.com', name: 'Native Investor', status: 'ACTIVE')
+    end
+
+    let!(:native_portfolio) do
+      Portfolio.create!(
+        investor: native_investor,
+        current_balance: 567.63,
+        total_invested: 553,
+        strategy_return_all_usd: 14.63,
+        strategy_return_all_percent: 2.65,
+      )
+    end
+
+    before do
+      PortfolioHistory.create!(
+        investor: native_investor,
+        event: 'DEPOSIT',
+        amount: 553,
+        previous_balance: 0,
+        new_balance: 553,
+        date: Time.zone.local(2026, 5, 10, 19, 0, 0),
+        status: 'COMPLETED',
+      )
+      PortfolioHistory.create!(
+        investor: native_investor,
+        event: 'OPERATING_RESULT',
+        amount: 14.63,
+        previous_balance: 553,
+        new_balance: 567.63,
+        date: Time.zone.local(2026, 8, 15, 19, 0, 0),
+        status: 'COMPLETED',
+      )
+    end
+
+    it 'does not blank out Acumulado 2026 just because there is no genesis/spreadsheet opening row' do
+      travel_to Time.zone.local(2026, 8, 29, 12, 0, 0) do
+        report = described_class.new(investor: native_investor, report_month: Date.new(2026, 8, 1)).build
+
+        expect(report[:summary][:accumulated_2026_usd]).to be_within(0.01).of(14.63)
+        expect(report[:summary][:accumulated_2026_percent]).to eq(2.65)
+        expect(report[:summary][:year_opening_balance_usd]).to eq(0.0)
+      end
+    end
+  end
 end
