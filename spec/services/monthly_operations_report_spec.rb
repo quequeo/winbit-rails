@@ -109,6 +109,26 @@ RSpec.describe MonthlyOperationsReport do
     expect(result.negative).to eq(1)
   end
 
+  it 'includes an operating result on the last day of the month (not just midnight)' do
+    # date.end_of_month is a bare Date (midnight) - using it as a range end
+    # against a datetime column silently excludes anything later that day,
+    # e.g. the usual 19:00 daily-close timestamp on the month's last day.
+    StrategyOperation.create!(
+      operation_date: Date.new(2026, 6, 30), asset: 'MBT', direction: 'LONG', opened_at: '10:00', closed_at: '10:05',
+      result_usd: 20.0, ratio: 1.0, source: 'manual', result_label: 'POSITIVO', created_by: admin
+    )
+    PortfolioHistory.create!(
+      investor: investor, event: 'OPERATING_RESULT', amount: 12.0,
+      previous_balance: 1000, new_balance: 1012.0,
+      date: Time.zone.local(2026, 6, 30, 19, 0, 0), status: 'COMPLETED'
+    )
+
+    result = described_class.call(investor: investor, month: '2026-06')
+
+    expect(result.trades.map(&:date)).to include(Date.new(2026, 6, 30))
+    expect(result.count).to eq(4)
+  end
+
   it 'skips a day with no matching firm-wide trade instead of erroring' do
     PortfolioHistory.create!(
       investor: investor, event: 'OPERATING_RESULT', amount: 5,
