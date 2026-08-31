@@ -30,6 +30,28 @@ RSpec.describe 'Admin Investor Monthly Reports API', type: :request do
       expect(json['data']['reportMonth']).to eq('2026-04')
       expect(json['data']['investor']['email']).to eq('eugenio.carrio7@gmail.com')
       expect(json['data']['annexRows']).to be_an(Array)
+      expect(json['data']['summary']).to have_key('netContributedUsd')
+      expect(json['data']['summary']).to have_key('yearOpeningDate')
+      expect(json['data']['operations']).to be_present
+      expect(json['data']['operations']).to include('trades', 'assets', 'count', 'positive', 'negative', 'breakEven', 'netResultUsd')
+    end
+
+    it 'includes the month trades in operations' do
+      admin_op = User.create!(email: 'admin-ops@test.com', name: 'Ops Admin', role: 'SUPERADMIN', provider: 'google_oauth2', uid: 'ops-1')
+      StrategyOperation.create!(
+        operation_date: Date.new(2026, 4, 10), asset: 'MNQ', direction: 'LONG',
+        opened_at: '10:00', closed_at: '10:30', result_usd: 50, ratio: 1.2,
+        source: 'manual', result_label: 'POSITIVO', created_by: admin_op
+      )
+
+      get "/api/admin/v1/investors/#{investor.id}/monthly_report", params: { month: '2026-04' }
+
+      json = JSON.parse(response.body)
+      operations = json.dig('data', 'operations')
+      expect(operations['count']).to eq(1)
+      expect(operations['trades'].first['asset']).to eq('MNQ')
+      expect(operations['trades'].first['resultUsd']).to eq(50.0)
+      expect(operations['assets']).to eq([{ 'code' => 'MNQ', 'name' => 'Micro E-mini Nasdaq-100' }])
     end
 
     it 'returns 422 for invalid month' do

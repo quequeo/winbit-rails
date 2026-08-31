@@ -1,0 +1,407 @@
+<%#
+  Monthly investor report PDF (5+N pages), rendered via wicked_pdf/wkhtmltopdf.
+
+  Locals:
+    data - the Hash built by InvestorMonthlyReportPdfs::DocumentData#call
+
+  Layout/design notes:
+  - CSS `gap` is NOT supported on flex containers under wkhtmltopdf's
+    unpatched-Qt engine: spacing between flex children uses margins instead.
+  - The page-3 header (title/subtitle + "saldo inicial" stat) uses
+    display:table/table-cell rather than nested flexbox, which mis-measures
+    heights under this engine when a flex row sits inside a flex column.
+  - The "Operaciones del mes" section is paginated (data[:ops_pages]) since
+    a month's trade count is unbounded; see DocumentData::OPS_PAGE_LIMIT.
+  - Real fonts (Noto Sans Regular/Bold + Noto Sans Display Extra Condensed
+    SemiBold) are embedded below via @font-face + base64 data: URIs (see
+    InvestorMonthlyReportPdfs::Assets.font_data_uri).
+%>
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+@font-face {
+  font-family: "Noto Sans";
+  font-weight: 400;
+  font-style: normal;
+  src: url(<%= InvestorMonthlyReportPdfs::Assets.font_data_uri(:sans_regular) %>) format("truetype");
+}
+@font-face {
+  font-family: "Noto Sans";
+  font-weight: 700;
+  font-style: normal;
+  src: url(<%= InvestorMonthlyReportPdfs::Assets.font_data_uri(:sans_bold) %>) format("truetype");
+}
+@font-face {
+  font-family: "Noto Sans Display Condensed";
+  font-weight: 600;
+  font-style: normal;
+  src: url(<%= InvestorMonthlyReportPdfs::Assets.font_data_uri(:display_condensed_semibold) %>) format("truetype");
+}
+@page { size: 297mm 210mm; margin: 0; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; }
+body {
+  font-family: "Noto Sans", -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  color: #0d0f0e;
+  -webkit-font-smoothing: antialiased;
+}
+.page {
+  width: 100%;
+  height: 210mm;
+  position: relative;
+  overflow: hidden;
+  page-break-after: always;
+  display: flex;
+  flex-direction: column;
+}
+.page:last-child { page-break-after: auto; }
+
+.cond {
+  display: inline-block;
+  font-family: "Noto Sans Display Condensed", "Noto Sans", sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.cond-block { display: block; font-family: "Noto Sans Display Condensed", "Noto Sans", sans-serif; font-weight: 600; letter-spacing: -0.01em; }
+
+/* ---------- Cover / Back (split layout) ----------
+   wkhtmltopdf's flex support doesn't reliably stretch a row-flex child's
+   height:100% (the cover/back page collapsed to content height, leaving the
+   photo invisible and a blank gap below) - absolute positioning against
+   .page's own position:relative + explicit height is a well-supported
+   equivalent that isn't subject to that bug. */
+.split-left {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 51.5%;
+  padding: 14mm 16mm;
+  display: flex;
+  flex-direction: column;
+}
+.split-right {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 48.5%;
+  overflow: hidden;
+}
+.split-right img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.bg-dark { background: #0d0f0e; color: #ece4d5; }
+.bg-cream { background: #ece4d5; color: #0d0f0e; }
+
+.logo { height: 9mm; }
+.teal { color: #3f9280; }
+.teal-onlight { color: #2f7a67; }
+.muted-onlight { color: #7a776f; }
+.muted-ondark { color: #9c988e; }
+.red { color: #c96c67; }
+
+.cover-title {
+  margin-top: 26mm;
+  font-size: 30pt;
+  line-height: 1.18;
+}
+.cover-title .line2 { color: #3f9280; }
+.cover-rule { width: 46mm; border: none; border-top: 1px solid rgba(236,228,213,0.35); margin: 5mm 0 6mm; }
+.cover-month { font-size: 11pt; letter-spacing: 0.04em; font-weight: 600; }
+.cover-investor-wrap { margin-top: auto; padding-bottom: 4mm; }
+.cover-investor-label { font-size: 8pt; letter-spacing: 0.12em; font-weight: 700; color: #3f9280; margin-bottom: 2mm; }
+.cover-investor-name { font-size: 19pt; font-weight: 500; }
+
+/* ---------- Header bar shared by inner pages ----------
+   table/table-cell, not flex: a flex row nested inside .page's flex column
+   doesn't lay children side by side under wkhtmltopdf's engine. */
+.hdr { display: table; width: 100%; padding: 10mm 14mm 0; }
+.hdr .logo { display: table-cell; vertical-align: middle; }
+.hdr .pageno { display: table-cell; vertical-align: middle; text-align: right; font-size: 11pt; font-weight: 700; letter-spacing: 0.02em; }
+.hdr .pageno .dash { display: inline-block; width: 9mm; border-top: 1px solid currentColor; margin-right: 3mm; vertical-align: middle; opacity: .8; }
+
+.content { padding: 4mm 14mm 0; flex: 1; display: flex; flex-direction: column; min-height: 0; }
+.h1 { font-family: "Noto Sans Display Condensed", "Noto Sans", sans-serif; font-weight: 600; font-size: 21pt; margin-bottom: 3mm; }
+.h1-rule { border: none; border-top: 1.5px solid #3f9280; margin-bottom: 7mm; }
+.subtitle { font-size: 9.5pt; margin-top: 1mm; margin-bottom: 5mm; }
+
+.footer { padding: 0 14mm 7mm; font-size: 7.3pt; }
+.footer .fline { border: none; border-top: 1px solid rgba(0,0,0,0.12); margin-bottom: 2.5mm; }
+.bg-dark .footer .fline { border-top-color: rgba(236,228,213,0.18); }
+.footer .foot-label { font-size: 7.3pt; letter-spacing: 0.03em; }
+
+/* ---------- Page 2: resumen ---------- */
+/* display:table/table-cell, not flex: a flex row nested inside .content's
+   flex column mis-measures height under wkhtmltopdf's engine (same reason
+   page 3's header below avoids nested flexbox). */
+.resumen-grid { display: table; width: 100%; table-layout: fixed; }
+.resumen-col { display: table-cell; width: 50%; vertical-align: top; }
+.resumen-col.right { padding-left: 10mm; }
+.resumen-col.left { border-right: 1px solid rgba(13,15,14,0.15); padding-right: 10mm; }
+.stat-label { font-size: 8pt; font-weight: 700; letter-spacing: 0.05em; color: #2f7a67; margin-bottom: 2mm; }
+.stat-value-xl { font-family: "Noto Sans Display Condensed", "Noto Sans", sans-serif; font-size: 34pt; font-weight: 600; line-height: 1; }
+.stat-caption { font-size: 8pt; color: #7a776f; margin-top: 2mm; }
+.stat-block { padding-bottom: 5mm; margin-bottom: 5mm; border-bottom: 1px solid rgba(13,15,14,0.12); }
+.stat-block:last-child { border-bottom: none; }
+.right-stat { padding-bottom: 5mm; margin-bottom: 5mm; border-bottom: 1px solid rgba(13,15,14,0.12); }
+.right-stat:last-child { border-bottom: none; }
+.right-stat-row { display: flex; align-items: baseline; margin-top: 2.5mm; }
+.right-stat-row .pct { font-family: "Noto Sans Display Condensed", "Noto Sans", sans-serif; font-size: 24pt; font-weight: 600; color: #2f7a67; min-width: 34mm; }
+.right-stat-row .usd { font-size: 15pt; font-weight: 700; margin-left: 8mm; }
+.right-stat.neg .pct { color: #c96c67; }
+
+/* ---------- Page 3: evolucion ---------- */
+.evo-top { display: table; width: 100%; table-layout: fixed; }
+.evo-top-left { display: table-cell; width: 62%; vertical-align: top; }
+.evo-initial { display: table-cell; width: 38%; vertical-align: top; text-align: right; border-left: 1px solid rgba(236,228,213,0.3); padding-left: 8mm; }
+.evo-initial .lbl { font-size: 8pt; font-weight: 700; color: #3f9280; letter-spacing: 0.04em; }
+.evo-initial .date { font-size: 8pt; color: #9c988e; margin: 1mm 0; }
+.evo-initial .val { font-family: "Noto Sans Display Condensed", "Noto Sans", sans-serif; font-size: 15pt; font-weight: 600; }
+.chart-label { font-size: 8pt; font-weight: 700; color: #3f9280; letter-spacing: 0.04em; margin: 3mm 0 2mm; }
+.chart-wrap { position: relative; height: 33mm; margin-bottom: 2mm; }
+.evo-table { width: 100%; border-collapse: collapse; font-size: 8pt; margin-top: 2mm; }
+.evo-table th { text-align: right; font-weight: 600; color: #9c988e; font-size: 7.3pt; letter-spacing: 0.03em; padding-bottom: 2mm; border-bottom: 1px solid rgba(236,228,213,0.2); }
+.evo-table th:first-child, .evo-table td:first-child { text-align: left; }
+.evo-table td { text-align: right; padding: 1.05mm 0; border-bottom: 1px solid rgba(236,228,213,0.08); }
+.evo-table tr.last td { font-weight: 700; }
+.pos { color: #57b299; }
+.neg { color: #d17f7a; }
+/* table/table-cell, not flex: see .hdr above. */
+.evo-total { display: table; width: 100%; background: rgba(63,146,128,0.16); border: 1px solid rgba(63,146,128,0.35); border-radius: 1.5mm; padding: 2.4mm 5mm; margin-top: 2mm; font-weight: 700; }
+.evo-total > div { display: table-cell; vertical-align: middle; }
+.evo-total .amounts { text-align: right; font-family: "Noto Sans Display Condensed", "Noto Sans", sans-serif; font-weight: 600; font-size: 12pt; }
+.evo-total .amounts div { display: inline-block; }
+.evo-total .amounts div:last-child { margin-left: 10mm; }
+.footnote { font-size: 7.3pt; color: #9c988e; margin-top: 1.3mm; }
+
+/* ---------- Operaciones pages ---------- */
+/* inline-block, not flex+wrap: nested flex-wrap rows don't reliably wrap
+   under wkhtmltopdf's engine; inline-block flows and wraps naturally. */
+.assets-row { margin-bottom: 5mm; }
+.asset-chip { display: inline-block; margin-right: 12mm; }
+.asset-chip .code { color: #2f7a67; font-family: "Noto Sans Display Condensed", "Noto Sans", sans-serif; font-weight: 600; font-size: 9pt; margin-right: 2mm; }
+.asset-chip .name { color: #55524a; font-size: 8.5pt; }
+.ops-table { width: 100%; border-collapse: collapse; font-size: 8pt; flex: 1; }
+.ops-table th { text-align: right; font-weight: 600; color: #9c988e; font-size: 7.3pt; letter-spacing: 0.03em; padding-bottom: 2mm; border-bottom: 1px solid rgba(13,15,14,0.15); }
+.ops-table th:nth-child(1), .ops-table td:nth-child(1),
+.ops-table th:nth-child(2), .ops-table td:nth-child(2),
+.ops-table th:nth-child(3), .ops-table td:nth-child(3) { text-align: left; }
+.ops-table td { text-align: right; padding: 1.5mm 0; border-bottom: 1px solid rgba(13,15,14,0.06); }
+/* table/table-cell, not flex: see .hdr above. */
+.stats-bar { display: table; width: 100%; table-layout: fixed; border-top: 1px solid rgba(13,15,14,0.15); margin-top: 3mm; padding-top: 4mm; }
+.stats-bar .stat { display: table-cell; text-align: center; border-right: 1px solid rgba(13,15,14,0.12); }
+.stats-bar .stat:last-child { border-right: none; }
+.stats-bar .stat .lbl { font-size: 7.3pt; color: #9c988e; letter-spacing: 0.04em; margin-bottom: 1.5mm; }
+.stats-bar .stat .val { font-family: "Noto Sans Display Condensed", "Noto Sans", sans-serif; font-size: 13pt; font-weight: 600; }
+
+/* ---------- Back page ---------- */
+.contact-label { font-size: 8pt; font-weight: 700; color: #3f9280; letter-spacing: 0.1em; margin-bottom: 2mm; }
+.contact-rule { width: 34mm; border: none; border-top: 1px solid rgba(236,228,213,0.35); margin-bottom: 5mm; }
+.contact-line { font-size: 11pt; margin-bottom: 3mm; }
+.contact-line a { color: #3f9280; text-decoration: none; }
+.legal-block { margin-top: 8mm; padding-top: 5mm; border-top: 1px solid rgba(236,228,213,0.2); max-width: 100mm; }
+.legal-block p { font-size: 8pt; color: #b9b6ad; margin-bottom: 2mm; line-height: 1.4; }
+.back-month { margin-top: auto; font-family: "Noto Sans Display Condensed", "Noto Sans", sans-serif; font-size: 12pt; font-weight: 600; color: #3f9280; }
+</style>
+</head>
+<body>
+
+<!-- PAGE 1: COVER -->
+<section class="page split bg-dark">
+  <div class="split-left">
+    <img class="logo" src="<%= InvestorMonthlyReportPdfs::Assets.data_uri(:logo_light) %>">
+    <div class="cover-title">
+      <div class="cond-block">REPORTE MENSUAL</div>
+      <div class="cond-block line2">DE RENDIMIENTO</div>
+    </div>
+    <hr class="cover-rule">
+    <div class="cover-month"><%= data[:month_label] %></div>
+    <div class="cover-investor-wrap">
+      <div class="cover-investor-label">INVERSOR</div>
+      <div class="cover-investor-name"><%= data[:investor_name] %></div>
+    </div>
+  </div>
+  <div class="split-right"><img src="<%= InvestorMonthlyReportPdfs::Assets.data_uri(:cover) %>"></div>
+</section>
+
+<!-- PAGE 2: RESUMEN -->
+<section class="page bg-cream">
+  <div class="hdr">
+    <img class="logo" src="<%= InvestorMonthlyReportPdfs::Assets.data_uri(:logo_dark) %>">
+    <div class="pageno teal-onlight"><span class="dash"></span>02</div>
+  </div>
+  <div class="content">
+    <h1 class="h1">RESUMEN DEL PORTAFOLIO</h1>
+    <hr class="h1-rule">
+    <div class="resumen-grid">
+      <div class="resumen-col left">
+        <div class="stat-block">
+          <div class="stat-label">VALOR DEL PORTAFOLIO</div>
+          <div class="stat-value-xl">USD <%= data[:portfolio_value] %></div>
+          <div class="stat-caption">Valor del portafolio al <%= data[:as_of_date] %></div>
+        </div>
+        <div class="stat-block">
+          <div class="stat-label">CAPITAL APORTADO NETO</div>
+          <div class="stat-value-xl">USD <%= data[:net_contributed] %></div>
+          <div class="stat-caption">Ingresos menos retiros.</div>
+        </div>
+      </div>
+      <div class="resumen-col right">
+        <div class="right-stat <%= data[:monthly][:class] %>">
+          <div class="stat-label">RENDIMIENTO MENSUAL &middot; <%= data[:month_label] %></div>
+          <div class="right-stat-row"><div class="pct"><%= data[:monthly][:percent] %></div><div class="usd"><%= data[:monthly][:usd] %></div></div>
+        </div>
+        <div class="right-stat <%= data[:ytd][:class] %>">
+          <div class="stat-label">RENDIMIENTO ACUMULADO <%= data[:year_opening][:date].split('/').last %></div>
+          <div class="right-stat-row"><div class="pct"><%= data[:ytd][:percent] %></div><div class="usd"><%= data[:ytd][:usd] %></div></div>
+        </div>
+        <div class="right-stat <%= data[:since_entry][:class] %>">
+          <div class="stat-label">RENDIMIENTO ACUMULADO DESDE EL INGRESO</div>
+          <div class="right-stat-row"><div class="pct"><%= data[:since_entry][:percent] %></div><div class="usd"><%= data[:since_entry][:usd] %></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="footer">
+    <div class="muted-onlight" style="margin-bottom:2.5mm;">Rendimiento neto = rendimiento operativo - costo del servicio aplicado al per&iacute;odo.</div>
+    <hr class="fline">
+    <div class="foot-label muted-onlight">REPORTE MENSUAL DE RENDIMIENTO &middot; <%= data[:month_label] %></div>
+  </div>
+</section>
+
+<!-- PAGE 3: EVOLUCION -->
+<section class="page bg-dark">
+  <div class="hdr">
+    <img class="logo" src="<%= InvestorMonthlyReportPdfs::Assets.data_uri(:logo_light) %>">
+    <div class="pageno teal"><span class="dash"></span>03</div>
+  </div>
+  <div class="content">
+    <div class="evo-top">
+      <div class="evo-top-left">
+        <h1 class="h1">EVOLUCI&Oacute;N DEL PORTAFOLIO</h1>
+        <div class="subtitle muted-ondark">Historial mensual <%= data[:year_opening][:date].split('/').last %></div>
+      </div>
+      <div class="evo-initial">
+        <div class="lbl">SALDO INICIAL <%= data[:year_opening][:date].split('/').last %></div>
+        <div class="date"><%= data[:year_opening][:date] %></div>
+        <div class="val">USD <%= data[:year_opening][:value] %></div>
+      </div>
+    </div>
+    <div class="chart-label">EVOLUCI&Oacute;N DEL VALOR DEL PORTAFOLIO</div>
+    <div class="chart-wrap"><%= data[:chart_svg].html_safe %></div>
+    <table class="evo-table">
+      <thead><tr>
+        <th>MES</th><th>VALOR PORTAFOLIO (USD)</th><th>INGRESOS (USD)</th><th>RETIROS (USD)</th>
+        <th>COSTO SERVICIO* (USD)</th><th>REND. OPERATIVO %</th><th>REND. OPERATIVO (USD)</th>
+      </tr></thead>
+      <tbody>
+        <% data[:evo_rows].each do |row| %>
+          <tr class="<%= 'last' if row[:last] %>">
+            <td><%= row[:label] %></td>
+            <td><%= row[:portfolio_value] %></td>
+            <td><%= row[:deposits] %></td>
+            <td><%= row[:withdrawals] %></td>
+            <td><%= row[:service_cost] %></td>
+            <td class="<%= row[:return_percent_class] %>"><%= row[:return_percent] %></td>
+            <td class="<%= row[:return_usd_class] %>"><%= row[:return_usd] %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+    <div class="evo-total">
+      <div>ACUMULADO <%= data[:year_opening][:date].split('/').last %></div>
+      <div class="amounts"><div><%= data[:evo_total][:percent] %></div><div><%= data[:evo_total][:usd] %></div></div>
+    </div>
+    <div class="footnote">* Importe correspondiente al servicio de trading aplicado en el per&iacute;odo indicado.</div>
+  </div>
+  <div class="footer">
+    <hr class="fline">
+    <div class="foot-label muted-ondark">REPORTE MENSUAL DE RENDIMIENTO &middot; <%= data[:month_label] %></div>
+  </div>
+</section>
+
+<!-- PAGES 4+: OPERACIONES DEL MES (paginated - see DocumentData::OPS_PAGE_LIMIT) -->
+<% data[:ops_pages].each do |page| %>
+  <section class="page bg-cream">
+    <div class="hdr">
+      <img class="logo" src="<%= InvestorMonthlyReportPdfs::Assets.data_uri(:logo_dark) %>">
+      <div class="pageno teal-onlight"><span class="dash"></span><%= page[:page_number] %></div>
+    </div>
+    <div class="content">
+      <h1 class="h1">OPERACIONES DEL MES</h1>
+      <% if page[:first] %>
+        <div class="subtitle muted-onlight" style="margin-top:2mm; margin-bottom:6mm;">Detalle operativo &middot; <%= data[:month_label_full] %></div>
+        <div class="stat-label" style="margin-bottom:3mm;">ACTIVOS OPERADOS</div>
+        <div class="assets-row">
+          <% page[:assets].each do |asset| %>
+            <div class="asset-chip"><span class="code"><%= asset[:code] %></span><span class="name"><%= asset[:name] %></span></div>
+          <% end %>
+        </div>
+      <% else %>
+        <div class="subtitle muted-onlight" style="margin-top:2mm; margin-bottom:6mm;">Detalle operativo &middot; <%= data[:month_label_full] %> (continuaci&oacute;n)</div>
+      <% end %>
+      <table class="ops-table">
+        <thead><tr>
+          <th>FECHA</th><th>ACTIVO</th><th>DIRECCI&Oacute;N</th><th>APERTURA</th><th>CIERRE</th>
+          <th>RESULTADO USD</th><th>RENDIMIENTO %</th><th>RATIO</th>
+        </tr></thead>
+        <tbody>
+          <% page[:trades].each do |trade| %>
+            <tr>
+              <td><%= trade[:date] %></td>
+              <td><%= trade[:asset] %></td>
+              <td><%= trade[:direction] %></td>
+              <td><%= trade[:opened_at] %></td>
+              <td><%= trade[:closed_at] %></td>
+              <td class="<%= trade[:result_class] %>"><%= trade[:result_usd] %></td>
+              <td class="<%= trade[:result_class] %>"><%= trade[:result_percent] %></td>
+              <td class="<%= trade[:result_class] %>"><%= trade[:ratio] %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+      <% if page[:last] %>
+        <div class="footnote">Ratio: relaci&oacute;n entre el resultado de la operaci&oacute;n y el riesgo inicialmente asumido.</div>
+        <div class="stats-bar">
+          <div class="stat"><div class="lbl">OPERACIONES</div><div class="val"><%= page[:ops_summary][:count] %></div></div>
+          <div class="stat"><div class="lbl">POSITIVAS</div><div class="val pos"><%= page[:ops_summary][:positive] %></div></div>
+          <div class="stat"><div class="lbl">NEGATIVAS</div><div class="val neg"><%= page[:ops_summary][:negative] %></div></div>
+          <div class="stat"><div class="lbl">BREAK EVEN</div><div class="val"><%= page[:ops_summary][:break_even] %></div></div>
+          <div class="stat"><div class="lbl">RESULTADO NETO</div><div class="val <%= page[:ops_summary][:net_result_class] %>"><%= page[:ops_summary][:net_result] %></div></div>
+          <div class="stat"><div class="lbl">RENDIMIENTO DEL MES</div><div class="val <%= data[:monthly][:class] %>"><%= page[:ops_summary][:monthly_return_percent] %></div></div>
+        </div>
+      <% end %>
+    </div>
+    <div class="footer">
+      <hr class="fline">
+      <div class="foot-label muted-onlight">REPORTE MENSUAL DE RENDIMIENTO &middot; <%= data[:month_label] %></div>
+    </div>
+  </section>
+<% end %>
+
+<!-- LAST PAGE: BACK / CONTACT -->
+<section class="page split bg-dark">
+  <div class="split-left">
+    <img class="logo" src="<%= InvestorMonthlyReportPdfs::Assets.data_uri(:logo_light) %>">
+    <div style="margin-top:auto;">
+      <div class="contact-label">CONTACTO</div>
+      <hr class="contact-rule">
+      <div class="contact-line">+54 9 11 4178-3126</div>
+      <div class="contact-line">winbit.cfds@gmail.com</div>
+      <div class="contact-line"><a href="https://winbit.com.ar">winbit.com.ar</a></div>
+      <div class="legal-block">
+        <div class="contact-label">INFORMACI&Oacute;N LEGAL</div>
+        <p>Este documento es confidencial y ha sido emitido para uso exclusivo del titular del portafolio.</p>
+        <p>Material informativo. La operatoria con derivados implica riesgo y los resultados pueden variar seg&uacute;n las condiciones de mercado.</p>
+        <p>Los rendimientos pasados no garantizan resultados futuros.</p>
+      </div>
+    </div>
+    <div class="back-month"><%= data[:month_label] %></div>
+  </div>
+  <div class="split-right"><img src="<%= InvestorMonthlyReportPdfs::Assets.data_uri(:back) %>"></div>
+</section>
+
+</body>
+</html>

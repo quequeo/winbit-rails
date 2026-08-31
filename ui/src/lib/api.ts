@@ -603,6 +603,20 @@ export const api = {
     if (params.confirm === false) form.append("confirm", "false");
     return requestForm(`${ADMIN_API_PREFIX}/monthly_report_pdfs/bulk`, form);
   },
+  generateMonthlyReportPdfs: (params: {
+    month: string;
+    investorId?: string;
+    overwrite?: boolean;
+  }) => {
+    return request(`${ADMIN_API_PREFIX}/monthly_report_pdfs/generate`, {
+      method: "POST",
+      body: JSON.stringify({
+        month: params.month,
+        investor_id: params.investorId,
+        overwrite: params.overwrite,
+      }),
+    });
+  },
   downloadMonthlyReportPdfFile: async (id: string, filename: string) => {
     const res = await fetch(
       `${API_BASE_URL}${ADMIN_API_PREFIX}/monthly_report_pdfs/${id}/file`,
@@ -627,5 +641,40 @@ export const api = {
   deleteMonthlyReportPdf: (id: string) =>
     request(`${ADMIN_API_PREFIX}/monthly_report_pdfs/${id}`, {
       method: "DELETE",
+    }),
+  previewMonthlyReportEmail: (params: {
+    month: string;
+    subject?: string;
+    body?: string;
+    investor_id?: string;
+  }) => {
+    const qs = new URLSearchParams();
+    qs.set("month", params.month);
+    if (params.subject) qs.set("subject", params.subject);
+    if (params.body) qs.set("body", params.body);
+    if (params.investor_id) qs.set("investor_id", params.investor_id);
+    return request(
+      `${ADMIN_API_PREFIX}/monthly_report_emails/preview?${qs.toString()}`,
+    );
+  },
+  sendMonthlyReportEmailOne: (body: {
+    month: string;
+    subject: string;
+    body: string;
+    investor_id: string;
+  }) =>
+    request(`${ADMIN_API_PREFIX}/monthly_report_emails/send_one`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  sendMonthlyReportEmailMass: (body: {
+    month: string;
+    subject: string;
+    body: string;
+    confirm: boolean;
+  }) =>
+    request(`${ADMIN_API_PREFIX}/monthly_report_emails/send_mass`, {
+      method: "POST",
+      body: JSON.stringify(body),
     }),
 };

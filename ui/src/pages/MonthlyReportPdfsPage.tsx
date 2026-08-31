@@ -3,6 +3,9 @@ import { api } from "../lib/api";
 import { lastClosedMonth } from "../lib/lastClosedMonth";
 import { Button } from "../components/ui/Button";
 import { ConfirmDialog } from "../components/ui/ConfirmDialog";
+import { MonthlyReportEmailPanel } from "../components/MonthlyReportEmailPanel";
+
+type PageTab = "pdfs" | "enviar";
 
 type InvestorRow = {
   id: string;
@@ -78,6 +81,7 @@ const formatBytes = (n: number) => {
 const skipLabel = (reason: string) => SKIP_REASONS[reason] || reason;
 
 export const MonthlyReportPdfsPage = () => {
+  const [tab, setTab] = useState<PageTab>("pdfs");
   const [month, setMonth] = useState(lastClosedMonth);
   const [data, setData] = useState<IndexPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -86,6 +90,8 @@ export const MonthlyReportPdfsPage = () => {
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [preview, setPreview] = useState<PreviewPayload | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<PresentRow | null>(null);
+  const [generating, setGenerating] = useState(false);
+  const [generatingInvestorId, setGeneratingInvestorId] = useState<string | null>(null);
   const bulkInputRef = useRef<HTMLInputElement>(null);
   const singleInputRef = useRef<HTMLInputElement>(null);
   const [singleInvestorId, setSingleInvestorId] = useState<string | null>(null);
@@ -199,6 +205,46 @@ export const MonthlyReportPdfsPage = () => {
     }
   };
 
+  const handleGenerateMissing = async () => {
+    setGenerating(true);
+    setError(null);
+    setNotice(null);
+    try {
+      const res = await api.generateMonthlyReportPdfs({ month });
+      const result = (
+        res as { data: { generated: unknown[]; skipped: unknown[]; failed: { name: string; error: string }[] } }
+      ).data;
+      const parts = [`${result.generated.length} generados`];
+      if (result.failed.length) parts.push(`${result.failed.length} con error`);
+      setNotice(parts.join(", ") + ".");
+      if (result.failed.length) {
+        setError(
+          result.failed.map((f) => `${f.name}: ${f.error}`).join(" — "),
+        );
+      }
+      fetchMonth(month);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Error al generar PDFs");
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleGenerateOne = async (investorId: string) => {
+    setGeneratingInvestorId(investorId);
+    setError(null);
+    setNotice(null);
+    try {
+      await api.generateMonthlyReportPdfs({ month, investorId, overwrite: true });
+      setNotice("PDF generado.");
+      fetchMonth(month);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Error al generar PDF");
+    } finally {
+      setGeneratingInvestorId(null);
+    }
+  };
+
   const handleDownload = async (row: PresentRow) => {
     try {
       await api.downloadMonthlyReportPdfFile(row.id, row.originalFilename);
@@ -236,12 +282,14 @@ export const MonthlyReportPdfsPage = () => {
         <div>
           <h1 className="text-3xl font-bold text-t-primary">Reportes PDF</h1>
           <p className="mt-1 text-sm text-t-muted">
-            Cargá los PDFs del mes cerrado. Primero se muestra a quién se
-            asignaría cada archivo; no se guarda hasta que confirmes. Nombre
-            esperado:{" "}
-            <span className="text-t-primary">
-              Reporte julio - TULIO CAPPARELLI.pdf
-            </span>
+            {tab === "pdfs"
+              ? "Cargá los PDFs del mes cerrado. Primero se muestra a quién se asignaría cada archivo; no se guarda hasta que confirmes. Nombre esperado: "
+              : "Redactá el email del mes y envialo con el PDF ya cargado. "}
+            {tab === "pdfs" ? (
+              <span className="text-t-primary">
+                Reporte julio - TULIO CAPPARELLI.pdf
+              </span>
+            ) : null}
           </p>
         </div>
         <label className="flex items-center gap-2 text-sm text-t-muted">
@@ -255,9 +303,44 @@ export const MonthlyReportPdfsPage = () => {
         </label>
       </div>
 
-      {error ? <div className="text-sm text-error">{error}</div> : null}
-      {notice ? <div className="text-sm text-success">{notice}</div> : null}
+      <div className="border-b border-b-default">
+        <nav className="-mb-px flex space-x-6">
+          <button
+            type="button"
+            onClick={() => setTab("pdfs")}
+            className={
+              tab === "pdfs"
+                ? "border-b-2 border-primary pb-3 text-sm font-semibold text-primary"
+                : "border-b-2 border-transparent pb-3 text-sm font-medium text-t-dim hover:border-b-default hover:text-t-muted"
+            }
+          >
+            PDFs
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab("enviar")}
+            className={
+              tab === "enviar"
+                ? "border-b-2 border-primary pb-3 text-sm font-semibold text-primary"
+                : "border-b-2 border-transparent pb-3 text-sm font-medium text-t-dim hover:border-b-default hover:text-t-muted"
+            }
+          >
+            Enviar emails
+          </button>
+        </nav>
+      </div>
 
+      {tab === "enviar" ? <MonthlyReportEmailPanel month={month} /> : null}
+
+      {tab === "pdfs" && error ? (
+        <div className="text-sm text-error">{error}</div>
+      ) : null}
+      {tab === "pdfs" && notice ? (
+        <div className="text-sm text-success">{notice}</div>
+      ) : null}
+
+      {tab === "pdfs" ? (
+      <>
       <div className="admin-card p-6 space-y-4">
         <div className="flex flex-wrap items-center gap-3">
           <Button
@@ -279,6 +362,16 @@ export const MonthlyReportPdfsPage = () => {
             Varios PDF o un ZIP. Máx. 15MB por archivo. El mes del nombre tiene
             que coincidir con el mes seleccionado.
           </p>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleGenerateMissing}
+            disabled={generating || missingActive.length === 0}
+          >
+            {generating
+              ? "Generando..."
+              : `Generar automáticamente (${missingActive.length})`}
+          </Button>
         </div>
         <div className="flex flex-wrap gap-4 text-sm">
           <span className="text-success">Con PDF: {data.counts.present}</span>
@@ -446,18 +539,29 @@ export const MonthlyReportPdfsPage = () => {
                   <td className="py-2 text-t-primary">{row.name}</td>
                   <td className="py-2 text-t-muted">{row.email}</td>
                   <td className="py-2 text-right">
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        setSingleInvestorId(row.id);
-                        singleInputRef.current?.click();
-                      }}
-                      disabled={uploading}
-                    >
-                      Subir
-                    </Button>
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleGenerateOne(row.id)}
+                        disabled={generatingInvestorId === row.id || generating}
+                      >
+                        {generatingInvestorId === row.id ? "Generando..." : "Generar"}
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setSingleInvestorId(row.id);
+                          singleInputRef.current?.click();
+                        }}
+                        disabled={uploading}
+                      >
+                        Subir
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -491,6 +595,8 @@ export const MonthlyReportPdfsPage = () => {
         }
         confirmText="Quitar"
       />
+      </>
+      ) : null}
     </div>
   );
 };

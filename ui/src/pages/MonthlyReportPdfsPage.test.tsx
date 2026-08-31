@@ -10,6 +10,9 @@ vi.mock("../lib/api", () => ({
     uploadMonthlyReportPdfs: vi.fn(),
     downloadMonthlyReportPdfFile: vi.fn(),
     deleteMonthlyReportPdf: vi.fn(),
+    previewMonthlyReportEmail: vi.fn(),
+    sendMonthlyReportEmailOne: vi.fn(),
+    sendMonthlyReportEmailMass: vi.fn(),
   },
 }));
 
@@ -134,5 +137,24 @@ describe("MonthlyReportPdfsPage", () => {
     const confirmArgs = vi.mocked(api.uploadMonthlyReportPdfs).mock.calls[1][0];
     expect(confirmArgs.preview).toBe(false);
     expect(confirmArgs.confirm).toBe(true);
+  });
+
+  it("opens the email tab with the composer", async () => {
+    const user = userEvent.setup();
+    vi.mocked(api.previewMonthlyReportEmail).mockResolvedValue({
+      data: {
+        month: "2026-07",
+        audienceCount: 0,
+        variables: [],
+        recipients: [],
+        skipped: [],
+      },
+    });
+
+    render(<MonthlyReportPdfsPage />);
+    await screen.findByText("Tulio Capparelli");
+    await user.click(screen.getByRole("button", { name: /Enviar emails/i }));
+    expect(await screen.findByLabelText("Asunto del email")).toBeInTheDocument();
+    expect(api.previewMonthlyReportEmail).toHaveBeenCalled();
   });
 });

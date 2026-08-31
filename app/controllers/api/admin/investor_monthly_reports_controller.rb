@@ -9,8 +9,9 @@ module Api
         month = parse_month_param
         return if performed?
 
-        builder = MonthlyReportBuilder.new(investor: @investor, report_month: month)
-        render json: { data: AdminInvestorMonthlyReportSerializer.new(builder.build).as_json }
+        report = MonthlyReportBuilder.new(investor: @investor, report_month: month).build
+        operations = MonthlyOperationsReport.call(month: month)
+        render json: { data: AdminInvestorMonthlyReportSerializer.new(report, operations: operations).as_json }
       end
 
       private

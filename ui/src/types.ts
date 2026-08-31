@@ -89,11 +89,35 @@ export interface MonthlyReportAnnexRow {
 
 export interface MonthlyReportSummary {
   portfolioValueUsd: number | null;
+  netContributedUsd?: number | null;
   winbitMonthlyReturnPercent: number | null;
   accumulatedSinceEntryUsd: number | null;
   accumulatedSinceEntryPercent: number | null;
   accumulated2026Usd: number | null;
   accumulated2026Percent: number | null;
+  yearOpeningDate?: string | null;
+  yearOpeningBalanceUsd?: number | null;
+}
+
+export interface MonthlyReportTrade {
+  date: string;
+  asset: string;
+  direction: string | null;
+  openedAt: string | null;
+  closedAt: string | null;
+  resultUsd: number;
+  resultPercent: number | null;
+  ratio: number | null;
+}
+
+export interface MonthlyReportOperations {
+  trades: MonthlyReportTrade[];
+  assets: { code: string; name: string }[];
+  count: number;
+  positive: number;
+  negative: number;
+  breakEven: number;
+  netResultUsd: number;
 }
 
 export interface MonthlyReport {
@@ -101,4 +125,5 @@ export interface MonthlyReport {
   reportMonth: string;
   summary: MonthlyReportSummary;
   annexRows: MonthlyReportAnnexRow[];
+  operations?: MonthlyReportOperations | null;
 }

@@ -41,17 +41,19 @@ class MonthlyReportBuilder
         email: @investor.email,
       },
       report_month: @report_month.strftime('%Y-%m'),
-      summary: build_summary(dashboard, ytd_usd:, ytd_base:),
+      summary: build_summary(dashboard, ytd_usd:, ytd_base:, opening_row:),
       annex_rows: annex_rows,
     }
   end
 
   private
 
-  def build_summary(dashboard, ytd_usd:, ytd_base:)
+  def build_summary(dashboard, ytd_usd:, ytd_base:, opening_row:)
     {
       portfolio_value_usd: portfolio_value_for_summary,
       winbit_monthly_return_percent: winbit_monthly_percent(@report_month),
+      # Ingresos netos (depositos - retiros), igual que Portfolio#total_invested.
+      net_contributed_usd: dashboard[:totalInvested],
       # Lifetime figures mirror the investor panel (strategy_return_all_*).
       accumulated_since_entry_usd: dashboard[:strategyReturnAllUSD],
       accumulated_since_entry_percent: dashboard[:strategyReturnAllPercent],
@@ -60,6 +62,9 @@ class MonthlyReportBuilder
       accumulated_2026_percent: if ytd_base.positive?
                                  ((bd(ytd_usd) / bd(ytd_base)) * 100).round(2, :half_up).to_f
                                 end,
+      # Snapshot used as the YTD chart/table's starting point (see DocumentData).
+      year_opening_date: Date.new(@report_month.year, 1, 1).strftime('%Y-%m-%d'),
+      year_opening_balance_usd: opening_row&.dig(:portfolio_value),
     }
   end
 

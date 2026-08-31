@@ -295,6 +295,9 @@ Requiere sesión de admin. Usada por el backoffice.
 | POST | `/monthly_report_pdfs/bulk` | Carga masiva. Multipart: `month` + `files[]` (PDFs o ZIP). Por defecto es preview (`preview=true`): no escribe en DB y devuelve `assignments` (filename, parsedName, status assign/replace/skip, investor o reason). Persiste solo con `preview=false` o `confirm=true`. Asigna por nombre `Reporte julio - NOMBRE APELLIDO.pdf`. Con `investor_id` + un PDF, asigna directo a ese inversor. Máx. 15MB por PDF. |
 | GET | `/monthly_report_pdfs/:id/file` | Descarga el PDF (sesión admin). |
 | DELETE | `/monthly_report_pdfs/:id` | Elimina el PDF cargado. |
+| GET | `/monthly_report_emails/preview` | Preview de envío de reporte mensual (params: `month` YYYY-MM, opcional `subject`, `body`, `investor_id`). Lista destinatarios elegibles (ACTIVE, balance > 0, PDF del mes) y omitidos. Interpola las mismas variables que campañas (`{{nombre}}` = nombre completo del inversor). |
+| POST | `/monthly_report_emails/send_one` | Envía el email del reporte a un inversor (`month`, `subject`, `body`, `investor_id`) con el PDF ya cargado como adjunto (`Reporte julio 2026 - NOMBRE.pdf`). 422 si no es elegible. Omite NotificationGate (`force: true`). |
+| POST | `/monthly_report_emails/send_mass` | Envía el reporte a todos los elegibles del mes (`month`, `subject`, `body`, `confirm=true`). Adjunta el PDF almacenado de cada uno. Omite NotificationGate. |
 | GET | `/referral_commissions` | Comisiones por referido |
 | GET | `/settings` | Configuración |
 | PATCH | `/settings` | Actualizar configuración |
