@@ -209,7 +209,7 @@ RSpec.describe MonthlyReportBuilder do
       )
     end
 
-    it 'uses panel strategy_return_all for since-entry, annex net for 2026 YTD' do
+    it 'uses panel strategy_return_all for since-entry and panel strategy_return_ytd (TWR) for 2026 YTD' do
       travel_to Time.zone.local(2026, 5, 29, 12, 0, 0) do
         PortfolioHistory.create!(
           investor: investor,
@@ -232,14 +232,15 @@ RSpec.describe MonthlyReportBuilder do
 
         report = described_class.new(investor: investor, report_month: Date.new(2026, 5, 1)).build
         dashboard = InvestorPortfolioDashboardPayload.build(investor: investor)
-        data_rows = report[:annex_rows].reject { |r| r[:opening_snapshot] || r[:entry_row] }
-        annex_net = data_rows.sum { |r| r[:return_usd].to_f } - data_rows.sum { |r| r[:service_cost].to_f }
 
         expect(report[:summary][:portfolio_value_usd]).to eq(dashboard[:currentBalance])
         expect(report[:summary][:accumulated_since_entry_usd]).to eq(dashboard[:strategyReturnAllUSD])
         expect(report[:summary][:accumulated_since_entry_percent]).to eq(dashboard[:strategyReturnAllPercent])
-        expect(report[:summary][:accumulated_2026_usd]).to be_within(0.01).of(annex_net)
-        expect(report[:summary][:accumulated_2026_usd]).to be_within(0.01).of(328.74)
+        # TWR-based (panel strategy_return_ytd_*), not the annex/RDO sum - robust
+        # to large interim withdrawals (see Requests::Approve / Luis Matías Crocci case).
+        expect(report[:summary][:accumulated_2026_usd]).to eq(dashboard[:strategyReturnYtdUSD])
+        expect(report[:summary][:accumulated_2026_usd]).to eq(92.74)
+        expect(report[:summary][:accumulated_2026_percent]).to eq(dashboard[:strategyReturnYtdPercent])
       end
     end
   end
@@ -280,7 +281,7 @@ RSpec.describe MonthlyReportBuilder do
       end
     end
 
-    it 'uses annex net PnL for accumulated 2026 (not live panel YTD, not gross RDO sum)' do
+    it 'uses the panel TWR-based YTD (not the annex/gross RDO sum, which understates return under withdrawals)' do
       report = described_class.new(investor: investor, report_month: Date.new(2026, 4, 1)).build
       data_rows = report[:annex_rows].reject { |r| r[:opening_snapshot] || r[:entry_row] }
       gross = data_rows.sum { |r| r[:return_usd].to_f }
@@ -288,10 +289,9 @@ RSpec.describe MonthlyReportBuilder do
 
       expect(gross).to eq(197.0)
       expect(cst).to eq(38.0)
-      expect(report[:summary][:accumulated_2026_usd]).to eq(159.0)
-      expect(report[:summary][:accumulated_2026_usd]).to eq(gross - cst)
-      expect(report[:summary][:accumulated_2026_percent]).to be_within(0.01).of(5.86)
-      expect(report[:summary][:accumulated_2026_usd]).not_to eq(107.72)
+      expect(report[:summary][:accumulated_2026_usd]).to eq(107.72)
+      expect(report[:summary][:accumulated_2026_percent]).to be_within(0.01).of(3.9724)
+      expect(report[:summary][:accumulated_2026_usd]).not_to eq(gross - cst)
     end
   end
 end
@@ -401,6 +401,8 @@ RSpec.describe MonthlyReportBuilder do
         total_invested: 553,
         strategy_return_all_usd: 14.63,
         strategy_return_all_percent: 2.65,
+        strategy_return_ytd_usd: 14.63,
+        strategy_return_ytd_percent: 2.65,
       )
     end
 

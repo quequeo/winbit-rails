@@ -31,8 +31,6 @@ class MonthlyReportBuilder
     annex_rows = build_annex_rows
     opening_row = annex_rows.find { |r| r[:entry_row] || r[:opening_snapshot] }
     dashboard = InvestorPortfolioDashboardPayload.build(investor: @investor) || {}
-    ytd_usd = compute_ytd_usd(annex_rows, opening_row:)
-    ytd_base = opening_row&.dig(:portfolio_value).to_f
 
     {
       investor: {
@@ -41,40 +39,42 @@ class MonthlyReportBuilder
         email: @investor.email,
       },
       report_month: @report_month.strftime('%Y-%m'),
-      summary: build_summary(dashboard, ytd_usd:, ytd_base:, opening_row:),
+      summary: build_summary(dashboard, opening_row:),
       annex_rows: annex_rows,
     }
   end
 
   private
 
-  def build_summary(dashboard, ytd_usd:, ytd_base:, opening_row:)
+  def build_summary(dashboard, opening_row:)
     {
       portfolio_value_usd: portfolio_value_for_summary,
       winbit_monthly_return_percent: winbit_monthly_percent(@report_month),
       # Ingresos netos (depositos - retiros), igual que Portfolio#total_invested.
       net_contributed_usd: dashboard[:totalInvested],
+      # Depositos - retiros de por vida (a diferencia de net_contributed_usd,
+      # este sí descuenta lo retirado - ver AGENTS/CST_FEE_LOGIC para por qué
+      # ambos existen: total_invested nunca baja con retiros en el resto de
+      # la app, pero para este reporte también hace falta el neto real).
+      net_contributed_after_withdrawals_usd: lifetime_net_contributed,
       # Lifetime figures mirror the investor panel (strategy_return_all_*).
       accumulated_since_entry_usd: dashboard[:strategyReturnAllUSD],
       accumulated_since_entry_percent: dashboard[:strategyReturnAllPercent],
-      # 2026 YTD must match the annex (net of CST): same source as Anexo TOTAL RDO.
-      accumulated_2026_usd: ytd_usd,
-      accumulated_2026_percent: accumulated_2026_percent(ytd_usd:, ytd_base:, opening_row:, dashboard:),
+      # TWR-based, from the investor panel (strategy_return_ytd_*) - robust to
+      # large interim withdrawals, unlike a plain (end - Jan1 balance) / Jan1
+      # balance calculation, which understates return for anyone who pulled
+      # out much of their opening balance mid-year.
+      accumulated_2026_usd: dashboard[:strategyReturnYtdUSD],
+      accumulated_2026_percent: dashboard[:strategyReturnYtdPercent],
       # Snapshot used as the YTD chart/table's starting point (see DocumentData).
       year_opening_date: Date.new(@report_month.year, 1, 1).strftime('%Y-%m-%d'),
       year_opening_balance_usd: opening_row&.dig(:portfolio_value),
     }
   end
 
-  # ytd_base of 0 means the opening row is a mid-year entry (no prior
-  # balance to divide by), not a break-even genesis snapshot - in that case
-  # the investor's whole 2026 return equals their since-entry return, so
-  # reuse that TWR percent instead of leaving this blank.
-  def accumulated_2026_percent(ytd_usd:, ytd_base:, opening_row:, dashboard:)
-    return ((bd(ytd_usd) / bd(ytd_base)) * 100).round(2, :half_up).to_f if ytd_base.positive?
-    return dashboard[:strategyReturnAllPercent] if opening_row&.dig(:entry_row) && ytd_usd != 0.0
-
-    nil
+  def lifetime_net_contributed
+    flows = aggregate_flows(Time.zone.local(2000, 1, 1), effective_month_end(@report_month))
+    (bd(flows[:deposits]) - bd(flows[:withdrawals])).round(2, :half_up).to_f
   end
 
   def portfolio_value_for_summary
@@ -92,11 +92,9 @@ class MonthlyReportBuilder
     rows = spreadsheet_rows
     migrated_from_spreadsheet = rows.present?
     # Investors with no spreadsheet history (joined after the migration cutoff,
-    # entirely native to the platform) have no opening_snapshot/entry_row to
-    # anchor the YTD calculation on - without one, compute_ytd_usd always
-    # returns 0 and "Acumulado 2026" stays blank even though they do have a
-    # full return history within the year. Synthesize their entry at 0, same
-    # as an imported investor's genesis row would be.
+    # entirely native to the platform) have no opening_snapshot/entry_row -
+    # synthesize their entry at 0, same as an imported investor's genesis row
+    # would be, so the Anexo table has a starting point to show/label.
     rows << synthetic_entry_row if rows.empty?
 
     platform_start = SPREADSHEET_LAST_MONTH.next_month
@@ -269,27 +267,6 @@ class MonthlyReportBuilder
     end
 
     ((factor - 1) * 100).round(2, :half_up).to_f
-  end
-
-  # Net YTD PnL as of report month (FORMULAS.md §8): end − base − deposits + withdrawals.
-  # Equals sum(RDO M $) − sum(CST) when monthly RDO is gross and CST is separate.
-  def compute_ytd_usd(annex_rows, opening_row:)
-    return 0.0 unless opening_row
-
-    year_rows = annex_rows
-                .reject { |r| r[:opening_snapshot] || r[:entry_row] }
-                .select { |r| r[:month].to_s.start_with?("#{@report_month.year}-") && Date.parse("#{r[:month]}-01") <= @report_month }
-
-    return 0.0 if year_rows.empty?
-
-    base = opening_row[:portfolio_value].to_f
-    end_value = year_rows.last[:portfolio_value].to_f
-    deposits = year_rows.sum { |r| r[:deposits].to_f }
-    withdrawals = year_rows.sum { |r| r[:withdrawals].to_f }
-
-    (
-      bd(end_value) - bd(base) - bd(deposits) + bd(withdrawals)
-    ).round(2, :half_up).to_f
   end
 
   def serialize_row(month:, return_percent:, return_usd:, deposits:, withdrawals:, service_cost:,

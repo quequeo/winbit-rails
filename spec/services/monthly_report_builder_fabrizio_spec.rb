@@ -79,7 +79,7 @@ RSpec.describe MonthlyReportBuilder do
       )
     end
 
-    it 'keeps monthly RDO gross, but summary YTD equals net (gross − CST)' do
+    it 'keeps monthly RDO gross in the annex rows, and summary YTD uses the panel TWR figure' do
       travel_to Time.zone.local(2026, 6, 25, 12, 0, 0) do
         report = described_class.new(investor: investor, report_month: Date.new(2026, 6, 1)).build
         data_rows = report[:annex_rows].reject { |r| r[:opening_snapshot] || r[:entry_row] }
@@ -94,9 +94,11 @@ RSpec.describe MonthlyReportBuilder do
         expect(total_rdo_gross).to eq(489.0)
         expect(total_cst).to eq(146.0)
         expect(total_rdo_net).to eq(343.0)
-        # Must NOT use live panel YTD (392) which ignores platform CST and mismatches annex.
-        expect(report[:summary][:accumulated_2026_usd]).to eq(343.0)
-        expect(report[:summary][:accumulated_2026_usd]).not_to eq(392.0)
+        # TWR-based (panel strategy_return_ytd_usd), not the annex net RDO sum -
+        # see Luis Matías Crocci case: the annex sum understates return for
+        # anyone with large interim withdrawals.
+        expect(report[:summary][:accumulated_2026_usd]).to eq(392.0)
+        expect(report[:summary][:accumulated_2026_usd]).not_to eq(343.0)
       end
     end
   end

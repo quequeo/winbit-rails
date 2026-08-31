@@ -82,7 +82,11 @@ function buildSummarySheet(report: MonthlyReport): XLSX.WorkSheet {
     ["Email", report.investor.email ?? ""],
     ["", ""],
     ["Valor portafolio (USD)", cellValue(roundUsdTwoDec(s.portfolioValueUsd))],
-    ["Capital aportado neto (USD)", cellValue(roundUsdTwoDec(s.netContributedUsd))],
+    ["Capital aportado (depósitos, USD)", cellValue(roundUsdTwoDec(s.netContributedUsd))],
+    [
+      "Capital aportado neto (depósitos - retiros, USD)",
+      cellValue(roundUsdTwoDec(s.netContributedAfterWithdrawalsUsd)),
+    ],
     [
       "Rendimiento mensual (USD)",
       cellValue(roundUsdTwoDec(monthRow?.returnUsd ?? null)),
@@ -114,12 +118,13 @@ function buildSummarySheet(report: MonthlyReport): XLSX.WorkSheet {
   applyUsdFormat(ws, "B5", USD_FORMAT_CENTS);
   applyUsdFormat(ws, "B6", USD_FORMAT_CENTS);
   applyUsdFormat(ws, "B7", USD_FORMAT_CENTS);
-  applyPctFormat(ws, "B8", PCT_FORMAT);
-  applyUsdFormat(ws, "B9", USD_FORMAT_CENTS);
-  applyPctFormat(ws, "B10", PCT_FORMAT_RESUMEN);
-  applyUsdFormat(ws, "B11", USD_FORMAT_CENTS);
-  applyPctFormat(ws, "B12", PCT_FORMAT_RESUMEN);
-  applyUsdFormat(ws, "B14", USD_FORMAT_CENTS);
+  applyUsdFormat(ws, "B8", USD_FORMAT_CENTS);
+  applyPctFormat(ws, "B9", PCT_FORMAT);
+  applyUsdFormat(ws, "B10", USD_FORMAT_CENTS);
+  applyPctFormat(ws, "B11", PCT_FORMAT_RESUMEN);
+  applyUsdFormat(ws, "B12", USD_FORMAT_CENTS);
+  applyPctFormat(ws, "B13", PCT_FORMAT_RESUMEN);
+  applyUsdFormat(ws, "B15", USD_FORMAT_CENTS);
 
   ws["!cols"] = [{ wch: 34 }, { wch: 20 }];
 
@@ -203,14 +208,6 @@ function appendAnnexBlock(
       : totalReturnUsdNet;
   // TOTAL RDO M % = Resumen "Acumulado 2026 (%)" (annex-net YTD), not a sum of monthly %.
   const ytdPercentFromSummary = report.summary.accumulated2026Percent;
-  const openingRow = report.annexRows.find(
-    (row) => row.openingSnapshot || row.entryRow,
-  );
-  const openingValue = openingRow?.portfolioValue ?? 0;
-  const portfolioDelta =
-    closingValue != null && Number.isFinite(closingValue)
-      ? closingValue - openingValue
-      : null;
 
   blockRows.push([
     "TOTAL",
@@ -219,7 +216,10 @@ function appendAnnexBlock(
     cellValue(roundUsd(totalDeposits)),
     cellValue(roundUsd(totalWithdrawals)),
     cellValue(roundUsd(totalCst)),
-    cellValue(roundUsd(portfolioDelta)),
+    // The "VALOR PORTAFOLIO" column is the balance as of that row for every
+    // other row - for TOTAL that's simply the current/closing balance, not a
+    // difference (a "portfolio value" of a negative delta reads as nonsense).
+    cellValue(roundUsd(closingValue)),
   ]);
 
   XLSX.utils.sheet_add_aoa(ws, blockRows, { origin: { r: startRow, c: 0 } });

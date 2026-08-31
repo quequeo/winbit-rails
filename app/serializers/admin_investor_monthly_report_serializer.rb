@@ -17,6 +17,7 @@ class AdminInvestorMonthlyReportSerializer
       summary: {
         portfolioValueUsd: @report.dig(:summary, :portfolio_value_usd),
         netContributedUsd: @report.dig(:summary, :net_contributed_usd),
+        netContributedAfterWithdrawalsUsd: @report.dig(:summary, :net_contributed_after_withdrawals_usd),
         winbitMonthlyReturnPercent: @report.dig(:summary, :winbit_monthly_return_percent),
         accumulatedSinceEntryUsd: @report.dig(:summary, :accumulated_since_entry_usd),
         accumulatedSinceEntryPercent: @report.dig(:summary, :accumulated_since_entry_percent),

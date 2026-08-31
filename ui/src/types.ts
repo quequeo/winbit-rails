@@ -90,6 +90,7 @@ export interface MonthlyReportAnnexRow {
 export interface MonthlyReportSummary {
   portfolioValueUsd: number | null;
   netContributedUsd?: number | null;
+  netContributedAfterWithdrawalsUsd?: number | null;
   winbitMonthlyReturnPercent: number | null;
   accumulatedSinceEntryUsd: number | null;
   accumulatedSinceEntryPercent: number | null;
