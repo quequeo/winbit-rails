@@ -52,11 +52,11 @@ class MonthlyReportBuilder
       winbit_monthly_return_percent: winbit_monthly_percent(@report_month),
       # Ingresos netos (depositos - retiros), igual que Portfolio#total_invested.
       net_contributed_usd: dashboard[:totalInvested],
-      # Depositos - retiros - comisiones de por vida (a diferencia de
-      # net_contributed_usd, este sí descuenta lo retirado y lo pagado en
-      # comisiones - total_invested nunca baja con eso en el resto de la
-      # app, pero este es el número que hace que "valor actual - capital
-      # aportado neto = rendimiento acumulado" cierre exacto contra el TWR).
+      # Depositos - retiros de por vida (a diferencia de net_contributed_usd,
+      # este sí descuenta lo retirado - ingresos menos retiros, nada más;
+      # las comisiones son un costo, no una reducción del capital aportado.
+      # total_invested nunca baja con retiros en el resto de la app, pero
+      # para este reporte también hace falta el neto real).
       net_contributed_after_withdrawals_usd: lifetime_net_contributed,
       # Lifetime figures mirror the investor panel (strategy_return_all_*).
       accumulated_since_entry_usd: dashboard[:strategyReturnAllUSD],
@@ -75,7 +75,7 @@ class MonthlyReportBuilder
 
   def lifetime_net_contributed
     flows = aggregate_flows(Time.zone.local(2000, 1, 1), effective_month_end(@report_month))
-    (bd(flows[:deposits]) - bd(flows[:withdrawals]) - bd(flows[:service_cost])).round(2, :half_up).to_f
+    (bd(flows[:deposits]) - bd(flows[:withdrawals])).round(2, :half_up).to_f
   end
 
   def portfolio_value_for_summary
