@@ -322,10 +322,15 @@ function buildOperationsSheet(operations: MonthlyReportOperations): XLSX.WorkShe
     t.closedAt ?? "",
     cellValue(roundUsdTwoDec(t.resultUsd)),
     cellValue(pctToDecimalOneDec(t.resultPercent)),
-    cellValue(t.ratio),
+    t.ratio == null ? "—" : t.ratio,
   ]);
 
   const ws = XLSX.utils.aoa_to_sheet([
+    [
+      "Operaciones del mes (Winbit, todos los inversores)",
+      "El mismo detalle de operativa aplica a todos los inversores: no es un resultado individual de esta cuenta.",
+    ],
+    [],
     ["Activos operados", assetsLine],
     [],
     headers,
@@ -339,13 +344,13 @@ function buildOperationsSheet(operations: MonthlyReportOperations): XLSX.WorkShe
   ]);
 
   for (let i = 0; i < tradeRows.length; i += 1) {
-    const r = 3 + i;
+    const r = 5 + i;
     applyUsdFormat(ws, XLSX.utils.encode_cell({ r, c: 5 }), USD_FORMAT_CENTS);
     applyPctFormat(ws, XLSX.utils.encode_cell({ r, c: 6 }), PCT_FORMAT);
   }
   applyUsdFormat(
     ws,
-    XLSX.utils.encode_cell({ r: 8 + tradeRows.length, c: 1 }),
+    XLSX.utils.encode_cell({ r: 10 + tradeRows.length, c: 1 }),
     USD_FORMAT_CENTS,
   );
 

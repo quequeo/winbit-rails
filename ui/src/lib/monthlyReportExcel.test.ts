@@ -136,15 +136,30 @@ describe("monthlyReportExcel workbooks", () => {
     const ops = wb.Sheets.Operaciones;
 
     expect(ops).toBeDefined();
-    expect(ops.A1?.v).toBe("Activos operados");
-    expect(ops.B1?.v).toBe("MNQ (Micro E-mini Nasdaq-100), MES (Micro E-mini S&P 500)");
-    expect(ops.A3?.v).toBe("Fecha");
-    expect(ops.B4?.v).toBe("MNQ");
-    expect(ops.F4?.v).toBe(44);
-    expect(ops.B5?.v).toBe("MES");
-    expect(ops.F5?.v).toBe(-45);
-    expect(ops.A11?.v).toBe("Resultado neto (USD)");
-    expect(ops.B11?.v).toBe(-1);
+    expect(ops.A1?.v).toBe("Operaciones del mes (Winbit, todos los inversores)");
+    expect(ops.A3?.v).toBe("Activos operados");
+    expect(ops.B3?.v).toBe("MNQ (Micro E-mini Nasdaq-100), MES (Micro E-mini S&P 500)");
+    expect(ops.A5?.v).toBe("Fecha");
+    expect(ops.B6?.v).toBe("MNQ");
+    expect(ops.F6?.v).toBe(44);
+    expect(ops.H6?.v).toBe(0.9);
+    expect(ops.B7?.v).toBe("MES");
+    expect(ops.F7?.v).toBe(-45);
+    expect(ops.A13?.v).toBe("Resultado neto (USD)");
+    expect(ops.B13?.v).toBe(-1);
+  });
+
+  it("shows a dash for trades with no ratio instead of a blank cell", () => {
+    const report: MonthlyReport = {
+      ...sampleReport,
+      operations: {
+        ...sampleOperations,
+        trades: [{ ...sampleOperations.trades[0], ratio: null }],
+      },
+    };
+    const wb = buildMonthlyReportWorkbook(report);
+    const ops = wb.Sheets.Operaciones;
+    expect(ops.H6?.v).toBe("—");
   });
 
   it("omits the Operaciones sheet when there is no operations data", () => {

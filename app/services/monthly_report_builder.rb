@@ -59,13 +59,22 @@ class MonthlyReportBuilder
       accumulated_since_entry_percent: dashboard[:strategyReturnAllPercent],
       # 2026 YTD must match the annex (net of CST): same source as Anexo TOTAL RDO.
       accumulated_2026_usd: ytd_usd,
-      accumulated_2026_percent: if ytd_base.positive?
-                                 ((bd(ytd_usd) / bd(ytd_base)) * 100).round(2, :half_up).to_f
-                                end,
+      accumulated_2026_percent: accumulated_2026_percent(ytd_usd:, ytd_base:, opening_row:, dashboard:),
       # Snapshot used as the YTD chart/table's starting point (see DocumentData).
       year_opening_date: Date.new(@report_month.year, 1, 1).strftime('%Y-%m-%d'),
       year_opening_balance_usd: opening_row&.dig(:portfolio_value),
     }
+  end
+
+  # ytd_base of 0 means the opening row is a mid-year entry (no prior
+  # balance to divide by), not a break-even genesis snapshot - in that case
+  # the investor's whole 2026 return equals their since-entry return, so
+  # reuse that TWR percent instead of leaving this blank.
+  def accumulated_2026_percent(ytd_usd:, ytd_base:, opening_row:, dashboard:)
+    return ((bd(ytd_usd) / bd(ytd_base)) * 100).round(2, :half_up).to_f if ytd_base.positive?
+    return dashboard[:strategyReturnAllPercent] if opening_row&.dig(:entry_row) && ytd_usd != 0.0
+
+    nil
   end
 
   def portfolio_value_for_summary
@@ -81,6 +90,14 @@ class MonthlyReportBuilder
 
   def build_annex_rows
     rows = spreadsheet_rows
+    # Investors with no spreadsheet history (joined after the migration cutoff,
+    # entirely native to the platform) have no opening_snapshot/entry_row to
+    # anchor the YTD calculation on - without one, compute_ytd_usd always
+    # returns 0 and "Acumulado 2026" stays blank even though they do have a
+    # full return history within the year. Synthesize their entry at 0, same
+    # as an imported investor's genesis row would be.
+    rows << synthetic_entry_row if rows.empty?
+
     platform_start = SPREADSHEET_LAST_MONTH.next_month
     month = platform_start
 
@@ -90,6 +107,21 @@ class MonthlyReportBuilder
     end
 
     rows
+  end
+
+  def synthetic_entry_row
+    serialize_row(
+      month: SPREADSHEET_LAST_MONTH.strftime('%Y-%m'),
+      return_percent: nil,
+      return_usd: nil,
+      deposits: 0,
+      withdrawals: 0,
+      service_cost: 0,
+      portfolio_value: 0,
+      opening_snapshot: false,
+      entry_row: true,
+      source: 'platform',
+    )
   end
 
   def spreadsheet_rows
