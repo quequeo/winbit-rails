@@ -95,6 +95,7 @@ Rails.application.routes.draw do
 
       get 'monthly_report_pdfs', to: 'investor_monthly_report_pdfs#index', format: false
       post 'monthly_report_pdfs/bulk', to: 'investor_monthly_report_pdfs#bulk', format: false
+      post 'monthly_report_pdfs/generate', to: 'investor_monthly_report_pdfs#generate', format: false
       get 'monthly_report_pdfs/:id/file', to: 'investor_monthly_report_pdfs#file', format: false
       delete 'monthly_report_pdfs/:id', to: 'investor_monthly_report_pdfs#destroy', format: false
 
@@ -164,6 +165,7 @@ Rails.application.routes.draw do
 
         get 'monthly_report_pdfs', to: 'investor_monthly_report_pdfs#index', format: false
         post 'monthly_report_pdfs/bulk', to: 'investor_monthly_report_pdfs#bulk', format: false
+        post 'monthly_report_pdfs/generate', to: 'investor_monthly_report_pdfs#generate', format: false
         get 'monthly_report_pdfs/:id/file', to: 'investor_monthly_report_pdfs#file', format: false
         delete 'monthly_report_pdfs/:id', to: 'investor_monthly_report_pdfs#destroy', format: false
 

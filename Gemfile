@@ -31,3 +31,12 @@ gem "simplecov", "~> 0.22.0", groups: [:development, :test]
 gem "resend", "~> 1.0"
 gem "roo", "~> 2.10"
 gem "rubyzip", "~> 2.3"
+
+# Monthly investor report PDF generation (see app/services/investor_monthly_report_pdfs).
+gem "wicked_pdf", "~> 2.8"
+# Ships the wkhtmltopdf binary itself (Heroku-22/24 compatible) and points
+# wicked_pdf at it automatically - no separate Heroku buildpack needed.
+# Locally (e.g. Windows dev machines) it's inert; install wkhtmltopdf
+# yourself and set WKHTMLTOPDF_BINARY, or put it on PATH (see
+# config/initializers/wicked_pdf.rb).
+gem "wkhtmltopdf-heroku", "3.0.0"

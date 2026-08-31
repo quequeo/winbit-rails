@@ -603,6 +603,20 @@ export const api = {
     if (params.confirm === false) form.append("confirm", "false");
     return requestForm(`${ADMIN_API_PREFIX}/monthly_report_pdfs/bulk`, form);
   },
+  generateMonthlyReportPdfs: (params: {
+    month: string;
+    investorId?: string;
+    overwrite?: boolean;
+  }) => {
+    return request(`${ADMIN_API_PREFIX}/monthly_report_pdfs/generate`, {
+      method: "POST",
+      body: JSON.stringify({
+        month: params.month,
+        investor_id: params.investorId,
+        overwrite: params.overwrite,
+      }),
+    });
+  },
   downloadMonthlyReportPdfFile: async (id: string, filename: string) => {
     const res = await fetch(
       `${API_BASE_URL}${ADMIN_API_PREFIX}/monthly_report_pdfs/${id}/file`,

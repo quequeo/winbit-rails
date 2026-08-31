@@ -1,5 +1,5 @@
 import * as XLSX from "xlsx-js-style";
-import type { MonthlyReport } from "../types";
+import type { MonthlyReport, MonthlyReportOperations } from "../types";
 
 const USD_FORMAT = "#,##0";
 const USD_FORMAT_CENTS = "#,##0.00";
@@ -69,14 +69,24 @@ function applyPctFormat(
   }
 }
 
+function currentMonthAnnexRow(report: MonthlyReport) {
+  return report.annexRows.find((row) => row.month === report.reportMonth);
+}
+
 function buildSummarySheet(report: MonthlyReport): XLSX.WorkSheet {
   const s = report.summary;
+  const monthRow = currentMonthAnnexRow(report);
   const ws = XLSX.utils.aoa_to_sheet([
     ["Reporte mensual", report.reportMonth],
     ["Inversor", report.investor.name ?? ""],
     ["Email", report.investor.email ?? ""],
     ["", ""],
     ["Valor portafolio (USD)", cellValue(roundUsdTwoDec(s.portfolioValueUsd))],
+    ["Capital aportado neto (USD)", cellValue(roundUsdTwoDec(s.netContributedUsd))],
+    [
+      "Rendimiento mensual (USD)",
+      cellValue(roundUsdTwoDec(monthRow?.returnUsd ?? null)),
+    ],
     [
       "Rendimiento mensual Winbit (%)",
       cellValue(pctToDecimalOneDec(s.winbitMonthlyReturnPercent)),
@@ -94,14 +104,22 @@ function buildSummarySheet(report: MonthlyReport): XLSX.WorkSheet {
       "Acumulado 2026 (%)",
       cellValue(pctToDecimalTwoDec(s.accumulated2026Percent)),
     ],
+    ["Saldo inicial 2026", s.yearOpeningDate ?? ""],
+    [
+      "Saldo inicial 2026 (USD)",
+      cellValue(roundUsdTwoDec(s.yearOpeningBalanceUsd)),
+    ],
   ]);
 
   applyUsdFormat(ws, "B5", USD_FORMAT_CENTS);
-  applyPctFormat(ws, "B6", PCT_FORMAT);
+  applyUsdFormat(ws, "B6", USD_FORMAT_CENTS);
   applyUsdFormat(ws, "B7", USD_FORMAT_CENTS);
-  applyPctFormat(ws, "B8", PCT_FORMAT_RESUMEN);
+  applyPctFormat(ws, "B8", PCT_FORMAT);
   applyUsdFormat(ws, "B9", USD_FORMAT_CENTS);
   applyPctFormat(ws, "B10", PCT_FORMAT_RESUMEN);
+  applyUsdFormat(ws, "B11", USD_FORMAT_CENTS);
+  applyPctFormat(ws, "B12", PCT_FORMAT_RESUMEN);
+  applyUsdFormat(ws, "B14", USD_FORMAT_CENTS);
 
   ws["!cols"] = [{ wch: 34 }, { wch: 20 }];
 
@@ -280,6 +298,71 @@ function buildResumenTableSheet(reports: MonthlyReport[]): XLSX.WorkSheet {
   return ws;
 }
 
+function buildOperationsSheet(operations: MonthlyReportOperations): XLSX.WorkSheet {
+  const assetsLine = operations.assets
+    .map((a) => `${a.code} (${a.name})`)
+    .join(", ");
+
+  const headers = [
+    "Fecha",
+    "Activo",
+    "Dirección",
+    "Apertura",
+    "Cierre",
+    "Resultado (USD)",
+    "Rendimiento (%)",
+    "Ratio",
+  ];
+
+  const tradeRows = operations.trades.map((t) => [
+    t.date,
+    t.asset,
+    t.direction ?? "",
+    t.openedAt ?? "",
+    t.closedAt ?? "",
+    cellValue(roundUsdTwoDec(t.resultUsd)),
+    cellValue(pctToDecimalOneDec(t.resultPercent)),
+    cellValue(t.ratio),
+  ]);
+
+  const ws = XLSX.utils.aoa_to_sheet([
+    ["Activos operados", assetsLine],
+    [],
+    headers,
+    ...tradeRows,
+    [],
+    ["Operaciones", operations.count],
+    ["Positivas", operations.positive],
+    ["Negativas", operations.negative],
+    ["Break even", operations.breakEven],
+    ["Resultado neto (USD)", cellValue(roundUsdTwoDec(operations.netResultUsd))],
+  ]);
+
+  for (let i = 0; i < tradeRows.length; i += 1) {
+    const r = 3 + i;
+    applyUsdFormat(ws, XLSX.utils.encode_cell({ r, c: 5 }), USD_FORMAT_CENTS);
+    applyPctFormat(ws, XLSX.utils.encode_cell({ r, c: 6 }), PCT_FORMAT);
+  }
+  applyUsdFormat(
+    ws,
+    XLSX.utils.encode_cell({ r: 8 + tradeRows.length, c: 1 }),
+    USD_FORMAT_CENTS,
+  );
+
+  ws["!cols"] = [
+    { wch: 10 },
+    { wch: 8 },
+    { wch: 10 },
+    { wch: 10 },
+    { wch: 10 },
+    { wch: 14 },
+    { wch: 14 },
+    { wch: 8 },
+  ];
+
+  return ws;
+}
+
 export function buildMonthlyReportWorkbook(report: MonthlyReport): XLSX.WorkBook {
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, buildSummarySheet(report), "Resumen");
@@ -296,6 +379,14 @@ export function buildMonthlyReportWorkbook(report: MonthlyReport): XLSX.WorkBook
     { wch: 16 },
   ];
   XLSX.utils.book_append_sheet(wb, annexWs, "Anexo");
+
+  if (report.operations) {
+    XLSX.utils.book_append_sheet(
+      wb,
+      buildOperationsSheet(report.operations),
+      "Operaciones",
+    );
+  }
 
   return wb;
 }
@@ -326,6 +417,17 @@ export function buildAllInvestorsWorkbook(reports: MonthlyReport[]): XLSX.WorkBo
     { wch: 16 },
   ];
   XLSX.utils.book_append_sheet(wb, annexWs, "Anexo");
+
+  // Operations are firm-wide (same for every investor in a given month) -
+  // one shared sheet instead of repeating the same table per investor.
+  const sharedOperations = sorted.find((r) => r.operations)?.operations;
+  if (sharedOperations) {
+    XLSX.utils.book_append_sheet(
+      wb,
+      buildOperationsSheet(sharedOperations),
+      "Operaciones",
+    );
+  }
 
   return wb;
 }

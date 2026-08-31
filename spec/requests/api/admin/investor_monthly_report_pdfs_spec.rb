@@ -22,6 +22,60 @@ RSpec.describe 'Admin investor monthly report PDFs', type: :request do
     uploaded
   end
 
+  describe 'POST /api/admin/v1/monthly_report_pdfs/generate' do
+    before do
+      Portfolio.create!(investor: tulio, current_balance: 5000, total_invested: 5000)
+      placeholder = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII='
+      allow(InvestorMonthlyReportPdfs::Assets).to receive(:data_uri).and_return("data:image/png;base64,#{placeholder}")
+      allow(InvestorMonthlyReportPdfs::Assets).to receive(:font_data_uri).and_return("data:font/ttf;base64,#{placeholder}")
+    end
+
+    it 'generates a report for every active investor missing one' do
+      post '/api/admin/v1/monthly_report_pdfs/generate', params: { month: '2026-07' }
+
+      expect(response).to have_http_status(:ok)
+      json = JSON.parse(response.body)
+      generated_ids = json.dig('data', 'generated').map { |r| r.dig('investor', 'id') }
+      expect(generated_ids).to include(tulio.id)
+      expect(InvestorMonthlyReportPdf.find_by(investor: tulio, month: '2026-07')).to be_present
+    end
+
+    it 'skips investors that already have a report unless overwrite is true' do
+      InvestorMonthlyReportPdf.create!(
+        investor: tulio, month: '2026-07', original_filename: 'old.pdf',
+        content_type: 'application/pdf', byte_size: 8, pdf_data: '%PDF-old'
+      )
+
+      post '/api/admin/v1/monthly_report_pdfs/generate', params: { month: '2026-07' }
+
+      json = JSON.parse(response.body)
+      expect(json.dig('data', 'skipped').map { |r| r['investorId'] }).to include(tulio.id)
+      expect(InvestorMonthlyReportPdf.find_by(investor: tulio, month: '2026-07').pdf_data).to eq('%PDF-old')
+    end
+
+    it 'generates for a single investor even without overwrite: true' do
+      InvestorMonthlyReportPdf.create!(
+        investor: tulio, month: '2026-07', original_filename: 'old.pdf',
+        content_type: 'application/pdf', byte_size: 8, pdf_data: '%PDF-old'
+      )
+
+      post '/api/admin/v1/monthly_report_pdfs/generate', params: { month: '2026-07', investor_id: tulio.id }
+
+      expect(response).to have_http_status(:ok)
+      expect(InvestorMonthlyReportPdf.find_by(investor: tulio, month: '2026-07').pdf_data).not_to eq('%PDF-old')
+    end
+
+    it 'returns 422 without month' do
+      post '/api/admin/v1/monthly_report_pdfs/generate'
+      expect(response).to have_http_status(:unprocessable_content)
+    end
+
+    it 'returns 404 for an unknown investor_id' do
+      post '/api/admin/v1/monthly_report_pdfs/generate', params: { month: '2026-07', investor_id: 'nope' }
+      expect(response).to have_http_status(:not_found)
+    end
+  end
+
   describe 'GET /api/admin/v1/monthly_report_pdfs' do
     it 'lists who has a PDF and who is missing for a month' do
       InvestorMonthlyReportPdf.create!(

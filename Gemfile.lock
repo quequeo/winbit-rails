@@ -426,6 +426,10 @@ GEM
       base64
       websocket-extensions (>= 0.1.0)
     websocket-extensions (0.1.5)
+    wicked_pdf (2.8.2)
+      activesupport
+      ostruct
+    wkhtmltopdf-heroku (3.0.0)
     zeitwerk (2.7.4)
 
 PLATFORMS
@@ -457,6 +461,8 @@ DEPENDENCIES
   solid_queue
   thruster
   tzinfo-data
+  wicked_pdf (~> 2.8)
+  wkhtmltopdf-heroku (= 3.0.0)
 
 RUBY VERSION
    ruby 3.3.9p170

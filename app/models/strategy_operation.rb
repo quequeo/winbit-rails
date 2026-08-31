@@ -2,6 +2,12 @@ class StrategyOperation < ApplicationRecord
   SOURCES = %w[manual import].freeze
   DIRECTIONS = %w[LONG SHORT].freeze
   ASSETS = %w[MNQ MBT MYM MES].freeze
+  ASSET_NAMES = {
+    'MNQ' => 'Micro E-mini Nasdaq-100',
+    'MBT' => 'Micro Bitcoin',
+    'MYM' => 'Micro E-mini Dow Jones',
+    'MES' => 'Micro E-mini S&P 500',
+  }.freeze
   RESULT_LABELS = %w[POSITIVO NEGATIVO BE+ BE-].freeze
   TIME_FORMAT = /\A([01]\d|2[0-3]):[0-5]\d\z/
 

@@ -90,6 +90,8 @@ export const MonthlyReportPdfsPage = () => {
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [preview, setPreview] = useState<PreviewPayload | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<PresentRow | null>(null);
+  const [generating, setGenerating] = useState(false);
+  const [generatingInvestorId, setGeneratingInvestorId] = useState<string | null>(null);
   const bulkInputRef = useRef<HTMLInputElement>(null);
   const singleInputRef = useRef<HTMLInputElement>(null);
   const [singleInvestorId, setSingleInvestorId] = useState<string | null>(null);
@@ -200,6 +202,46 @@ export const MonthlyReportPdfsPage = () => {
       setUploading(false);
       setSingleInvestorId(null);
       if (singleInputRef.current) singleInputRef.current.value = "";
+    }
+  };
+
+  const handleGenerateMissing = async () => {
+    setGenerating(true);
+    setError(null);
+    setNotice(null);
+    try {
+      const res = await api.generateMonthlyReportPdfs({ month });
+      const result = (
+        res as { data: { generated: unknown[]; skipped: unknown[]; failed: { name: string; error: string }[] } }
+      ).data;
+      const parts = [`${result.generated.length} generados`];
+      if (result.failed.length) parts.push(`${result.failed.length} con error`);
+      setNotice(parts.join(", ") + ".");
+      if (result.failed.length) {
+        setError(
+          result.failed.map((f) => `${f.name}: ${f.error}`).join(" — "),
+        );
+      }
+      fetchMonth(month);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Error al generar PDFs");
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleGenerateOne = async (investorId: string) => {
+    setGeneratingInvestorId(investorId);
+    setError(null);
+    setNotice(null);
+    try {
+      await api.generateMonthlyReportPdfs({ month, investorId, overwrite: true });
+      setNotice("PDF generado.");
+      fetchMonth(month);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Error al generar PDF");
+    } finally {
+      setGeneratingInvestorId(null);
     }
   };
 
@@ -320,6 +362,16 @@ export const MonthlyReportPdfsPage = () => {
             Varios PDF o un ZIP. Máx. 15MB por archivo. El mes del nombre tiene
             que coincidir con el mes seleccionado.
           </p>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleGenerateMissing}
+            disabled={generating || missingActive.length === 0}
+          >
+            {generating
+              ? "Generando..."
+              : `Generar automáticamente (${missingActive.length})`}
+          </Button>
         </div>
         <div className="flex flex-wrap gap-4 text-sm">
           <span className="text-success">Con PDF: {data.counts.present}</span>
@@ -487,18 +539,29 @@ export const MonthlyReportPdfsPage = () => {
                   <td className="py-2 text-t-primary">{row.name}</td>
                   <td className="py-2 text-t-muted">{row.email}</td>
                   <td className="py-2 text-right">
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        setSingleInvestorId(row.id);
-                        singleInputRef.current?.click();
-                      }}
-                      disabled={uploading}
-                    >
-                      Subir
-                    </Button>
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleGenerateOne(row.id)}
+                        disabled={generatingInvestorId === row.id || generating}
+                      >
+                        {generatingInvestorId === row.id ? "Generando..." : "Generar"}
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setSingleInvestorId(row.id);
+                          singleInputRef.current?.click();
+                        }}
+                        disabled={uploading}
+                      >
+                        Subir
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               ))}

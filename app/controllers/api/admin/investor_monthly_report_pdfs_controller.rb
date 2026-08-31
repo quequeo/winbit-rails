@@ -9,7 +9,7 @@ module Api
         month = parse_month_param(required: true)
         return if performed?
 
-        reports = InvestorMonthlyReportPdf.for_month(month).includes(:investor)
+        reports = InvestorMonthlyReportPdf.for_month(month).without_pdf_data.includes(:investor)
         reports_by_investor_id = reports.index_by(&:investor_id)
         investors = Investor.order(:name)
 
@@ -66,6 +66,29 @@ module Api
         uploader.call
 
         render json: { data: uploader.summary }, status: :ok
+      end
+
+      def generate
+        month = parse_month_param(required: true)
+        return if performed?
+
+        investor = nil
+        if params[:investor_id].present?
+          investor = find_investor_by_id(id: params[:investor_id])
+          return unless investor
+        end
+
+        result = InvestorMonthlyReportPdfs::Generate.call(
+          month: month,
+          investor: investor,
+          overwrite: boolean_param(params[:overwrite]),
+          generated_by: current_user
+        )
+
+        render json: { data: result.as_json }, status: :ok
+      rescue StandardError => e
+        Rails.logger.error("[InvestorMonthlyReportPdfsController#generate] #{e.class}: #{e.message}")
+        render_error('No se pudo generar el reporte. Verificá que wkhtmltopdf esté instalado.', status: :internal_server_error)
       end
 
       def file
