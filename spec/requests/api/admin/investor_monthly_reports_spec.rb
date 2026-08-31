@@ -43,6 +43,12 @@ RSpec.describe 'Admin Investor Monthly Reports API', type: :request do
         opened_at: '10:00', closed_at: '10:30', result_usd: 50, ratio: 1.2,
         source: 'manual', result_label: 'POSITIVO', created_by: admin_op
       )
+      # The investor's own daily result drives which trades appear/their $ amount.
+      PortfolioHistory.create!(
+        investor: investor, event: 'OPERATING_RESULT', amount: 32.5,
+        previous_balance: 6484, new_balance: 6516.5,
+        date: Time.zone.local(2026, 4, 10, 19, 0, 0), status: 'COMPLETED',
+      )
 
       get "/api/admin/v1/investors/#{investor.id}/monthly_report", params: { month: '2026-04' }
 
@@ -50,7 +56,7 @@ RSpec.describe 'Admin Investor Monthly Reports API', type: :request do
       operations = json.dig('data', 'operations')
       expect(operations['count']).to eq(1)
       expect(operations['trades'].first['asset']).to eq('MNQ')
-      expect(operations['trades'].first['resultUsd']).to eq(50.0)
+      expect(operations['trades'].first['resultUsd']).to eq(32.5)
       expect(operations['assets']).to eq([{ 'code' => 'MNQ', 'name' => 'Micro E-mini Nasdaq-100' }])
     end
 

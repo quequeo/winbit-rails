@@ -136,7 +136,7 @@ describe("monthlyReportExcel workbooks", () => {
     const ops = wb.Sheets.Operaciones;
 
     expect(ops).toBeDefined();
-    expect(ops.A1?.v).toBe("Operaciones del mes (Winbit, todos los inversores)");
+    expect(ops.A1?.v).toBe("Operaciones del mes");
     expect(ops.A3?.v).toBe("Activos operados");
     expect(ops.B3?.v).toBe("MNQ (Micro E-mini Nasdaq-100), MES (Micro E-mini S&P 500)");
     expect(ops.A5?.v).toBe("Fecha");

@@ -10,7 +10,7 @@ module Api
         return if performed?
 
         report = MonthlyReportBuilder.new(investor: @investor, report_month: month).build
-        operations = MonthlyOperationsReport.call(month: month)
+        operations = MonthlyOperationsReport.call(investor: @investor, month: month)
         render json: { data: AdminInvestorMonthlyReportSerializer.new(report, operations: operations).as_json }
       end
 

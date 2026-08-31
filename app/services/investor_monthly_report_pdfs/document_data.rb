@@ -8,9 +8,9 @@ module InvestorMonthlyReportPdfs
   # +/- signs, CSS sign classes) so the ERB template has no business logic.
   #
   # Reuses MonthlyReportBuilder (same source of truth as the on-screen
-  # report and the email variables) plus StrategyOperation for the
-  # firm-wide "Operaciones del mes" page, which is identical for every
-  # investor in a given month.
+  # report and the email variables) plus MonthlyOperationsReport for the
+  # "Operaciones del mes" page - this investor's own daily $ result paired
+  # with that day's trade (see MonthlyOperationsReport for how).
   class DocumentData
     MONTH_NAMES = {
       1 => 'Enero', 2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril', 5 => 'Mayo', 6 => 'Junio',
@@ -99,7 +99,7 @@ module InvestorMonthlyReportPdfs
     end
 
     def operations_report
-      @operations_report ||= MonthlyOperationsReport.call(month: @report_month)
+      @operations_report ||= MonthlyOperationsReport.call(investor: @investor, month: @report_month)
     end
 
     def trade_row(trade)
