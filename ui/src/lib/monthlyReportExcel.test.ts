@@ -107,12 +107,13 @@ const sampleOperations = {
 };
 
 describe("monthlyReportExcel workbooks", () => {
-  it("includes net contributed, monthly USD return and year-opening in Resumen", () => {
+  it("includes gross/net contributed, monthly USD return and year-opening in Resumen", () => {
     const report: MonthlyReport = {
       ...sampleReport,
       summary: {
         ...sampleReport.summary,
         netContributedUsd: 5050,
+        netContributedAfterWithdrawalsUsd: 4200,
         yearOpeningDate: "2026-01-01",
         yearOpeningBalanceUsd: 7736,
       },
@@ -120,14 +121,16 @@ describe("monthlyReportExcel workbooks", () => {
     const wb = buildMonthlyReportWorkbook(report);
     const resumen = wb.Sheets.Resumen;
 
-    expect(resumen.A6?.v).toBe("Capital aportado neto (USD)");
+    expect(resumen.A6?.v).toBe("Capital aportado (depósitos, USD)");
     expect(resumen.B6?.v).toBe(5050);
-    expect(resumen.A7?.v).toBe("Rendimiento mensual (USD)");
-    expect(resumen.B7?.v).toBe(0);
-    expect(resumen.A13?.v).toBe("Saldo inicial 2026");
-    expect(resumen.B13?.v).toBe("2026-01-01");
-    expect(resumen.A14?.v).toBe("Saldo inicial 2026 (USD)");
-    expect(resumen.B14?.v).toBe(7736);
+    expect(resumen.A7?.v).toBe("Capital aportado neto (depósitos - retiros - comisiones, USD)");
+    expect(resumen.B7?.v).toBe(4200);
+    expect(resumen.A8?.v).toBe("Rendimiento mensual (USD)");
+    expect(resumen.B8?.v).toBe(0);
+    expect(resumen.A14?.v).toBe("Saldo inicial 2026");
+    expect(resumen.B14?.v).toBe("2026-01-01");
+    expect(resumen.A15?.v).toBe("Saldo inicial 2026 (USD)");
+    expect(resumen.B15?.v).toBe(7736);
   });
 
   it("adds an Operaciones sheet with the trade table and summary stats", () => {
@@ -176,13 +179,13 @@ describe("monthlyReportExcel workbooks", () => {
     expect(resumen.A5?.v).toBe("Valor portafolio (USD)");
     expect(resumen.B5?.v).toBe(553.2);
     expect(resumen.B5?.z).toBe(USD_FORMAT_CENTS);
-    expect(resumen.A8?.v).toBe("Rendimiento mensual Winbit (%)");
-    expect(resumen.B8?.v).toBe(-0.018);
-    expect(resumen.B8?.z).toBe(PCT_FORMAT);
-    expect(resumen.A9?.v).toBe("Acumulado desde ingreso (USD)");
-    expect(resumen.B9?.v).toBe("");
-    expect(resumen.A12?.v).toBe("Acumulado 2026 (%)");
-    expect(resumen.B12?.z).toBe(PCT_FORMAT_RESUMEN);
+    expect(resumen.A9?.v).toBe("Rendimiento mensual Winbit (%)");
+    expect(resumen.B9?.v).toBe(-0.018);
+    expect(resumen.B9?.z).toBe(PCT_FORMAT);
+    expect(resumen.A10?.v).toBe("Acumulado desde ingreso (USD)");
+    expect(resumen.B10?.v).toBe("");
+    expect(resumen.A13?.v).toBe("Acumulado 2026 (%)");
+    expect(resumen.B13?.z).toBe(PCT_FORMAT_RESUMEN);
   });
 
   it("builds Anexo with headers and formatted rows", () => {
@@ -245,11 +248,11 @@ describe("monthlyReportExcel workbooks", () => {
     expect(anexo.B4?.z).toBe(PCT_FORMAT_RESUMEN);
     expect(anexo.C4?.v).toBe(68);
     expect(anexo.F4?.v).toBe(49);
-    expect(anexo.G4?.v).toBe(342);
-    expect(resumen.B11?.v).toBe(68);
-    expect(anexo.C4?.v).toBe(resumen.B11?.v);
-    expect(resumen.B12?.v).toBe(0.0098);
-    expect(anexo.B4?.v).toBe(resumen.B12?.v);
+    expect(anexo.G4?.v).toBe(7293);
+    expect(resumen.B12?.v).toBe(68);
+    expect(anexo.C4?.v).toBe(resumen.B12?.v);
+    expect(resumen.B13?.v).toBe(0.0098);
+    expect(anexo.B4?.v).toBe(resumen.B13?.v);
   });
 
   it("Fabrizio Bruno: Resumen acumulado 2026 matches Anexo TOTAL (neto), not gross RDO sum", () => {
@@ -369,11 +372,11 @@ describe("monthlyReportExcel workbooks", () => {
     expect(anexo.C9?.v).toBe(343);
     expect(anexo.C9?.v).not.toBe(489);
     expect(anexo.F9?.v).toBe(146);
-    expect(anexo.G9?.v).toBe(342);
-    expect(resumen.B11?.v).toBe(343);
-    expect(anexo.C9?.v).toBe(resumen.B11?.v);
-    expect(resumen.B12?.v).toBe(0.0493);
-    expect(anexo.B9?.v).toBe(resumen.B12?.v);
+    expect(anexo.G9?.v).toBe(7293);
+    expect(resumen.B12?.v).toBe(343);
+    expect(anexo.C9?.v).toBe(resumen.B12?.v);
+    expect(resumen.B13?.v).toBe(0.0493);
+    expect(anexo.B9?.v).toBe(resumen.B13?.v);
   });
 
   it("Agostina Carrió: TOTAL RDO M % is Acumulado 2026 (%), not blank or sum of monthly %", () => {
@@ -457,8 +460,8 @@ describe("monthlyReportExcel workbooks", () => {
     expect(anexo.B6?.v).toBe(0.1032);
     expect(anexo.B6?.z).toBe(PCT_FORMAT_RESUMEN);
     expect(anexo.B6?.v).not.toBe(0.097);
-    expect(resumen.B12?.v).toBe(0.1032);
-    expect(anexo.B6?.v).toBe(resumen.B12?.v);
+    expect(resumen.B13?.v).toBe(0.1032);
+    expect(anexo.B6?.v).toBe(resumen.B13?.v);
   });
 
   it("builds all-investors workbook with stacked annex blocks", () => {

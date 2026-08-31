@@ -111,7 +111,7 @@ module InvestorMonthlyReportPdfs
         closed_at: trade.closed_at.presence || '-',
         result_usd: signed_amount(trade.result_usd),
         result_percent: signed_percent(trade.result_percent),
-        result_class: sign_class(trade.result_usd),
+        result_class: trade_result_class(trade.result_label),
         ratio: signed_ratio(trade.ratio),
       }
     end
@@ -167,6 +167,16 @@ module InvestorMonthlyReportPdfs
       return '' if value.nil?
 
       value.to_f.positive? ? 'pos' : (value.to_f.negative? ? 'neg' : '')
+    end
+
+    # A trade the system calls break-even (BE+/BE-) shouldn't render red/green
+    # just because this investor's proportional $ happened to round negative.
+    def trade_result_class(result_label)
+      case result_label
+      when 'POSITIVO' then 'pos'
+      when 'NEGATIVO' then 'neg'
+      else ''
+      end
     end
 
     def amount(value, decimals: 0)

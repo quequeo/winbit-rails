@@ -15,7 +15,7 @@
 class MonthlyOperationsReport
   Trade = Struct.new(
     :date, :asset, :direction, :opened_at, :closed_at,
-    :result_usd, :result_percent, :ratio,
+    :result_usd, :result_percent, :ratio, :result_label,
     keyword_init: true
   )
 
@@ -33,13 +33,17 @@ class MonthlyOperationsReport
   def call
     trades = daily_results.filter_map { |date, amount| build_trade(date, amount) }.sort_by(&:date)
 
+    # Classify by the trade's own result_label (POSITIVO/NEGATIVO/BE+/BE-),
+    # not the sign of this investor's dollar amount - a trade the system
+    # calls break-even can still net a small negative $ for a given investor
+    # (e.g. proportional CST/rounding), and that shouldn't count as a loss.
     Result.new(
       trades: trades,
       assets: asset_chips(trades),
       count: trades.size,
-      positive: trades.count { |t| t.result_usd.positive? },
-      negative: trades.count { |t| t.result_usd.negative? },
-      break_even: trades.count { |t| t.result_usd.zero? },
+      positive: trades.count { |t| t.result_label == 'POSITIVO' },
+      negative: trades.count { |t| t.result_label == 'NEGATIVO' },
+      break_even: trades.count { |t| %w[BE+ BE-].include?(t.result_label) },
       net_result_usd: trades.sum(&:result_usd),
     )
   end
@@ -82,6 +86,7 @@ class MonthlyOperationsReport
       result_usd: amount,
       result_percent: daily_percents_by_date[date]&.to_f,
       ratio: op.ratio&.to_f,
+      result_label: op.result_label,
     )
   end
 
