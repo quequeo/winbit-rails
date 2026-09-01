@@ -8,7 +8,19 @@ RSpec.describe Requests::Approve, type: :service do
   let!(:investor) { Investor.create!(email: 'inv@test.com', name: 'Investor', status: 'ACTIVE') }
   let!(:portfolio) { Portfolio.create!(investor: investor, current_balance: 5000, total_invested: 5000) }
   let!(:admin) { User.create!(email: 'admin-approve@test.com', name: 'Admin', role: 'ADMIN') }
-  # Represents the initial deposit in portfolio history (required for Vpcust profit calculation)
+  # Represents the initial deposit (Vpcust inflow tracking reads from InvestorRequest,
+  # so the approved request must exist alongside the history entry).
+  let!(:initial_deposit_request) do
+    InvestorRequest.create!(
+      investor: investor,
+      request_type: 'DEPOSIT',
+      method: 'USDT',
+      amount: 5000,
+      status: 'APPROVED',
+      requested_at: 10.days.ago,
+      processed_at: 10.days.ago
+    )
+  end
   let!(:initial_deposit_history) do
     PortfolioHistory.create!(
       investor: investor,
@@ -331,6 +343,15 @@ RSpec.describe Requests::Approve, type: :service do
           new_balance: 5500,
           status: 'COMPLETED',
           date: 2.days.ago
+        )
+        InvestorRequest.create!(
+          investor: investor,
+          request_type: 'DEPOSIT',
+          method: 'USDT',
+          amount: 300,
+          status: 'APPROVED',
+          requested_at: 1.day.ago,
+          processed_at: 1.day.ago
         )
         PortfolioHistory.create!(
           investor: investor,
