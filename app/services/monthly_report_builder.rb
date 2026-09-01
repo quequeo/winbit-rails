@@ -29,7 +29,6 @@ class MonthlyReportBuilder
 
   def build
     annex_rows = build_annex_rows
-    opening_row = annex_rows.find { |r| r[:entry_row] || r[:opening_snapshot] }
     dashboard = InvestorPortfolioDashboardPayload.build(investor: @investor) || {}
 
     {
@@ -39,14 +38,16 @@ class MonthlyReportBuilder
         email: @investor.email,
       },
       report_month: @report_month.strftime('%Y-%m'),
-      summary: build_summary(dashboard, opening_row:),
+      summary: build_summary(dashboard, annex_rows:),
       annex_rows: annex_rows,
     }
   end
 
   private
 
-  def build_summary(dashboard, opening_row:)
+  def build_summary(dashboard, annex_rows:)
+    year_opening = year_opening_snapshot(annex_rows)
+
     {
       portfolio_value_usd: portfolio_value_for_summary,
       winbit_monthly_return_percent: winbit_monthly_percent(@report_month),
@@ -68,9 +69,48 @@ class MonthlyReportBuilder
       accumulated_2026_usd: dashboard[:strategyReturnYtdUSD],
       accumulated_2026_percent: dashboard[:strategyReturnYtdPercent],
       # Snapshot used as the YTD chart/table's starting point (see DocumentData).
-      year_opening_date: Date.new(@report_month.year, 1, 1).strftime('%Y-%m-%d'),
-      year_opening_balance_usd: opening_row&.dig(:portfolio_value),
+      year_opening_date: year_opening[:date],
+      year_opening_balance_usd: year_opening[:balance],
     }
+  end
+
+  # For an investor already active before the report year, this is simply
+  # their balance at Jan 1st (the last annex row before the year). For an
+  # investor whose first ever ingreso happened *during* the report year, Jan
+  # 1st would show a misleading $0 - instead this returns the date/balance of
+  # their real primer ingreso that year, so "Saldo inicial <year>" reflects
+  # when their money actually started working, not the calendar year start.
+  def year_opening_snapshot(annex_rows)
+    year_start = Date.new(@report_month.year, 1, 1)
+    year_key = year_start.strftime('%Y-%m')
+
+    pre_year_row = annex_rows.reverse_each.find { |r| r[:month] < year_key }
+    return { date: year_start.strftime('%Y-%m-%d'), balance: pre_year_row[:portfolio_value] } if pre_year_row
+
+    # No history before the year: this investor's genesis falls inside it.
+    # A real spreadsheet-imported entry row already carries their true
+    # ingreso month/balance - trust it directly. The synthetic platform
+    # placeholder (source: 'platform') is not a real event, so it's ignored
+    # in favor of the first month where a real deposit actually landed.
+    real_entry = annex_rows.find { |r| r[:entry_row] && r[:source] == 'spreadsheet' }
+    return { date: "#{real_entry[:month]}-01", balance: real_entry[:portfolio_value] } if real_entry
+
+    first_active_row = annex_rows.find do |r|
+      !r[:entry_row] && !r[:opening_snapshot] && r[:portfolio_value].to_f != 0
+    end
+    return { date: year_start.strftime('%Y-%m-%d'), balance: 0.0 } unless first_active_row
+
+    { date: first_deposit_date_in(first_active_row[:month]), balance: first_active_row[:portfolio_value] }
+  end
+
+  def first_deposit_date_in(month_key)
+    month = Date.strptime("#{month_key}-01", '%Y-%m-%d')
+    date = PortfolioHistory
+           .where(investor_id: @investor.id, status: 'COMPLETED', event: %w[DEPOSIT REFERRAL_COMMISSION])
+           .where(date: month.beginning_of_month.beginning_of_day..month.end_of_month.end_of_day)
+           .order(:date, :created_at)
+           .pick(:date)
+    (date || month).to_date.strftime('%Y-%m-%d')
   end
 
   def lifetime_net_contributed
