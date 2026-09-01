@@ -17,6 +17,7 @@ class MonthlyAnnexImporter
   def import!
     rows = JSON.parse(File.read(@json_path))
     investors_by_name = Investor.all.index_by { |inv| normalize_name(inv.name) }
+    ingreso_month_by_investor = ingreso_months(rows)
 
     rows.each do |row|
       next if row['ytd_total']
@@ -29,7 +30,7 @@ class MonthlyAnnexImporter
       end
 
       month = if row['month'] == 'INGRESO'
-                Date.new(2026, 4, 1)
+                ingreso_month_by_investor.fetch(row['investor_name'])
       else
                 Date.strptime("#{row['month']}-01", '%Y-%m-%d')
       end
@@ -54,6 +55,22 @@ class MonthlyAnnexImporter
   end
 
   private
+
+  # "INGRESO" rows carry no explicit date in the spreadsheet, so they default
+  # to the last spreadsheet-tracked month. But some investors (e.g. Boero,
+  # Vázquez) also have a real dated row for that same month, which would
+  # silently overwrite the INGRESO row on import (month is unique per
+  # investor - see InvestorMonthlyAnnexRow). Push INGRESO back to the month
+  # right before their earliest real row instead, so both coexist.
+  def ingreso_months(rows)
+    rows.group_by { |r| r['investor_name'] }.transform_values do |investor_rows|
+      real_months = investor_rows
+                    .reject { |r| r['ytd_total'] || r['month'] == 'INGRESO' }
+                    .map { |r| Date.strptime("#{r['month']}-01", '%Y-%m-%d') }
+
+      real_months.min&.prev_month || InvestorMonthlyAnnexRow.spreadsheet_cutoff_month
+    end
+  end
 
   NAME_ALIASES = {
     'luis m. crocci' => 'luis matias crocci',

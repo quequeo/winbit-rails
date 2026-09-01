@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
 import { downloadMonthlyReportExcel, downloadAllInvestorsReportsExcel } from "../lib/monthlyReportExcel";
+import { lastClosedMonth } from "../lib/lastClosedMonth";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 import { ConfirmDialog } from "../components/ui/ConfirmDialog";
@@ -21,17 +22,12 @@ const frequencyLabel = (freq: string) => {
   return "Trimestral";
 };
 
-const currentMonthValue = () => {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-};
-
 export const InvestorsPage = () => {
   const navigate = useNavigate();
   const [data, setData] = useState<{ data?: ApiInvestor[] } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [reportMonth, setReportMonth] = useState(currentMonthValue);
+  const [reportMonth, setReportMonth] = useState(lastClosedMonth);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [downloadingAll, setDownloadingAll] = useState(false);
   const [showForm, setShowForm] = useState(false);

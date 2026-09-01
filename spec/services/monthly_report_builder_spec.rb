@@ -433,7 +433,15 @@ RSpec.describe MonthlyReportBuilder do
 
         expect(report[:summary][:accumulated_2026_usd]).to be_within(0.01).of(14.63)
         expect(report[:summary][:accumulated_2026_percent]).to eq(2.65)
-        expect(report[:summary][:year_opening_balance_usd]).to eq(0.0)
+      end
+    end
+
+    it 'uses the date/balance of the real first deposit as saldo inicial 2026, not Jan 1st at $0' do
+      travel_to Time.zone.local(2026, 8, 29, 12, 0, 0) do
+        report = described_class.new(investor: native_investor, report_month: Date.new(2026, 8, 1)).build
+
+        expect(report[:summary][:year_opening_date]).to eq('2026-05-10')
+        expect(report[:summary][:year_opening_balance_usd]).to eq(553.0)
       end
     end
   end
