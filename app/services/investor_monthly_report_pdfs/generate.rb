@@ -2,7 +2,7 @@
 
 module InvestorMonthlyReportPdfs
   # Renders the monthly report PDF (DocumentData + document.html.erb, via
-  # wicked_pdf/wkhtmltopdf) and saves it into InvestorMonthlyReportPdf - the
+  # Grover/Chrome headless) and saves it into InvestorMonthlyReportPdf - the
   # same table InvestorMonthlyReportPdfs::BulkUploader writes to when an
   # admin uploads a PDF by hand. Because it's the same table, the existing
   # email campaign feature (EmailCampaigns::Send, MonthlyReportEmailPanel)
@@ -102,19 +102,11 @@ module InvestorMonthlyReportPdfs
         locals: { data: data }
       )
 
-      WickedPdf.new.pdf_from_string(
-        html,
-        page_size: 'A4',
-        orientation: 'Landscape',
-        margin: { top: 0, bottom: 0, left: 0, right: 0 },
-        enable_local_file_access: true,
-        encoding: 'UTF-8',
-        # wkhtmltopdf's "smart shrinking" (on by default) proportionally
-        # shrank every page to try to make content "fit", leaving a blank
-        # gap below each page's actual content - disabling it renders each
-        # .page at its real 297x210mm size.
-        disable_smart_shrinking: true
-      )
+      # Page size/margins/print_background/launch_args come from the global
+      # Grover.configure block (config/initializers/grover.rb) - the template's
+      # own `@page` CSS rule (297mm x 210mm, margin 0) is honored via
+      # prefer_css_page_size there.
+      Grover.new(html).to_pdf
     end
   end
 end

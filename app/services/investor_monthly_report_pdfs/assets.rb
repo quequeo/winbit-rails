@@ -20,12 +20,17 @@ module InvestorMonthlyReportPdfs
       back: ['back.jpg', 'image/jpeg'],
     }.freeze
 
-    # Noto Sans (regular/bold) for body text, Noto Sans Display Extra
-    # Condensed SemiBold for headline/number treatments.
+    # IBM Plex Sans (body text) + IBM Plex Sans Condensed (headline/number
+    # treatments) - Winbit's official typeface, same as the admin/app redesign.
     FONT_FILES = {
-      sans_regular: 'NotoSans-Regular.ttf',
-      sans_bold: 'NotoSans-Bold.ttf',
-      display_condensed_semibold: 'NotoSansDisplay_ExtraCondensed-SemiBold.ttf',
+      sans_regular: 'IBMPlexSans-Regular.ttf',
+      sans_medium: 'IBMPlexSans-Medium.ttf',
+      sans_semibold: 'IBMPlexSans-SemiBold.ttf',
+      sans_bold: 'IBMPlexSans-Bold.ttf',
+      condensed_regular: 'IBMPlexSansCondensed-Regular.ttf',
+      condensed_medium: 'IBMPlexSansCondensed-Medium.ttf',
+      condensed_semibold: 'IBMPlexSansCondensed-SemiBold.ttf',
+      condensed_bold: 'IBMPlexSansCondensed-Bold.ttf',
     }.freeze
 
     class << self

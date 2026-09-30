@@ -79,7 +79,7 @@ RSpec.describe MonthlyReportBuilder do
       )
     end
 
-    it 'keeps monthly RDO gross in the annex rows, and summary YTD uses the panel TWR figure' do
+    it 'keeps monthly RDO gross in the annex rows, and summary YTD uses the panel TWR figure net of fees' do
       travel_to Time.zone.local(2026, 6, 25, 12, 0, 0) do
         report = described_class.new(investor: investor, report_month: Date.new(2026, 6, 1)).build
         data_rows = report[:annex_rows].reject { |r| r[:opening_snapshot] || r[:entry_row] }
@@ -96,9 +96,12 @@ RSpec.describe MonthlyReportBuilder do
         expect(total_rdo_net).to eq(343.0)
         # TWR-based (panel strategy_return_ytd_usd), not the annex net RDO sum -
         # see Luis Matías Crocci case: the annex sum understates return for
-        # anyone with large interim withdrawals.
-        expect(report[:summary][:accumulated_2026_usd]).to eq(392.0)
-        expect(report[:summary][:accumulated_2026_usd]).not_to eq(343.0)
+        # anyone with large interim withdrawals. On top of that TWR base,
+        # accumulated_2026_usd nets out trading fees paid in the window
+        # (see MonthlyReportBuilder#accumulated_net_as_of): 392 gross - the
+        # $49 TRADING_FEE on 2026-06-15 = 343 net.
+        expect(report[:summary][:accumulated_2026_usd]).to eq(343.0)
+        expect(report[:summary][:accumulated_2026_usd]).not_to eq(392.0)
       end
     end
   end

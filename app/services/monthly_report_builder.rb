@@ -47,6 +47,14 @@ class MonthlyReportBuilder
 
   def build_summary(dashboard, annex_rows:)
     year_opening = year_opening_snapshot(annex_rows)
+    as_of = effective_month_end(@report_month)
+
+    since_entry = accumulated_net_as_of(
+      gross_usd: dashboard[:strategyReturnAllUSD], gross_percent: dashboard[:strategyReturnAllPercent], as_of:
+    )
+    since_year_start = accumulated_net_as_of(
+      gross_usd: dashboard[:strategyReturnYtdUSD], gross_percent: dashboard[:strategyReturnYtdPercent], as_of:
+    )
 
     {
       portfolio_value_usd: portfolio_value_for_summary,
@@ -59,19 +67,72 @@ class MonthlyReportBuilder
       # total_invested nunca baja con retiros en el resto de la app, pero
       # para este reporte también hace falta el neto real).
       net_contributed_after_withdrawals_usd: lifetime_net_contributed,
-      # Lifetime figures mirror the investor panel (strategy_return_all_*).
-      accumulated_since_entry_usd: dashboard[:strategyReturnAllUSD],
-      accumulated_since_entry_percent: dashboard[:strategyReturnAllPercent],
-      # TWR-based, from the investor panel (strategy_return_ytd_*) - robust to
-      # large interim withdrawals, unlike a plain (end - Jan1 balance) / Jan1
-      # balance calculation, which understates return for anyone who pulled
-      # out much of their opening balance mid-year.
-      accumulated_2026_usd: dashboard[:strategyReturnYtdUSD],
-      accumulated_2026_percent: dashboard[:strategyReturnYtdPercent],
+      # "Rebobinado" a report_month + neto de comisión (ver accumulated_net_as_of):
+      # sigue partiendo de strategy_return_all_*/strategy_return_ytd_* (necesario
+      # para inversores "genesis", cuya ganancia real previa a la migración de
+      # planilla no está en PortfolioHistory como filas separadas para sumar),
+      # pero ya no arrastra días posteriores al mes del reporte ni comisión sin
+      # descontar.
+      accumulated_since_entry_usd: since_entry[:usd],
+      accumulated_since_entry_percent: since_entry[:percent],
+      accumulated_2026_usd: since_year_start[:usd],
+      accumulated_2026_percent: since_year_start[:percent],
       # Snapshot used as the YTD chart/table's starting point (see DocumentData).
       year_opening_date: year_opening[:date],
       year_opening_balance_usd: year_opening[:balance],
     }
+  end
+
+  # strategy_return_all_*/strategy_return_ytd_* (dashboard[:strategyReturnAllUSD] etc.) compound
+  # daily via DailyOperatingResultApplicator#compound_strategy_returns! with no awareness of
+  # report_month - they're always "as of right now". When a report is generated later than its
+  # own month (which the new PDF/Excel download flow makes routine - any past month, any day),
+  # they silently include every day since. They're also always gross: TRADING_FEE never touches
+  # them.
+  #
+  # This rewinds the live figure to `as_of` instead of re-deriving it from scratch (re-deriving
+  # from annex_rows alone would lose "genesis" investors' real pre-migration history, which only
+  # exists baked into this compounding baseline, not as separate PortfolioHistory rows) and then
+  # nets out trading fees paid up to that same cutoff (InvestorTradingFeesPaid - the same
+  # approach already used for the investor-facing app's net YTD/all-time figures).
+  #
+  # USD accumulates additively (one delta per day - see compound_strategy_returns!), so
+  # unwinding it is a plain subtraction of what happened after the cutoff. Percent compounds
+  # multiplicatively, so unwinding divides out the product of each subsequent day's factor
+  # (DailyOperatingResult#percent, firm-wide, same for every investor).
+  def accumulated_net_as_of(gross_usd:, gross_percent:, as_of:)
+    return { usd: 0.0, percent: 0.0 } if gross_usd.nil? || gross_percent.nil?
+
+    usd_after_cutoff = bd(
+      @investor.portfolio_histories
+               .where(event: 'OPERATING_RESULT', status: 'COMPLETED')
+               .where('date > ?', as_of)
+               .sum(:amount).to_s
+    )
+
+    daily_factor_after_cutoff = DailyOperatingResult
+                                .where('date > ?', as_of.to_date)
+                                .pluck(:percent)
+                                .reduce(bd('1')) { |acc, pct| acc * (bd('1') + (bd(pct.to_s) / 100)) }
+
+    current_factor = bd('1') + (bd(gross_percent.to_s) / 100)
+    factor_as_of = daily_factor_after_cutoff.positive? ? current_factor / daily_factor_after_cutoff : current_factor
+
+    gross_usd_as_of = bd(gross_usd.to_s) - usd_after_cutoff
+    gross_percent_as_of = (factor_as_of - bd('1')) * 100
+
+    fees_as_of = InvestorTradingFeesPaid.total(investor_id: @investor.id, to: as_of)
+    net_usd_as_of = (gross_usd_as_of - fees_as_of).round(2, :half_up)
+
+    net_percent_as_of =
+      if gross_percent_as_of.zero? || gross_usd_as_of.zero?
+        bd('0')
+      else
+        base_capital = gross_usd_as_of / (gross_percent_as_of / 100)
+        base_capital.positive? ? ((net_usd_as_of / base_capital) * 100).round(4, :half_up) : bd('0')
+      end
+
+    { usd: net_usd_as_of.to_f, percent: net_percent_as_of.to_f }
   end
 
   # For an investor already active before the report year, this is simply

@@ -2,10 +2,10 @@
 
 require 'rails_helper'
 
-# Exercises the real wicked_pdf/wkhtmltopdf pipeline (no mocking of PDF
-# rendering itself) - needs the wkhtmltopdf binary available locally
-# (WKHTMLTOPDF_BINARY in .env, or on PATH). Logo/cover/back/font binaries
-# are stubbed since those are proprietary design assets, not test fixtures.
+# Exercises the real Grover/Chrome headless pipeline (no mocking of PDF
+# rendering itself) - needs Puppeteer's bundled Chromium available locally
+# (`npm install` at the repo root). Logo/cover/back/font binaries are
+# stubbed since those are proprietary design assets, not test fixtures.
 RSpec.describe InvestorMonthlyReportPdfs::Generate do
   PLACEHOLDER_PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII='
 

@@ -33,10 +33,10 @@ gem "roo", "~> 2.10"
 gem "rubyzip", "~> 2.3"
 
 # Monthly investor report PDF generation (see app/services/investor_monthly_report_pdfs).
-gem "wicked_pdf", "~> 2.8"
-# Ships the wkhtmltopdf binary itself (Heroku-22/24 compatible) and points
-# wicked_pdf at it automatically - no separate Heroku buildpack needed.
-# Locally (e.g. Windows dev machines) it's inert; install wkhtmltopdf
-# yourself and set WKHTMLTOPDF_BINARY, or put it on PATH (see
-# config/initializers/wicked_pdf.rb).
-gem "wkhtmltopdf-heroku", "3.0.0"
+# Chrome headless (via Puppeteer/Node) instead of wkhtmltopdf: the report template uses
+# flexbox/grid/CSS variables that wkhtmltopdf's old Qt-WebKit engine doesn't render
+# reliably (see git history on app/views/investor_monthly_report_pdfs/document.html.erb
+# for the workarounds that used to be needed). Needs `puppeteer` in package.json (root -
+# already installed by the existing heroku-postbuild) and, on Heroku, a Chrome buildpack
+# (see README) - not needed locally if Chrome/Chromium is already on the machine.
+gem "grover", "~> 1.2"

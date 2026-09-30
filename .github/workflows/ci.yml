@@ -51,7 +51,7 @@ jobs:
 
     steps:
       - name: Install packages
-        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y build-essential git libpq-dev libyaml-dev pkg-config wkhtmltopdf
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y build-essential git libpq-dev libyaml-dev pkg-config
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -66,6 +66,19 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+
+      # Grover (monthly report PDFs, see app/services/investor_monthly_report_pdfs)
+      # drives Chrome through the root-level `puppeteer` package - skip its own
+      # Chromium download and point it at the browser ubuntu-latest runners
+      # ship preinstalled (for Selenium/Puppeteer/Playwright), which already has
+      # every system library it needs to launch under this image.
+      - name: Install root Node deps (Puppeteer/Grover for monthly report PDFs)
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: true
+        run: npm ci
+
+      - name: Point Puppeteer at the runner's preinstalled Chrome
+        run: echo "PUPPETEER_EXECUTABLE_PATH=$(which google-chrome-stable || which google-chrome || which chromium-browser || which chromium)" >> "$GITHUB_ENV"
 
       - name: Build UI
         run: npm run build

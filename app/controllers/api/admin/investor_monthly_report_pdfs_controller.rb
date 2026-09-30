@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'zip'
+
 module Api
   module Admin
     class InvestorMonthlyReportPdfsController < BaseController
@@ -88,7 +90,52 @@ module Api
         render json: { data: result.as_json }, status: :ok
       rescue StandardError => e
         Rails.logger.error("[InvestorMonthlyReportPdfsController#generate] #{e.class}: #{e.message}")
-        render_error('No se pudo generar el reporte. Verificá que wkhtmltopdf esté instalado.', status: :internal_server_error)
+        render_error('No se pudo generar el reporte.', status: :internal_server_error)
+      end
+
+      # Renders the report as HTML (no PDF conversion) plus its validation
+      # warnings, so an admin can review before generating/downloading -
+      # much faster than round-tripping through Grover for every tweak.
+      def preview
+        month = parse_month_param(required: true)
+        return if performed?
+
+        investor = find_investor_by_id(id: params[:investor_id])
+        return unless investor
+
+        data = InvestorMonthlyReportPdfs::DocumentData.call(investor: investor, report_month: month)
+        html = ActionController::Base.renderer.render(
+          template: 'investor_monthly_report_pdfs/document',
+          layout: false,
+          locals: { data: data }
+        )
+        warnings = InvestorMonthlyReportPdfs::Validate.call(investor: investor, report_month: month)
+
+        render json: { data: { html: html, warnings: warnings } }, status: :ok
+      rescue StandardError => e
+        Rails.logger.error("[InvestorMonthlyReportPdfsController#preview] #{e.class}: #{e.message}")
+        render_error('No se pudo generar la vista previa.', status: :internal_server_error)
+      end
+
+      # Fills in any missing PDF for the month (same as "Generar
+      # automáticamente") and streams back every present PDF for that month
+      # as a single ZIP.
+      def zip
+        month = parse_month_param(required: true)
+        return if performed?
+
+        InvestorMonthlyReportPdfs::Generate.call(month: month, generated_by: current_user)
+
+        reports = InvestorMonthlyReportPdf.for_month(month).includes(:investor).order('investors.name')
+        if reports.empty?
+          return render_error('No hay reportes para este mes.', status: :unprocessable_content)
+        end
+
+        zip_bytes = build_zip(reports)
+        send_data zip_bytes,
+                  type: 'application/zip',
+                  disposition: 'attachment',
+                  filename: "Reportes_#{month}.zip"
       end
 
       def file
@@ -174,6 +221,16 @@ module Api
         render json: { data: { replaced: replaced, report: payload } }, status: :ok
       rescue ActiveRecord::RecordInvalid => e
         render json: { error: 'Validación fallida', details: e.record.errors.to_hash }, status: :unprocessable_content
+      end
+
+      def build_zip(reports)
+        buffer = Zip::OutputStream.write_buffer do |zip|
+          reports.each do |report|
+            zip.put_next_entry(report.email_attachment_filename)
+            zip.write(report.pdf_data)
+          end
+        end
+        buffer.string
       end
 
       def extract_uploads

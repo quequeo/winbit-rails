@@ -3,11 +3,15 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MonthlyReportPdfsPage } from "./MonthlyReportPdfsPage";
 import { api } from "../lib/api";
+import { lastClosedMonth } from "../lib/lastClosedMonth";
 
 vi.mock("../lib/api", () => ({
   api: {
     getMonthlyReportPdfs: vi.fn(),
     uploadMonthlyReportPdfs: vi.fn(),
+    generateMonthlyReportPdfs: vi.fn(),
+    previewMonthlyReportPdf: vi.fn(),
+    downloadMonthlyReportPdfsZip: vi.fn(),
     downloadMonthlyReportPdfFile: vi.fn(),
     deleteMonthlyReportPdf: vi.fn(),
     previewMonthlyReportEmail: vi.fn(),
@@ -137,6 +141,51 @@ describe("MonthlyReportPdfsPage", () => {
     const confirmArgs = vi.mocked(api.uploadMonthlyReportPdfs).mock.calls[1][0];
     expect(confirmArgs.preview).toBe(false);
     expect(confirmArgs.confirm).toBe(true);
+  });
+
+  it("shows the report preview with validation warnings in a modal", async () => {
+    const user = userEvent.setup();
+    vi.mocked(api.previewMonthlyReportPdf).mockResolvedValue({
+      data: {
+        html: "<html><body>Reporte de Tulio</body></html>",
+        warnings: ["El último valor del historial no coincide con el valor actual del portafolio."],
+      },
+    });
+
+    render(<MonthlyReportPdfsPage />);
+    await screen.findByText("Tulio Capparelli");
+
+    await user.click(screen.getAllByRole("button", { name: "Vista previa" })[0]);
+
+    expect(api.previewMonthlyReportPdf).toHaveBeenCalledWith({
+      month: lastClosedMonth(),
+      investorId: "inv-1",
+    });
+    expect(await screen.findByText("Avisos (1)")).toBeInTheDocument();
+    expect(
+      screen.getByText(/último valor del historial no coincide/),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Cerrar" }));
+    expect(screen.queryByText("Avisos (1)")).not.toBeInTheDocument();
+  });
+
+  it("downloads a ZIP with every PDF for the month", async () => {
+    const user = userEvent.setup();
+    vi.mocked(api.downloadMonthlyReportPdfsZip).mockResolvedValue(undefined);
+
+    render(<MonthlyReportPdfsPage />);
+    await screen.findByText("Tulio Capparelli");
+
+    await user.click(
+      screen.getByRole("button", { name: /Descargar todos \(ZIP\)/i }),
+    );
+
+    await waitFor(() => {
+      expect(api.downloadMonthlyReportPdfsZip).toHaveBeenCalledWith(
+        lastClosedMonth(),
+      );
+    });
   });
 
   it("opens the email tab with the composer", async () => {

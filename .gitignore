@@ -8,7 +8,7 @@
 **/.env.*
 
 # Rails
-log/*.log
+log/
 tmp/
 storage/
 .bundle/
@@ -16,6 +16,9 @@ vendor/bundle/
 config/master.key
 config/credentials/*.key
 coverage/
+
+# Node (root - Puppeteer/Grover for monthly report PDFs, see package.json)
+/node_modules/
 
 # Node (UI)
 ui/node_modules/

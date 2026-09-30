@@ -481,11 +481,14 @@ RSpec.describe MonthlyReportBuilder do
 
       # 5050 deposited, 0 withdrawn - the $54.94 in fees does NOT reduce this.
       expect(summary[:net_contributed_after_withdrawals_usd]).to eq(5050.0)
-      # So it does NOT need to reconcile exactly against the TWR return once
-      # fees are involved - that's expected, not a bug.
+      # accumulated_since_entry_usd is net of fees (accumulated_net_as_of), same as
+      # the balance: with no withdrawal in the window, both sides are just
+      # "trading gains minus fees paid", so they reconcile exactly here. (They'd
+      # diverge with a mid-period withdrawal, since TWR treats that as a flow,
+      # not as realized profit removed from net_contributed_after_withdrawals.)
       expect(
         (summary[:portfolio_value_usd] - summary[:net_contributed_after_withdrawals_usd]).round(2)
-      ).not_to eq(summary[:accumulated_since_entry_usd])
+      ).to eq(summary[:accumulated_since_entry_usd])
     end
   end
 end
