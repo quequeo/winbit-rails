@@ -51,6 +51,13 @@ type PreviewPayload = {
   replaced_count?: number;
 };
 
+type ReportPreview = {
+  investorId: string;
+  investorName: string;
+  html: string;
+  warnings: string[];
+};
+
 const SKIP_REASONS: Record<string, string> = {
   not_pdf: "No es un PDF",
   too_large: "Supera 15MB",
@@ -92,6 +99,9 @@ export const MonthlyReportPdfsPage = () => {
   const [deleteTarget, setDeleteTarget] = useState<PresentRow | null>(null);
   const [generating, setGenerating] = useState(false);
   const [generatingInvestorId, setGeneratingInvestorId] = useState<string | null>(null);
+  const [reportPreview, setReportPreview] = useState<ReportPreview | null>(null);
+  const [previewLoadingId, setPreviewLoadingId] = useState<string | null>(null);
+  const [zipDownloading, setZipDownloading] = useState(false);
   const bulkInputRef = useRef<HTMLInputElement>(null);
   const singleInputRef = useRef<HTMLInputElement>(null);
   const [singleInvestorId, setSingleInvestorId] = useState<string | null>(null);
@@ -245,6 +255,40 @@ export const MonthlyReportPdfsPage = () => {
     }
   };
 
+  const handlePreview = async (investorId: string, investorName: string) => {
+    setPreviewLoadingId(investorId);
+    setError(null);
+    try {
+      const res = await api.previewMonthlyReportPdf({ month, investorId });
+      const payload = (res as { data: { html: string; warnings: string[] } })
+        .data;
+      setReportPreview({
+        investorId,
+        investorName,
+        html: payload.html,
+        warnings: payload.warnings,
+      });
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error ? err.message : "Error al generar la vista previa",
+      );
+    } finally {
+      setPreviewLoadingId(null);
+    }
+  };
+
+  const handleDownloadZip = async () => {
+    setZipDownloading(true);
+    setError(null);
+    try {
+      await api.downloadMonthlyReportPdfsZip(month);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Error al descargar el ZIP");
+    } finally {
+      setZipDownloading(false);
+    }
+  };
+
   const handleDownload = async (row: PresentRow) => {
     try {
       await api.downloadMonthlyReportPdfFile(row.id, row.originalFilename);
@@ -372,6 +416,14 @@ export const MonthlyReportPdfsPage = () => {
               ? "Generando..."
               : `Generar automáticamente (${missingActive.length})`}
           </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleDownloadZip}
+            disabled={zipDownloading || data.present.length + missingActive.length === 0}
+          >
+            {zipDownloading ? "Preparando ZIP..." : "Descargar todos (ZIP)"}
+          </Button>
         </div>
         <div className="flex flex-wrap gap-4 text-sm">
           <span className="text-success">Con PDF: {data.counts.present}</span>
@@ -497,6 +549,19 @@ export const MonthlyReportPdfsPage = () => {
                         type="button"
                         size="sm"
                         variant="outline"
+                        onClick={() =>
+                          handlePreview(row.investor.id, row.investor.name)
+                        }
+                        disabled={previewLoadingId === row.investor.id}
+                      >
+                        {previewLoadingId === row.investor.id
+                          ? "Cargando..."
+                          : "Vista previa"}
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
                         onClick={() => handleDownload(row)}
                       >
                         Ver
@@ -540,6 +605,17 @@ export const MonthlyReportPdfsPage = () => {
                   <td className="py-2 text-t-muted">{row.email}</td>
                   <td className="py-2 text-right">
                     <div className="flex justify-end gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handlePreview(row.id, row.name)}
+                        disabled={previewLoadingId === row.id}
+                      >
+                        {previewLoadingId === row.id
+                          ? "Cargando..."
+                          : "Vista previa"}
+                      </Button>
                       <Button
                         type="button"
                         size="sm"
@@ -595,6 +671,49 @@ export const MonthlyReportPdfsPage = () => {
         }
         confirmText="Quitar"
       />
+
+      {reportPreview ? (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm"
+            onClick={() => setReportPreview(null)}
+          />
+          <div className="flex min-h-full items-center justify-center p-4">
+            <div className="relative flex h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-lg admin-card border border-[rgba(101,167,165,0.25)]">
+              <div className="flex items-center justify-between border-b border-b-default px-6 py-4">
+                <h3 className="text-lg font-semibold text-white">
+                  Vista previa &middot; {reportPreview.investorName} &middot; {month}
+                </h3>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setReportPreview(null)}
+                >
+                  Cerrar
+                </Button>
+              </div>
+              {reportPreview.warnings.length > 0 ? (
+                <div className="border-b border-b-default bg-warning/10 px-6 py-3">
+                  <p className="mb-1 text-sm font-semibold text-warning">
+                    Avisos ({reportPreview.warnings.length})
+                  </p>
+                  <ul className="list-inside list-disc space-y-1 text-sm text-warning">
+                    {reportPreview.warnings.map((warning) => (
+                      <li key={warning}>{warning}</li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+              <iframe
+                title="Vista previa del reporte"
+                srcDoc={reportPreview.html}
+                className="flex-1 bg-white"
+              />
+            </div>
+          </div>
+        </div>
+      ) : null}
       </>
       ) : null}
     </div>

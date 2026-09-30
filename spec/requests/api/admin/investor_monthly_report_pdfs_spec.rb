@@ -153,6 +153,76 @@ RSpec.describe 'Admin investor monthly report PDFs', type: :request do
     end
   end
 
+  describe 'GET /api/admin/v1/monthly_report_pdfs/preview' do
+    before do
+      Portfolio.create!(investor: tulio, current_balance: 5000, total_invested: 5000)
+      placeholder = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII='
+      allow(InvestorMonthlyReportPdfs::Assets).to receive(:data_uri).and_return("data:image/png;base64,#{placeholder}")
+      allow(InvestorMonthlyReportPdfs::Assets).to receive(:font_data_uri).and_return("data:font/ttf;base64,#{placeholder}")
+    end
+
+    it 'renders the report HTML and its validation warnings without persisting anything' do
+      get '/api/admin/v1/monthly_report_pdfs/preview', params: { month: '2026-07', investor_id: tulio.id }
+
+      expect(response).to have_http_status(:ok)
+      json = JSON.parse(response.body)
+      expect(json.dig('data', 'html')).to include('<!doctype html>')
+      expect(json.dig('data', 'html')).to include('Tulio Capparelli')
+      expect(json.dig('data', 'warnings')).to be_an(Array)
+      expect(InvestorMonthlyReportPdf.count).to eq(0)
+    end
+
+    it 'returns 404 for an unknown investor_id' do
+      get '/api/admin/v1/monthly_report_pdfs/preview', params: { month: '2026-07', investor_id: 'nope' }
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it 'returns 422 without month' do
+      get '/api/admin/v1/monthly_report_pdfs/preview', params: { investor_id: tulio.id }
+      expect(response).to have_http_status(:unprocessable_content)
+    end
+  end
+
+  describe 'POST /api/admin/v1/monthly_report_pdfs/zip' do
+    before do
+      Portfolio.create!(investor: tulio, current_balance: 5000, total_invested: 5000)
+      placeholder = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII='
+      allow(InvestorMonthlyReportPdfs::Assets).to receive(:data_uri).and_return("data:image/png;base64,#{placeholder}")
+      allow(InvestorMonthlyReportPdfs::Assets).to receive(:font_data_uri).and_return("data:font/ttf;base64,#{placeholder}")
+    end
+
+    it 'fills in missing PDFs and streams every present PDF for the month as one ZIP' do
+      post '/api/admin/v1/monthly_report_pdfs/zip', params: { month: '2026-07' }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.media_type).to eq('application/zip')
+      expect(InvestorMonthlyReportPdf.find_by(investor: tulio, month: '2026-07')).to be_present
+
+      entries = Zip::File.open_buffer(response.body).entries.map(&:name)
+      expect(entries).to include(a_string_matching(/TULIO CAPPARELLI/i))
+    end
+
+    it 'reuses an already-generated PDF instead of regenerating it' do
+      existing = InvestorMonthlyReportPdf.create!(
+        investor: tulio, month: '2026-07', original_filename: 'old.pdf',
+        content_type: 'application/pdf', byte_size: 8, pdf_data: '%PDF-old'
+      )
+
+      post '/api/admin/v1/monthly_report_pdfs/zip', params: { month: '2026-07' }
+
+      expect(response).to have_http_status(:ok)
+      expect(existing.reload.pdf_data).to eq('%PDF-old')
+    end
+
+    it 'returns 422 when there is nothing to zip' do
+      Investor.destroy_all
+
+      post '/api/admin/v1/monthly_report_pdfs/zip', params: { month: '2026-07' }
+
+      expect(response).to have_http_status(:unprocessable_content)
+    end
+  end
+
   describe 'GET /api/admin/v1/monthly_report_pdfs/:id/file' do
     it 'streams the PDF' do
       report = InvestorMonthlyReportPdf.create!(

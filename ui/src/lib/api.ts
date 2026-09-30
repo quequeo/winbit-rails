@@ -617,6 +617,45 @@ export const api = {
       }),
     });
   },
+  previewMonthlyReportPdf: (params: { month: string; investorId: string }) => {
+    const qs = new URLSearchParams({
+      month: params.month,
+      investor_id: params.investorId,
+    });
+    return request(
+      `${ADMIN_API_PREFIX}/monthly_report_pdfs/preview?${qs.toString()}`,
+    );
+  },
+  downloadMonthlyReportPdfsZip: async (month: string) => {
+    const res = await fetch(
+      `${API_BASE_URL}${ADMIN_API_PREFIX}/monthly_report_pdfs/zip`,
+      {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          Accept: "application/zip",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ month }),
+      },
+    );
+    if (!res.ok) {
+      if (res.status === 401) throw new Error("Unauthorized");
+      if (res.status === 403) throw new Error("Forbidden");
+      const contentType = res.headers.get("content-type") || "";
+      const body = contentType.includes("application/json")
+        ? JSON.stringify(await res.json())
+        : await res.text();
+      throw new Error(body || `Request failed: ${res.status}`);
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `Reportes_${month}.zip`;
+    link.click();
+    URL.revokeObjectURL(url);
+  },
   downloadMonthlyReportPdfFile: async (id: string, filename: string) => {
     const res = await fetch(
       `${API_BASE_URL}${ADMIN_API_PREFIX}/monthly_report_pdfs/${id}/file`,
