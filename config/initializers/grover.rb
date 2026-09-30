@@ -10,13 +10,14 @@
 #   Puppeteer's own downloaded Chromium is used by default (both locally, once
 #   `npm i puppeteer` has run, and on Heroku via the explicit
 #   `npx puppeteer browsers install chrome` in the root package.json's
-#   heroku-postbuild - relying on npm's own postinstall download isn't
-#   reliable here since it writes to $HOME/.cache by default, which doesn't
-#   survive into the Heroku slug; PUPPETEER_CACHE_DIR (Heroku config var)
-#   points both the install step and the runtime launch at the same
-#   slug-included path instead). The jontewks/puppeteer buildpack only
-#   supplies the system shared libraries Chrome needs to launch - not Chrome
-#   itself.
+#   heroku-postbuild). PUPPETEER_CACHE_DIR (Heroku config var) points the
+#   install step and the runtime launch at the same path - it must live
+#   under node_modules/ (confirmed: a top-level dotdir like
+#   /app/.puppeteer-cache does NOT survive Heroku's slug finalization, even
+#   though the build log shows the download succeeding there; node_modules/
+#   is the one directory the Node buildpack guarantees ships in the slug).
+#   The jontewks/puppeteer buildpack only supplies the system shared
+#   libraries Chrome needs to launch - not Chrome itself.
 Grover.configure do |config|
   config.options = {
     format: 'A4',
