@@ -5,12 +5,15 @@ module InvestorMonthlyReportPdfs
   # the monthly PDF report) as an inline SVG, server-side. No JS charting
   # library is needed: wkhtmltopdf renders plain SVG natively.
   class ChartSvg
+    # Flat aspect ratio (matches the CSS .chart box, ~122px tall at full page
+    # width) so the report's fixed-height evolution page always has room for
+    # the table/acumulado bar below it, up to 12 months of history.
     WIDTH = 1000
-    HEIGHT = 260
+    HEIGHT = 120
     PAD_LEFT = 10
     PAD_RIGHT = 10
-    PAD_TOP = 34
-    PAD_BOTTOM = 30
+    PAD_TOP = 26
+    PAD_BOTTOM = 22
 
     def self.build(rows:, initial_value:)
       new(rows:, initial_value:).build
