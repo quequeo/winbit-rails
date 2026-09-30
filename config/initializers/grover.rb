@@ -8,20 +8,23 @@
 #   launch fails outright, sandbox or not.
 # - `executable_path`: only set if PUPPETEER_EXECUTABLE_PATH is present, so
 #   Puppeteer's own downloaded Chromium is used by default (both locally, once
-#   `npm i puppeteer` has run, and on Heroku via the explicit
-#   `npx puppeteer browsers install chrome` in the root package.json's
-#   heroku-postbuild). PUPPETEER_CACHE_DIR (Heroku config var, currently
-#   /app/puppeteer_browsers) points the install step and the runtime launch
-#   at the same path. Two things that look safe are NOT here: a dotdir
-#   directly under /app (confirmed via a real build+deploy: the download
-#   succeeds during heroku-postbuild, but it's gone from the slug afterward)
-#   and anything nested under node_modules/ (Heroku's "Pruning
-#   devDependencies" step re-runs `npm ci`, which wipes and rebuilds
-#   node_modules from package-lock.json, taking any manually-placed files
-#   with it - confirmed via `heroku run`). A plain, non-dot, non-"cache"-named
-#   top-level directory is what survives both. The jontewks/puppeteer
-#   buildpack only supplies the system shared libraries Chrome needs to
-#   launch - not Chrome itself.
+#   `npm i puppeteer` has run, and on Heroku via `bin/post_compile`).
+#   PUPPETEER_CACHE_DIR (Heroku config var, currently /app/puppeteer_browsers)
+#   points the install step and the runtime launch at the same path.
+#
+#   Getting the install step to actually run at the right time took three
+#   tries (confirmed via real build+deploy each time, not just locally):
+#   the Node buildpack's own build phase (heroku-postbuild, where this used
+#   to live) is NOT safe for this - nothing written to the build directory
+#   during that phase survives, regardless of name or nesting (tried a
+#   dotdir directly under /app, then nested under node_modules/, then a
+#   plain non-dot/non-"cache"-named top-level dir; all three vanished from
+#   the deployed slug despite the build log showing the download succeed).
+#   Something in the Node buildpack's post-postbuild bookkeeping (cache
+#   save/pruning) resets the build dir against its own known paths.
+#   `bin/post_compile` runs later - after the Ruby buildpack's own bundle
+#   install, once the Node buildpack (and whatever it does internally) has
+#   fully finished - which is why the install lives there now instead.
 Grover.configure do |config|
   config.options = {
     format: 'A4',

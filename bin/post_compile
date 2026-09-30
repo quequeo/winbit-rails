@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# Runs after the Ruby buildpack's `bundle install`, near the very end of the
+# Heroku build - see config/initializers/grover.rb for why the Chrome
+# install has to happen here and not in heroku-postbuild (the Node
+# buildpack's own "Pruning devDependencies"/cache steps wipe anything
+# written to the build directory during heroku-postbuild that isn't one of
+# its own recognized paths, regardless of name or location).
+set -e
+
+npx puppeteer browsers install chrome

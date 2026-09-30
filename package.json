@@ -6,7 +6,7 @@
   },
   "scripts": {
     "build": "npm --prefix ui ci --include=dev && npm --prefix ui run build && node scripts/copy-ui-dist.mjs",
-    "heroku-postbuild": "npx puppeteer browsers install chrome && npm run build"
+    "heroku-postbuild": "npm run build"
   },
   "dependencies": {
     "puppeteer": "^25.12.0"
