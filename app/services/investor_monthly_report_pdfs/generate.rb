@@ -91,6 +91,7 @@ module InvestorMonthlyReportPdfs
     end
 
     def render_pdf(investor)
+      EnsureChromeInstalled.call
       data = DocumentData.call(investor: investor, report_month: @month)
       # ApplicationController is api_only (ActionController::API), whose
       # renderer swallows template errors and returns blank output instead
