@@ -360,7 +360,14 @@ RSpec.describe 'Public investors', type: :request do
         accumulated_return_usd: 0, accumulated_return_percent: 0,
         annual_return_usd: 0, annual_return_percent: 0
       )
-      # Initial deposit history needed for Vpcust profit calculation
+      # Initial deposit needed for Vpcust profit calculation. InvestorPendingProfit
+      # reads deposits from InvestorRequest (status APPROVED), not PortfolioHistory
+      # directly - matching how Requests::Approve always creates both together for a
+      # real deposit, so both are needed here too.
+      InvestorRequest.create!(
+        investor: inv, request_type: 'DEPOSIT', method: 'USDT', amount: balance,
+        status: 'APPROVED', requested_at: 10.days.ago, processed_at: 10.days.ago
+      )
       PortfolioHistory.create!(
         investor_id: inv.id, event: 'DEPOSIT', status: 'COMPLETED',
         amount: balance, previous_balance: 0, new_balance: balance,
@@ -409,6 +416,10 @@ RSpec.describe 'Public investors', type: :request do
         investor_id: inv.id, current_balance: 10_000, total_invested: 8000,
         accumulated_return_usd: 2000, accumulated_return_percent: 25,
         annual_return_usd: 2000, annual_return_percent: 25
+      )
+      InvestorRequest.create!(
+        investor: inv, request_type: 'DEPOSIT', method: 'USDT', amount: 8000,
+        status: 'APPROVED', requested_at: 10.days.ago, processed_at: 10.days.ago
       )
       PortfolioHistory.create!(
         investor_id: inv.id, event: 'DEPOSIT', status: 'COMPLETED',
