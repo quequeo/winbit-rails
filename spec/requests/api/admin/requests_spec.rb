@@ -55,6 +55,15 @@ RSpec.describe 'Admin requests', type: :request do
   it 'POST /api/admin/requests/:id/approve applies trading fee por retiro when there are pending profits' do
     investor = Investor.create!(email: 'fee-withdraw@test.com', name: 'wf', status: 'ACTIVE', trading_fee_percentage: 30)
     portfolio = Portfolio.create!(investor_id: investor.id, current_balance: 5500, total_invested: 5000)
+    InvestorRequest.create!(
+      investor_id: investor.id,
+      request_type: 'DEPOSIT',
+      method: 'USDT',
+      amount: 5000,
+      status: 'APPROVED',
+      requested_at: 10.days.ago,
+      processed_at: 10.days.ago
+    )
     PortfolioHistory.create!(
       investor_id: investor.id,
       event: 'DEPOSIT',
