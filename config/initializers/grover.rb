@@ -7,24 +7,20 @@
 #   inside Heroku's container (no user namespaces) - without them Puppeteer's
 #   launch fails outright, sandbox or not.
 # - `executable_path`: only set if PUPPETEER_EXECUTABLE_PATH is present, so
-#   Puppeteer's own downloaded Chromium is used by default (both locally, once
-#   `npm i puppeteer` has run, and on Heroku via `bin/post_compile`).
-#   PUPPETEER_CACHE_DIR (Heroku config var, currently /app/puppeteer_browsers)
-#   points the install step and the runtime launch at the same path.
+#   Puppeteer's own downloaded Chromium is used by default. PUPPETEER_CACHE_DIR
+#   (Heroku config var, currently /app/puppeteer_browsers) points both the
+#   install and the launch at the same path.
 #
-#   Getting the install step to actually run at the right time took three
-#   tries (confirmed via real build+deploy each time, not just locally):
-#   the Node buildpack's own build phase (heroku-postbuild, where this used
-#   to live) is NOT safe for this - nothing written to the build directory
-#   during that phase survives, regardless of name or nesting (tried a
-#   dotdir directly under /app, then nested under node_modules/, then a
-#   plain non-dot/non-"cache"-named top-level dir; all three vanished from
-#   the deployed slug despite the build log showing the download succeed).
-#   Something in the Node buildpack's post-postbuild bookkeeping (cache
-#   save/pruning) resets the build dir against its own known paths.
-#   `bin/post_compile` runs later - after the Ruby buildpack's own bundle
-#   install, once the Node buildpack (and whatever it does internally) has
-#   fully finished - which is why the install lives there now instead.
+#   The install itself happens at RUNTIME, on first use (see
+#   InvestorMonthlyReportPdfs::EnsureChromeInstalled), not during the Heroku
+#   build. Every build-time approach tried (heroku-postbuild, then
+#   bin/post_compile) showed the download succeeding in the build log, but
+#   the result never made it into the deployed slug either way - confirmed
+#   with real deploys, not just locally - and on this Heroku-24 stack
+#   bin/post_compile turned out not to even run at all. Installing at
+#   runtime instead sidesteps whatever that was: /app is writable at
+#   runtime (unlike during the build), so the download just needs to
+#   survive for this dyno's lifetime, not make it into a slug.
 Grover.configure do |config|
   config.options = {
     format: 'A4',
