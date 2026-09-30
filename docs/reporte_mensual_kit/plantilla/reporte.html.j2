@@ -1,31 +1,17 @@
-<%#
-  Monthly investor report PDF (5+N pages), rendered via Grover (Chrome
-  headless / Puppeteer) - see app/services/investor_monthly_report_pdfs/generate.rb.
-
-  Locals:
-    data - the Hash built by InvestorMonthlyReportPdfs::DocumentData#call
-
-  Design ported from docs/reporte_mensual_kit/plantilla/reporte.html.j2
-  (IBM Plex Sans/Condensed, same CSS custom properties as the admin/app
-  redesign). Unlike the kit's script (one operations page per report), the
-  "Operaciones del mes" section stays paginated via data[:ops_pages] since a
-  month's trade count is unbounded - see DocumentData::OPS_PAGE_LIMIT.
-%>
-<% year = data[:year_opening][:date].split('/').last %>
 <!doctype html>
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<title>Reporte mensual &middot; <%= data[:month_label_full] %> &middot; <%= data[:investor_name] %></title>
+<title>Reporte mensual · {{ mes_txt }} · {{ inversor }}</title>
 <style>
-@font-face { font-family: "Plex"; font-weight: 400; src: url(<%= InvestorMonthlyReportPdfs::Assets.font_data_uri(:sans_regular) %>) format("truetype"); }
-@font-face { font-family: "Plex"; font-weight: 500; src: url(<%= InvestorMonthlyReportPdfs::Assets.font_data_uri(:sans_medium) %>) format("truetype"); }
-@font-face { font-family: "Plex"; font-weight: 600; src: url(<%= InvestorMonthlyReportPdfs::Assets.font_data_uri(:sans_semibold) %>) format("truetype"); }
-@font-face { font-family: "Plex"; font-weight: 700; src: url(<%= InvestorMonthlyReportPdfs::Assets.font_data_uri(:sans_bold) %>) format("truetype"); }
-@font-face { font-family: "PlexC"; font-weight: 400; src: url(<%= InvestorMonthlyReportPdfs::Assets.font_data_uri(:condensed_regular) %>) format("truetype"); }
-@font-face { font-family: "PlexC"; font-weight: 500; src: url(<%= InvestorMonthlyReportPdfs::Assets.font_data_uri(:condensed_medium) %>) format("truetype"); }
-@font-face { font-family: "PlexC"; font-weight: 600; src: url(<%= InvestorMonthlyReportPdfs::Assets.font_data_uri(:condensed_semibold) %>) format("truetype"); }
-@font-face { font-family: "PlexC"; font-weight: 700; src: url(<%= InvestorMonthlyReportPdfs::Assets.font_data_uri(:condensed_bold) %>) format("truetype"); }
+@font-face { font-family: "Plex"; src: url("{{ fonts }}/IBMPlexSans-Regular.ttf"); font-weight: 400; }
+@font-face { font-family: "Plex"; src: url("{{ fonts }}/IBMPlexSans-Medium.ttf"); font-weight: 500; }
+@font-face { font-family: "Plex"; src: url("{{ fonts }}/IBMPlexSans-SemiBold.ttf"); font-weight: 600; }
+@font-face { font-family: "Plex"; src: url("{{ fonts }}/IBMPlexSans-Bold.ttf"); font-weight: 700; }
+@font-face { font-family: "PlexC"; src: url("{{ fonts }}/IBMPlexSansCondensed-Regular.ttf"); font-weight: 400; }
+@font-face { font-family: "PlexC"; src: url("{{ fonts }}/IBMPlexSansCondensed-Medium.ttf"); font-weight: 500; }
+@font-face { font-family: "PlexC"; src: url("{{ fonts }}/IBMPlexSansCondensed-SemiBold.ttf"); font-weight: 600; }
+@font-face { font-family: "PlexC"; src: url("{{ fonts }}/IBMPlexSansCondensed-Bold.ttf"); font-weight: 700; }
 
 :root {
   --carbon: #0D0F0E; --verde: #39836D; --verde2: #479785; --crema: #ECE4D5;
@@ -63,8 +49,8 @@ body { font-family: "Plex", sans-serif; color: var(--tinta); font-size: 11px; }
 
 /* ---------- 1 · portada ---------- */
 .cover .left { position: absolute; left: 0; top: 0; bottom: 0; width: 52%; padding: 44px 60px; }
-.cover .right { position: absolute; right: 0; top: 0; bottom: 0; width: 48%; border-left: 2px solid var(--verde2); }
-.cover .right img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cover .right { position: absolute; right: 0; top: 0; bottom: 0; width: 48%; border-left: 2px solid var(--verde2);
+                background: url("{{ assets }}/portada.jpg") center / cover no-repeat; }
 .cover .logo { height: 50px; }
 .cover h1 { font-family: "PlexC"; font-weight: 700; font-size: 50px; line-height: 1.02; text-transform: uppercase; margin-top: 170px; }
 .cover h1 span { display: block; color: var(--verde2); }
@@ -97,6 +83,14 @@ body { font-family: "Plex", sans-serif; color: var(--tinta); font-size: 11px; }
 .saldo .d { font-size: 12px; color: var(--gris); }
 .saldo .v { font-family: "PlexC"; font-weight: 700; font-size: 26px; }
 .chart { margin-top: 14px; }
+.chart .gl { stroke: var(--borde); stroke-width: 1; }
+.chart .ya { fill: var(--gris); font: 9px "Plex"; text-anchor: end; }
+.chart .xa { fill: var(--gris); font: 9px "Plex"; }
+.chart .ln { fill: none; stroke: var(--verde2); stroke-width: 2.4; stroke-linejoin: round; stroke-linecap: round; }
+.chart .area { fill: var(--verde2); opacity: .07; }
+.chart .pt { fill: var(--carbon); stroke: var(--verde2); stroke-width: 1.8; }
+.chart .pt.last { fill: var(--crema); stroke: var(--verde2); stroke-width: 2.2; }
+.chart .lbl { fill: var(--verde2); font: 600 10.5px "Plex"; }
 table { width: 100%; border-collapse: collapse; }
 .tev { margin-top: 10px; }
 .tev th { font-size: 8.5px; font-weight: 600; letter-spacing: .5px; color: var(--gris); text-align: right; padding: 8px 6px; border-bottom: 1px solid var(--verde2); text-transform: uppercase; }
@@ -118,6 +112,7 @@ table { width: 100%; border-collapse: collapse; }
 .tops td { font-size: 10.5px; padding: 3.3px 6px; border-bottom: 1px solid var(--linea-crema); font-variant-numeric: tabular-nums; }
 .tops .r { text-align: right; }
 .tops td.b { font-weight: 600; }
+.tops td.rst { font-weight: 600; font-size: 9.5px; letter-spacing: .4px; }
 .tops.holgado td { padding: 8px 6px; font-size: 11px; }
 .tops.denso td { padding: 1.8px 6px; font-size: 9.6px; }
 .opnote { font-size: 9.5px; color: var(--tinta2); margin-top: 8px; }
@@ -130,8 +125,8 @@ table { width: 100%; border-collapse: collapse; }
 
 /* ---------- 5 · contratapa ---------- */
 .back .left { position: absolute; left: 0; top: 0; bottom: 0; width: 56%; padding: 44px 60px; }
-.back .right { position: absolute; right: 0; top: 0; bottom: 0; width: 44%; border-left: 2px solid var(--verde2); }
-.back .right img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.back .right { position: absolute; right: 0; top: 0; bottom: 0; width: 44%; border-left: 2px solid var(--verde2);
+               background: url("{{ assets }}/contratapa.jpg") center / cover no-repeat; }
 .back .logo { height: 58px; }
 .back .contact { margin-top: 180px; width: 380px; }
 .back .contact .rule { height: 1px; background: var(--verde); margin: 12px 0 22px; }
@@ -147,157 +142,121 @@ table { width: 100%; border-collapse: collapse; }
 <!-- 1 · PORTADA -->
 <section class="page dark cover">
   <div class="left">
-    <img class="logo" src="<%= InvestorMonthlyReportPdfs::Assets.data_uri(:logo_dark) %>" alt="Winbit">
+    <img class="logo" src="{{ assets }}/logo_dark_bg.png" alt="Winbit">
     <h1>Reporte mensual<span>de rendimiento</span></h1>
     <div class="rule"></div>
-    <div class="period"><%= data[:month_label_full] %></div>
+    <div class="period">{{ mes_txt }}</div>
     <div class="who">
       <div class="label">Inversor</div>
-      <div class="name"><%= data[:investor_name] %></div>
+      <div class="name">{{ inversor }}</div>
     </div>
   </div>
-  <div class="right"><img src="<%= InvestorMonthlyReportPdfs::Assets.data_uri(:cover) %>"></div>
+  <div class="right"></div>
 </section>
 
 <!-- 2 · RESUMEN -->
 <section class="page light">
   <div class="inner">
-    <div class="head"><img src="<%= InvestorMonthlyReportPdfs::Assets.data_uri(:logo_light) %>" alt="Winbit"><div class="pnum">02</div></div>
+    <div class="head"><img src="{{ assets }}/logo_light_bg.png" alt="Winbit"><div class="pnum">02</div></div>
     <div class="title">Resumen del portafolio</div>
     <div class="res-rule"></div>
     <div class="res">
       <div>
         <div class="blk">
           <div class="label">Valor del portafolio</div>
-          <div class="big">USD <%= data[:portfolio_value] %></div>
-          <div class="note">Valor del portafolio al <%= data[:as_of_date] %></div>
+          <div class="big">{{ valor }}</div>
+          <div class="note">Valor del portafolio al {{ fecha_cierre }}</div>
         </div>
         <div class="blk">
           <div class="label">Capital aportado neto</div>
-          <div class="big big2">USD <%= data[:net_contributed] %></div>
+          <div class="big big2">{{ aportado_neto }}</div>
           <div class="note">Ingresos menos retiros.</div>
         </div>
       </div>
       <div class="vline"></div>
       <div>
         <div class="kpi">
-          <div class="label">Rendimiento mensual &middot; <%= data[:month_label_full] %></div>
-          <div class="row"><div class="p <%= data[:monthly][:class] %>"><%= data[:monthly][:percent] %></div><div class="u"><%= data[:monthly][:usd] %></div></div>
+          <div class="label">Rendimiento mensual · {{ mes_txt }}</div>
+          <div class="row"><div class="p {{ k_mes[2] }}">{{ k_mes[0] }}</div><div class="u">{{ k_mes[1] }}</div></div>
         </div>
         <div class="kpi">
-          <div class="label">Rendimiento acumulado <%= year %></div>
-          <div class="row"><div class="p <%= data[:ytd][:class] %>"><%= data[:ytd][:percent] %></div><div class="u"><%= data[:ytd][:usd] %></div></div>
+          <div class="label">Rendimiento acumulado {{ anio }}</div>
+          <div class="row"><div class="p {{ k_anio[2] }}">{{ k_anio[0] }}</div><div class="u">{{ k_anio[1] }}</div></div>
         </div>
         <div class="kpi">
           <div class="label">Rendimiento acumulado desde el ingreso</div>
-          <div class="row"><div class="p <%= data[:since_entry][:class] %>"><%= data[:since_entry][:percent] %></div><div class="u"><%= data[:since_entry][:usd] %></div></div>
+          <div class="row"><div class="p {{ k_ing[2] }}">{{ k_ing[0] }}</div><div class="u">{{ k_ing[1] }}</div></div>
         </div>
       </div>
     </div>
   </div>
-  <div class="fnote">Rendimiento neto = rendimiento operativo &minus; costo del servicio aplicado al per&iacute;odo.</div>
-  <div class="foot"><span>Reporte mensual de rendimiento &middot; <%= data[:month_label_full] %></span><span><%= data[:investor_name] %></span></div>
+  <div class="fnote">Rendimiento neto = rendimiento operativo − costo del servicio aplicado al período.</div>
+  <div class="foot"><span>Reporte mensual de rendimiento · {{ mes_txt }}</span><span>{{ inversor }}</span></div>
 </section>
 
 <!-- 3 · EVOLUCIÓN -->
 <section class="page dark">
   <div class="inner">
-    <div class="head"><img src="<%= InvestorMonthlyReportPdfs::Assets.data_uri(:logo_dark) %>" alt="Winbit"><div class="pnum">03</div></div>
+    <div class="head"><img src="{{ assets }}/logo_dark_bg.png" alt="Winbit"><div class="pnum">03</div></div>
     <div class="ev-top">
       <div>
-        <div class="title">Evoluci&oacute;n del portafolio</div>
-        <div class="sub">Historial mensual <%= year %></div>
+        <div class="title">Evolución del portafolio</div>
+        <div class="sub">Historial mensual {{ anio }}</div>
       </div>
       <div class="saldo">
-        <div class="label">Saldo inicial <%= year %></div>
-        <div class="row"><span class="d"><%= data[:year_opening][:date] %></span><span class="v">USD <%= data[:year_opening][:value] %></span></div>
+        <div class="label">Saldo inicial {{ anio }}</div>
+        <div class="row"><span class="d">{{ saldo_ini_fecha }}</span><span class="v">{{ saldo_ini }}</span></div>
       </div>
     </div>
-    <div class="label" style="margin-top:18px">Evoluci&oacute;n del valor del portafolio</div>
-    <div class="chart"><%= data[:chart_svg].html_safe %></div>
-    <% dense_evo = data[:evo_rows].size > 8 %>
-    <table class="tev<%= ' denso' if dense_evo %>">
+    <div class="label" style="margin-top:18px">Evolución del valor del portafolio</div>
+    <div class="chart">{{ grafico|safe }}</div>
+    <table class="tev{% if denso %} denso{% endif %}">
       <thead><tr><th>Mes</th><th>Valor portafolio (USD)</th><th>Ingresos (USD)</th><th>Retiros (USD)</th><th>Costo servicio* (USD)</th><th>Rendimiento %</th><th>Rendimiento (USD)</th></tr></thead>
       <tbody>
-        <% data[:evo_rows].each do |row| %>
-          <tr<%= ' class="cur"'.html_safe if row[:last] %>>
-            <td><%= row[:label] %></td>
-            <td><%= row[:portfolio_value] %></td>
-            <td><%= row[:deposits] %></td>
-            <td><%= row[:withdrawals] %></td>
-            <td><%= row[:service_cost] %></td>
-            <td class="<%= row[:return_percent_class] %>"><%= row[:return_percent] %></td>
-            <td class="<%= row[:return_usd_class] %>"><%= row[:return_usd] %></td>
-          </tr>
-        <% end %>
+      {% for f in filas %}
+        <tr{% if f.actual %} class="cur"{% endif %}><td>{{ f.mes }}</td><td>{{ f.valor }}</td><td>{{ f.ingresos }}</td><td>{{ f.retiros }}</td><td>{{ f.costo }}</td><td class="{{ f.cls }}">{{ f.pct }}</td><td class="{{ f.cls }}">{{ f.usd }}</td></tr>
+      {% endfor %}
       </tbody>
     </table>
-    <div class="acum"><span class="t">ACUMULADO <%= year %></span><span class="vals"><span class="<%= data[:evo_total][:class] %>"><%= data[:evo_total][:percent] %></span><span><%= data[:evo_total][:usd] %></span></span></div>
-    <div class="fn">* Importe correspondiente al servicio de gesti&oacute;n aplicado en el per&iacute;odo indicado.</div>
+    <div class="acum"><span class="t">ACUMULADO {{ anio }}</span><span class="vals"><span class="{{ acum_cls }}">{{ acum_pct }}</span><span>{{ acum_usd }}</span></span></div>
+    <div class="fn">* Importe correspondiente al servicio de gestión aplicado en el período indicado.</div>
   </div>
-  <div class="foot"><span>Reporte mensual de rendimiento &middot; <%= data[:month_label_full] %></span><span><%= data[:investor_name] %></span></div>
+  <div class="foot"><span>Reporte mensual de rendimiento · {{ mes_txt }}</span><span>{{ inversor }}</span></div>
 </section>
 
-<!-- 4+ · OPERACIONES DEL MES (paginated - see DocumentData::OPS_PAGE_LIMIT) -->
-<% data[:ops_pages].each do |page| %>
-  <% density = page[:trades].size <= 10 ? ' holgado' : (page[:trades].size > 12 ? ' denso' : '') %>
-  <section class="page light">
-    <div class="inner">
-      <div class="head"><img src="<%= InvestorMonthlyReportPdfs::Assets.data_uri(:logo_light) %>" alt="Winbit"><div class="pnum"><%= page[:page_number] %></div></div>
-      <div class="title" style="margin-top:22px">Operaciones del mes</div>
-      <% if page[:first] %>
-        <div class="sub" style="margin-top:6px">Detalle operativo &middot; <%= data[:month_label_full] %></div>
-        <div class="label" style="margin-top:14px">Activos operados</div>
-        <div class="activos">
-          <% page[:assets].each do |asset| %>
-            <div><b><%= asset[:code] %></b><%= asset[:name] %></div>
-          <% end %>
-        </div>
-      <% else %>
-        <div class="sub" style="margin-top:6px">Detalle operativo &middot; <%= data[:month_label_full] %> (continuaci&oacute;n)</div>
-      <% end %>
-      <table class="tops<%= density %>">
-        <thead><tr>
-          <th>Fecha</th><th>Activo</th><th>Direcci&oacute;n</th><th class="r">Apertura</th><th class="r">Cierre</th>
-          <th class="r">Resultado (USD)</th><th class="r">Rend. %</th><th class="r">Ratio</th>
-        </tr></thead>
-        <tbody>
-          <% page[:trades].each do |trade| %>
-            <tr>
-              <td class="b"><%= trade[:date] %></td>
-              <td class="b"><%= trade[:asset] %></td>
-              <td><%= trade[:direction] %></td>
-              <td class="r"><%= trade[:opened_at] %></td>
-              <td class="r"><%= trade[:closed_at] %></td>
-              <td class="r b <%= trade[:result_class] %>"><%= trade[:result_usd] %></td>
-              <td class="r <%= trade[:result_class] %>"><%= trade[:result_percent] %></td>
-              <td class="r b"><%= trade[:ratio] %></td>
-            </tr>
-          <% end %>
-        </tbody>
-      </table>
-      <% if page[:last] %>
-        <div class="opnote">Ratio: relaci&oacute;n entre el resultado de la operaci&oacute;n y el riesgo inicialmente asumido. BE: break even (resultado cercano a cero). USD: resultado atribuido a esta cuenta.</div>
-      <% end %>
-    </div>
-    <% if page[:last] %>
-      <div class="sumbar">
-        <div><div class="k">Operaciones</div><div class="v"><%= page[:ops_summary][:count] %></div></div>
-        <div><div class="k">Positivas</div><div class="v pos"><%= page[:ops_summary][:positive] %></div></div>
-        <div><div class="k">Negativas</div><div class="v neg"><%= page[:ops_summary][:negative] %></div></div>
-        <div><div class="k">Break even</div><div class="v neu"><%= page[:ops_summary][:break_even] %></div></div>
-        <div><div class="k">Resultado neto</div><div class="v <%= page[:ops_summary][:net_result_class] %>"><%= page[:ops_summary][:net_result] %></div></div>
-        <div><div class="k">Rendimiento del mes</div><div class="v <%= data[:monthly][:class] %>"><%= page[:ops_summary][:monthly_return_percent] %></div></div>
-      </div>
-    <% end %>
-    <div class="foot"><span>Reporte mensual de rendimiento &middot; <%= data[:month_label_full] %></span><span><%= data[:investor_name] %></span></div>
-  </section>
-<% end %>
+<!-- 4 · OPERACIONES -->
+<section class="page light">
+  <div class="inner">
+    <div class="head"><img src="{{ assets }}/logo_light_bg.png" alt="Winbit"><div class="pnum">04</div></div>
+    <div class="title" style="margin-top:22px">Operaciones del mes</div>
+    <div class="sub" style="margin-top:6px">Detalle operativo · {{ mes_txt|title }}</div>
+    <div class="label" style="margin-top:14px">Activos operados</div>
+    <div class="activos">{% for c, n in activos %}<div><b>{{ c }}</b>{{ n }}</div>{% endfor %}</div>
+    <table class="tops{% if ops_denso %} denso{% elif ops|length <= 10 %} holgado{% endif %}">
+      <thead><tr><th>Fecha</th><th>Activo</th><th>Dirección</th><th class="r">Apertura</th><th class="r">Cierre</th><th class="r">Resultado</th><th class="r">Rend. %</th><th class="r">USD</th><th class="r">Ratio</th></tr></thead>
+      <tbody>
+      {% for o in ops %}
+        <tr><td class="b">{{ o.fecha }}</td><td class="b">{{ o.activo }}</td><td>{{ o.direccion }}</td><td class="r">{{ o.apertura }}</td><td class="r">{{ o.cierre }}</td><td class="r rst {{ o.cls }}">{{ o.resultado }}</td><td class="r {{ o.cls }}">{{ o.pct }}</td><td class="r b {{ o.usd_cls }}">{{ o.usd }}</td><td class="r b">{{ o.ratio }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    <div class="opnote">Ratio: relación entre el resultado de la operación y el riesgo inicialmente asumido. BE: break even (resultado cercano a cero). USD: resultado atribuido a esta cuenta.</div>
+  </div>
+  <div class="sumbar">
+    <div><div class="k">Operaciones</div><div class="v">{{ n_ops }}</div></div>
+    <div><div class="k">Positivas</div><div class="v pos">{{ n_pos }}</div></div>
+    <div><div class="k">Negativas</div><div class="v neg">{{ n_neg }}</div></div>
+    <div><div class="k">Break even</div><div class="v neu">{{ n_be }}</div></div>
+    <div><div class="k">Resultado neto</div><div class="v {{ k_mes[2] }}">{{ neto_mes }}</div></div>
+    <div><div class="k">Rendimiento del mes</div><div class="v {{ k_mes[2] }}">{{ rend_mes }}</div></div>
+  </div>
+  <div class="foot"><span>Reporte mensual de rendimiento · {{ mes_txt }}</span><span>{{ inversor }}</span></div>
+</section>
 
 <!-- 5 · CONTRATAPA -->
 <section class="page dark back">
   <div class="left">
-    <img class="logo" src="<%= InvestorMonthlyReportPdfs::Assets.data_uri(:logo_dark) %>" alt="Winbit">
+    <img class="logo" src="{{ assets }}/logo_dark_bg.png" alt="Winbit">
     <div class="contact">
       <div class="label">Contacto</div>
       <div class="rule"></div>
@@ -306,14 +265,14 @@ table { width: 100%; border-collapse: collapse; }
       <p class="web">winbit.com.ar</p>
     </div>
     <div class="legal">
-      <div class="label">Informaci&oacute;n legal</div>
+      <div class="label">Información legal</div>
       <p>Este documento es confidencial y fue emitido para uso exclusivo del titular del portafolio.</p>
-      <p>Material informativo. La operatoria con derivados implica riesgo y los resultados pueden variar seg&uacute;n las condiciones de mercado.</p>
-      <p>Resultados hist&oacute;ricos. No garantizan resultados futuros.</p>
+      <p>Material informativo. La operatoria con derivados implica riesgo y los resultados pueden variar según las condiciones de mercado.</p>
+      <p>Resultados históricos. No garantizan resultados futuros.</p>
     </div>
-    <div class="mes"><%= data[:month_label_full] %></div>
+    <div class="mes">{{ mes_txt }}</div>
   </div>
-  <div class="right"><img src="<%= InvestorMonthlyReportPdfs::Assets.data_uri(:back) %>"></div>
+  <div class="right"></div>
 </section>
 
 </body>
