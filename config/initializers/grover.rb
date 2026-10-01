@@ -6,6 +6,9 @@
 # - `--no-sandbox`/`--disable-setuid-sandbox` are required for Chrome to launch
 #   inside Heroku's container (no user namespaces) - without them Puppeteer's
 #   launch fails outright, sandbox or not.
+# - `--disable-dev-shm-usage`: Heroku dynos give /dev/shm very little space,
+#   which crashes/OOMs Chrome under the default shared-memory usage - this
+#   makes it fall back to disk instead. Standard fix for Chrome-on-Heroku.
 # - `executable_path`: only set if PUPPETEER_EXECUTABLE_PATH is present, so
 #   Puppeteer's own downloaded Chromium is used by default. PUPPETEER_CACHE_DIR
 #   (Heroku config var, currently /app/puppeteer_browsers) points both the
@@ -28,7 +31,7 @@ Grover.configure do |config|
     print_background: true,
     prefer_css_page_size: true,
     margin: { top: '0', bottom: '0', left: '0', right: '0' },
-    launch_args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    launch_args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
     executable_path: ENV['PUPPETEER_EXECUTABLE_PATH'].presence,
   }.compact
 end

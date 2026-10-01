@@ -3,6 +3,8 @@
 require 'rails_helper'
 
 RSpec.describe 'Admin investor monthly report PDFs', type: :request do
+  include ActiveJob::TestHelper
+
   let!(:admin) do
     User.create!(email: 'pdfs-admin@test.com', name: 'Admin', role: 'ADMIN', provider: 'google_oauth2', uid: 'pdfs-admin')
   end
@@ -30,13 +32,14 @@ RSpec.describe 'Admin investor monthly report PDFs', type: :request do
       allow(InvestorMonthlyReportPdfs::Assets).to receive(:font_data_uri).and_return("data:font/ttf;base64,#{placeholder}")
     end
 
-    it 'generates a report for every active investor missing one' do
-      post '/api/admin/v1/monthly_report_pdfs/generate', params: { month: '2026-07' }
+    it 'enqueues a background job that generates a report for every active investor missing one' do
+      perform_enqueued_jobs do
+        post '/api/admin/v1/monthly_report_pdfs/generate', params: { month: '2026-07' }
+      end
 
-      expect(response).to have_http_status(:ok)
+      expect(response).to have_http_status(:accepted)
       json = JSON.parse(response.body)
-      generated_ids = json.dig('data', 'generated').map { |r| r.dig('investor', 'id') }
-      expect(generated_ids).to include(tulio.id)
+      expect(json.dig('data', 'enqueued')).to be(true)
       expect(InvestorMonthlyReportPdf.find_by(investor: tulio, month: '2026-07')).to be_present
     end
 
@@ -46,10 +49,10 @@ RSpec.describe 'Admin investor monthly report PDFs', type: :request do
         content_type: 'application/pdf', byte_size: 8, pdf_data: '%PDF-old'
       )
 
-      post '/api/admin/v1/monthly_report_pdfs/generate', params: { month: '2026-07' }
+      perform_enqueued_jobs do
+        post '/api/admin/v1/monthly_report_pdfs/generate', params: { month: '2026-07' }
+      end
 
-      json = JSON.parse(response.body)
-      expect(json.dig('data', 'skipped').map { |r| r['investorId'] }).to include(tulio.id)
       expect(InvestorMonthlyReportPdf.find_by(investor: tulio, month: '2026-07').pdf_data).to eq('%PDF-old')
     end
 
@@ -184,39 +187,31 @@ RSpec.describe 'Admin investor monthly report PDFs', type: :request do
   end
 
   describe 'POST /api/admin/v1/monthly_report_pdfs/zip' do
-    before do
-      Portfolio.create!(investor: tulio, current_balance: 5000, total_invested: 5000)
-      placeholder = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII='
-      allow(InvestorMonthlyReportPdfs::Assets).to receive(:data_uri).and_return("data:image/png;base64,#{placeholder}")
-      allow(InvestorMonthlyReportPdfs::Assets).to receive(:font_data_uri).and_return("data:font/ttf;base64,#{placeholder}")
-    end
-
-    it 'fills in missing PDFs and streams every present PDF for the month as one ZIP' do
-      post '/api/admin/v1/monthly_report_pdfs/zip', params: { month: '2026-07' }
-
-      expect(response).to have_http_status(:ok)
-      expect(response.media_type).to eq('application/zip')
-      expect(InvestorMonthlyReportPdf.find_by(investor: tulio, month: '2026-07')).to be_present
-
-      entries = Zip::File.open_buffer(response.body).entries.map(&:name)
-      expect(entries).to include(a_string_matching(/TULIO CAPPARELLI/i))
-    end
-
-    it 'reuses an already-generated PDF instead of regenerating it' do
-      existing = InvestorMonthlyReportPdf.create!(
-        investor: tulio, month: '2026-07', original_filename: 'old.pdf',
-        content_type: 'application/pdf', byte_size: 8, pdf_data: '%PDF-old'
+    it 'streams every PDF already generated for the month as one ZIP' do
+      InvestorMonthlyReportPdf.create!(
+        investor: tulio, month: '2026-07', original_filename: 'Reporte julio - TULIO CAPPARELLI.pdf',
+        content_type: 'application/pdf', byte_size: 11, pdf_data: '%PDF-1.4 hi'
       )
 
       post '/api/admin/v1/monthly_report_pdfs/zip', params: { month: '2026-07' }
 
       expect(response).to have_http_status(:ok)
-      expect(existing.reload.pdf_data).to eq('%PDF-old')
+      expect(response.media_type).to eq('application/zip')
+
+      entries = Zip::File.open_buffer(response.body).entries.map(&:name)
+      expect(entries).to include(a_string_matching(/TULIO CAPPARELLI/i))
+    end
+
+    it 'does not generate missing PDFs - only bundles what already exists' do
+      Portfolio.create!(investor: tulio, current_balance: 5000, total_invested: 5000)
+
+      post '/api/admin/v1/monthly_report_pdfs/zip', params: { month: '2026-07' }
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(InvestorMonthlyReportPdf.find_by(investor: tulio, month: '2026-07')).to be_nil
     end
 
     it 'returns 422 when there is nothing to zip' do
-      Investor.destroy_all
-
       post '/api/admin/v1/monthly_report_pdfs/zip', params: { month: '2026-07' }
 
       expect(response).to have_http_status(:unprocessable_content)

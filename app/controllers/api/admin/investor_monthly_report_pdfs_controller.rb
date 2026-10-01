@@ -74,11 +74,18 @@ module Api
         month = parse_month_param(required: true)
         return if performed?
 
-        investor = nil
-        if params[:investor_id].present?
-          investor = find_investor_by_id(id: params[:investor_id])
-          return unless investor
+        # Bulk ("Generar todos") - no investor_id - runs in the background:
+        # with enough investors, generating every PDF one by one (each one a
+        # full Chrome render) blows past Heroku's 30s request timeout and
+        # takes the dyno's memory down with it. A single investor's PDF is
+        # fast enough to render inline, so that path is unchanged.
+        if params[:investor_id].blank?
+          InvestorMonthlyReportPdfs::GenerateAllJob.perform_later(month: month, generated_by_id: current_user.id)
+          return render json: { data: { enqueued: true, month: month } }, status: :accepted
         end
+
+        investor = find_investor_by_id(id: params[:investor_id])
+        return unless investor
 
         result = InvestorMonthlyReportPdfs::Generate.call(
           month: month,
@@ -117,14 +124,14 @@ module Api
         render_error('No se pudo generar la vista previa.', status: :internal_server_error)
       end
 
-      # Fills in any missing PDF for the month (same as "Generar
-      # automáticamente") and streams back every present PDF for that month
-      # as a single ZIP.
+      # Streams back every PDF already generated for the month as a single
+      # ZIP. Does NOT generate missing ones first (that used to run inline
+      # here, same as "Generar todos" did - with enough investors it blew
+      # past Heroku's request timeout and memory limit); use "Generar
+      # todos" first if some are still missing.
       def zip
         month = parse_month_param(required: true)
         return if performed?
-
-        InvestorMonthlyReportPdfs::Generate.call(month: month, generated_by: current_user)
 
         reports = InvestorMonthlyReportPdf.for_month(month).includes(:investor).order('investors.name')
         if reports.empty?

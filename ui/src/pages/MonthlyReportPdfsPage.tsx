@@ -220,19 +220,21 @@ export const MonthlyReportPdfsPage = () => {
     setError(null);
     setNotice(null);
     try {
-      const res = await api.generateMonthlyReportPdfs({ month });
-      const result = (
-        res as { data: { generated: unknown[]; skipped: unknown[]; failed: { name: string; error: string }[] } }
-      ).data;
-      const parts = [`${result.generated.length} generados`];
-      if (result.failed.length) parts.push(`${result.failed.length} con error`);
-      setNotice(parts.join(", ") + ".");
-      if (result.failed.length) {
-        setError(
-          result.failed.map((f) => `${f.name}: ${f.error}`).join(" — "),
-        );
-      }
-      fetchMonth(month);
+      // Generation runs in the background now (see the backend PR): with
+      // enough investors, generating every PDF inline blew past Heroku's
+      // request timeout and its memory limit. Poll the list for a bit so
+      // it fills in as each one finishes, instead of waiting on one giant
+      // response.
+      await api.generateMonthlyReportPdfs({ month });
+      setNotice(
+        "Generando en el fondo. Esta lista se va a ir actualizando sola durante los próximos minutos.",
+      );
+      let attempts = 0;
+      const poll = window.setInterval(() => {
+        attempts += 1;
+        fetchMonth(month);
+        if (attempts >= 18) window.clearInterval(poll); // ~3 min at 10s each
+      }, 10000);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Error al generar PDFs");
     } finally {
