@@ -80,6 +80,10 @@ module Api
         # takes the dyno's memory down with it. A single investor's PDF is
         # fast enough to render inline, so that path is unchanged.
         if params[:investor_id].blank?
+          if InvestorMonthlyReportPdfs::GenerateAllJob.running?(month)
+            return render json: { data: { enqueued: false, already_running: true, month: month } }, status: :ok
+          end
+
           InvestorMonthlyReportPdfs::GenerateAllJob.perform_later(month: month, generated_by_id: current_user.id)
           return render json: { data: { enqueued: true, month: month } }, status: :accepted
         end

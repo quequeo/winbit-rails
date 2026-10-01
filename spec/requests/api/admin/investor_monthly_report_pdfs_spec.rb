@@ -77,6 +77,18 @@ RSpec.describe 'Admin investor monthly report PDFs', type: :request do
       post '/api/admin/v1/monthly_report_pdfs/generate', params: { month: '2026-07', investor_id: 'nope' }
       expect(response).to have_http_status(:not_found)
     end
+
+    it 'does not enqueue a second bulk job while one is already running for the month' do
+      allow(InvestorMonthlyReportPdfs::GenerateAllJob).to receive(:running?).with('2026-07').and_return(true)
+
+      post '/api/admin/v1/monthly_report_pdfs/generate', params: { month: '2026-07' }
+
+      expect(response).to have_http_status(:ok)
+      json = JSON.parse(response.body)
+      expect(json.dig('data', 'enqueued')).to be(false)
+      expect(json.dig('data', 'already_running')).to be(true)
+      expect(enqueued_jobs).to be_empty
+    end
   end
 
   describe 'GET /api/admin/v1/monthly_report_pdfs' do

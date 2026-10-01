@@ -164,6 +164,24 @@ describe("MonthlyReportPdfsPage", () => {
     ).toBeInTheDocument();
   });
 
+  it("shows a notice instead of polling when a bulk generation is already running", async () => {
+    const user = userEvent.setup();
+    vi.mocked(api.generateMonthlyReportPdfs).mockResolvedValue({
+      data: { enqueued: false, already_running: true, month: lastClosedMonth() },
+    });
+
+    render(<MonthlyReportPdfsPage />);
+    await screen.findByText("Tulio Capparelli");
+
+    await user.click(
+      screen.getByRole("button", { name: /Generar automáticamente/i }),
+    );
+
+    expect(
+      await screen.findByText(/Ya hay una generación en curso/),
+    ).toBeInTheDocument();
+  });
+
   it("shows the report preview with validation warnings in a modal", async () => {
     const user = userEvent.setup();
     vi.mocked(api.previewMonthlyReportPdf).mockResolvedValue({

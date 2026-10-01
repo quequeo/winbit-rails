@@ -18,6 +18,17 @@ module InvestorMonthlyReportPdfs
   #   InvestorMonthlyReportPdfs::Generate.call(month: '2026-07', overwrite: true, generated_by: current_user)
   #     -> regenerates for every ACTIVE investor, replacing any existing report
   class Generate
+    # Each render launches a full Chrome process - on the 512MB dyno this
+    # app runs on, two or three running at once is enough to exhaust memory
+    # and take the whole app down (confirmed in production: a double-click
+    # on "Generar todos" ran two GenerateAllJob instances concurrently,
+    # each launching Chrome per investor, and the dyno OOMed - R14, then
+    # every request including investor login started timing out). This
+    # mutex caps the dyno to one Chrome process at a time, across every
+    # caller (the bulk job, a single "Generar" click, overlapping bulk
+    # runs) - slower, but it can't pile up.
+    RENDER_MUTEX = Mutex.new
+
     Result = Struct.new(:month, :generated, :skipped, :failed, keyword_init: true) do
       def as_json(*)
         {
@@ -107,7 +118,7 @@ module InvestorMonthlyReportPdfs
       # Grover.configure block (config/initializers/grover.rb) - the template's
       # own `@page` CSS rule (297mm x 210mm, margin 0) is honored via
       # prefer_css_page_size there.
-      Grover.new(html).to_pdf
+      RENDER_MUTEX.synchronize { Grover.new(html).to_pdf }
     end
   end
 end
