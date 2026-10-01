@@ -15,20 +15,21 @@ module InvestorMonthlyReportPdfs
     PAD_TOP = 26
     PAD_BOTTOM = 22
 
-    def self.build(rows:, initial_value:)
-      new(rows:, initial_value:).build
+    def self.build(rows:, initial_value:, initial_label:)
+      new(rows:, initial_value:, initial_label:).build
     end
 
-    def initialize(rows:, initial_value:)
+    def initialize(rows:, initial_value:, initial_label:)
       @rows = rows
       @initial_value = initial_value.to_f
+      @initial_label = initial_label
     end
 
     def build
       return '' if @rows.empty?
 
       values = [@initial_value] + @rows.map { |r| r[:portfolio_value].to_f }
-      labels = ['01/26'] + @rows.map { |r| r[:label] }
+      labels = [@initial_label] + @rows.map { |r| r[:label] }
       vmin = values.min
       vmax = values.max
       vrange = (vmax - vmin).zero? ? 1.0 : (vmax - vmin)
