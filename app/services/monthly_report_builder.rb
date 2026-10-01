@@ -30,6 +30,8 @@ class MonthlyReportBuilder
   def build
     annex_rows = build_annex_rows
     dashboard = InvestorPortfolioDashboardPayload.build(investor: @investor) || {}
+    summary = build_summary(dashboard, annex_rows:)
+    align_entry_month_return!(annex_rows, summary)
 
     {
       investor: {
@@ -38,12 +40,41 @@ class MonthlyReportBuilder
         email: @investor.email,
       },
       report_month: @report_month.strftime('%Y-%m'),
-      summary: build_summary(dashboard, annex_rows:),
+      summary: summary,
       annex_rows: annex_rows,
     }
   end
 
   private
+
+  # If the investor's entire history is this one report month, "rendimiento
+  # mensual" and "acumulado desde el ingreso" cover the exact same period -
+  # but they're computed via different formulas (this row: gross return
+  # over that month's deposit; since_entry: the TWR-unwound summary figure
+  # - see accumulated_net_as_of), so without this they can show two
+  # different-looking numbers for what's actually the same thing (seen in
+  # production: Matías Di Giano showed +1,4% rendimiento mensual vs +1,3%
+  # acumulado, despite September being his only month ever). Overriding the
+  # row with the summary figure keeps both readings identical whenever
+  # they're describing the same period.
+  def align_entry_month_return!(annex_rows, summary)
+    key = @report_month.strftime('%Y-%m')
+    return unless summary[:year_opening_date].to_s.start_with?(key)
+
+    # Only platform-computed rows are subject to the previous_close=0 bug
+    # this works around (see build_platform_row) - a spreadsheet-imported
+    # row's return_percent/return_usd already came straight from the import
+    # and was never computed that way, so it stays as-is. Overriding it here
+    # would instead replace a trusted imported figure with
+    # accumulated_since_entry, which depends on dashboard fields
+    # (strategy_return_all_*) that aren't guaranteed to be populated/current
+    # for every spreadsheet-only investor.
+    row = annex_rows.find { |r| r[:month] == key && !r[:opening_snapshot] && !r[:entry_row] && r[:source] == 'platform' }
+    return unless row
+
+    row[:return_percent] = summary[:accumulated_since_entry_percent]
+    row[:return_usd] = summary[:accumulated_since_entry_usd]
+  end
 
   def build_summary(dashboard, annex_rows:)
     year_opening = year_opening_snapshot(annex_rows)

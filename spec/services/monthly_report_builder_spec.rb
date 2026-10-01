@@ -482,10 +482,12 @@ RSpec.describe MonthlyReportBuilder do
         # (today's balance) - (today's balance) - (this month's deposit).
         september_row = report[:annex_rows].find { |r| r[:month] == '2026-09' }
         expect(september_row[:return_usd]).to eq(16.9)
-        # No prior balance to measure a percent against, so it's measured
-        # against what she actually deposited (16.9 / 2000) - not a flat 0%,
-        # which would hide that she only caught part of the month's trades.
-        expect(september_row[:return_percent]).to eq(0.85)
+        # September is both "this month" and "since entry" for her - both
+        # must read the same (align_entry_month_return! mirrors the
+        # since_entry figure onto the row instead of a separately-computed
+        # gross/deposit ratio, which could show a different-looking number
+        # for what's actually the same period).
+        expect(september_row[:return_percent]).to eq(report[:summary][:accumulated_since_entry_percent])
 
         expect(report[:summary][:year_opening_date]).to eq('2026-09-28')
         expect(report[:summary][:year_opening_balance_usd]).to eq(2016.9)
