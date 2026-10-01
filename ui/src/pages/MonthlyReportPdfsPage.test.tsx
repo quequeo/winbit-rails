@@ -143,6 +143,27 @@ describe("MonthlyReportPdfsPage", () => {
     expect(confirmArgs.confirm).toBe(true);
   });
 
+  it("enqueues bulk generation and shows a background-processing notice", async () => {
+    const user = userEvent.setup();
+    vi.mocked(api.generateMonthlyReportPdfs).mockResolvedValue({
+      data: { enqueued: true, month: lastClosedMonth() },
+    });
+
+    render(<MonthlyReportPdfsPage />);
+    await screen.findByText("Tulio Capparelli");
+
+    await user.click(
+      screen.getByRole("button", { name: /Generar automáticamente/i }),
+    );
+
+    expect(api.generateMonthlyReportPdfs).toHaveBeenCalledWith({
+      month: lastClosedMonth(),
+    });
+    expect(
+      await screen.findByText(/Generando en el fondo/),
+    ).toBeInTheDocument();
+  });
+
   it("shows the report preview with validation warnings in a modal", async () => {
     const user = userEvent.setup();
     vi.mocked(api.previewMonthlyReportPdf).mockResolvedValue({
