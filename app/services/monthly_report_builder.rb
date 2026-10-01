@@ -269,8 +269,17 @@ class MonthlyReportBuilder
     # RDO M $ / % = gross Winbit return; CST is shown separately in its own column.
     gross_return_usd = (net_return_usd + bd(flows[:service_cost])).round(2, :half_up)
 
-    return_percent = if previous_close.positive?
-                       ((gross_return_usd / bd(previous_close)) * 100).round(2, :half_up)
+    # For an investor's first-ever month, previous_close is 0 - there's no
+    # prior balance to measure a percent return against. The capital they
+    # actually had at risk that month is what they deposited, not $0, so
+    # fall back to that instead of forcing a flat 0% (which hid real gains/
+    # losses for anyone who joined mid-year and only caught part of the
+    # month's trading days - e.g. an investor who deposits right before the
+    # month's last trade shouldn't show 0,0% just because they had no
+    # balance before that deposit).
+    base_capital = previous_close.positive? ? bd(previous_close) : bd(flows[:deposits])
+    return_percent = if base_capital.positive?
+                       ((gross_return_usd / base_capital) * 100).round(2, :half_up)
     else
                        BigDecimal('0')
     end
