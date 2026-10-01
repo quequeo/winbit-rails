@@ -350,7 +350,20 @@ class MonthlyReportBuilder
                            .pick(:portfolio_value)
     return annex_value.to_f if annex_value
 
-    @investor.portfolio&.current_balance&.to_f
+    # No PortfolioHistory and no spreadsheet row at/before `time` means this
+    # investor genuinely had nothing with the fund yet at that point - 0, not
+    # Portfolio#current_balance (today's live balance). Falling back to
+    # current_balance here back-dates "today's balance" onto every month
+    # before a late-joining investor's real first deposit (each one gets
+    # built via build_platform_row from May 2026 onward regardless of when
+    # they actually joined): those phantom months then show flat 0% (no
+    # previous value to compare against), and the month they actually DO
+    # deposit swings to a nonsense deeply negative return, since that
+    # month's math subtracts the phantom "previous" balance and the real
+    # deposit from the real end value (e.g. an investor whose only ever
+    # activity is a $2000 deposit this month showed -99%, -$2000 for it,
+    # instead of their real ~0% / small trading result).
+    0.0
   end
 
   def portfolio_value_at_month_end(month)

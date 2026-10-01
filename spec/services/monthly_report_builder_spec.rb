@@ -446,6 +446,46 @@ RSpec.describe MonthlyReportBuilder do
     end
   end
 
+  describe 'investor who joins several months after the platform start (Cecilia Sarli case)' do
+    let(:late_joiner) do
+      Investor.create!(email: 'late.joiner@example.com', name: 'Late Joiner', status: 'ACTIVE')
+    end
+
+    let!(:late_joiner_portfolio) do
+      Portfolio.create!(investor: late_joiner, current_balance: 2016.9, total_invested: 2000)
+    end
+
+    before do
+      PortfolioHistory.create!(
+        investor: late_joiner, event: 'DEPOSIT', amount: 2000,
+        previous_balance: 0, new_balance: 2000,
+        date: Time.zone.local(2026, 9, 28, 19, 0, 0), status: 'COMPLETED',
+      )
+      PortfolioHistory.create!(
+        investor: late_joiner, event: 'OPERATING_RESULT', amount: 16.9,
+        previous_balance: 2000, new_balance: 2016.9,
+        date: Time.zone.local(2026, 9, 29, 17, 0, 0), status: 'COMPLETED',
+      )
+    end
+
+    it "does not backdate today's balance onto the months before the investor existed" do
+      travel_to Time.zone.local(2026, 9, 30, 12, 0, 0) do
+        report = described_class.new(investor: late_joiner, report_month: Date.new(2026, 9, 1)).build
+
+        phantom_months = report[:annex_rows].select { |r| %w[2026-05 2026-06 2026-07 2026-08].include?(r[:month]) }
+        expect(phantom_months.map { |r| r[:portfolio_value] }).to all(eq(0.0))
+
+        # Real first month: should reflect the actual $16.9 trading gain, not
+        # (today's balance) - (today's balance) - (this month's deposit).
+        september_row = report[:annex_rows].find { |r| r[:month] == '2026-09' }
+        expect(september_row[:return_usd]).to eq(16.9)
+
+        expect(report[:summary][:year_opening_date]).to eq('2026-09-28')
+        expect(report[:summary][:year_opening_balance_usd]).to eq(2016.9)
+      end
+    end
+  end
+
   describe 'net_contributed_after_withdrawals_usd (Camilo Giordano case)' do
     let(:investor) do
       Investor.create!(email: 'camilo-recon@example.com', name: 'Camilo Recon', status: 'ACTIVE')
