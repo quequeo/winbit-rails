@@ -79,12 +79,15 @@ class MonthlyReportBuilder
   def build_summary(dashboard, annex_rows:)
     year_opening = year_opening_snapshot(annex_rows)
     as_of = effective_month_end(@report_month)
+    portfolio = @investor.portfolio
 
     since_entry = accumulated_net_as_of(
-      gross_usd: dashboard[:strategyReturnAllUSD], gross_percent: dashboard[:strategyReturnAllPercent], as_of:
+      gross_usd: dashboard[:strategyReturnAllUSD], gross_percent: dashboard[:strategyReturnAllPercent], as_of:,
+      from: nil, stored_baseline: portfolio&.strategy_return_all_usd.present?
     )
     since_year_start = accumulated_net_as_of(
-      gross_usd: dashboard[:strategyReturnYtdUSD], gross_percent: dashboard[:strategyReturnYtdPercent], as_of:
+      gross_usd: dashboard[:strategyReturnYtdUSD], gross_percent: dashboard[:strategyReturnYtdPercent], as_of:,
+      from: Time.zone.local(@report_month.year, 1, 1), stored_baseline: portfolio&.strategy_return_ytd_usd.present?
     )
 
     {
@@ -131,8 +134,26 @@ class MonthlyReportBuilder
   # unwinding it is a plain subtraction of what happened after the cutoff. Percent compounds
   # multiplicatively, so unwinding divides out the product of each subsequent day's factor
   # (DailyOperatingResult#percent, firm-wide, same for every investor).
-  def accumulated_net_as_of(gross_usd:, gross_percent:, as_of:)
+  #
+  # Todo lo anterior vale solo cuando `portfolio.strategy_return_all_usd`/`strategy_return_ytd_usd`
+  # está poblado (`stored_baseline:`) - es decir, hay una base de compounding real para rebobinar.
+  # Cuando es nil (cualquier inversor nativo de la plataforma, sin migración de planilla, mientras
+  # DailyOperatingResultApplicator nunca haya tenido un valor previo para seguir acumulando),
+  # InvestorPortfolioDashboardPayload cae a TimeWeightedReturnCalculator, que ya neta TRADING_FEE
+  # dentro de su pnl_usd/twr_percent (comentario propio de esa clase: "Trading fees reduce return
+  # automatically because they reduce balances"). Restarle fees_as_of a eso cobra la comisión dos
+  # veces - confirmado en producción para varios inversores sin historial migrado que ya tuvieron
+  # al menos un cobro de comisión (Cecilia Sarli, Matías Di Giano, Jaime García Méndez, Marcela
+  # Manavella): en todos los casos el reporte mostraba el neto real menos la comisión otra vez.
+  # Para ese caso no hay una cifra en vivo que rebobinar, así que se le pide directamente a la
+  # calculadora la ventana que termina en `as_of`.
+  def accumulated_net_as_of(gross_usd:, gross_percent:, as_of:, from:, stored_baseline:)
     return { usd: 0.0, percent: 0.0 } if gross_usd.nil? || gross_percent.nil?
+
+    unless stored_baseline
+      twr = TimeWeightedReturnCalculator.for_investor(investor_id: @investor.id, from: from, to: as_of)
+      return { usd: twr.pnl_usd.round(2), percent: twr.twr_percent.round(4) }
+    end
 
     usd_after_cutoff = bd(
       @investor.portfolio_histories

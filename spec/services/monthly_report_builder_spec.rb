@@ -495,6 +495,52 @@ RSpec.describe MonthlyReportBuilder do
     end
   end
 
+  describe 'investor with no migrated baseline charged a fee in their entry month (Cecilia Sarli fee bug)' do
+    let(:late_joiner) do
+      Investor.create!(email: 'late.joiner.fee@example.com', name: 'Late Joiner Fee', status: 'ACTIVE')
+    end
+
+    let!(:late_joiner_portfolio) do
+      Portfolio.create!(investor: late_joiner, current_balance: 2011.83, total_invested: 2000)
+    end
+
+    before do
+      PortfolioHistory.create!(
+        investor: late_joiner, event: 'DEPOSIT', amount: 2000,
+        previous_balance: 0, new_balance: 2000,
+        date: Time.zone.local(2026, 9, 28, 19, 0, 0), status: 'COMPLETED',
+      )
+      PortfolioHistory.create!(
+        investor: late_joiner, event: 'OPERATING_RESULT', amount: 16.9,
+        previous_balance: 2000, new_balance: 2016.9,
+        date: Time.zone.local(2026, 9, 29, 17, 0, 0), status: 'COMPLETED',
+      )
+      PortfolioHistory.create!(
+        investor: late_joiner, event: 'TRADING_FEE', amount: -5.07,
+        previous_balance: 2016.9, new_balance: 2011.83,
+        date: Time.zone.local(2026, 9, 30, 19, 0, 0), status: 'COMPLETED',
+      )
+    end
+
+    it 'nets the fee only once (gross 16.9 - fee 5.07 = net 11.83), not twice' do
+      travel_to Time.zone.local(2026, 9, 30, 20, 0, 0) do
+        report = described_class.new(investor: late_joiner, report_month: Date.new(2026, 9, 1)).build
+        summary = report[:summary]
+
+        # Portfolio#strategy_return_all_usd/strategy_return_ytd_usd are nil here (no
+        # migrated baseline, like any investor native to the platform) - the dashboard
+        # falls back to TimeWeightedReturnCalculator, whose pnl_usd already nets
+        # TRADING_FEE out. Subtracting the fee again produced 6.76 (11.83 - 5.07) in
+        # production for investors in this exact situation.
+        expect(summary[:accumulated_since_entry_usd]).to eq(11.83)
+        expect(summary[:accumulated_2026_usd]).to eq(11.83)
+
+        september_row = report[:annex_rows].find { |r| r[:month] == '2026-09' }
+        expect(september_row[:return_usd]).to eq(summary[:accumulated_since_entry_usd])
+      end
+    end
+  end
+
   describe 'net_contributed_after_withdrawals_usd (Camilo Giordano case)' do
     let(:investor) do
       Investor.create!(email: 'camilo-recon@example.com', name: 'Camilo Recon', status: 'ACTIVE')
