@@ -43,7 +43,12 @@ module InvestorMonthlyReportPdfs
         month_label_full: "#{MONTH_NAMES[@report_month.month]} #{@report_month.year}",
         as_of_date: (@report_month.end_of_month <= Date.current ? @report_month.end_of_month : Date.current).strftime('%d/%m/%Y'),
         portfolio_value: amount(summary[:portfolio_value_usd]),
-        net_contributed: amount(summary[:net_contributed_usd]),
+        # "Capital aportado neto" / "Ingresos menos retiros" in the template -
+        # net_contributed_usd is actually gross (= Portfolio#total_invested,
+        # which never goes down on a withdrawal elsewhere in the app; see
+        # MonthlyReportBuilder#build_summary). The PDF's own label promises
+        # net, so this needs net_contributed_after_withdrawals_usd.
+        net_contributed: amount(summary[:net_contributed_after_withdrawals_usd]),
         monthly: signed_pair(current_month_row&.dig(:return_percent), current_month_row&.dig(:return_usd)),
         ytd: signed_pair(summary[:accumulated_2026_percent], summary[:accumulated_2026_usd]),
         since_entry: signed_pair(summary[:accumulated_since_entry_percent], summary[:accumulated_since_entry_usd]),

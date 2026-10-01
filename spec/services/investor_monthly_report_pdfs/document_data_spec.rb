@@ -111,7 +111,11 @@ RSpec.describe InvestorMonthlyReportPdfs::DocumentData do
       expect(data[:investor_name]).to eq('Camilo Giordano')
       expect(data[:month_label]).to eq('MAYO 2026')
       expect(data[:portfolio_value]).to eq('6.750')
-      expect(data[:net_contributed]).to eq('6.484')
+      # net of withdrawals (none here) - both May deposits: 6484 + 382.29.
+      # Portfolio#total_invested (6484 in this fixture) is NOT what's shown
+      # here precisely because it doesn't reflect that second deposit - see
+      # DocumentData's net_contributed comment.
+      expect(data[:net_contributed]).to eq('6.866')
       expect(data[:year_opening][:date]).to eq('01/01/2026')
       expect(data[:year_opening][:value]).to eq('6.044')
 
