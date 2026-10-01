@@ -201,9 +201,20 @@ class MonthlyReportBuilder
 
     platform_start = SPREADSHEET_LAST_MONTH.next_month
     month = platform_start
+    # Months before the investor's real first deposit are always $0 (see
+    # portfolio_value_at) - not appending them keeps the Anexo table/chart
+    # starting from when their money actually arrived, instead of a run of
+    # empty rows back to the platform's own start date (May 2026) for
+    # anyone who joined later. previous_row stays the synthetic/spreadsheet
+    # entry across every skipped month, which is the same $0 baseline those
+    # rows would have chained through anyway, so this doesn't change the
+    # math for the first real row.
+    entered = migrated_from_spreadsheet
 
     while month <= @report_month
-      rows << build_platform_row(month, previous_row: rows.last, migrated_from_spreadsheet:)
+      row = build_platform_row(month, previous_row: rows.last, migrated_from_spreadsheet:)
+      entered ||= row[:portfolio_value].to_f != 0 || row[:deposits].to_f != 0
+      rows << row if entered
       month = month.next_month
     end
 

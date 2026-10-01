@@ -53,7 +53,11 @@ module InvestorMonthlyReportPdfs
         },
         evo_rows: evo_rows,
         evo_total: signed_pair(summary[:accumulated_2026_percent], summary[:accumulated_2026_usd]),
-        chart_svg: ChartSvg.build(rows: evo_rows_for_chart, initial_value: summary[:year_opening_balance_usd].to_f),
+        chart_svg: ChartSvg.build(
+          rows: evo_rows_for_chart,
+          initial_value: summary[:year_opening_balance_usd].to_f,
+          initial_label: Date.parse(summary[:year_opening_date]).strftime('%b-%y')
+        ),
         ops_pages: ops_pages,
       }
     end

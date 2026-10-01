@@ -468,12 +468,15 @@ RSpec.describe MonthlyReportBuilder do
       )
     end
 
-    it "does not backdate today's balance onto the months before the investor existed" do
+    it "does not backdate today's balance onto the months before the investor existed, and drops those empty rows" do
       travel_to Time.zone.local(2026, 9, 30, 12, 0, 0) do
         report = described_class.new(investor: late_joiner, report_month: Date.new(2026, 9, 1)).build
 
-        phantom_months = report[:annex_rows].select { |r| %w[2026-05 2026-06 2026-07 2026-08].include?(r[:month]) }
-        expect(phantom_months.map { |r| r[:portfolio_value] }).to all(eq(0.0))
+        # May-Aug never happened for this investor (their first deposit was
+        # Sep 28) - the Anexo/Evolución table shouldn't show a run of empty
+        # $0 rows before the month they actually joined.
+        months = report[:annex_rows].map { |r| r[:month] }
+        expect(months).not_to include('2026-05', '2026-06', '2026-07', '2026-08')
 
         # Real first month: should reflect the actual $16.9 trading gain, not
         # (today's balance) - (today's balance) - (this month's deposit).
