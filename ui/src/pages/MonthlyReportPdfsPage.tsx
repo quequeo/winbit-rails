@@ -225,7 +225,14 @@ export const MonthlyReportPdfsPage = () => {
       // request timeout and its memory limit. Poll the list for a bit so
       // it fills in as each one finishes, instead of waiting on one giant
       // response.
-      await api.generateMonthlyReportPdfs({ month });
+      const res = await api.generateMonthlyReportPdfs({ month });
+      const payload = (res as { data: { already_running?: boolean } }).data;
+      if (payload?.already_running) {
+        setNotice(
+          "Ya hay una generación en curso para este mes. Esperá a que termine antes de volver a generar.",
+        );
+        return;
+      }
       setNotice(
         "Generando en el fondo. Esta lista se va a ir actualizando sola durante los próximos minutos.",
       );
