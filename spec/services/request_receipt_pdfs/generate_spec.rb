@@ -23,7 +23,7 @@ RSpec.describe RequestReceiptPdfs::Generate do
 
     expect(second.id).to eq(first.id)
     expect(RequestReceiptPdf.where(request_id: req.id).count).to eq(1)
-    expect(second.original_filename).to eq('Retiro de capital – Lisandro Filardi | 100 USDT - 09.10.2026.pdf')
+    expect(second.original_filename).to eq('Retiro de capital – Lisandro Filardi - 100 USDT - 09.10.2026.pdf')
   end
 
   it 'refuses non-approved requests' do
