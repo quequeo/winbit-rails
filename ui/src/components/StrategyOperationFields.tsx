@@ -169,7 +169,7 @@ export const StrategyOperationFields = ({
             value={values.notes}
             onChange={(e) => set("notes", e.target.value)}
             rows={2}
-            className="w-full rounded-md border border-[rgba(101,167,165,0.25)] bg-[#121716] px-3 py-2 text-sm text-white focus:border-primary focus:outline-none"
+            className="w-full rounded-md border border-[rgba(71,151,133,0.25)] bg-[#111513] px-3 py-2 text-sm text-white focus:border-primary focus:outline-none"
             placeholder="Setup, contexto, etc."
           />
         </div>

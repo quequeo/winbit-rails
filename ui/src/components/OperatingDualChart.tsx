@@ -175,7 +175,7 @@ export const OperatingDualChart = ({
                 width={barWidth}
                 height={bar.height}
                 rx={1.5}
-                fill={positive ? "#9dd4cb" : "#d48080"}
+                fill={positive ? "#6fb8a4" : "#c96c67"}
                 opacity={isHovered ? 1 : 0.85}
               />
             );

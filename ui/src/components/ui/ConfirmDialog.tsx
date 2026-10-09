@@ -30,8 +30,8 @@ export const ConfirmDialog = ({
 
   const confirmButtonClass =
     confirmVariant === "danger"
-      ? "bg-[rgba(196,107,107,0.2)] text-[#c46b6b] border border-[rgba(196,107,107,0.25)] hover:bg-[rgba(196,107,107,0.3)]"
-      : "bg-[rgba(101,167,165,0.2)] text-white border border-[rgba(101,167,165,0.35)] hover:bg-[rgba(101,167,165,0.3)]";
+      ? "bg-[rgba(201,108,103,0.2)] text-[#c96c67] border border-[rgba(201,108,103,0.25)] hover:bg-[rgba(201,108,103,0.3)]"
+      : "bg-[rgba(71,151,133,0.2)] text-white border border-[rgba(71,151,133,0.35)] hover:bg-[rgba(71,151,133,0.3)]";
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -41,7 +41,7 @@ export const ConfirmDialog = ({
       />
 
       <div className="flex min-h-full items-center justify-center p-4">
-        <div className="relative w-full max-w-md transform overflow-hidden rounded-lg admin-card !transition-none border border-[rgba(101,167,165,0.25)]">
+        <div className="relative w-full max-w-md transform overflow-hidden rounded-lg admin-card !transition-none border border-[rgba(71,151,133,0.25)]">
           <div className="border-b border-b-default px-6 py-4">
             <h3 className="text-lg font-semibold text-white">{title}</h3>
           </div>
@@ -57,7 +57,7 @@ export const ConfirmDialog = ({
           <div className="flex justify-end gap-3 border-t border-b-default px-6 py-4">
             <button
               onClick={onClose}
-              className="rounded-lg border border-[rgba(101,167,165,0.25)] bg-dark-section px-4 py-2 text-sm font-medium text-t-muted transition-all duration-200 hover:bg-primary-dim focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-dark-bg"
+              className="rounded-lg border border-[rgba(71,151,133,0.25)] bg-dark-section px-4 py-2 text-sm font-medium text-t-muted transition-all duration-200 hover:bg-primary-dim focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-dark-bg"
             >
               {cancelText}
             </button>
