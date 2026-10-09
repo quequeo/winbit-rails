@@ -9,6 +9,16 @@ module RequestReceiptPdfs
       new(request:, balance_after:).call
     end
 
+    # "Retiro de capital – Nombre | 200 USDT - 16.08.2026"
+    def self.filename_for(request)
+      data = DocumentData.call(request: request)
+      kind = request.request_type == 'WITHDRAWAL' ? 'Retiro de capital' : 'Aporte de capital'
+      amount = data[:amount].delete_suffix(',00')
+      date = (request.processed_at || Time.current).in_time_zone.strftime('%d.%m.%Y')
+      name = request.investor.name.to_s.tr('\\\\/', '  ').squish
+      "#{kind} – #{name} | #{amount} #{data[:unit]} - #{date}.pdf"
+    end
+
     def initialize(request:, balance_after: nil)
       @request = request
       @balance_after = balance_after
@@ -32,10 +42,7 @@ module RequestReceiptPdfs
     private
 
     def filename
-      kind = @request.request_type == 'WITHDRAWAL' ? 'Comprobante de retiro' : 'Comprobante de aporte'
-      date = (@request.processed_at || Time.current).in_time_zone.strftime('%Y-%m-%d')
-      name = @request.investor.name.to_s.gsub(%r{[\/]}, ' ').squish
-      "#{kind} #{date} - #{name}.pdf"
+      self.class.filename_for(@request)
     end
 
     def render_pdf
