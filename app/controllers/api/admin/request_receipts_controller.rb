@@ -18,7 +18,7 @@ module Api
         send_data receipt.pdf_data,
                   type: receipt.content_type,
                   disposition: 'attachment',
-                  filename: receipt.original_filename
+                  filename: RequestReceiptPdfs::Generate.filename_for(request_record)
       rescue StandardError => e
         render_error(e.message, status: :bad_request)
       end

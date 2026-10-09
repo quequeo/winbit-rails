@@ -170,12 +170,18 @@ export const api = {
       throw new Error(`No se pudo generar el comprobante (${res.status})`);
     }
     const disposition = res.headers.get("Content-Disposition") ?? "";
-    const match = disposition.match(/filename="?([^";]+)"?/);
+    const utf8 = disposition.match(/filename*=UTF-8''([^;]+)/i);
+    const plain = disposition.match(/filename="?([^";]+)"?/);
+    const filename = utf8
+      ? decodeURIComponent(utf8[1])
+      : plain
+        ? plain[1]
+        : "Comprobante.pdf";
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = match ? decodeURIComponent(match[1]) : "Comprobante.pdf";
+    link.download = filename;
     link.click();
     URL.revokeObjectURL(url);
   },
