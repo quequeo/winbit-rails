@@ -181,6 +181,17 @@ export const RequestsPage = () => {
     }
   };
 
+  const downloadReceipt = async (id: string) => {
+    try {
+      setBusyId(id);
+      await api.downloadRequestReceipt(id);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Error");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   const reject = async (id: string) => {
     try {
       setBusyId(id);
@@ -655,8 +666,17 @@ export const RequestsPage = () => {
                 </Button>
               </div>
             )}
-            {r.status === "APPROVED" && isSuperadmin ? (
-              <div className="mt-4">
+            {r.status === "APPROVED" ? (
+              <div className="mt-4 flex flex-col gap-2">
+                <Button
+                  size="sm"
+                  onClick={() => downloadReceipt(r.id)}
+                  disabled={busyId === r.id}
+                  className="w-full"
+                >
+                  Descargar comprobante
+                </Button>
+                {isSuperadmin ? (
                 <Button
                   size="sm"
                   variant="outline"
@@ -666,6 +686,7 @@ export const RequestsPage = () => {
                 >
                   Deshacer aprobación
                 </Button>
+                ) : null}
               </div>
             ) : null}
           </div>
@@ -780,15 +801,26 @@ export const RequestsPage = () => {
                         </Button>
                       </div>
                     )}
-                    {r.status === "APPROVED" && isSuperadmin ? (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => resetApprovalToPending(r.id)}
-                        disabled={busyId === r.id}
-                      >
-                        Deshacer aprobación
-                      </Button>
+                    {r.status === "APPROVED" ? (
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          size="sm"
+                          onClick={() => downloadReceipt(r.id)}
+                          disabled={busyId === r.id}
+                        >
+                          Comprobante
+                        </Button>
+                        {isSuperadmin ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => resetApprovalToPending(r.id)}
+                            disabled={busyId === r.id}
+                          >
+                            Deshacer aprobación
+                          </Button>
+                        ) : null}
+                      </div>
                     ) : null}
                   </td>
                 </tr>

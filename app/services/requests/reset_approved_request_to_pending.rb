@@ -38,6 +38,8 @@ module Requests
           raise StandardError, 'Tipo de solicitud no soportado'
         end
 
+        req.receipt_pdf&.destroy!
+
         req.update!(
           status: 'PENDING',
           processed_at: nil

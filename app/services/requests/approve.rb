@@ -23,6 +23,7 @@ module Requests
                         .exists?
 
       withdrawal_fee = nil
+      balance_after = nil
 
       ActiveRecord::Base.transaction do
         req.update!(status: 'APPROVED', processed_at: processed_at)
@@ -49,6 +50,7 @@ module Requests
 
             previous_balance - requested_amount - withdrawal_fee[:fee_amount]
           end
+          balance_after = new_balance
 
           if req.request_type == 'DEPOSIT'
             PortfolioHistory.create!(
@@ -89,6 +91,7 @@ module Requests
             fee_amount = withdrawal_fee[:fee_amount]
             previous_balance - requested_amount - fee_amount
           end
+          balance_after = new_balance
 
           if req.request_type == 'DEPOSIT'
             PortfolioHistory.create!(
@@ -139,10 +142,18 @@ module Requests
         # Continue even if email fails
       end
 
+      enqueue_receipt(req, balance_after)
+
       true
     end
 
     private
+
+    def enqueue_receipt(req, balance_after)
+      RequestReceiptPdfs::GenerateJob.perform_later(request_id: req.id, balance_after: balance_after.to_s)
+    rescue StandardError => e
+      Rails.logger.error("Failed to enqueue receipt PDF for request #{req.id}: #{e.message}")
+    end
 
     # Accepts:
     # - nil
