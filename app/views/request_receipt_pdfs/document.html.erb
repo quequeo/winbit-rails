@@ -1,0 +1,91 @@
+<%#
+  Deposit / withdrawal receipt (1 page, A4 landscape), rendered via Grover -
+  see app/services/request_receipt_pdfs/generate.rb.
+
+  Locals:
+    data - the Hash built by RequestReceiptPdfs::DocumentData#call
+
+  Same fonts, palette and logo as the monthly report template.
+%>
+<%
+  assets = InvestorMonthlyReportPdfs::Assets
+  withdrawal = data[:withdrawal]
+  title = withdrawal ? 'Comprobante de retiro' : 'Certificado de aporte de capital'
+  description = if withdrawal
+    'Este comprobante acredita el retiro de fondos realizado por el inversor desde su portfolio dentro del servicio de inversión de Winbit Finance.'
+  else
+    'Este certificado acredita un aporte de capital realizado por el inversor, sumado a su portfolio vigente dentro del servicio de inversión de Winbit Finance.'
+  end
+  rows = [ [ 'Inversor', data[:investor_name], nil ], [ 'Fecha', data[:date_label], nil ] ]
+  rows << [ withdrawal ? 'Importe retirado' : 'Importe', "#{data[:amount]} #{data[:unit]}", nil ]
+  rows << [ "Comisión (#{data[:fee_percentage]}%)", "#{data[:fee]} #{data[:unit]}", nil ] if data[:fee]
+  rows << [ 'Destino', data[:destination], :small ] if data[:destination]
+%>
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title><%= title %> &middot; <%= data[:investor_name] %></title>
+<style>
+@font-face { font-family: "Plex"; font-weight: 400; src: url(<%= assets.font_data_uri(:sans_regular) %>) format("truetype"); }
+@font-face { font-family: "Plex"; font-weight: 500; src: url(<%= assets.font_data_uri(:sans_medium) %>) format("truetype"); }
+@font-face { font-family: "Plex"; font-weight: 600; src: url(<%= assets.font_data_uri(:sans_semibold) %>) format("truetype"); }
+@font-face { font-family: "PlexC"; font-weight: 400; src: url(<%= assets.font_data_uri(:condensed_regular) %>) format("truetype"); }
+@font-face { font-family: "PlexC"; font-weight: 600; src: url(<%= assets.font_data_uri(:condensed_semibold) %>) format("truetype"); }
+@font-face { font-family: "PlexC"; font-weight: 700; src: url(<%= assets.font_data_uri(:condensed_bold) %>) format("truetype"); }
+
+:root {
+  --carbon: #0D0F0E; --verde: #39836D; --verde2: #479785; --crema: #ECE4D5;
+  --gris: #A7AAA2; --borde: #28312D; --tinta: #2F3532; --tinta2: #5E625C; --linea-crema: #D4CBBA;
+}
+@page { size: 297mm 210mm; margin: 0; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body { font-family: "Plex", sans-serif; color: var(--tinta); }
+.page { width: 297mm; height: 210mm; position: relative; overflow: hidden; background: var(--carbon); }
+
+.top { position: absolute; left: 0; right: 0; top: 0; height: 160mm; color: var(--crema);
+  background: linear-gradient(90deg, rgba(13,15,14,0.97) 0%, rgba(13,15,14,0.85) 55%, rgba(13,15,14,0.35) 100%), url(<%= assets.data_uri(:back) %>) center / cover; }
+.top img.logo { position: absolute; left: 64px; top: 40px; height: 52px; }
+
+.rows { position: absolute; left: 64px; top: 138px; width: 700px; }
+.row { display: flex; align-items: baseline; gap: 22px; padding: 10px 0 9px; border-bottom: 1px solid var(--borde); }
+.label { font-family: "PlexC"; font-weight: 700; font-size: 21px; letter-spacing: 0.8px; text-transform: uppercase; color: var(--verde2); width: 300px; white-space: nowrap; flex: none; }
+.value { font-family: "PlexC"; font-weight: 400; font-size: 30px; color: var(--crema); text-transform: uppercase; }
+.row.small .value { font-family: "Plex"; font-size: 14px; text-transform: none; word-break: break-all; line-height: 1.4; }
+.row.capital { border-bottom: 0; padding-top: 16px; }
+.row.capital .label { font-size: 28px; }
+.row.capital .value { font-size: 38px; }
+
+.band { position: absolute; left: 0; right: 0; bottom: 0; height: 50mm; background: var(--crema);
+  display: flex; align-items: center; justify-content: space-between; padding: 0 64px; gap: 40px; }
+.band .t { font-family: "PlexC"; font-weight: 700; font-size: 24px; letter-spacing: 0.4px; text-transform: uppercase; color: var(--verde); }
+.band .by { margin-top: 6px; font-size: 12px; color: var(--tinta2); }
+.band .by b { color: var(--verde); font-weight: 600; }
+.band .desc { max-width: 330px; font-size: 11px; line-height: 1.5; color: var(--tinta2); padding-left: 28px; border-left: 1px solid var(--linea-crema); }
+.band .contact { font-size: 11px; color: var(--tinta2); text-align: right; line-height: 1.7; }
+.band .contact b { color: var(--verde); font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="top">
+    <img class="logo" src="<%= assets.data_uri(:logo_dark) %>" alt="Winbit">
+    <div class="rows">
+      <% rows.each do |label, value, kind| %>
+        <div class="row <%= kind %>"><span class="label"><%= label %>:</span><span class="value"><%= value %></span></div>
+      <% end %>
+      <div class="row capital"><span class="label">Capital actual:</span><span class="value"><%= data[:capital] %> <%= data[:unit] %></span></div>
+    </div>
+  </div>
+  <div class="band">
+    <div>
+      <div class="t"><%= title %></div>
+      <div class="by">Emitido por <b>Winbit</b></div>
+    </div>
+    <div class="desc"><%= description %></div>
+    <div class="contact">Consultas<br><b>winbit.cfds@gmail.com</b><br><b>+54 9 11 4178 3126</b></div>
+  </div>
+</div>
+</body>
+</html>

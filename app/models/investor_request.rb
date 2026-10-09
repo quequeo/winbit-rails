@@ -21,6 +21,7 @@ class InvestorRequest < ApplicationRecord
 
   belongs_to :investor
   belongs_to :reversed_by, class_name: 'User', optional: true
+  has_one :receipt_pdf, class_name: 'RequestReceiptPdf', foreign_key: :request_id, dependent: :destroy, inverse_of: :investor_request
 
   validates :request_type, presence: true, inclusion: { in: TYPES }
   validates :method, presence: true, inclusion: { in: METHODS }

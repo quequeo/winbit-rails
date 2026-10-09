@@ -156,6 +156,29 @@ export const api = {
     request(`${ADMIN_API_PREFIX}/requests/${id}/reset_approval_to_pending`, {
       method: "POST",
     }),
+  downloadRequestReceipt: async (id: string) => {
+    const res = await fetch(
+      `${API_BASE_URL}${ADMIN_API_PREFIX}/requests/${id}/receipt`,
+      {
+        credentials: "include",
+        headers: { Accept: "application/pdf" },
+      },
+    );
+    if (!res.ok) {
+      if (res.status === 401) throw new Error("Unauthorized");
+      if (res.status === 403) throw new Error("Forbidden");
+      throw new Error(`No se pudo generar el comprobante (${res.status})`);
+    }
+    const disposition = res.headers.get("Content-Disposition") ?? "";
+    const match = disposition.match(/filename="?([^";]+)"?/);
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = match ? decodeURIComponent(match[1]) : "Comprobante.pdf";
+    link.click();
+    URL.revokeObjectURL(url);
+  },
   getAdminAdmins: () => request(`${ADMIN_API_PREFIX}/admins`),
   createAdmin: (body: {
     email: string;
