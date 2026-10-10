@@ -9,7 +9,7 @@ const isLocalHost = ["localhost", "127.0.0.1", "0.0.0.0"].includes(
   globalThis?.location?.hostname,
 );
 if (import.meta.env.DEV || isLocalHost) {
-  document.title = "Winbit Admin v1.0.0 [DEV]";
+  document.title = "Winbit Admin [DEV]";
 }
 
 createRoot(document.getElementById("root")!).render(

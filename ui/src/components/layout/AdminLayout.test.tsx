@@ -69,7 +69,7 @@ describe("AdminLayout", () => {
     await waitFor(() =>
       expect(screen.getByText("admin@test.com")).toBeInTheDocument(),
     );
-    expect(screen.getByText("Winbit Admin v1.0.0")).toBeInTheDocument();
+    expect(screen.getByAltText("Winbit")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Dashboard" })).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: "Inversores" }),
