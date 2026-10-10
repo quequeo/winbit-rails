@@ -22,6 +22,7 @@ Si algo no está claro o hay más de una opción válida, el agente DEBE pregunt
 
 - **Backend:** Rails 8 API + SPA server sobre Ruby 3.3.9.
 - **Frontend admin (SPA):** React 19 + Vite 7 + TypeScript + Tailwind CSS 4, servido desde `public/`.
+- **Tipografía admin:** IBM Plex Sans (cuerpo) e IBM Plex Sans Condensed (títulos h1-h3 y cifras destacadas, via `font-display`), cargadas localmente desde `ui/src/assets/fonts`.
 
 ### Diseño visual del frontend admin (referencia para cambios CSS)
 
@@ -29,22 +30,22 @@ Si algo no está claro o hay más de una opción válida, el agente DEBE pregunt
 
 | Token              | Valor                            | Uso                        |
 | ------------------ | -------------------------------- | -------------------------- |
-| `primary`          | `#65a7a5`                        | Acento principal, botones  |
-| `primary-dim`      | `rgba(101, 167, 165, 0.15)`     | Fondos hover suaves        |
-| `primary-glow`     | `rgba(101, 167, 165, 0.3)`      | Glow en hover              |
-| `dark-bg`          | `#0B0F0E`                        | Fondo base                 |
-| `dark-card`        | `rgba(20, 20, 20, 0.6)`         | Fondo de cards             |
-| `dark-section`     | `rgba(20, 20, 20, 0.55)`        | Fondo de secciones         |
-| `t-primary`        | `#e8e8e8`                        | Texto principal            |
-| `t-muted`          | `#888888`                        | Texto secundario           |
-| `t-dim`            | `#555555`                        | Texto terciario            |
-| `b-default`        | `rgba(255, 255, 255, 0.08)`     | Bordes default             |
-| `b-accent`         | `rgba(101, 167, 165, 0.3)`      | Bordes activos             |
-| `success`          | `#9dd4cb`                        | Estado completado          |
+| `primary`          | `#479785`                        | Acento principal, botones  |
+| `primary-dim`      | `rgba(71, 151, 133, 0.15)`     | Fondos hover suaves        |
+| `primary-glow`     | `rgba(71, 151, 133, 0.3)`      | Glow en hover              |
+| `dark-bg`          | `#0D0F0E`                        | Fondo base                 |
+| `dark-card`        | `rgba(19, 23, 21, 0.75)`         | Fondo de cards             |
+| `dark-section`     | `rgba(19, 23, 21, 0.65)`        | Fondo de secciones         |
+| `t-primary`        | `#ECE4D5`                        | Texto principal            |
+| `t-muted`          | `#A7AAA2`                        | Texto secundario           |
+| `t-dim`            | `#6F736D`                        | Texto terciario            |
+| `b-default`        | `#28312D`     | Bordes default             |
+| `b-accent`         | `rgba(71, 151, 133, 0.35)`      | Bordes activos             |
+| `success`          | `#6FB8A4`                        | Estado completado          |
 | `warning`          | `#d4bf82`                        | Estado pendiente           |
-| `error`            | `#d48080`                        | Estado rechazado           |
+| `error`            | `#C96C67`                        | Estado rechazado           |
 
-**Fondo global (body):** Radial gradient sutil con dos elipses verdes sobre `#0B0F0E`. Definido en `ui/src/index.css`. NO usar `bg-dark-bg` en contenedores — el gradiente viene del `body`.
+**Fondo global (body):** Radial gradient sutil con dos elipses verdes sobre `#0D0F0E`. Definido en `ui/src/index.css`. NO usar `bg-dark-bg` en contenedores — el gradiente viene del `body`.
 
 **Clase CSS principal:**
 
@@ -54,7 +55,7 @@ Si algo no está claro o hay más de una opción válida, el agente DEBE pregunt
 
 **Reglas de diseño:**
 - Todas las cards usan hover con `translateY(-2px)` + green glow.
-- Bordes de cards: `rgba(101, 167, 165, 0.3)` mínimo.
+- Bordes de cards: `#28312D` (hover: `rgba(71, 151, 133, 0.45)`).
 - Botón default: hover con elevación y glow verde.
 - Consistencia visual con winbit-app (misma paleta, mismos tokens de status).
 - **Base de datos:** PostgreSQL.

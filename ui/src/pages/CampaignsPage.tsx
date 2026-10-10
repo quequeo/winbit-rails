@@ -344,7 +344,7 @@ export const CampaignsPage = () => {
             value={body}
             onChange={(e) => setBody(e.target.value)}
             rows={12}
-            className="w-full rounded-md border border-[rgba(101,167,165,0.25)] bg-[#121716] px-3 py-2 text-sm text-white focus:border-primary focus:outline-none focus:ring-1 focus:ring-[rgba(101,167,165,0.3)]"
+            className="w-full rounded-md border border-[rgba(71,151,133,0.25)] bg-[#111513] px-3 py-2 text-sm text-white focus:border-primary focus:outline-none focus:ring-1 focus:ring-[rgba(71,151,133,0.3)]"
           />
           <p className="mt-2 text-xs text-t-dim">
             Variables:{" "}

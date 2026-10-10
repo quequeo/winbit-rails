@@ -688,7 +688,7 @@ export const MonthlyReportPdfsPage = () => {
             onClick={() => setReportPreview(null)}
           />
           <div className="flex min-h-full items-center justify-center p-4">
-            <div className="relative flex h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-lg admin-card border border-[rgba(101,167,165,0.25)]">
+            <div className="relative flex h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-lg admin-card border border-[rgba(71,151,133,0.25)]">
               <div className="flex items-center justify-between border-b border-b-default px-6 py-4">
                 <h3 className="text-lg font-semibold text-white">
                   Vista previa &middot; {reportPreview.investorName} &middot; {month}

@@ -141,8 +141,8 @@ export const AumLineChart = ({ series }: { series: AumPoint[] }) => {
       >
         <defs>
           <linearGradient id="aumArea" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#65a7a5" stopOpacity="0.28" />
-            <stop offset="100%" stopColor="#65a7a5" stopOpacity="0.02" />
+            <stop offset="0%" stopColor="#479785" stopOpacity="0.28" />
+            <stop offset="100%" stopColor="#479785" stopOpacity="0.02" />
           </linearGradient>
         </defs>
 
@@ -181,7 +181,7 @@ export const AumLineChart = ({ series }: { series: AumPoint[] }) => {
         <polyline
           points={line}
           fill="none"
-          stroke="#65a7a5"
+          stroke="#479785"
           strokeWidth="2"
           strokeLinejoin="round"
           strokeLinecap="round"
@@ -204,7 +204,7 @@ export const AumLineChart = ({ series }: { series: AumPoint[] }) => {
             cx={hoveredPoint.x}
             cy={hoveredPoint.y}
             r="5"
-            fill="#65a7a5"
+            fill="#479785"
             style={{ transition: "r 0.2s, fill 0.2s" }}
           />
         )}
@@ -215,7 +215,7 @@ export const AumLineChart = ({ series }: { series: AumPoint[] }) => {
             y1={padY}
             x2={hoveredPoint.x}
             y2={height - padY}
-            stroke="#65a7a5"
+            stroke="#479785"
             strokeWidth="1"
             strokeDasharray="4,4"
             opacity="0.5"

@@ -1,21 +1,61 @@
 @import 'tailwindcss';
 
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-weight: 400;
+  font-display: swap;
+  src: url('./assets/fonts/IBMPlexSans-Regular.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-weight: 500;
+  font-display: swap;
+  src: url('./assets/fonts/IBMPlexSans-Medium.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-weight: 600;
+  font-display: swap;
+  src: url('./assets/fonts/IBMPlexSans-SemiBold.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-weight: 700;
+  font-display: swap;
+  src: url('./assets/fonts/IBMPlexSans-Bold.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'IBM Plex Sans Condensed';
+  font-weight: 600;
+  font-display: swap;
+  src: url('./assets/fonts/IBMPlexSansCondensed-SemiBold.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'IBM Plex Sans Condensed';
+  font-weight: 700;
+  font-display: swap;
+  src: url('./assets/fonts/IBMPlexSansCondensed-Bold.ttf') format('truetype');
+}
+
 @theme {
-  --color-primary: #65a7a5;
-  --color-primary-dim: rgba(101, 167, 165, 0.15);
-  --color-primary-glow: rgba(101, 167, 165, 0.3);
-  --color-dark-bg: #0B0F0E;
-  --color-dark-card: rgba(20, 20, 20, 0.6);
-  --color-dark-section: rgba(20, 20, 20, 0.55);
-  --color-t-primary: #e8e8e8;
-  --color-t-muted: #888888;
-  --color-t-dim: #555555;
-  --color-b-default: rgba(255, 255, 255, 0.08);
-  --color-b-accent: rgba(101, 167, 165, 0.3);
-  --color-success: #9dd4cb;
+  --font-sans: 'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  --font-display: 'IBM Plex Sans Condensed', 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
+
+  --color-primary: #479785;
+  --color-primary-dim: rgba(71, 151, 133, 0.15);
+  --color-primary-glow: rgba(71, 151, 133, 0.3);
+  --color-dark-bg: #0d0f0e;
+  --color-dark-card: rgba(19, 23, 21, 0.75);
+  --color-dark-section: rgba(19, 23, 21, 0.65);
+  --color-t-primary: #ece4d5;
+  --color-t-muted: #a7aaa2;
+  --color-t-dim: #6f736d;
+  --color-b-default: #28312d;
+  --color-b-accent: rgba(71, 151, 133, 0.35);
+  --color-success: #6fb8a4;
   --color-warning: #d4bf82;
-  --color-error: #d48080;
-  --color-info: #65a7a5;
+  --color-error: #c96c67;
+  --color-info: #479785;
 }
 
 html,
@@ -27,52 +67,60 @@ body {
   background:
     radial-gradient(
       ellipse at 20% 0%,
-      rgba(31, 122, 99, 0.12),
+      rgba(57, 131, 109, 0.12),
       transparent 55%
     ),
     radial-gradient(
       ellipse at 80% 100%,
-      rgba(31, 122, 99, 0.06),
+      rgba(57, 131, 109, 0.06),
       transparent 50%
     );
-  background-color: #0B0F0E;
-  color: #e8e8e8;
-  font-family: 'Montserrat', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial,
-    'Noto Sans', 'Liberation Sans', sans-serif;
+  background-color: #0d0f0e;
+  color: #ece4d5;
+  font-family: var(--font-sans);
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 
 input,
 select,
 textarea {
-  background: #121716;
-  color: #FFFFFF;
-  border: 1px solid rgba(101, 167, 165, 0.25);
-  border-radius: 8px;
+  background: #111513;
+  color: #ece4d5;
+  border: 1px solid #28312d;
+  border-radius: 10px;
   padding: 8px 12px;
-  font-family: 'Montserrat', sans-serif;
+  font-family: var(--font-sans);
   font-size: 0.875rem;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 input::placeholder,
 textarea::placeholder {
-  color: #555555;
+  color: #6f736d;
 }
 
 input:focus,
 select:focus,
 textarea:focus {
   outline: none;
-  border-color: #65a7a5;
-  box-shadow: 0 0 0 1px rgba(101, 167, 165, 0.3);
+  border-color: #479785;
+  box-shadow: 0 0 0 1px rgba(71, 151, 133, 0.3);
 }
 
 .admin-card {
-  background: rgba(20, 20, 20, 0.6);
+  background: rgba(19, 23, 21, 0.75);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  border: 1px solid rgba(101, 167, 165, 0.3);
-  border-radius: 8px;
+  border: 1px solid #28312d;
+  border-radius: 14px;
   box-shadow:
     inset 0 0 0 1px rgba(255, 255, 255, 0.02),
     0 10px 30px rgba(0, 0, 0, 0.35);
@@ -81,13 +129,13 @@ textarea:focus {
 
 .admin-card:hover {
   transform: translateY(-2px);
-  border-color: rgba(101, 167, 165, 0.4);
+  border-color: rgba(71, 151, 133, 0.45);
   box-shadow:
     inset 0 0 0 1px rgba(255, 255, 255, 0.03),
     0 14px 36px rgba(0, 0, 0, 0.4),
-    0 0 18px rgba(101, 167, 165, 0.08);
+    0 0 18px rgba(71, 151, 133, 0.1);
 }
 
 .rdp {
-  --rdp-accent-color: #65a7a5;
+  --rdp-accent-color: #479785;
 }
