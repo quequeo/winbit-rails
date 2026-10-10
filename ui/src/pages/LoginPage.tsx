@@ -1,6 +1,7 @@
 import { API_BASE_URL } from "../lib/api";
 import { Button } from "../components/ui/Button";
 import { useMemo } from "react";
+import logo from "../assets/winbit-logo.png";
 
 export const LoginPage = () => {
   const url = `${API_BASE_URL}/users/auth/google_oauth2`;
@@ -17,7 +18,8 @@ export const LoginPage = () => {
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-md rounded-xl admin-card border border-[rgba(71,151,133,0.25)] p-8">
-        <h1 className="text-2xl font-bold text-t-primary">Winbit Admin</h1>
+        <img src={logo} alt="Winbit" className="h-12 w-auto" />
+        <h1 className="mt-6 text-2xl text-t-primary">Admin</h1>
         <p className="text-sm text-t-muted mt-1">Ingresá con Google</p>
         {message ? (
           <p className="mt-3 text-sm text-error">{message}</p>

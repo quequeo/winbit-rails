@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { api } from "../../lib/api";
+import logo from "../../assets/winbit-logo.png";
 
 const linkBase =
   "border-b-2 border-transparent px-1 py-4 text-sm font-medium text-t-muted hover:border-primary hover:text-primary";
@@ -75,11 +76,14 @@ export const AdminLayout = () => {
     <div className="min-h-screen">
       <header className="bg-dark-card border-b border-b-default">
         <div className="flex items-center justify-between px-4 py-4 md:px-6">
-          <div>
-            <h1 className="text-2xl font-bold text-primary">
-              Winbit Admin v1.0.0
-            </h1>
-            <p className="text-sm text-t-muted">{sessionEmail || "—"}</p>
+          <div className="flex items-center gap-4">
+            <img src={logo} alt="Winbit" className="h-9 w-auto" />
+            <div className="border-l border-b-default pl-4">
+              <p className="font-display text-sm font-bold uppercase tracking-wider text-t-primary">
+                Admin
+              </p>
+              <p className="text-xs text-t-muted">{sessionEmail || "—"}</p>
+            </div>
           </div>
 
           <div className="flex items-center gap-2">

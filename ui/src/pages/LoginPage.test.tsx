@@ -21,7 +21,7 @@ describe("LoginPage", () => {
 
   it("renders login page with title", () => {
     render(<LoginPage />);
-    expect(screen.getByText("Winbit Admin")).toBeInTheDocument();
+    expect(screen.getByAltText("Winbit")).toBeInTheDocument();
     expect(screen.getByText("Ingresá con Google")).toBeInTheDocument();
   });
 
