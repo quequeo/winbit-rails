@@ -54,6 +54,10 @@ Rails.application.routes.draw do
       post 'requests/:id/approve', to: 'requests#approve', format: false
       post 'requests/:id/reject', to: 'requests#reject', format: false
       get 'requests/:id/receipt', to: 'request_receipts#show', format: false
+      get 'outgoing_emails', to: 'outgoing_emails#index', format: false
+      get 'outgoing_emails/:id', to: 'outgoing_emails#show', format: false
+      post 'outgoing_emails/:id/send', to: 'outgoing_emails#deliver', format: false
+      post 'outgoing_emails/:id/discard', to: 'outgoing_emails#discard', format: false
       post 'requests/:id/reset_approval_to_pending', to: 'requests#reset_approval_to_pending', format: false
       resources :admins, only: [:index, :create, :update, :destroy], format: false
 
@@ -127,6 +131,10 @@ Rails.application.routes.draw do
         post 'requests/:id/approve', to: 'requests#approve', format: false
         post 'requests/:id/reject', to: 'requests#reject', format: false
         get 'requests/:id/receipt', to: 'request_receipts#show', format: false
+        get 'outgoing_emails', to: 'outgoing_emails#index', format: false
+        get 'outgoing_emails/:id', to: 'outgoing_emails#show', format: false
+        post 'outgoing_emails/:id/send', to: 'outgoing_emails#deliver', format: false
+        post 'outgoing_emails/:id/discard', to: 'outgoing_emails#discard', format: false
         post 'requests/:id/reset_approval_to_pending', to: 'requests#reset_approval_to_pending', format: false
         resources :admins, only: [:index, :create, :update, :destroy], format: false
 

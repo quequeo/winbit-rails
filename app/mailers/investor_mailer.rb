@@ -23,13 +23,13 @@ class InvestorMailer < ApplicationMailer
   end
 
   # Email cuando el admin aprueba el depósito
-  def deposit_approved(investor, request)
+  def deposit_approved(investor, request, force: false)
     @investor = investor
     @request = request
     @amount_label = request_amount_label(request)
     @new_balance_usdt = format_usdt_amount(investor.portfolio&.current_balance || 0)
 
-    return unless NotificationGate.should_send_to_investor?(investor.email)
+    return if !force && !NotificationGate.should_send_to_investor?(investor.email)
 
     mail(
       to: investor.email,
@@ -38,14 +38,14 @@ class InvestorMailer < ApplicationMailer
   end
 
   # Email cuando el admin rechaza el depósito
-  def deposit_rejected(investor, request, reason = nil)
+  def deposit_rejected(investor, request, reason = nil, force: false)
     @investor = investor
     @request = request
     @amount_label = request_amount_label(request)
     @reason = reason.presence
     @show_reason = @reason.present?
 
-    return unless NotificationGate.should_send_to_investor?(investor.email)
+    return if !force && !NotificationGate.should_send_to_investor?(investor.email)
 
     mail(
       to: investor.email,
@@ -75,7 +75,7 @@ class InvestorMailer < ApplicationMailer
   end
 
   # Email cuando el admin aprueba el retiro
-  def withdrawal_approved(investor, request, withdrawal_fee = nil)
+  def withdrawal_approved(investor, request, withdrawal_fee = nil, force: false)
     @investor = investor
     @request = request
     @amount_label = request_amount_label(request)
@@ -86,7 +86,7 @@ class InvestorMailer < ApplicationMailer
     @show_withdrawal_fee = fee_amount.positive?
     @new_balance_usdt = format_usdt_amount(investor.portfolio&.current_balance || 0)
 
-    return unless NotificationGate.should_send_to_investor?(investor.email)
+    return if !force && !NotificationGate.should_send_to_investor?(investor.email)
 
     mail(
       to: investor.email,
@@ -95,14 +95,14 @@ class InvestorMailer < ApplicationMailer
   end
 
   # Email cuando el admin rechaza el retiro
-  def withdrawal_rejected(investor, request, reason = nil)
+  def withdrawal_rejected(investor, request, reason = nil, force: false)
     @investor = investor
     @request = request
     @amount_label = request_amount_label(request)
     @reason = reason.presence
     @show_reason = @reason.present?
 
-    return unless NotificationGate.should_send_to_investor?(investor.email)
+    return if !force && !NotificationGate.should_send_to_investor?(investor.email)
 
     mail(
       to: investor.email,
@@ -131,6 +131,23 @@ class InvestorMailer < ApplicationMailer
       to: investor.email,
       subject: subject.to_s
     )
+  end
+
+  # Mail revisado y confirmado por un admin (OutgoingEmail): cuerpo ya
+  # renderizado; adjunta el comprobante PDF cuando corresponde.
+  def reviewed_message(outgoing_email)
+    if outgoing_email.with_receipt?
+      request = outgoing_email.investor_request
+      receipt = request.receipt_pdf || RequestReceiptPdfs::Generate.call(request: request)
+      attachments[RequestReceiptPdfs::Generate.filename_for(request)] = {
+        mime_type: receipt.content_type,
+        content: receipt.pdf_data,
+      }
+    end
+
+    mail(to: outgoing_email.to_email, subject: outgoing_email.subject) do |format|
+      format.html { render html: outgoing_email.body_html.html_safe, layout: false }
+    end
   end
 
   # === COMISIONES DE TRADING ===

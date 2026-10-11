@@ -11,6 +11,7 @@ import { ComisionesHubPage } from "./pages/ComisionesHubPage";
 import { OperativaHubPage } from "./pages/OperativaHubPage";
 import { LoginPage } from "./pages/LoginPage";
 import { CampaignsPage } from "./pages/CampaignsPage";
+import { OutgoingEmailsPage } from "./pages/OutgoingEmailsPage";
 import { MonthlyReportPdfsPage } from "./pages/MonthlyReportPdfsPage";
 
 function App() {
@@ -27,6 +28,7 @@ function App() {
           <Route path="/reportes-pdf" element={<MonthlyReportPdfsPage />} />
           <Route path="/campanas" element={<CampaignsPage />} />
           <Route path="/requests" element={<RequestsPage />} />
+          <Route path="/correos" element={<OutgoingEmailsPage />} />
           <Route path="/operativa" element={<OperativaHubPage />} />
           <Route
             path="/daily-operating"

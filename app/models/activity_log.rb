@@ -33,6 +33,8 @@ class ActivityLog < ApplicationRecord
     delete_deposit_option
     toggle_deposit_option
     update_settings
+    send_outgoing_email
+    discard_outgoing_email
   ].freeze
 
   validates :action, presence: true, inclusion: { in: ACTIONS }
@@ -76,5 +78,7 @@ class ActivityLog < ApplicationRecord
     'delete_deposit_option' => 'Opción de depósito eliminada',
     'toggle_deposit_option' => 'Opción de depósito activada/desactivada',
     'update_settings' => 'Configuración actualizada',
+    'send_outgoing_email' => 'Correo enviado al inversor',
+    'discard_outgoing_email' => 'Correo descartado',
   }.freeze
 end

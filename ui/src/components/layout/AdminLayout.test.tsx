@@ -9,6 +9,7 @@ vi.mock("../../lib/api", () => ({
   api: {
     getAdminSession: vi.fn(),
     getAdminRequests: vi.fn(),
+    getOutgoingEmails: vi.fn().mockResolvedValue({ data: { pendingCount: 0 } }),
     signOut: vi.fn(),
   },
 }));

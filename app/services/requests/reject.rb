@@ -12,12 +12,12 @@ module Requests
 
       req.update!(status: 'REJECTED', processed_at: Time.current, notes: @notes)
 
-      # Send rejection email notification
+      # Leave the rejection email as a draft for admin review
       begin
         if req.request_type == 'DEPOSIT'
-          InvestorMailer.deposit_rejected(req.investor, req, @notes).deliver_later
+          OutgoingEmails::Draft.call(kind: 'DEPOSIT_REJECTED', investor: req.investor, request: req, reason: @notes)
         elsif req.request_type == 'WITHDRAWAL'
-          InvestorMailer.withdrawal_rejected(req.investor, req, @notes).deliver_later
+          OutgoingEmails::Draft.call(kind: 'WITHDRAWAL_REJECTED', investor: req.investor, request: req, reason: @notes)
         end
       rescue => e
         Rails.logger.error("Failed to send rejection email: #{e.message}")

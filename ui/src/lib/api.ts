@@ -156,6 +156,20 @@ export const api = {
     request(`${ADMIN_API_PREFIX}/requests/${id}/reset_approval_to_pending`, {
       method: "POST",
     }),
+  getOutgoingEmails: (status?: string) =>
+    request(
+      `${ADMIN_API_PREFIX}/outgoing_emails${status ? `?status=${status}` : ""}`,
+    ),
+  getOutgoingEmail: (id: string) =>
+    request(`${ADMIN_API_PREFIX}/outgoing_emails/${id}`),
+  sendOutgoingEmail: (id: string) =>
+    request(`${ADMIN_API_PREFIX}/outgoing_emails/${id}/send`, {
+      method: "POST",
+    }),
+  discardOutgoingEmail: (id: string) =>
+    request(`${ADMIN_API_PREFIX}/outgoing_emails/${id}/discard`, {
+      method: "POST",
+    }),
   downloadRequestReceipt: async (id: string) => {
     const res = await fetch(
       `${API_BASE_URL}${ADMIN_API_PREFIX}/requests/${id}/receipt`,
