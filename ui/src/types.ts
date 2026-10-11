@@ -57,6 +57,22 @@ export interface ApiResponse<T> {
   data: T;
 }
 
+export interface ApiOutgoingEmail {
+  id: string;
+  kind: string;
+  status: string;
+  to: string;
+  subject: string;
+  error?: string | null;
+  requestId?: string | null;
+  hasReceipt: boolean;
+  receiptFilename?: string | null;
+  createdAt: string;
+  sentAt?: string | null;
+  investor: { id: string; name: string };
+  bodyHtml?: string;
+}
+
 export interface ApiRequest {
   id: string;
   investorId: string;

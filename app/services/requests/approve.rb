@@ -131,10 +131,12 @@ module Requests
       # Send approval email notification
       begin
         if req.request_type == 'DEPOSIT'
-          InvestorMailer.deposit_approved(req.investor, req).deliver_later
+          OutgoingEmails::Draft.call(kind: 'DEPOSIT_APPROVED', investor: req.investor, request: req)
           AdminMailer.deposit_approved_notification(req).deliver_later
         elsif req.request_type == 'WITHDRAWAL'
-          InvestorMailer.withdrawal_approved(req.investor, req, withdrawal_fee).deliver_later
+          OutgoingEmails::Draft.call(
+            kind: 'WITHDRAWAL_APPROVED', investor: req.investor, request: req, withdrawal_fee: withdrawal_fee
+          )
           AdminMailer.withdrawal_approved_notification(req, withdrawal_fee).deliver_later
         end
       rescue => e

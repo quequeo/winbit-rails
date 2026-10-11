@@ -20,6 +20,7 @@ export const AdminLayout = () => {
   const [sessionEmail, setSessionEmail] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [pendingRequests, setPendingRequests] = useState(0);
+  const [pendingEmails, setPendingEmails] = useState(0);
 
   useEffect(() => {
     let isMounted = true;
@@ -51,6 +52,15 @@ export const AdminLayout = () => {
         setPendingRequests(
           r?.data?.pendingCount ?? r?.data?.requests?.length ?? 0,
         );
+      })
+      .catch(() => {});
+
+    api
+      .getOutgoingEmails()
+      .then((res) => {
+        if (!isMounted) return;
+        const r = res as { data?: { pendingCount?: number } };
+        setPendingEmails(r?.data?.pendingCount ?? 0);
       })
       .catch(() => {});
 
@@ -178,6 +188,23 @@ export const AdminLayout = () => {
               </span>
             </NavLink>
             <NavLink
+              to="/correos"
+              className={({ isActive }) =>
+                isActive
+                  ? `${linkBase} border-primary text-primary`
+                  : linkBase
+              }
+            >
+              <span className="inline-flex items-center gap-2">
+                Correos
+                {pendingEmails > 0 ? (
+                  <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-warning/20 px-1.5 py-0.5 text-[10px] font-bold text-warning">
+                    {pendingEmails > 99 ? "99+" : pendingEmails}
+                  </span>
+                ) : null}
+              </span>
+            </NavLink>
+            <NavLink
               to="/operativa"
               className={({ isActive }) =>
                 isActive
@@ -285,6 +312,17 @@ export const AdminLayout = () => {
                     </span>
                   ) : null}
                 </span>
+              </NavLink>
+              <NavLink
+                to="/correos"
+                onClick={() => setMobileMenuOpen(false)}
+                className={({ isActive }) =>
+                  isActive
+                    ? "rounded-lg bg-primary-dim px-3 py-2 text-sm font-medium text-primary"
+                    : "rounded-lg px-3 py-2 text-sm font-medium text-t-muted hover:bg-primary-dim"
+                }
+              >
+                Correos{pendingEmails > 0 ? ` (${pendingEmails})` : ""}
               </NavLink>
               <NavLink
                 to="/operativa"

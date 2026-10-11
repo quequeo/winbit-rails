@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_10_09_120000) do
+ActiveRecord::Schema[8.0].define(version: 2026_10_10_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -140,6 +140,24 @@ ActiveRecord::Schema[8.0].define(version: 2026_10_09_120000) do
     t.datetime "updated_at", null: false
     t.index ["active", "position"], name: "index_payment_methods_on_active_and_position"
     t.index ["code"], name: "index_payment_methods_on_code", unique: true
+  end
+
+  create_table "outgoing_emails", id: :string, force: :cascade do |t|
+    t.string "investor_id", null: false
+    t.string "request_id"
+    t.string "kind", null: false
+    t.string "to_email", null: false
+    t.string "subject", null: false
+    t.text "body_html", null: false
+    t.string "status", default: "DRAFT", null: false
+    t.text "error"
+    t.datetime "sent_at"
+    t.string "sent_by_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["investor_id", "created_at"], name: "index_outgoing_emails_on_investor_id_and_created_at"
+    t.index ["request_id"], name: "index_outgoing_emails_on_request_id"
+    t.index ["status"], name: "index_outgoing_emails_on_status"
   end
 
   create_table "portfolio_histories", id: :string, force: :cascade do |t|
@@ -294,6 +312,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_10_09_120000) do
   add_foreign_key "investor_monthly_report_pdfs", "investors"
   add_foreign_key "investor_monthly_report_pdfs", "users", column: "uploaded_by_id"
   add_foreign_key "operation_day_captures", "users", column: "created_by_id"
+  add_foreign_key "outgoing_emails", "investors"
+  add_foreign_key "outgoing_emails", "requests", on_delete: :cascade
+  add_foreign_key "outgoing_emails", "users", column: "sent_by_id"
   add_foreign_key "portfolio_histories", "investors"
   add_foreign_key "portfolios", "investors"
   add_foreign_key "request_receipt_pdfs", "requests", on_delete: :cascade
