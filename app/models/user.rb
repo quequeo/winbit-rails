@@ -40,13 +40,17 @@ class User < ApplicationRecord
 
     return nil if email.blank?
 
-    # Only allow emails already whitelisted as admins
-    user = find_by(email: email)
-    return nil unless user
-
     provider = auth.respond_to?(:provider) ? auth.provider : (auth['provider'] rescue nil)
     uid = auth.respond_to?(:uid) ? auth.uid : (auth['uid'] rescue nil)
-    user.update!(provider: provider, uid: uid)
+
+    # Same Google account as an already authorized admin, even if its primary
+    # email changed (e.g. moved to a Workspace address); otherwise only emails
+    # already whitelisted as admins are allowed.
+    user = (find_by(provider: provider, uid: uid) if provider.present? && uid.present?)
+    user ||= find_by(email: email)
+    return nil unless user
+
+    user.update!(provider: provider, uid: uid) unless user.provider == provider && user.uid == uid
     user
   end
 end
