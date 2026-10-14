@@ -12,12 +12,14 @@ class OutgoingEmail < ApplicationRecord
     INVESTOR_DEACTIVATED
   ].freeze
   RECEIPT_KINDS = %w[DEPOSIT_APPROVED WITHDRAWAL_APPROVED].freeze
-  STATUSES = %w[DRAFT SENT DISCARDED FAILED].freeze
-  PENDING_STATUSES = %w[DRAFT FAILED].freeze
+  STATUSES = %w[DRAFT SCHEDULED SENT DISCARDED FAILED].freeze
+  PENDING_STATUSES = %w[DRAFT SCHEDULED FAILED].freeze
+  UNSCHEDULED_STATUSES = %w[DRAFT FAILED].freeze
 
   belongs_to :investor
   belongs_to :investor_request, foreign_key: :request_id, optional: true
   belongs_to :sent_by, class_name: 'User', optional: true
+  belongs_to :scheduled_by, class_name: 'User', optional: true
 
   validates :kind, presence: true, inclusion: { in: KINDS }
   validates :status, presence: true, inclusion: { in: STATUSES }

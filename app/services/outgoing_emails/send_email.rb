@@ -4,6 +4,8 @@ require 'net/smtp'
 
 module OutgoingEmails
   class SendEmail
+    class DeliveryFailed < StandardError; end
+
     DELIVERY_ERRORS = [
       Net::SMTPError, Net::OpenTimeout, Net::ReadTimeout, Errno::ECONNREFUSED, Errno::ECONNRESET, SocketError,
       IOError, OpenSSL::SSL::SSLError
@@ -26,7 +28,7 @@ module OutgoingEmails
       @email
     rescue *DELIVERY_ERRORS => e
       @email.update!(status: 'FAILED', error: "#{e.class}: #{e.message}")
-      raise StandardError, "No se pudo enviar el correo: #{e.message}"
+      raise DeliveryFailed, "No se pudo enviar el correo: #{e.message}"
     end
   end
 end

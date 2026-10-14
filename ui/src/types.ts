@@ -69,6 +69,7 @@ export interface ApiOutgoingEmail {
   receiptFilename?: string | null;
   createdAt: string;
   sentAt?: string | null;
+  scheduledFor?: string | null;
   investor: { id: string; name: string };
   bodyHtml?: string;
 }

@@ -1,7 +1,7 @@
 module Api
   module Admin
     class OutgoingEmailsController < BaseController
-      before_action :set_email, only: [:show, :deliver, :discard]
+      before_action :set_email, only: [:show, :deliver, :discard, :schedule, :unschedule]
 
       def index
         scope = OutgoingEmail.includes(:investor, :investor_request).recent_first
@@ -34,6 +34,36 @@ module Api
         head :no_content
       rescue StandardError => e
         render_error(e.message, status: :unprocessable_entity)
+      end
+
+      def schedule
+        OutgoingEmails::Schedule.call(outgoing_email: @email, scheduled_by: current_user)
+
+        ActivityLogger.log(
+          user: current_user,
+          action: 'schedule_outgoing_email',
+          target: @email,
+          metadata: { label: "#{@email.kind} - #{@email.to_email}" }
+        )
+
+        render json: { data: OutgoingEmailSerializer.new(@email).as_json }
+      rescue StandardError => e
+        render_error(e.message, status: :unprocessable_entity)
+      end
+
+      def unschedule
+        return render_error('El correo no está programado', status: :unprocessable_entity) unless @email.status == 'SCHEDULED'
+
+        @email.update!(status: 'DRAFT', scheduled_by: nil)
+
+        ActivityLogger.log(
+          user: current_user,
+          action: 'unschedule_outgoing_email',
+          target: @email,
+          metadata: { label: "#{@email.kind} - #{@email.to_email}" }
+        )
+
+        head :no_content
       end
 
       def discard

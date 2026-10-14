@@ -35,6 +35,8 @@ class ActivityLog < ApplicationRecord
     update_settings
     send_outgoing_email
     discard_outgoing_email
+    schedule_outgoing_email
+    unschedule_outgoing_email
   ].freeze
 
   validates :action, presence: true, inclusion: { in: ACTIONS }
@@ -80,5 +82,7 @@ class ActivityLog < ApplicationRecord
     'update_settings' => 'Configuración actualizada',
     'send_outgoing_email' => 'Correo enviado al inversor',
     'discard_outgoing_email' => 'Correo descartado',
+    'schedule_outgoing_email' => 'Correo programado',
+    'unschedule_outgoing_email' => 'Programación de correo cancelada',
   }.freeze
 end

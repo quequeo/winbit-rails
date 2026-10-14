@@ -42,6 +42,30 @@ RSpec.describe 'Admin outgoing emails', type: :request do
       expect(ActivityLog.where(action: 'send_outgoing_email').count).to eq(1)
     end
 
+    it 'schedules a draft' do
+      post "/api/admin/outgoing_emails/#{draft.id}/schedule"
+      expect(response).to have_http_status(:ok)
+      expect(draft.reload.status).to eq('SCHEDULED')
+      expect(JSON.parse(response.body)['data']['scheduledFor']).to be_present
+    end
+
+    it 'cancels a schedule' do
+      draft.update!(status: 'SCHEDULED', scheduled_for: 1.hour.from_now)
+      post "/api/admin/outgoing_emails/#{draft.id}/unschedule"
+      expect(response).to have_http_status(:no_content)
+      expect(draft.reload.status).to eq('DRAFT')
+    end
+
+    it 'does not schedule a sent email' do
+      post "/api/admin/outgoing_emails/#{sent.id}/schedule"
+      expect(response).to have_http_status(:unprocessable_entity)
+    end
+
+    it 'does not unschedule a draft that is not scheduled' do
+      post "/api/admin/outgoing_emails/#{draft.id}/unschedule"
+      expect(response).to have_http_status(:unprocessable_entity)
+    end
+
     it 'does not resend a sent email' do
       post "/api/admin/outgoing_emails/#{sent.id}/send"
       expect(response).to have_http_status(:unprocessable_entity)
