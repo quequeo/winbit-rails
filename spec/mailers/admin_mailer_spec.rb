@@ -46,7 +46,7 @@ RSpec.describe AdminMailer, type: :mailer do
     it 'renders the headers' do
       expect(mail.subject).to match('Nueva solicitud DEPÓSITO')
       expect(mail.subject).to match('John Doe')
-      expect(mail.to).to eq(['winbit.cfds@gmail.com'])
+      expect(mail.to).to eq(['contacto@winbit.com.ar'])
     end
 
     it 'renders the body' do
@@ -85,7 +85,7 @@ RSpec.describe AdminMailer, type: :mailer do
     it 'renders the headers' do
       expect(mail.subject).to match('Nueva solicitud RETIRO')
       expect(mail.subject).to match('John Doe')
-      expect(mail.to).to eq(['winbit.cfds@gmail.com'])
+      expect(mail.to).to eq(['contacto@winbit.com.ar'])
     end
 
     it 'renders the body' do
@@ -167,7 +167,7 @@ RSpec.describe AdminMailer, type: :mailer do
 
     it 'renders the headers' do
       expect(mail.subject).to match('Depósito aprobado de John Doe')
-      expect(mail.to).to eq(['winbit.cfds@gmail.com'])
+      expect(mail.to).to eq(['contacto@winbit.com.ar'])
     end
 
     it 'renders the body with deposit details' do
@@ -193,7 +193,7 @@ RSpec.describe AdminMailer, type: :mailer do
 
     it 'renders the headers' do
       expect(mail.subject).to match('Retiro aprobado de John Doe')
-      expect(mail.to).to eq(['winbit.cfds@gmail.com'])
+      expect(mail.to).to eq(['contacto@winbit.com.ar'])
     end
 
     it 'renders the body with withdrawal fee details' do

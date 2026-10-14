@@ -355,7 +355,7 @@ Condiciones:
 - **Event names:** Siempre en inglés mayúsculas (`DEPOSIT`, `WITHDRAWAL`, `PROFIT`, `TRADING_FEE`, etc.).
 - **Status:** `PENDING`, `COMPLETED`, `REJECTED`, `ACTIVE`, `INACTIVE`, `APPROVED`.
 - **Formato numérico:** Argentino `$XX.XXX,XX` (punto miles, coma decimales).
-- **Emails de soporte:** winbit.cfds@gmail.com
+- **Emails de soporte:** contacto@winbit.com.ar
 - **Admins autorizados:** jaimegarciamendez@gmail.com, winbit.cfds@gmail.com
 
 ## 14) Qué NO hacer

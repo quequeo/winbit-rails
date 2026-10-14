@@ -2,7 +2,7 @@
 
 # Mailer para notificaciones a administradores
 class AdminMailer < ApplicationMailer
-  OPERATIONS_INBOX = 'winbit.cfds@gmail.com'
+  OPERATIONS_INBOX = 'contacto@winbit.com.ar'
 
   # Email cuando se crea una nueva solicitud de depósito
   def new_deposit_notification(request)
