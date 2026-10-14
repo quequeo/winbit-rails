@@ -69,6 +69,15 @@ RSpec.describe InvestorMailer, type: :mailer do
       expect(mail.body.encoded).to match('acreditados')
       expect(mail.body.encoded).to match('panel de inversión')
     end
+
+    it 'uses USDC as the unit when the deposit method is USDC' do
+      deposit_request.update!(method: 'USDC')
+      usdc_mail = described_class.deposit_approved(investor, deposit_request)
+
+      expect(usdc_mail.subject).to include('USDC')
+      expect(usdc_mail.subject).not_to include('USDT')
+      expect(usdc_mail.body.encoded).to include('USDC')
+    end
   end
 
   describe '#deposit_rejected' do

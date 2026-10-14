@@ -27,7 +27,7 @@ class InvestorMailer < ApplicationMailer
     @investor = investor
     @request = request
     @amount_label = request_amount_label(request)
-    @new_balance_usdt = format_usdt_amount(investor.portfolio&.current_balance || 0)
+    @new_balance_usdt = format_amount_with_unit(investor.portfolio&.current_balance || 0, balance_unit(request))
 
     return if !force && !NotificationGate.should_send_to_investor?(investor.email)
 
@@ -84,7 +84,7 @@ class InvestorMailer < ApplicationMailer
     @withdrawal_fee_amount_label = format_amount_for_request(fee_amount, request)
     @total_deducted_label = format_amount_for_request(total_deducted, request)
     @show_withdrawal_fee = fee_amount.positive?
-    @new_balance_usdt = format_usdt_amount(investor.portfolio&.current_balance || 0)
+    @new_balance_usdt = format_amount_with_unit(investor.portfolio&.current_balance || 0, balance_unit(request))
 
     return if !force && !NotificationGate.should_send_to_investor?(investor.email)
 
