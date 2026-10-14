@@ -17,6 +17,7 @@ class OutgoingEmailSerializer
       receiptFilename: email.with_receipt? ? RequestReceiptPdfs::Generate.filename_for(email.investor_request) : nil,
       createdAt: email.created_at,
       sentAt: email.sent_at,
+      scheduledFor: email.scheduled_for,
       investor: { id: email.investor_id, name: email.investor.name },
     }
     json[:bodyHtml] = email.body_html if @include_body

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_10_10_120000) do
+ActiveRecord::Schema[8.0].define(version: 2026_10_14_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -155,8 +155,11 @@ ActiveRecord::Schema[8.0].define(version: 2026_10_10_120000) do
     t.string "sent_by_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "scheduled_for"
+    t.string "scheduled_by_id"
     t.index ["investor_id", "created_at"], name: "index_outgoing_emails_on_investor_id_and_created_at"
     t.index ["request_id"], name: "index_outgoing_emails_on_request_id"
+    t.index ["status", "scheduled_for"], name: "index_outgoing_emails_on_status_and_scheduled_for"
     t.index ["status"], name: "index_outgoing_emails_on_status"
   end
 
@@ -314,6 +317,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_10_10_120000) do
   add_foreign_key "operation_day_captures", "users", column: "created_by_id"
   add_foreign_key "outgoing_emails", "investors"
   add_foreign_key "outgoing_emails", "requests", on_delete: :cascade
+  add_foreign_key "outgoing_emails", "users", column: "scheduled_by_id"
   add_foreign_key "outgoing_emails", "users", column: "sent_by_id"
   add_foreign_key "portfolio_histories", "investors"
   add_foreign_key "portfolios", "investors"

@@ -9,6 +9,8 @@ vi.mock("../lib/api", () => ({
     getOutgoingEmails: vi.fn(),
     getOutgoingEmail: vi.fn(),
     sendOutgoingEmail: vi.fn(),
+    scheduleOutgoingEmail: vi.fn(),
+    unscheduleOutgoingEmail: vi.fn(),
     discardOutgoingEmail: vi.fn(),
     downloadRequestReceipt: vi.fn(),
   },
@@ -57,16 +59,55 @@ describe("OutgoingEmailsPage", () => {
     ).toBeInTheDocument();
   });
 
-  it("sends after confirming", async () => {
+  it("sends right away after confirming", async () => {
     vi.mocked(api.sendOutgoingEmail).mockResolvedValue(null as never);
     render(<OutgoingEmailsPage />);
     await userEvent.click(
-      await screen.findByRole("button", { name: "Enviar" }),
+      await screen.findByRole("button", { name: "Enviar ahora" }),
     );
-    const buttons = await screen.findAllByRole("button", { name: "Enviar" });
+    const buttons = await screen.findAllByRole("button", {
+      name: "Enviar ahora",
+    });
     await userEvent.click(buttons[buttons.length - 1]);
     await waitFor(() =>
       expect(api.sendOutgoingEmail).toHaveBeenCalledWith("e1"),
+    );
+  });
+
+  it("schedules the send after confirming", async () => {
+    vi.mocked(api.scheduleOutgoingEmail).mockResolvedValue(null as never);
+    render(<OutgoingEmailsPage />);
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Programar envío" }),
+    );
+    const buttons = await screen.findAllByRole("button", {
+      name: "Programar",
+    });
+    await userEvent.click(buttons[buttons.length - 1]);
+    await waitFor(() =>
+      expect(api.scheduleOutgoingEmail).toHaveBeenCalledWith("e1"),
+    );
+  });
+
+  it("lets you cancel a scheduled email", async () => {
+    vi.mocked(api.unscheduleOutgoingEmail).mockResolvedValue(null as never);
+    const scheduled = {
+      ...email,
+      status: "SCHEDULED",
+      scheduledFor: "2026-10-14T21:00:00Z",
+    };
+    vi.mocked(api.getOutgoingEmails).mockResolvedValue({
+      data: { emails: [scheduled], pendingCount: 1 },
+    });
+    vi.mocked(api.getOutgoingEmail).mockResolvedValue({
+      data: { ...scheduled, bodyHtml: "<p>Hola</p>" },
+    });
+    render(<OutgoingEmailsPage />);
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Cancelar programación" }),
+    );
+    await waitFor(() =>
+      expect(api.unscheduleOutgoingEmail).toHaveBeenCalledWith("e1"),
     );
   });
 

@@ -166,6 +166,14 @@ export const api = {
     request(`${ADMIN_API_PREFIX}/outgoing_emails/${id}/send`, {
       method: "POST",
     }),
+  scheduleOutgoingEmail: (id: string) =>
+    request(`${ADMIN_API_PREFIX}/outgoing_emails/${id}/schedule`, {
+      method: "POST",
+    }),
+  unscheduleOutgoingEmail: (id: string) =>
+    request(`${ADMIN_API_PREFIX}/outgoing_emails/${id}/unschedule`, {
+      method: "POST",
+    }),
   discardOutgoingEmail: (id: string) =>
     request(`${ADMIN_API_PREFIX}/outgoing_emails/${id}/discard`, {
       method: "POST",

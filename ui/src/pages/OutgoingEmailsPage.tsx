@@ -15,7 +15,8 @@ const KIND_LABELS: Record<string, string> = {
 };
 
 const STATUS_LABELS: Record<string, string> = {
-  DRAFT: "Para enviar",
+  DRAFT: "Para revisar",
+  SCHEDULED: "Programado",
   FAILED: "Falló el envío",
   SENT: "Enviado",
   DISCARDED: "Descartado",
@@ -28,7 +29,7 @@ export const OutgoingEmailsPage = () => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<ApiOutgoingEmail | null>(null);
   const [busy, setBusy] = useState(false);
-  const [confirmSend, setConfirmSend] = useState(false);
+  const [confirm, setConfirm] = useState<"send" | "schedule" | null>(null);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -129,8 +130,10 @@ export const OutgoingEmailsPage = () => {
                     {e.investor.name}
                   </p>
                   <p className="text-xs text-t-muted">
-                    {formatDateAR(e.createdAt)} ·{" "}
                     {STATUS_LABELS[e.status] ?? e.status}
+                    {e.scheduledFor
+                      ? ` · Sale ${formatDateAR(e.scheduledFor)}`
+                      : ` · ${formatDateAR(e.createdAt)}`}
                   </p>
                 </button>
               </li>
@@ -144,6 +147,17 @@ export const OutgoingEmailsPage = () => {
                 <dd className="text-t-primary">{detail.to}</dd>
                 <dt className="text-t-muted">Asunto</dt>
                 <dd className="text-t-primary">{detail.subject}</dd>
+                {detail.scheduledFor ? (
+                  <>
+                    <dt className="text-t-muted">Salida</dt>
+                    <dd className="text-t-primary">
+                      {formatDateAR(detail.scheduledFor)}
+                      {detail.status === "SCHEDULED"
+                        ? " (programado)"
+                        : " (se programa al confirmar)"}
+                    </dd>
+                  </>
+                ) : null}
                 {detail.hasReceipt && detail.requestId ? (
                   <>
                     <dt className="text-t-muted">Adjunto</dt>
@@ -172,8 +186,26 @@ export const OutgoingEmailsPage = () => {
               />
 
               <div className="mt-4 flex gap-2">
-                <Button disabled={busy} onClick={() => setConfirmSend(true)}>
-                  Enviar
+                {detail.status === "SCHEDULED" ? (
+                  <Button
+                    disabled={busy}
+                    onClick={() =>
+                      run(() => api.unscheduleOutgoingEmail(detail.id))
+                    }
+                  >
+                    Cancelar programación
+                  </Button>
+                ) : (
+                  <Button disabled={busy} onClick={() => setConfirm("schedule")}>
+                    Programar envío
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  disabled={busy}
+                  onClick={() => setConfirm("send")}
+                >
+                  Enviar ahora
                 </Button>
                 <Button
                   variant="outline"
@@ -189,14 +221,31 @@ export const OutgoingEmailsPage = () => {
       )}
 
       <ConfirmDialog
-        isOpen={confirmSend}
-        onClose={() => setConfirmSend(false)}
-        onConfirm={() => detail && run(() => api.sendOutgoingEmail(detail.id))}
-        title="Enviar correo"
-        message={`Se enviará a ${detail?.to ?? ""}${
-          detail?.hasReceipt ? " con el comprobante adjunto" : ""
-        }. ¿Confirmás?`}
-        confirmText="Enviar"
+        isOpen={confirm !== null}
+        onClose={() => setConfirm(null)}
+        onConfirm={() => {
+          if (!detail) return;
+          if (confirm === "schedule") {
+            run(() => api.scheduleOutgoingEmail(detail.id));
+          } else {
+            run(() => api.sendOutgoingEmail(detail.id));
+          }
+        }}
+        title={confirm === "schedule" ? "Programar envío" : "Enviar ahora"}
+        message={
+          confirm === "schedule"
+            ? `Saldrá automáticamente a ${detail?.to ?? ""}${
+                detail?.scheduledFor
+                  ? ` el ${formatDateAR(detail.scheduledFor)}`
+                  : ""
+              }${
+                detail?.hasReceipt ? " con el comprobante adjunto" : ""
+              }. ¿Confirmás?`
+            : `Se enviará ahora mismo a ${detail?.to ?? ""}${
+                detail?.hasReceipt ? " con el comprobante adjunto" : ""
+              }. ¿Confirmás?`
+        }
+        confirmText={confirm === "schedule" ? "Programar" : "Enviar ahora"}
         confirmVariant="primary"
       />
     </div>

@@ -25,11 +25,16 @@ module OutgoingEmails
         kind: @kind,
         to_email: @investor.email,
         subject: message.subject,
-        body_html: html_body(message)
+        body_html: html_body(message),
+        scheduled_for: scheduled_for
       )
     end
 
     private
+
+    def scheduled_for
+      SendSchedule.call(requested_at: @request&.requested_at, approved_at: Time.current)
+    end
 
     def build_message
       case @kind
