@@ -60,7 +60,7 @@ Rails.application.configure do
   config.action_mailer.raise_delivery_errors = true
   config.action_mailer.default_options = {
     from: ENV.fetch('RESEND_FROM_EMAIL', 'onboarding@resend.dev'),
-    reply_to: ENV.fetch('RESEND_REPLY_TO', 'winbit.cfds@gmail.com'),
+    reply_to: ENV.fetch('RESEND_REPLY_TO', 'contacto@winbit.com.ar'),
   }
 
   # Set host to be used by links generated in mailer templates.

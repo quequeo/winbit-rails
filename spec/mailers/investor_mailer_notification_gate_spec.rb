@@ -138,7 +138,7 @@ RSpec.describe InvestorMailer, type: :mailer do
         )
         expect(mail.message).not_to be_a(ActionMailer::Base::NullMail)
         expect(mail.to).to eq(['john@example.com'])
-        expect(mail.reply_to).to eq(['winbit.cfds@gmail.com'])
+        expect(mail.reply_to).to eq(['contacto@winbit.com.ar'])
       end
 
       it 'campaign_message attaches optional file' do

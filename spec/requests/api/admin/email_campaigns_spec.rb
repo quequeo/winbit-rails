@@ -94,7 +94,7 @@ RSpec.describe 'Admin Email Campaigns API', type: :request do
       expect(mail.body.encoded).to include('3,25%')
       expect(mail.body.encoded).to include('$100,00')
       expect(mail.body.encoded).to include('<br>')
-      expect(mail.reply_to).to eq(['winbit.cfds@gmail.com'])
+      expect(mail.reply_to).to eq(['contacto@winbit.com.ar'])
     end
 
     it 'attaches a PDF/XLSX for that investor' do

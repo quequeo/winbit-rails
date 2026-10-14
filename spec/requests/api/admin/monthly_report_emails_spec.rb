@@ -93,7 +93,7 @@ RSpec.describe 'Admin monthly report emails API', type: :request do
       expect(mail.to).to eq([ 'tulio@test.com' ])
       expect(mail.subject).to eq('Informe 2026-07 — Tulio Capparelli')
       expect(mail.attachments.first.filename).to eq('Reporte julio 2026 - TULIO CAPPARELLI.pdf')
-      expect(mail.reply_to).to eq([ 'winbit.cfds@gmail.com' ])
+      expect(mail.reply_to).to eq([ 'contacto@winbit.com.ar' ])
     end
 
     it 'rejects zero-balance investors' do
