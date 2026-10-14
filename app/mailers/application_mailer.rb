@@ -1,7 +1,7 @@
 class ApplicationMailer < ActionMailer::Base
   # Resend verifies winbit.com.ar; Gmail cannot be used as From. Reply-To surfaces ops inbox.
   default from: ENV.fetch('RESEND_FROM_EMAIL', 'Winbit <onboarding@resend.dev>'),
-          reply_to: ENV.fetch('RESEND_REPLY_TO', 'winbit.cfds@gmail.com')
+          reply_to: ENV.fetch('RESEND_REPLY_TO', 'contacto@winbit.com.ar')
   layout "mailer"
 
   private

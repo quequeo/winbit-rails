@@ -46,6 +46,6 @@ RSpec.describe InvestorMonthlyReportEmails::Send do
     expect(mail.attachments.size).to eq(1)
     expect(mail.attachments.first.filename).to eq('Reporte julio 2026 - TULIO CAPPARELLI.pdf')
     expect(mail.attachments.first.body.decoded).to eq('%PDF-1.4 tulio')
-    expect(mail.reply_to).to eq([ 'winbit.cfds@gmail.com' ])
+    expect(mail.reply_to).to eq([ 'contacto@winbit.com.ar' ])
   end
 end
