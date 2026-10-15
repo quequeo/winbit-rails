@@ -31,7 +31,7 @@ export const ConfirmDialog = ({
   const confirmButtonClass =
     confirmVariant === "danger"
       ? "bg-[rgba(201,108,103,0.2)] text-[#c96c67] border border-[rgba(201,108,103,0.25)] hover:bg-[rgba(201,108,103,0.3)]"
-      : "bg-[rgba(71,151,133,0.2)] text-white border border-[rgba(71,151,133,0.35)] hover:bg-[rgba(71,151,133,0.3)]";
+      : "bg-[rgba(71,151,133,0.2)] text-t-primary border border-[rgba(71,151,133,0.35)] hover:bg-[rgba(71,151,133,0.3)]";
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -43,7 +43,7 @@ export const ConfirmDialog = ({
       <div className="flex min-h-full items-center justify-center p-4">
         <div className="relative w-full max-w-md transform overflow-hidden rounded-lg admin-card !transition-none border border-[rgba(71,151,133,0.25)]">
           <div className="border-b border-b-default px-6 py-4">
-            <h3 className="text-lg font-semibold text-white">{title}</h3>
+            <h3 className="text-lg font-semibold text-t-primary">{title}</h3>
           </div>
 
           <div className="px-6 py-4">

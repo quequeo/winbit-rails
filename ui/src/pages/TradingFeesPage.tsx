@@ -356,7 +356,7 @@ export const TradingFeesPage = () => {
     return (
       <span
         title={`Fee por retiro en el período: ${formatCurrencyAR(wf.fee_amount)} el ${formatDate(wf.fee_date)}`}
-        className="ml-1 inline-flex items-center rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-amber-800 align-middle cursor-help"
+        className="ml-1 inline-flex items-center rounded bg-warning/20 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-warning align-middle cursor-help"
       >
         Retiro
       </span>
@@ -461,7 +461,7 @@ export const TradingFeesPage = () => {
                   <div className="truncate text-sm font-semibold text-t-primary">{investor.investor_name}</div>
                   <div className="truncate text-xs text-t-dim">{investor.investor_email}</div>
                 </div>
-                <span className="shrink-0 inline-flex rounded-full bg-purple-50 px-2 py-0.5 text-[11px] font-semibold text-purple-800">
+                <span className="shrink-0 inline-flex rounded-full bg-primary-dim px-2 py-0.5 text-[11px] font-semibold text-primary">
                   {freqLabel(investor.trading_fee_frequency)}
                 </span>
               </div>
@@ -533,7 +533,7 @@ export const TradingFeesPage = () => {
                   <div className="text-[11px] font-medium uppercase tracking-wide text-t-dim">Comisión</div>
                   <div className="mt-2">
                     {investor.has_profit ? (
-                      <span className="text-sm font-semibold text-purple-600">{shownFeeAmount === null ? "—" : formatCurrencyAR(shownFeeAmount)}</span>
+                      <span className="text-sm font-semibold text-primary">{shownFeeAmount === null ? "—" : formatCurrencyAR(shownFeeAmount)}</span>
                     ) : (
                       <span className="text-sm text-t-dim">—</span>
                     )}
@@ -552,7 +552,7 @@ export const TradingFeesPage = () => {
                     </button>
                   </>
                 ) : investor.has_profit ? (
-                  <button onClick={() => void handleApplyClick(investor)} className="rounded bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700">Aplicar</button>
+                  <button onClick={() => void handleApplyClick(investor)} className="rounded border border-[rgba(71,151,133,0.45)] bg-[rgba(71,151,133,0.25)] px-4 py-2 text-sm font-medium text-t-primary hover:bg-[rgba(71,151,133,0.35)]">Aplicar</button>
                 ) : (
                   <span className="text-xs text-t-dim">No corresponde</span>
                 )}
@@ -594,7 +594,7 @@ export const TradingFeesPage = () => {
                     <div className="text-sm font-medium text-t-primary">{investor.investor_name}</div>
                     <div className="text-xs text-t-dim">{investor.investor_email}</div>
                     <div className="mt-1">
-                      <span className="inline-flex rounded-full bg-purple-50 px-2 py-0.5 text-[11px] font-semibold text-purple-800">{freqLabel(investor.trading_fee_frequency)}</span>
+                      <span className="inline-flex rounded-full bg-primary-dim px-2 py-0.5 text-[11px] font-semibold text-primary">{freqLabel(investor.trading_fee_frequency)}</span>
                     </div>
                   </td>
                   <td className="px-6 py-4 text-sm text-t-primary">
@@ -638,7 +638,7 @@ export const TradingFeesPage = () => {
                   </td>
                   <td className="px-6 py-4 text-right">
                     {investor.has_profit ? (
-                      <span className="font-semibold text-purple-600">{shownFeeAmount === null ? "—" : formatCurrencyAR(shownFeeAmount)}</span>
+                      <span className="font-semibold text-primary">{shownFeeAmount === null ? "—" : formatCurrencyAR(shownFeeAmount)}</span>
                     ) : (
                       <span className="text-t-dim">—</span>
                     )}
@@ -654,7 +654,7 @@ export const TradingFeesPage = () => {
                         </button>
                       </div>
                     ) : investor.has_profit ? (
-                      <button onClick={() => void handleApplyClick(investor)} className="rounded bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700">Aplicar</button>
+                      <button onClick={() => void handleApplyClick(investor)} className="rounded border border-[rgba(71,151,133,0.45)] bg-[rgba(71,151,133,0.25)] px-4 py-2 text-sm font-medium text-t-primary hover:bg-[rgba(71,151,133,0.35)]">Aplicar</button>
                     ) : (
                       <span className="text-xs text-t-dim">No corresponde</span>
                     )}
@@ -686,7 +686,7 @@ export const TradingFeesPage = () => {
 
       {/* Detail modal */}
       {detailModal ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
           <div className="w-full max-w-lg overflow-hidden rounded-2xl bg-dark-card shadow-2xl">
             <div className="flex items-start justify-between border-b border-b-default px-5 py-4">
               <div>
@@ -700,18 +700,18 @@ export const TradingFeesPage = () => {
 
             <div className="px-5 py-4">
               {detailModal.withdrawal_fee_in_period ? (
-                <div className="mb-4 rounded-xl border border-amber-300/50 bg-amber-50 p-4">
-                  <div className="text-sm font-semibold text-amber-800">Fee por retiro cobrado en el período</div>
+                <div className="mb-4 rounded-xl border border-warning/40 bg-warning/10 p-4">
+                  <div className="text-sm font-semibold text-warning">Fee por retiro cobrado en el período</div>
                   <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
-                    <div className="text-amber-700">Fecha del retiro:</div>
-                    <div className="text-right font-medium text-amber-900">{formatDate(detailModal.withdrawal_fee_in_period.fee_date)}</div>
-                    <div className="text-amber-700">Monto retirado:</div>
-                    <div className="text-right font-medium text-amber-900">{formatCurrencyAR(detailModal.withdrawal_fee_in_period.withdrawal_amount)}</div>
-                    <div className="text-amber-700">Fee cobrado:</div>
-                    <div className="text-right font-medium text-amber-900">{formatCurrencyAR(detailModal.withdrawal_fee_in_period.fee_amount)}</div>
+                    <div className="text-t-muted">Fecha del retiro:</div>
+                    <div className="text-right font-medium text-t-primary">{formatDate(detailModal.withdrawal_fee_in_period.fee_date)}</div>
+                    <div className="text-t-muted">Monto retirado:</div>
+                    <div className="text-right font-medium text-t-primary">{formatCurrencyAR(detailModal.withdrawal_fee_in_period.withdrawal_amount)}</div>
+                    <div className="text-t-muted">Fee cobrado:</div>
+                    <div className="text-right font-medium text-t-primary">{formatCurrencyAR(detailModal.withdrawal_fee_in_period.fee_amount)}</div>
                   </div>
                   {detailModal.period_clipped ? (
-                    <p className="mt-2 text-xs text-amber-700">
+                    <p className="mt-2 text-xs text-t-muted">
                       Hubo comisión por retiro en este período. RENT se calcula con VPCUST (desde el último cobro), no sumando operativas del trimestre.
                     </p>
                   ) : null}
@@ -772,15 +772,15 @@ export const TradingFeesPage = () => {
 
       {/* Confirm apply modal */}
       {confirmModal ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
           <div className="w-full max-w-md admin-card p-6 shadow-xl">
             <h2 className="mb-4 text-xl font-bold text-t-primary">¿Aplicar comisión?</h2>
-            <div className="mb-4 space-y-2 rounded-lg border border-purple-600/40 bg-purple-900/25 p-4">
+            <div className="mb-4 space-y-2 rounded-lg border border-b-accent bg-primary-dim p-4">
               <div className="flex justify-between"><span className="text-sm text-t-muted">Inversor:</span><span className="text-sm font-semibold text-t-primary">{confirmModal.investor_name}</span></div>
               <div className="flex justify-between"><span className="text-sm text-t-muted">Período:</span><span className="text-sm text-t-primary">{formatDate(confirmModal.period_start)} - {formatDate(confirmModal.period_end)}</span></div>
               <div className="flex justify-between"><span className="text-sm text-t-muted">Ganancias:</span><span className="text-sm font-semibold text-success">{formatCurrencyAR(confirmModal.profit_amount)}</span></div>
               <div className="flex justify-between"><span className="text-sm text-t-muted">Porcentaje:</span><span className="text-sm font-semibold text-t-primary">{confirmModal.fee_percentage}%</span></div>
-              <div className="flex justify-between border-t border-purple-600/40 pt-2"><span className="text-sm text-t-muted">Comisión a cobrar:</span><span className="text-lg font-bold text-purple-400">{formatCurrencyAR(confirmModal.fee_amount)}</span></div>
+              <div className="flex justify-between border-t border-b-accent pt-2"><span className="text-sm text-t-muted">Comisión a cobrar:</span><span className="text-lg font-bold text-primary">{formatCurrencyAR(confirmModal.fee_amount)}</span></div>
             </div>
             <div className="mb-4 space-y-2">
               <div className="flex justify-between text-sm"><span className="text-t-muted">Capital actual:</span><span className="font-semibold">{formatCurrencyAR(confirmModal.current_balance)}</span></div>
@@ -792,7 +792,7 @@ export const TradingFeesPage = () => {
             </div>
             <div className="flex gap-3">
               <button onClick={() => setConfirmModal(null)} disabled={applying} className="flex-1 rounded border border-b-default bg-dark-card px-4 py-2 text-sm font-medium text-t-muted hover:bg-dark-section disabled:opacity-50">Cancelar</button>
-              <button onClick={() => void handleConfirmApply()} disabled={applying} className="flex-1 rounded bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 disabled:opacity-50">{applying ? "Aplicando..." : "Confirmar y Aplicar"}</button>
+              <button onClick={() => void handleConfirmApply()} disabled={applying} className="flex-1 rounded border border-[rgba(71,151,133,0.45)] bg-[rgba(71,151,133,0.25)] px-4 py-2 text-sm font-medium text-t-primary hover:bg-[rgba(71,151,133,0.35)] disabled:opacity-50">{applying ? "Aplicando..." : "Confirmar y Aplicar"}</button>
             </div>
           </div>
         </div>
@@ -800,7 +800,7 @@ export const TradingFeesPage = () => {
 
       {/* Edit modal */}
       {editModal ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
           <div className="w-full max-w-md admin-card p-6 shadow-xl">
             <h2 className="mb-4 text-xl font-bold text-t-primary">Editar comisión aplicada</h2>
             {(() => {
@@ -812,7 +812,7 @@ export const TradingFeesPage = () => {
               const balanceAfter = delta === null ? null : editModal.current_balance - delta;
               return (
                 <>
-                  <div className="mb-4 space-y-2 rounded-lg border border-purple-600/40 bg-purple-900/25 p-4">
+                  <div className="mb-4 space-y-2 rounded-lg border border-b-accent bg-primary-dim p-4">
                     <div className="flex justify-between"><span className="text-sm text-t-muted">Inversor:</span><span className="text-sm font-semibold text-t-primary">{editModal.investor_name}</span></div>
                     <div className="flex justify-between"><span className="text-sm text-t-muted">Período:</span><span className="text-sm text-t-primary">{formatDate(editModal.period_start)} - {formatDate(editModal.period_end)}</span></div>
                     <div className="flex justify-between"><span className="text-sm text-t-muted">Ganancias:</span><span className="text-sm font-semibold text-success">{formatCurrencyAR(editModal.profit_amount)}</span></div>
@@ -832,8 +832,8 @@ export const TradingFeesPage = () => {
                   </div>
                   <div className="flex gap-3">
                     <button onClick={() => setEditModal(null)} disabled={applying} className="flex-1 rounded border border-b-default bg-dark-card px-4 py-2 text-sm font-medium text-t-muted hover:bg-dark-section disabled:opacity-50">Cancelar</button>
-                    <button type="button" onClick={() => requestDeleteFee(editModal.applied_fee_id, editModal.investor_name, editModal.period_start, editModal.period_end)} disabled={applying} className="rounded bg-error px-4 py-2 text-sm font-medium text-white hover:bg-error/80 disabled:opacity-50">Eliminar</button>
-                    <button onClick={() => void handleConfirmEdit()} disabled={applying} className="flex-1 rounded bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 disabled:opacity-50">{applying ? "Guardando..." : "Guardar"}</button>
+                    <button type="button" onClick={() => requestDeleteFee(editModal.applied_fee_id, editModal.investor_name, editModal.period_start, editModal.period_end)} disabled={applying} className="rounded border border-[rgba(201,108,103,0.25)] bg-[rgba(201,108,103,0.2)] px-4 py-2 text-sm font-medium text-error hover:bg-[rgba(201,108,103,0.3)] disabled:opacity-50">Eliminar</button>
+                    <button onClick={() => void handleConfirmEdit()} disabled={applying} className="flex-1 rounded border border-[rgba(71,151,133,0.45)] bg-[rgba(71,151,133,0.25)] px-4 py-2 text-sm font-medium text-t-primary hover:bg-[rgba(71,151,133,0.35)] disabled:opacity-50">{applying ? "Guardando..." : "Guardar"}</button>
                   </div>
                 </>
               );

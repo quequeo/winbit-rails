@@ -225,7 +225,7 @@ export const AumLineChart = ({ series }: { series: AumPoint[] }) => {
 
       {hoveredPoint && (
         <div
-          className="fixed bg-gray-900 text-white text-xs rounded-lg px-3 py-2 shadow-lg pointer-events-none z-50"
+          className="fixed bg-dark-bg text-t-primary border border-b-default text-xs rounded-lg px-3 py-2 shadow-lg pointer-events-none z-50"
           style={{
             left: `${tooltipPosition.x}px`,
             top: `${tooltipPosition.y}px`,

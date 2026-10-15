@@ -226,7 +226,7 @@ export const TradingFeesHistoryPage = () => {
                   <td className="px-4 py-3 text-right text-sm text-t-primary">
                     {row.fee_percentage}%
                   </td>
-                  <td className="px-4 py-3 text-right text-sm font-semibold text-purple-700">
+                  <td className="px-4 py-3 text-right text-sm font-semibold text-primary">
                     {formatCurrencyAR(row.fee_amount)}
                   </td>
                   <td className="px-4 py-3 text-sm text-t-muted">
