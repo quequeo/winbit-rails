@@ -23,7 +23,7 @@ export const Button = ({
 
   const variants: Record<Variant, string> = {
     default:
-      "bg-[rgba(71,151,133,0.25)] text-white border border-[rgba(71,151,133,0.45)] hover:bg-[rgba(71,151,133,0.35)] hover:border-[rgba(71,151,133,0.65)] hover:-translate-y-0.5 hover:shadow-[0_0_14px_rgba(71,151,133,0.15)] focus:ring-primary",
+      "bg-[rgba(71,151,133,0.25)] text-t-primary border border-[rgba(71,151,133,0.45)] hover:bg-[rgba(71,151,133,0.35)] hover:border-[rgba(71,151,133,0.65)] hover:-translate-y-0.5 hover:shadow-[0_0_14px_rgba(71,151,133,0.15)] focus:ring-primary",
     outline:
       "border border-[rgba(71,151,133,0.25)] bg-dark-card text-t-primary hover:border-[rgba(71,151,133,0.55)] hover:text-primary focus:ring-primary",
     destructive:

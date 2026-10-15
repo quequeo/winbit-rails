@@ -24,7 +24,7 @@ const WinbitCheckbox = ({
       <svg
         aria-hidden
         viewBox="0 0 20 20"
-        className="pointer-events-none absolute h-3 w-3 text-white opacity-0 peer-checked:opacity-100"
+        className="pointer-events-none absolute h-3 w-3 text-dark-bg opacity-0 peer-checked:opacity-100"
         fill="currentColor"
       >
         <path

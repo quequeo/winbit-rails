@@ -197,7 +197,7 @@ export const SettingsPage = () => {
             type="button"
             onClick={handleSave}
             disabled={saving}
-            className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/80 disabled:opacity-50"
+            className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-t-primary hover:bg-primary/80 disabled:opacity-50"
           >
             {saving ? "Guardando..." : "Guardar Configuración"}
           </button>

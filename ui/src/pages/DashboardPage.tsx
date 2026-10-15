@@ -301,7 +301,7 @@ export const DashboardPage = () => {
                 onClick={() => setRangeKey(opt.key)}
                 className={`rounded-full border px-3 py-1 text-sm font-medium transition-colors ${
                   isActive
-                    ? "bg-primary text-white border-primary"
+                    ? "bg-primary text-dark-bg border-primary"
                     : "bg-dark-card text-t-muted border-b-default hover:border-primary hover:text-primary"
                 }`}
               >

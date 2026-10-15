@@ -159,7 +159,7 @@ export const DatePicker = ({
               week: "flex w-full mt-1",
               day: "w-10 h-10 text-center",
               day_button: "h-10 w-10 rounded-md text-sm hover:bg-primary-dim",
-              selected: "bg-primary text-white hover:bg-primary/80 rounded-md",
+              selected: "bg-primary text-dark-bg hover:bg-primary/80 rounded-md",
               today: "border border-primary rounded-md",
               outside: "text-t-dim",
             }}

@@ -184,7 +184,7 @@ export const OperatingDualChart = ({
 
         {hovered ? (
           <div
-            className="pointer-events-none absolute z-20 -translate-x-1/2 -translate-y-full rounded-lg bg-gray-900 px-3 py-2 text-xs text-white shadow-lg"
+            className="pointer-events-none absolute z-20 -translate-x-1/2 -translate-y-full rounded-lg bg-dark-bg border border-b-default px-3 py-2 text-xs text-t-primary shadow-lg"
             style={{
               left: `${tooltipLeftPct}%`,
               top: `${tooltipTopPct}%`,
