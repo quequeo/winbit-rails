@@ -30,6 +30,10 @@ module Api
           return render_error('Invalid request data', status: :bad_request)
         end
 
+        if InvestorRequest::ARS_METHODS.include?(method)
+          return render_error('Por el momento no se aceptan operaciones en pesos', status: :bad_request)
+        end
+
         cash_methods = %w[CASH_ARS CASH_USD]
         if request_type == 'DEPOSIT' && !cash_methods.include?(method) && attachment_url.blank?
           return render_error('Attachment is required for non-cash deposits', status: :bad_request)
