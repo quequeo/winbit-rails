@@ -87,6 +87,8 @@ export interface ApiRequest {
   requestedAt?: string;
   processedAt?: string;
   attachmentUrl?: string;
+  operationNumber?: string | null;
+  currency?: string;
   investor: { name: string; email: string };
 }
 

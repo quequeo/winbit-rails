@@ -81,6 +81,20 @@ RSpec.describe 'Public requests', type: :request do
     expect(response).to have_http_status(:created)
   end
 
+  it 'POST /api/public/requests stores the asset and returns the currency' do
+    investor = Investor.create!(email: 'asset@example.com', name: 'asset', status: 'ACTIVE')
+    Portfolio.create!(investor_id: investor.id, current_balance: 100, total_invested: 100)
+
+    post '/api/public/requests',
+         params: { email: investor.email, type: 'WITHDRAWAL', amount: 50, method: 'CRYPTO', asset: 'USDC',
+                   network: 'BEP20', walletAddress: '0xabc' },
+         as: :json
+
+    expect(response).to have_http_status(:created)
+    expect(JSON.parse(response.body).dig('data', 'currency')).to eq('USDC')
+    expect(InvestorRequest.find_by(investor_id: investor.id).asset).to eq('USDC')
+  end
+
   it 'POST /api/public/requests rejects requests in pesos' do
     investor = Investor.create!(email: 'pesos@example.com', name: 'pesos', status: 'ACTIVE')
     Portfolio.create!(investor_id: investor.id, current_balance: 100, total_invested: 100)

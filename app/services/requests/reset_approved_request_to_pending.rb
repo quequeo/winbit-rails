@@ -42,7 +42,8 @@ module Requests
 
         req.update!(
           status: 'PENDING',
-          processed_at: nil
+          processed_at: nil,
+          operation_number: nil
         )
       end
 

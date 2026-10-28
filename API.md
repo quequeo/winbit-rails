@@ -277,6 +277,7 @@ Requiere sesión de admin. Usada por el backoffice.
 | POST | `/requests/:id/approve` | Aprobar solicitud |
 | POST | `/requests/:id/reject` | Rechazar solicitud |
 | POST | `/requests/:id/reset_approval_to_pending` | Superadmin: deshace la aprobación (elimina los movimientos de historial generados por esa aprobación, deja la solicitud en `PENDING` y recalcula el portfolio). Solo si no hay `OPERATING_RESULT` posterior para el inversor. |
+| (nota) | | `requests` incluye `operationNumber` (A-/I-/R-año-correlativo, asignado al aprobar) y `currency` (USDT, USDC o USD). La API pública acepta `asset` (USDT/USDC/USD) al crear una solicitud. |
 | GET | `/requests/:id/receipt` | Descarga el comprobante PDF de una solicitud aprobada (lo genera si no existe). |
 | GET | `/outgoing_emails` | Correos pendientes de revisión (`?status=all` para todos) y `pendingCount`. |
 | GET | `/outgoing_emails/:id` | Detalle con `bodyHtml` para la vista previa. |

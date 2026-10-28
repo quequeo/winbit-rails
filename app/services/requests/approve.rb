@@ -27,6 +27,7 @@ module Requests
 
       ActiveRecord::Base.transaction do
         req.update!(status: 'APPROVED', processed_at: processed_at)
+        OperationNumber.assign!(req)
 
         if has_future_history
           # Backfilling: compute balance at processed_at and rebuild snapshot from history.
@@ -55,6 +56,7 @@ module Requests
           if req.request_type == 'DEPOSIT'
             PortfolioHistory.create!(
               investor_id: req.investor_id,
+              operation_number: req.operation_number,
               event: req.request_type,
               amount: requested_amount,
               previous_balance: previous_balance,
@@ -96,6 +98,7 @@ module Requests
           if req.request_type == 'DEPOSIT'
             PortfolioHistory.create!(
               investor_id: req.investor_id,
+              operation_number: req.operation_number,
               event: req.request_type,
               amount: requested_amount,
               previous_balance: previous_balance,
@@ -234,6 +237,7 @@ module Requests
       withdrawal_new_balance = previous_balance - requested_amount
       PortfolioHistory.create!(
         investor_id: request.investor_id,
+        operation_number: request.operation_number,
         event: 'WITHDRAWAL',
         amount: requested_amount,
         previous_balance: previous_balance,
@@ -246,6 +250,7 @@ module Requests
 
       PortfolioHistory.create!(
         investor_id: request.investor_id,
+        operation_number: request.operation_number,
         event: 'TRADING_FEE',
         amount: -fee_amount,
         previous_balance: withdrawal_new_balance,
