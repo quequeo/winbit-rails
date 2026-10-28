@@ -26,6 +26,8 @@ class InvestorMailer < ApplicationMailer
   def deposit_approved(investor, request, force: false)
     @investor = investor
     @request = request
+    @first_name = MailPersonalization.first_name(investor.name)
+    @defer_personalization = force
     @amount_label = request_amount_label(request)
     @new_balance_usdt = format_amount_with_unit(investor.portfolio&.current_balance || 0, balance_unit(request))
 
@@ -33,7 +35,7 @@ class InvestorMailer < ApplicationMailer
 
     mail(
       to: investor.email,
-      subject: "Winbit | Depósito acreditado | #{@amount_label}"
+      subject: "Winbit | Ingreso procesado | #{@amount_label}"
     )
   end
 
@@ -41,15 +43,17 @@ class InvestorMailer < ApplicationMailer
   def deposit_rejected(investor, request, reason = nil, force: false)
     @investor = investor
     @request = request
+    @first_name = MailPersonalization.first_name(investor.name)
+    @defer_personalization = force
     @amount_label = request_amount_label(request)
-    @reason = reason.presence
+    @reason = rejection_reason(reason)
     @show_reason = @reason.present?
 
     return if !force && !NotificationGate.should_send_to_investor?(investor.email)
 
     mail(
       to: investor.email,
-      subject: "Winbit | Depósito rechazado | #{@amount_label}"
+      subject: "Winbit | Ingreso no procesado | #{@amount_label}"
     )
   end
 
@@ -78,6 +82,9 @@ class InvestorMailer < ApplicationMailer
   def withdrawal_approved(investor, request, withdrawal_fee = nil, force: false)
     @investor = investor
     @request = request
+    @first_name = MailPersonalization.first_name(investor.name)
+    @defer_personalization = force
+    @fee_percentage_label = percentage_label(withdrawal_fee&.dig(:fee_percentage))
     @amount_label = request_amount_label(request)
     fee_amount = BigDecimal(withdrawal_fee&.dig(:fee_amount).presence.to_s.presence || '0')
     total_deducted = (BigDecimal(request.amount.to_s) + fee_amount).round(2, :half_up)
@@ -90,7 +97,7 @@ class InvestorMailer < ApplicationMailer
 
     mail(
       to: investor.email,
-      subject: "Winbit | Retiro aprobado | #{@amount_label}"
+      subject: "Winbit | Retiro procesado | #{@amount_label}"
     )
   end
 
@@ -98,15 +105,17 @@ class InvestorMailer < ApplicationMailer
   def withdrawal_rejected(investor, request, reason = nil, force: false)
     @investor = investor
     @request = request
+    @first_name = MailPersonalization.first_name(investor.name)
+    @defer_personalization = force
     @amount_label = request_amount_label(request)
-    @reason = reason.presence
+    @reason = rejection_reason(reason)
     @show_reason = @reason.present?
 
     return if !force && !NotificationGate.should_send_to_investor?(investor.email)
 
     mail(
       to: investor.email,
-      subject: "Winbit | Retiro rechazado | #{@amount_label}"
+      subject: "Winbit | Retiro no procesado | #{@amount_label}"
     )
   end
 
@@ -146,7 +155,12 @@ class InvestorMailer < ApplicationMailer
     end
 
     mail(to: outgoing_email.to_email, subject: outgoing_email.subject) do |format|
-      format.html { render html: outgoing_email.body_html.html_safe, layout: false }
+      body = MailPersonalization.apply(
+        outgoing_email.body_html,
+        requested_at: outgoing_email.investor_request&.requested_at,
+        at: Time.current
+      )
+      format.html { render html: body.html_safe, layout: false }
     end
   end
 
