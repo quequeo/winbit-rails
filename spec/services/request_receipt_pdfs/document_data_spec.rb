@@ -26,9 +26,23 @@ RSpec.describe RequestReceiptPdfs::DocumentData do
 
     expect(data).to include(
       withdrawal: true, investor_name: 'LISANDRO FILARDI', date_label: '9 de octubre de 2026',
-      unit: 'USDT', amount: '166,25', fee: '30,00', fee_percentage: '30', capital: '4.637,02'
+      unit: 'USDT', amount_unit: 'USDT', amount: '166,25', fee: '30,00', fee_percentage: '30', capital: '4.637,02'
     )
     expect(data[:destination]).to include('TRC20', 'TXyz123')
+  end
+
+  it 'shows a zero fee on a withdrawal without commission and keeps USDT for USDC requests' do
+    req = build_request(method: 'USDC')
+
+    data = described_class.call(request: req, balance_after: '1000')
+
+    expect(data).to include(fee: '0,00', fee_percentage: nil, unit: 'USDT', amount_unit: 'USDT')
+  end
+
+  it 'keeps the amount in ARS for peso requests' do
+    req = build_request(method: 'TRANSFER_ARS', network: nil, wallet_address: nil)
+
+    expect(described_class.call(request: req, balance_after: '1000')).to include(amount_unit: 'ARS', unit: 'USDT')
   end
 
   it 'omits fee on a deposit and falls back to USD unit' do
@@ -37,6 +51,6 @@ RSpec.describe RequestReceiptPdfs::DocumentData do
 
     data = described_class.call(request: req)
 
-    expect(data).to include(withdrawal: false, fee: nil, destination: nil, unit: 'USD', capital: '1.500,50')
+    expect(data).to include(withdrawal: false, fee: nil, destination: nil, unit: 'USDT', amount_unit: 'USDT', capital: '1.500,50')
   end
 end

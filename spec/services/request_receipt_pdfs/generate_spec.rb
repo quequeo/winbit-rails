@@ -13,7 +13,7 @@ RSpec.describe RequestReceiptPdfs::Generate do
 
   it 'renders the template and stores a PDF, replacing any previous one' do
     allow(Grover).to receive(:new).and_wrap_original do |_m, html|
-      expect(html).to include('Comprobante de retiro', 'LISANDRO FILARDI', '4.637,02')
+      expect(html).to include('Comprobante de egreso', 'LISANDRO FILARDI', '4.637,02')
       instance_double(Grover, to_pdf: '%PDF-1.4 fake')
     end
     allow(InvestorMonthlyReportPdfs::EnsureChromeInstalled).to receive(:call)

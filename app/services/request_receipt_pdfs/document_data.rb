@@ -6,7 +6,8 @@ module RequestReceiptPdfs
   # payout destination.
   class DocumentData
     MONTHS = %w[enero febrero marzo abril mayo junio julio agosto septiembre octubre noviembre diciembre].freeze
-    ASSET_METHODS = %w[USDT USDC].freeze
+    UNIT = 'USDT'
+    ARS_METHODS = %w[CASH_ARS TRANSFER_ARS].freeze
     METHOD_LABELS = {
       'USDT' => 'USDT',
       'USDC' => 'USDC',
@@ -31,15 +32,15 @@ module RequestReceiptPdfs
     def call
       withdrawal = @request.request_type == 'WITHDRAWAL'
       fee = withdrawal ? trading_fee : nil
-      unit = unit_label
 
       {
         withdrawal: withdrawal,
         investor_name: @request.investor.name.to_s.upcase,
         date_label: date_label,
-        unit: unit,
+        unit: UNIT,
+        amount_unit: amount_unit,
         amount: format_number(@request.amount),
-        fee: fee && format_number(fee.fee_amount),
+        fee: withdrawal ? format_number(fee&.fee_amount || 0) : nil,
         fee_percentage: fee && format_percentage(fee.fee_percentage),
         capital: format_number(capital_after),
         destination: withdrawal ? destination : nil,
@@ -49,8 +50,8 @@ module RequestReceiptPdfs
 
     private
 
-    def unit_label
-      ASSET_METHODS.include?(@request.method) ? @request.method : 'USD'
+    def amount_unit
+      ARS_METHODS.include?(@request.method) ? 'ARS' : UNIT
     end
 
     def date_label
