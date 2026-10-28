@@ -74,11 +74,26 @@ RSpec.describe 'Public requests', type: :request do
            email: investor.email,
            type: 'DEPOSIT',
            amount: 50,
-           method: 'CASH_ARS'
+           method: 'CASH_USD'
          },
          as: :json
 
     expect(response).to have_http_status(:created)
+  end
+
+  it 'POST /api/public/requests rejects requests in pesos' do
+    investor = Investor.create!(email: 'pesos@example.com', name: 'pesos', status: 'ACTIVE')
+    Portfolio.create!(investor_id: investor.id, current_balance: 100, total_invested: 100)
+
+    %w[CASH_ARS TRANSFER_ARS].each do |ars_method|
+      post '/api/public/requests',
+           params: { email: investor.email, type: 'DEPOSIT', amount: 50, method: ars_method },
+           as: :json
+
+      expect(response).to have_http_status(:bad_request)
+      expect(JSON.parse(response.body)['error']).to eq('Por el momento no se aceptan operaciones en pesos')
+    end
+    expect(InvestorRequest.where(investor_id: investor.id).count).to eq(0)
   end
 
   it 'POST /api/public/requests returns 400 when email is blank' do
@@ -87,7 +102,7 @@ RSpec.describe 'Public requests', type: :request do
            email: '',
            type: 'DEPOSIT',
            amount: 50,
-           method: 'CASH_ARS'
+           method: 'CASH_USD'
          },
          as: :json
 
@@ -102,7 +117,7 @@ RSpec.describe 'Public requests', type: :request do
            email: 'not-an-email',
            type: 'DEPOSIT',
            amount: 50,
-           method: 'CASH_ARS'
+           method: 'CASH_USD'
          },
          as: :json
 
@@ -137,7 +152,7 @@ RSpec.describe 'Public requests', type: :request do
            email: investor.email,
            type: 'DEPOSIT',
            amount: 50,
-           method: 'CASH_ARS',
+           method: 'CASH_USD',
            network: 'INVALID_NETWORK'
          },
          as: :json
@@ -158,7 +173,7 @@ RSpec.describe 'Public requests', type: :request do
            email: investor.email,
            type: 'DEPOSIT',
            amount: -10,
-           method: 'CASH_ARS'
+           method: 'CASH_USD'
          },
          as: :json
 
@@ -176,7 +191,7 @@ RSpec.describe 'Public requests', type: :request do
            email: investor.email,
            type: 'DEPOSIT',
            amount: [],
-           method: 'CASH_ARS'
+           method: 'CASH_USD'
          },
          as: :json
 
@@ -330,7 +345,7 @@ RSpec.describe 'Public requests', type: :request do
       email: investor.email,
       type: 'DEPOSIT',
       amount: 50,
-      method: 'CASH_ARS'
+      method: 'CASH_USD'
     }
 
     expect(response).to have_http_status(:created)

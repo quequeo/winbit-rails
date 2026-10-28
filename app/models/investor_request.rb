@@ -18,6 +18,7 @@ class InvestorRequest < ApplicationRecord
   STATUSES = %w[PENDING APPROVED REJECTED REVERSED].freeze
   NETWORKS = %w[TRC20 BEP20 ERC20 POLYGON].freeze
   CRYPTO_WITHDRAWAL_METHODS = %w[CRYPTO].freeze
+  ARS_METHODS = %w[CASH_ARS TRANSFER_ARS].freeze
 
   belongs_to :investor
   belongs_to :reversed_by, class_name: 'User', optional: true
