@@ -37,17 +37,14 @@ class ApplicationMailer < ActionMailer::Base
     %w[CASH_ARS TRANSFER_ARS].include?(request.method.to_s.upcase)
   end
 
-  # Unidad acorde al método: ARS en pesos, USDC si el método es USDC, resto USDT.
+  # Los montos se expresan en USDT (unidad de cuenta del fondo), salvo las solicitudes en pesos.
   def request_unit(request)
-    return 'ARS' if ars_request?(request)
-
-    request.method.to_s.upcase == 'USDC' ? 'USDC' : 'USDT'
+    ars_request?(request) ? 'ARS' : 'USDT'
   end
 
-  # El saldo del portfolio siempre es en dólares digitales, nunca en pesos.
-  def balance_unit(request)
-    unit = request_unit(request)
-    unit == 'ARS' ? 'USDT' : unit
+  # El saldo del portfolio siempre es en USDT, nunca en pesos.
+  def balance_unit(_request)
+    'USDT'
   end
 
   def request_amount_label(request)

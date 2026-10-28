@@ -10,15 +10,15 @@
 <%
   assets = InvestorMonthlyReportPdfs::Assets
   withdrawal = data[:withdrawal]
-  title = withdrawal ? 'Comprobante de retiro' : 'Certificado de aporte de capital'
+  title = withdrawal ? 'Comprobante de egreso' : 'Comprobante de ingreso'
   description = if withdrawal
-    'Este comprobante acredita el retiro de fondos realizado por el inversor desde su portfolio dentro del servicio de inversión de Winbit Finance.'
+    'Este comprobante acredita el egreso de fondos realizado por el inversor desde su portfolio dentro del servicio de inversión de Winbit Finance.'
   else
-    'Este certificado acredita un aporte de capital realizado por el inversor, sumado a su portfolio vigente dentro del servicio de inversión de Winbit Finance.'
+    'Este comprobante acredita un ingreso de capital realizado por el inversor, sumado a su portfolio vigente dentro del servicio de inversión de Winbit Finance.'
   end
   rows = [ [ 'Inversor', data[:investor_name], nil ], [ 'Fecha', data[:date_label], nil ] ]
-  rows << [ withdrawal ? 'Importe retirado' : 'Importe', "#{data[:amount]} #{data[:unit]}", nil ]
-  rows << [ "Comisión (#{data[:fee_percentage]}%)", "#{data[:fee]} #{data[:unit]}", nil ] if data[:fee]
+  rows << [ withdrawal ? 'Importe retirado' : 'Importe', "#{data[:amount]} #{data[:amount_unit]}", nil ]
+  rows << [ data[:fee_percentage] ? "Comisión (#{data[:fee_percentage]}%)" : 'Comisión', "#{data[:fee]} #{data[:unit]}", nil ] if data[:fee]
   rows << [ 'Destino', data[:destination], :small ] if data[:destination]
 %>
 <!doctype html>
