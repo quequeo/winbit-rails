@@ -61,13 +61,13 @@ RSpec.describe InvestorMailer, type: :mailer do
     let(:mail) { described_class.deposit_approved(investor, deposit_request) }
 
     it 'renders the headers' do
-      expect(mail.subject).to start_with('Winbit | Depósito acreditado |')
+      expect(mail.subject).to start_with('Winbit | Ingreso procesado |')
       expect(mail.to).to eq(['john@example.com'])
     end
 
     it 'renders the body' do
-      expect(mail.body.encoded).to match('acreditados')
-      expect(mail.body.encoded).to match('panel de inversión')
+      expect(mail.body.encoded).to match('fue procesado el ingreso')
+      expect(mail.body.encoded).to match('comprobante de ingreso')
     end
 
     it 'always expresses amounts in USDT, even for USDC deposits' do
@@ -84,13 +84,18 @@ RSpec.describe InvestorMailer, type: :mailer do
     let(:mail) { described_class.deposit_rejected(investor, deposit_request, reason) }
 
     it 'renders the headers' do
-      expect(mail.subject).to start_with('Winbit | Depósito rechazado |')
+      expect(mail.subject).to start_with('Winbit | Ingreso no procesado |')
       expect(mail.to).to eq(['john@example.com'])
     end
 
     it 'renders the body' do
-      expect(mail.body.encoded).to match(/rechazada/)
+      expect(mail.body.encoded).to match(/no pudimos procesar el ingreso/)
       expect(mail.body.encoded).to match(/Comprobante inválido/)
+    end
+
+    it 'hides the generic admin note as a reason' do
+      generic = described_class.deposit_rejected(investor, deposit_request, 'Rechazado por el administrador')
+      expect(generic.body.encoded).not_to match(/Motivo/)
     end
   end
 
@@ -161,23 +166,26 @@ RSpec.describe InvestorMailer, type: :mailer do
     let(:mail) { described_class.withdrawal_approved(investor, withdrawal_request) }
 
     it 'renders the headers' do
-      expect(mail.subject).to start_with('Winbit | Retiro aprobado |')
+      expect(mail.subject).to start_with('Winbit | Retiro procesado |')
       expect(mail.to).to eq(['john@example.com'])
     end
 
     it 'renders the body' do
-      expect(mail.body.encoded).to match(/aprobada/)
-      expect(mail.body.encoded).to match(/Monto enviado/)
+      expect(mail.body.encoded).to match(/fue procesado el retiro/)
+      expect(mail.body.encoded).to match(/comprobante de egreso/)
+      expect(mail.body.encoded).not_to match(/comisión por servicios de trading/)
     end
 
     it 'includes withdrawal trading fee details when provided' do
       fee_data = {
-        fee_amount: BigDecimal('30.50')
+        fee_amount: BigDecimal('30.50'),
+        fee_percentage: BigDecimal('30')
       }
       mail_with_fee = described_class.withdrawal_approved(investor, withdrawal_request, fee_data)
 
-      expect(mail_with_fee.body.encoded).to match(/Comisión por retiro/)
-      expect(mail_with_fee.body.encoded).to match(/Total deducido de tu cuenta/)
+      expect(mail_with_fee.body.encoded).to match(/comisión por servicios de trading/)
+      expect(mail_with_fee.body.encoded).to match(/30,50 USDT/)
+      expect(mail_with_fee.body.encoded).to match(/30% de la rentabilidad acumulada/)
     end
   end
 
@@ -186,14 +194,14 @@ RSpec.describe InvestorMailer, type: :mailer do
     let(:mail) { described_class.withdrawal_rejected(investor, withdrawal_request, reason) }
 
     it 'renders the headers' do
-      expect(mail.subject).to start_with('Winbit | Retiro rechazado |')
+      expect(mail.subject).to start_with('Winbit | Retiro no procesado |')
       expect(mail.to).to eq(['john@example.com'])
     end
 
     it 'renders the body' do
-      expect(mail.body.encoded).to match(/rechazada/)
+      expect(mail.body.encoded).to match(/no pudimos procesar el retiro/)
       expect(mail.body.encoded).to match(/Lemontag incorrecto/)
-      expect(mail.body.encoded).to match(/saldo no fue modificado/)
+      expect(mail.body.encoded).to match(/capital no tuvo cambios/)
     end
   end
 

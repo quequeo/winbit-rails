@@ -18,7 +18,8 @@ RSpec.describe OutgoingEmails::Draft do
     expect(draft).to be_persisted
     expect(draft.status).to eq('DRAFT')
     expect(draft.to_email).to eq('draft@test.com')
-    expect(draft.subject).to include('Retiro aprobado')
+    expect(draft.subject).to include('Retiro procesado')
+    expect(draft.body_html).to include(MailPersonalization::GREETING_TOKEN)
     expect(draft.body_html).to include('<html')
     expect(draft.investor_request).to eq(request)
   end
@@ -26,7 +27,7 @@ RSpec.describe OutgoingEmails::Draft do
   it 'builds rejection drafts with the reason' do
     request.update!(status: 'REJECTED')
     draft = described_class.call(kind: 'WITHDRAWAL_REJECTED', investor: investor, request: request, reason: 'Datos incompletos')
-    expect(draft.subject).to include('Retiro rechazado')
+    expect(draft.subject).to include('Retiro no procesado')
     expect(draft.body_html).to include('Datos incompletos')
   end
 

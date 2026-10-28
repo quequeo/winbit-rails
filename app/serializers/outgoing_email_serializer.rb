@@ -20,7 +20,13 @@ class OutgoingEmailSerializer
       scheduledFor: email.scheduled_for,
       investor: { id: email.investor_id, name: email.investor.name },
     }
-    json[:bodyHtml] = email.body_html if @include_body
+    if @include_body
+      json[:bodyHtml] = MailPersonalization.apply(
+        email.body_html,
+        requested_at: email.investor_request&.requested_at,
+        at: email.scheduled_for || Time.current
+      )
+    end
     json
   end
 
