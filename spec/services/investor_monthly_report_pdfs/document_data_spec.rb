@@ -135,6 +135,43 @@ RSpec.describe InvestorMonthlyReportPdfs::DocumentData do
       expect(page[:ops_summary][:count]).to eq(2)
       expect(page[:ops_summary][:positive]).to eq(1)
       expect(page[:ops_summary][:negative]).to eq(1)
+      expect(page[:ops_summary][:service_cost]).to eq('0 USD')
+      expect(page[:ops_summary][:service_cost_class]).to eq('')
+    end
+  end
+
+  it "shows the month's trading fee next to the raw trading result, so the gap vs. the (fee-netted) resumen/evolución figures is explained" do
+    PortfolioHistory.create!(
+      investor: investor, event: 'TRADING_FEE', amount: -62.03,
+      previous_balance: 6812.07, new_balance: 6750.04,
+      date: Time.zone.local(2026, 5, 30, 19, 0, 0), status: 'COMPLETED',
+    )
+
+    travel_to Time.zone.local(2026, 5, 31, 12, 0, 0) do
+      data = described_class.call(investor: investor, report_month: '2026-05')
+      expect(data[:ops_pages].last[:ops_summary][:service_cost]).to eq('-62 USD')
+      expect(data[:ops_pages].last[:ops_summary][:service_cost_class]).to eq('neg')
+    end
+  end
+
+  it "colors Winbit's monthly return by its own sign, not by the investor's monthly result" do
+    allow(MonthlyReportBuilder).to receive(:new).and_wrap_original do |original, **kwargs|
+      builder = original.call(**kwargs)
+      allow(builder).to receive(:build).and_wrap_original do |build|
+        report = build.call
+        report[:summary][:winbit_monthly_return_percent] = 1.4
+        may_row = report[:annex_rows].find { |r| r[:month] == '2026-05' && !r[:opening_snapshot] && !r[:entry_row] }
+        may_row.merge!(return_usd: -20, return_percent: -0.3)
+        report
+      end
+      builder
+    end
+
+    travel_to Time.zone.local(2026, 5, 29, 12, 0, 0) do
+      data = described_class.call(investor: investor, report_month: '2026-05')
+      expect(data[:monthly][:class]).to eq('neg')
+      expect(data[:ops_pages].last[:ops_summary][:monthly_return_percent]).to eq('+1,4 %')
+      expect(data[:ops_pages].last[:ops_summary][:monthly_return_class]).to eq('pos')
     end
   end
 
