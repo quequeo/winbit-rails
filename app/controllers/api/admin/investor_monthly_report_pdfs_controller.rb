@@ -14,6 +14,10 @@ module Api
         reports = InvestorMonthlyReportPdf.for_month(month).without_pdf_data.includes(:investor)
         reports_by_investor_id = reports.index_by(&:investor_id)
         investors = Investor.order(:name)
+        signatures = InvestorMonthlyReportPdfs::DataSignature.for_investors(
+          month: month,
+          investor_ids: reports.select { |r| r.data_signature.present? }.map(&:investor_id)
+        )
 
         present = []
         missing = []
@@ -21,7 +25,8 @@ module Api
         investors.each do |investor|
           report = reports_by_investor_id[investor.id]
           if report
-            present << InvestorMonthlyReportPdfSerializer.new(report).as_json
+            outdated = report.data_signature.present? && report.data_signature != signatures[investor.id]
+            present << InvestorMonthlyReportPdfSerializer.new(report).as_json.merge(outdated: outdated)
           else
             missing << {
               id: investor.id,
@@ -40,7 +45,8 @@ module Api
             counts: {
               present: present.size,
               missing: missing.size,
-              missingActive: missing.count { |row| row[:status] == 'ACTIVE' }
+              missingActive: missing.count { |row| row[:status] == 'ACTIVE' },
+              outdatedActive: present.count { |row| row[:outdated] && row.dig(:investor, :status) == 'ACTIVE' }
             },
             generation: InvestorMonthlyReportPdfs::GenerationRun.as_json_for_admin
           }
@@ -226,6 +232,7 @@ module Api
           content_type: 'application/pdf',
           byte_size: upload.bytes.bytesize,
           pdf_data: upload.bytes,
+          data_signature: nil,
           uploaded_by: current_user
         )
         record.save!

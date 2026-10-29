@@ -69,6 +69,23 @@ RSpec.describe InvestorMonthlyReportPdfs::Generate do
       expect(InvestorMonthlyReportPdf.find_by(investor: investor_with_report, month: '2026-05').pdf_data).not_to eq('%PDF-old')
     end
 
+    it 'saves the data signature and regenerates a generated PDF only once its data changed' do
+      described_class.call(month: '2026-05', generated_by: admin)
+      record = InvestorMonthlyReportPdf.find_by(investor: investor_missing, month: '2026-05')
+      expect(record.data_signature).to be_present
+
+      second = described_class.call(month: '2026-05', generated_by: admin)
+      expect(second.generated).to be_empty
+
+      PortfolioHistory.create!(
+        investor: investor_missing, event: 'DEPOSIT', amount: 10, previous_balance: 0, new_balance: 10,
+        date: Time.zone.local(2026, 5, 20, 12), status: 'COMPLETED',
+      )
+      third = described_class.call(month: '2026-05', generated_by: admin)
+      expect(third.generated.map(&:investor_id)).to contain_exactly(investor_missing.id)
+      expect(third.skipped).to contain_exactly(investor_with_report)
+    end
+
     it 'reports progress after each investor, skipped ones included' do
       calls = []
       described_class.call(month: '2026-05', generated_by: admin, on_progress: ->(**progress) { calls << progress })

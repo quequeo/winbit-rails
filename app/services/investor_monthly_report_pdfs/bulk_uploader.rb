@@ -174,6 +174,7 @@ module InvestorMonthlyReportPdfs
         content_type: 'application/pdf',
         byte_size: upload.bytes.bytesize,
         pdf_data: upload.bytes,
+        data_signature: nil,
         uploaded_by: @uploaded_by
       )
       record.save!

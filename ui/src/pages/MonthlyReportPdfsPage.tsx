@@ -20,6 +20,7 @@ type PresentRow = {
   originalFilename: string;
   byteSize: number;
   uploadedAt?: string;
+  outdated?: boolean;
   investor: InvestorRow;
 };
 
@@ -44,6 +45,7 @@ type IndexPayload = {
     present: number;
     missing: number;
     missingActive: number;
+    outdatedActive?: number;
   };
   generation?: GenerationStatus | null;
 };
@@ -430,6 +432,10 @@ export const MonthlyReportPdfsPage = () => {
     () => (data?.missing || []).filter((row) => row.status === "ACTIVE"),
     [data],
   );
+  // "Generar automáticamente" genera los que faltan y rehace los que
+  // quedaron desactualizados (datos del mes cambiados después de generarlos).
+  const outdatedActive = data?.counts.outdatedActive ?? 0;
+  const pendingGeneration = missingActive.length + outdatedActive;
   const missingInactive = useMemo(
     () => (data?.missing || []).filter((row) => row.status !== "ACTIVE"),
     [data],
@@ -528,11 +534,11 @@ export const MonthlyReportPdfsPage = () => {
             type="button"
             variant="outline"
             onClick={handleGenerateMissing}
-            disabled={generating || generationActive || missingActive.length === 0}
+            disabled={generating || generationActive || pendingGeneration === 0}
           >
             {generating || generationActive
               ? "Generando..."
-              : `Generar automáticamente (${missingActive.length})`}
+              : `Generar automáticamente (${pendingGeneration})`}
           </Button>
           <Button
             type="button"
@@ -551,7 +557,19 @@ export const MonthlyReportPdfsPage = () => {
           <span className="text-t-muted">
             Faltan total: {data.counts.missing}
           </span>
+          {outdatedActive > 0 ? (
+            <span className="text-warning">
+              Desactualizados: {outdatedActive}
+            </span>
+          ) : null}
         </div>
+        {outdatedActive > 0 ? (
+          <p className="text-sm text-t-muted">
+            Hay PDFs generados antes de que cambiaran los datos del mes (por
+            ejemplo, una comisión o un movimiento cargado después). &quot;Generar
+            automáticamente&quot; los vuelve a generar junto con los que faltan.
+          </p>
+        ) : null}
         {generation ? (
           <GenerationBanner generation={generation} month={month} />
         ) : null}
@@ -660,7 +678,14 @@ export const MonthlyReportPdfsPage = () => {
                 <tr key={row.id} className="border-t border-b-default">
                   <td className="py-2 text-t-primary">{row.investor.name}</td>
                   <td className="py-2 text-t-muted">{row.investor.email}</td>
-                  <td className="py-2 text-t-muted">{row.originalFilename}</td>
+                  <td className="py-2 text-t-muted">
+                    {row.originalFilename}
+                    {row.outdated ? (
+                      <span className="ml-2 rounded-full border border-warning px-2 py-0.5 text-xs text-warning">
+                        Desactualizado
+                      </span>
+                    ) : null}
+                  </td>
                   <td className="py-2 text-t-muted">
                     {formatBytes(row.byteSize)}
                   </td>
