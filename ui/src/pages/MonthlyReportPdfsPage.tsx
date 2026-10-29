@@ -23,6 +23,19 @@ type PresentRow = {
   investor: InvestorRow;
 };
 
+type GenerationStatus = {
+  month: string;
+  running: boolean;
+  stalled: boolean;
+  processed: number;
+  total: number | null;
+  generated: number;
+  failed: string[];
+  aborted: boolean;
+  startedAt: string | null;
+  finishedAt: string | null;
+};
+
 type IndexPayload = {
   month: string;
   present: PresentRow[];
@@ -32,7 +45,14 @@ type IndexPayload = {
     missing: number;
     missingActive: number;
   };
+  generation?: GenerationStatus | null;
 };
+
+// Mientras corre "Generar todos" la lista se refresca sola cada tanto.
+const GENERATION_POLL_MS = 5000;
+// Después del clic, el job tarda un instante en marcar la corrida como
+// iniciada: se sigue consultando un rato aunque todavía no figure.
+const GENERATION_START_GRACE_MS = 30000;
 
 type AssignmentRow = {
   filename: string;
@@ -87,6 +107,85 @@ const formatBytes = (n: number) => {
 
 const skipLabel = (reason: string) => SKIP_REASONS[reason] || reason;
 
+const pad2 = (n: number) => String(n).padStart(2, "0");
+const formatDateTime = (iso: string) => {
+  const d = new Date(iso);
+  return `${pad2(d.getDate())}/${pad2(d.getMonth() + 1)} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+};
+
+const GenerationBanner = ({
+  generation,
+  month,
+}: {
+  generation: GenerationStatus;
+  month: string;
+}) => {
+  if (!generation.finishedAt) {
+    if (generation.month !== month) {
+      return (
+        <p className="text-sm text-warning">
+          Hay una generación automática en curso para {generation.month}.
+        </p>
+      );
+    }
+    if (generation.stalled) {
+      return (
+        <p className="text-sm text-warning">
+          La generación se cortó (probablemente por un reinicio del servidor).
+          Se retoma sola en un minuto, desde donde quedó.
+        </p>
+      );
+    }
+    const total = generation.total;
+    const pct = total ? Math.round((generation.processed / total) * 100) : 0;
+    return (
+      <div className="space-y-2" role="status">
+        <p className="text-sm text-t-primary">
+          {total
+            ? `Generando PDFs… ${generation.processed} de ${total}`
+            : "Preparando la generación…"}
+        </p>
+        <div className="h-2 w-full overflow-hidden rounded-full bg-primary-dim">
+          <div
+            className="h-full bg-primary transition-all"
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+        <p className="text-xs text-t-dim">
+          Podés cerrar esta página: sigue en el fondo y, si el servidor se
+          reinicia, se retoma sola.
+        </p>
+      </div>
+    );
+  }
+
+  if (generation.month !== month) return null;
+
+  if (generation.aborted) {
+    return (
+      <p className="text-sm text-error">
+        La generación automática se detuvo después de varios intentos. Revisá
+        los faltantes y volvé a generar.
+      </p>
+    );
+  }
+
+  return (
+    <div className="space-y-1 text-sm">
+      <p className="text-success">
+        Última generación automática ({formatDateTime(generation.finishedAt)}
+        ): {generation.generated} PDF{generation.generated === 1 ? "" : "s"}{" "}
+        generado{generation.generated === 1 ? "" : "s"}.
+      </p>
+      {generation.failed.length > 0 ? (
+        <p className="text-error">
+          No se pudieron generar: {generation.failed.join(", ")}.
+        </p>
+      ) : null}
+    </div>
+  );
+};
+
 export const MonthlyReportPdfsPage = () => {
   const [tab, setTab] = useState<PageTab>("pdfs");
   const [month, setMonth] = useState(lastClosedMonth);
@@ -105,6 +204,7 @@ export const MonthlyReportPdfsPage = () => {
   const bulkInputRef = useRef<HTMLInputElement>(null);
   const singleInputRef = useRef<HTMLInputElement>(null);
   const [singleInvestorId, setSingleInvestorId] = useState<string | null>(null);
+  const pollUntilRef = useRef(0);
 
   const fetchMonth = (value: string) => {
     setError(null);
@@ -120,6 +220,18 @@ export const MonthlyReportPdfsPage = () => {
   useEffect(() => {
     fetchMonth(month);
   }, [month]);
+
+  const generation = data?.generation ?? null;
+  const generationActive = Boolean(
+    generation && !generation.finishedAt,
+  );
+
+  useEffect(() => {
+    const awaitingStart = Date.now() < pollUntilRef.current;
+    if (!generationActive && !awaitingStart) return;
+    const timer = window.setTimeout(() => fetchMonth(month), GENERATION_POLL_MS);
+    return () => window.clearTimeout(timer);
+  }, [data, month, generationActive]);
 
   const persistableCount = useMemo(() => {
     if (!preview) return 0;
@@ -220,28 +332,25 @@ export const MonthlyReportPdfsPage = () => {
     setError(null);
     setNotice(null);
     try {
-      // Generation runs in the background now (see the backend PR): with
-      // enough investors, generating every PDF inline blew past Heroku's
-      // request timeout and its memory limit. Poll the list for a bit so
-      // it fills in as each one finishes, instead of waiting on one giant
-      // response.
+      // La generación corre en el fondo y guarda su avance en el servidor:
+      // la lista se refresca sola mientras dure (ver el efecto de polling),
+      // aunque se cierre y se vuelva a abrir la página.
       const res = await api.generateMonthlyReportPdfs({ month });
-      const payload = (res as { data: { already_running?: boolean } }).data;
+      const payload = (res as { data: { already_running?: boolean; month?: string } }).data;
       if (payload?.already_running) {
         setNotice(
-          "Ya hay una generación en curso para este mes. Esperá a que termine antes de volver a generar.",
+          payload.month && payload.month !== month
+            ? `Ya hay una generación en curso para ${payload.month}. Esperá a que termine antes de generar otro mes.`
+            : "Ya hay una generación en curso para este mes. Esperá a que termine antes de volver a generar.",
         );
+        fetchMonth(month);
         return;
       }
       setNotice(
-        "Generando en el fondo. Esta lista se va a ir actualizando sola durante los próximos minutos.",
+        "Generando en el fondo. La lista se actualiza sola hasta que termine.",
       );
-      let attempts = 0;
-      const poll = window.setInterval(() => {
-        attempts += 1;
-        fetchMonth(month);
-        if (attempts >= 18) window.clearInterval(poll); // ~3 min at 10s each
-      }, 10000);
+      pollUntilRef.current = Date.now() + GENERATION_START_GRACE_MS;
+      fetchMonth(month);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Error al generar PDFs");
     } finally {
@@ -419,9 +528,9 @@ export const MonthlyReportPdfsPage = () => {
             type="button"
             variant="outline"
             onClick={handleGenerateMissing}
-            disabled={generating || missingActive.length === 0}
+            disabled={generating || generationActive || missingActive.length === 0}
           >
-            {generating
+            {generating || generationActive
               ? "Generando..."
               : `Generar automáticamente (${missingActive.length})`}
           </Button>
@@ -443,6 +552,9 @@ export const MonthlyReportPdfsPage = () => {
             Faltan total: {data.counts.missing}
           </span>
         </div>
+        {generation ? (
+          <GenerationBanner generation={generation} month={month} />
+        ) : null}
       </div>
 
       {preview ? (

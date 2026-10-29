@@ -41,7 +41,8 @@ module Api
               present: present.size,
               missing: missing.size,
               missingActive: missing.count { |row| row[:status] == 'ACTIVE' }
-            }
+            },
+            generation: InvestorMonthlyReportPdfs::GenerationRun.as_json_for_admin
           }
         }
       end
@@ -80,8 +81,9 @@ module Api
         # takes the dyno's memory down with it. A single investor's PDF is
         # fast enough to render inline, so that path is unchanged.
         if params[:investor_id].blank?
-          if InvestorMonthlyReportPdfs::GenerateAllJob.running?(month)
-            return render json: { data: { enqueued: false, already_running: true, month: month } }, status: :ok
+          if InvestorMonthlyReportPdfs::GenerationRun.running? || InvestorMonthlyReportPdfs::GenerateAllJob.running_here?
+            running_month = InvestorMonthlyReportPdfs::GenerationRun.current&.dig('month') || month
+            return render json: { data: { enqueued: false, already_running: true, month: running_month } }, status: :ok
           end
 
           InvestorMonthlyReportPdfs::GenerateAllJob.perform_later(month: month, generated_by_id: current_user.id)

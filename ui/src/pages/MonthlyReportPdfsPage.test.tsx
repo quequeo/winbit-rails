@@ -182,6 +182,76 @@ describe("MonthlyReportPdfsPage", () => {
     ).toBeInTheDocument();
   });
 
+  const withGeneration = (generation: Record<string, unknown>) => ({
+    data: {
+      ...indexPayload.data,
+      generation: {
+        month: lastClosedMonth(),
+        running: true,
+        stalled: false,
+        processed: 3,
+        total: 10,
+        generated: 2,
+        failed: [],
+        aborted: false,
+        startedAt: "2026-10-01T10:00:00Z",
+        finishedAt: null,
+        ...generation,
+      },
+    },
+  });
+
+  it("shows the progress of a running bulk generation and keeps refreshing until it finishes", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      vi.mocked(api.getMonthlyReportPdfs)
+        .mockResolvedValueOnce(withGeneration({}))
+        .mockResolvedValue(
+          withGeneration({
+            running: false,
+            processed: 10,
+            generated: 9,
+            failed: ["Eugenio Carrió"],
+            finishedAt: "2026-10-01T10:05:00Z",
+          }),
+        );
+
+      render(<MonthlyReportPdfsPage />);
+
+      expect(await screen.findByText("Generando PDFs… 3 de 10")).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Generando..." }),
+      ).toBeDisabled();
+
+      await vi.advanceTimersByTimeAsync(5000);
+
+      expect(
+        await screen.findByText(/9 PDFs generados/),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText("No se pudieron generar: Eugenio Carrió."),
+      ).toBeInTheDocument();
+      expect(api.getMonthlyReportPdfs).toHaveBeenCalledTimes(2);
+
+      await vi.advanceTimersByTimeAsync(10000);
+      expect(api.getMonthlyReportPdfs).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("tells the admin a cut-off generation resumes on its own", async () => {
+    vi.mocked(api.getMonthlyReportPdfs).mockResolvedValue(
+      withGeneration({ running: false, stalled: true }),
+    );
+
+    render(<MonthlyReportPdfsPage />);
+
+    expect(
+      await screen.findByText(/Se retoma sola en un minuto/),
+    ).toBeInTheDocument();
+  });
+
   it("shows the report preview with validation warnings in a modal", async () => {
     const user = userEvent.setup();
     vi.mocked(api.previewMonthlyReportPdf).mockResolvedValue({
