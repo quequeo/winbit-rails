@@ -240,6 +240,24 @@ describe("MonthlyReportPdfsPage", () => {
     }
   });
 
+  it("flags outdated PDFs and counts them in the automatic generation", async () => {
+    vi.mocked(api.getMonthlyReportPdfs).mockResolvedValue({
+      data: {
+        ...indexPayload.data,
+        present: [{ ...indexPayload.data.present[0], outdated: true }],
+        counts: { ...indexPayload.data.counts, outdatedActive: 1 },
+      },
+    });
+
+    render(<MonthlyReportPdfsPage />);
+
+    expect(await screen.findByText("Desactualizado")).toBeInTheDocument();
+    expect(screen.getByText("Desactualizados: 1")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Generar automáticamente (2)" }),
+    ).toBeEnabled();
+  });
+
   it("tells the admin a cut-off generation resumes on its own", async () => {
     vi.mocked(api.getMonthlyReportPdfs).mockResolvedValue(
       withGeneration({ running: false, stalled: true }),

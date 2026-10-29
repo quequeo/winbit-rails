@@ -125,6 +125,28 @@ RSpec.describe 'Admin investor monthly report PDFs', type: :request do
       expect(json.dig('data', 'generation')).to be_nil
     end
 
+    it 'flags a generated PDF as outdated once its data changed' do
+      signature = InvestorMonthlyReportPdfs::DataSignature.for_investors(month: '2026-07', investor_ids: [ tulio.id ])[tulio.id]
+      InvestorMonthlyReportPdf.create!(
+        investor: tulio, month: '2026-07', original_filename: 'Reporte 2026-07 - Tulio.pdf',
+        content_type: 'application/pdf', byte_size: 12, pdf_data: '%PDF-1.4 hi', data_signature: signature,
+      )
+
+      get '/api/admin/v1/monthly_report_pdfs', params: { month: '2026-07' }
+      expect(JSON.parse(response.body).dig('data', 'present').first['outdated']).to be(false)
+
+      PortfolioHistory.create!(
+        investor: tulio, event: 'TRADING_FEE', amount: -5, previous_balance: 100, new_balance: 95,
+        date: Time.zone.local(2026, 7, 31, 17), status: 'COMPLETED',
+      )
+
+      login_as(admin, scope: :user)
+      get '/api/admin/v1/monthly_report_pdfs', params: { month: '2026-07' }
+      json = JSON.parse(response.body)
+      expect(json.dig('data', 'present').first['outdated']).to be(true)
+      expect(json.dig('data', 'counts', 'outdatedActive')).to eq(1)
+    end
+
     it 'includes the progress of the bulk generation' do
       InvestorMonthlyReportPdfs::GenerationRun.start!(month: '2026-07', generated_by_id: admin.id)
       InvestorMonthlyReportPdfs::GenerationRun.progress!(processed: 3, total: 10, generated: 2, failed: ['Tulio'])

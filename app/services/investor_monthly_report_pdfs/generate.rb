@@ -66,7 +66,7 @@ module InvestorMonthlyReportPdfs
       investors.each_with_index do |investor, index|
         existing = InvestorMonthlyReportPdf.find_by(investor: investor, month: @month)
 
-        if existing && !@overwrite && @investor.nil?
+        if existing && !@overwrite && @investor.nil? && !outdated?(investor, existing)
           skipped << investor
         else
           begin
@@ -98,7 +98,22 @@ module InvestorMonthlyReportPdfs
       Investor.where(status: 'ACTIVE').order(:name)
     end
 
+    # Un PDF ya generado se vuelve a generar en "Generar todos" si sus datos
+    # cambiaron desde entonces (ver DataSignature). Los subidos a mano no
+    # tienen huella y nunca se pisan.
+    def outdated?(investor, existing)
+      existing.data_signature.present? && existing.data_signature != signature_for(investor)
+    end
+
+    def signature_for(investor)
+      DataSignature.for_investors(month: @month, investor_ids: [ investor.id ])[investor.id]
+    end
+
     def generate_for(investor, existing)
+      # La huella se toma antes del render: si los datos cambian mientras se
+      # genera, el PDF queda marcado como desactualizado en vez de pasar por
+      # bueno.
+      signature = signature_for(investor)
       pdf_bytes = render_pdf(investor)
       record = existing || InvestorMonthlyReportPdf.new(investor: investor, month: @month)
       record.assign_attributes(
@@ -106,6 +121,7 @@ module InvestorMonthlyReportPdfs
         content_type: 'application/pdf',
         byte_size: pdf_bytes.bytesize,
         pdf_data: pdf_bytes,
+        data_signature: signature,
         uploaded_by: @generated_by
       )
       record.save!
