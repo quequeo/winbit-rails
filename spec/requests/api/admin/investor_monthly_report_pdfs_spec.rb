@@ -78,8 +78,8 @@ RSpec.describe 'Admin investor monthly report PDFs', type: :request do
       expect(response).to have_http_status(:not_found)
     end
 
-    it 'does not enqueue a second bulk job while one is already running for the month' do
-      allow(InvestorMonthlyReportPdfs::GenerateAllJob).to receive(:running?).with('2026-07').and_return(true)
+    it 'does not enqueue a second bulk job while one is already running' do
+      InvestorMonthlyReportPdfs::GenerationRun.start!(month: '2026-06', generated_by_id: admin.id)
 
       post '/api/admin/v1/monthly_report_pdfs/generate', params: { month: '2026-07' }
 
@@ -87,7 +87,17 @@ RSpec.describe 'Admin investor monthly report PDFs', type: :request do
       json = JSON.parse(response.body)
       expect(json.dig('data', 'enqueued')).to be(false)
       expect(json.dig('data', 'already_running')).to be(true)
+      expect(json.dig('data', 'month')).to eq('2026-06')
       expect(enqueued_jobs).to be_empty
+    end
+
+    it 'enqueues again when the previous run was cut off (no heartbeat for a while)' do
+      travel_to(10.minutes.ago) { InvestorMonthlyReportPdfs::GenerationRun.start!(month: '2026-07', generated_by_id: admin.id) }
+
+      post '/api/admin/v1/monthly_report_pdfs/generate', params: { month: '2026-07' }
+
+      expect(response).to have_http_status(:accepted)
+      expect(enqueued_jobs.size).to eq(1)
     end
   end
 
@@ -112,6 +122,20 @@ RSpec.describe 'Admin investor monthly report PDFs', type: :request do
       expect(json.dig('data', 'present').first.dig('investor', 'email')).to eq('tulio@test.com')
       expect(json.dig('data', 'missing').map { |row| row['email'] }).to include('old@test.com')
       expect(json.dig('data', 'counts', 'present')).to eq(1)
+      expect(json.dig('data', 'generation')).to be_nil
+    end
+
+    it 'includes the progress of the bulk generation' do
+      InvestorMonthlyReportPdfs::GenerationRun.start!(month: '2026-07', generated_by_id: admin.id)
+      InvestorMonthlyReportPdfs::GenerationRun.progress!(processed: 3, total: 10, generated: 2, failed: ['Tulio'])
+
+      get '/api/admin/v1/monthly_report_pdfs', params: { month: '2026-07' }
+
+      generation = JSON.parse(response.body).dig('data', 'generation')
+      expect(generation).to include(
+        'month' => '2026-07', 'running' => true, 'processed' => 3, 'total' => 10,
+        'generated' => 2, 'failed' => ['Tulio'], 'finishedAt' => nil,
+      )
     end
 
     it 'returns 422 without month' do

@@ -40,15 +40,19 @@ module InvestorMonthlyReportPdfs
       end
     end
 
-    def self.call(month:, investor: nil, overwrite: false, generated_by: nil)
-      new(month:, investor:, overwrite:, generated_by:).call
+    # on_progress: opcional, se llama después de cada inversor con
+    # (processed:, total:, generated:, failed:) - lo usa GenerateAllJob para
+    # guardar el avance en GenerationRun.
+    def self.call(month:, investor: nil, overwrite: false, generated_by: nil, on_progress: nil)
+      new(month:, investor:, overwrite:, generated_by:, on_progress:).call
     end
 
-    def initialize(month:, investor: nil, overwrite: false, generated_by: nil)
+    def initialize(month:, investor: nil, overwrite: false, generated_by: nil, on_progress: nil)
       @month = InvestorMonthlyReportPdfs::Month.parse(month)
       @investor = investor
       @overwrite = overwrite
       @generated_by = generated_by
+      @on_progress = on_progress
     end
 
     def call
@@ -58,22 +62,29 @@ module InvestorMonthlyReportPdfs
       skipped = []
       failed = []
 
-      target_investors.each do |investor|
+      investors = target_investors.to_a
+      investors.each_with_index do |investor, index|
         existing = InvestorMonthlyReportPdf.find_by(investor: investor, month: @month)
 
         if existing && !@overwrite && @investor.nil?
           skipped << investor
-          next
+        else
+          begin
+            generated << generate_for(investor, existing)
+          rescue StandardError => e
+            Rails.logger.error(
+              "[InvestorMonthlyReportPdfs::Generate] investor=#{investor.id} month=#{@month}: #{e.class}: #{e.message}"
+            )
+            failed << { investor: investor, error: e.message }
+          end
         end
 
-        begin
-          generated << generate_for(investor, existing)
-        rescue StandardError => e
-          Rails.logger.error(
-            "[InvestorMonthlyReportPdfs::Generate] investor=#{investor.id} month=#{@month}: #{e.class}: #{e.message}"
-          )
-          failed << { investor: investor, error: e.message }
-        end
+        @on_progress&.call(
+          processed: index + 1,
+          total: investors.size,
+          generated: generated.size,
+          failed: failed.map { |f| f[:investor].name },
+        )
       end
 
       Result.new(month: @month, generated: generated, skipped: skipped, failed: failed)

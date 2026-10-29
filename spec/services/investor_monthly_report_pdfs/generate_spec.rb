@@ -68,6 +68,15 @@ RSpec.describe InvestorMonthlyReportPdfs::Generate do
       expect(result.generated.map(&:investor_id)).to contain_exactly(investor_missing.id, investor_with_report.id)
       expect(InvestorMonthlyReportPdf.find_by(investor: investor_with_report, month: '2026-05').pdf_data).not_to eq('%PDF-old')
     end
+
+    it 'reports progress after each investor, skipped ones included' do
+      calls = []
+      described_class.call(month: '2026-05', generated_by: admin, on_progress: ->(**progress) { calls << progress })
+
+      expect(calls.map { |c| c[:processed] }).to eq([1, 2])
+      expect(calls.map { |c| c[:total] }.uniq).to eq([2])
+      expect(calls.last).to include(generated: 1, failed: [])
+    end
   end
 
   describe '.call for a single investor' do
