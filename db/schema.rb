@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_10_14_120000) do
+ActiveRecord::Schema[8.0].define(version: 2026_10_28_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -172,7 +172,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_10_14_120000) do
     t.decimal "new_balance", precision: 15, scale: 2, default: "0.0", null: false
     t.string "status", default: "COMPLETED", null: false
     t.datetime "created_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.string "operation_number"
     t.index ["investor_id", "date"], name: "index_portfolio_histories_on_investor_id_and_date"
+    t.index ["operation_number"], name: "index_portfolio_histories_on_operation_number"
     t.check_constraint "status::text = ANY (ARRAY['PENDING'::character varying::text, 'COMPLETED'::character varying::text, 'REJECTED'::character varying::text])", name: "portfolio_histories_status_check"
   end
 
@@ -222,9 +224,13 @@ ActiveRecord::Schema[8.0].define(version: 2026_10_14_120000) do
     t.string "attachment_url"
     t.datetime "reversed_at"
     t.string "reversed_by_id"
+    t.string "operation_number"
+    t.string "asset"
     t.index ["investor_id", "status"], name: "index_requests_on_investor_id_and_status"
+    t.index ["operation_number"], name: "index_requests_on_operation_number", unique: true
     t.index ["reversed_by_id"], name: "index_requests_on_reversed_by_id"
     t.index ["status", "requested_at"], name: "index_requests_on_status_and_requested_at"
+    t.check_constraint "asset IS NULL OR (asset::text = ANY (ARRAY['USDT'::character varying, 'USDC'::character varying, 'USD'::character varying]::text[]))", name: "requests_asset_check"
     t.check_constraint "network IS NULL OR (network::text = ANY (ARRAY['TRC20'::character varying::text, 'BEP20'::character varying::text, 'ERC20'::character varying::text, 'POLYGON'::character varying::text]))", name: "requests_network_check"
     t.check_constraint "request_type::text = ANY (ARRAY['DEPOSIT'::character varying::text, 'WITHDRAWAL'::character varying::text])", name: "requests_type_check"
     t.check_constraint "status::text = ANY (ARRAY['PENDING'::character varying::text, 'APPROVED'::character varying::text, 'REJECTED'::character varying::text, 'REVERSED'::character varying::text])", name: "requests_status_check"

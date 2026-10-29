@@ -10,6 +10,8 @@ class AdminRequestsListItemSerializer
       type: request.request_type,
       amount: request.amount.to_f,
       method: request.method,
+      operationNumber: request.operation_number,
+      currency: request.currency,
       network: request.network,
       walletAddress: request.wallet_address,
       lemontag: request.lemontag,

@@ -585,6 +585,7 @@ export const RequestsPage = () => {
                 </p>
                 <p className="mt-1 text-xs text-t-dim">
                   {formatDateAR(r.requestedAt)}
+                  {r.operationNumber ? ` · ${r.operationNumber}` : ""}
                 </p>
               </div>
               <span
@@ -713,7 +714,12 @@ export const RequestsPage = () => {
             <tbody className="divide-y divide-b-default">
               {requests.map((r) => (
                 <tr key={r.id} className="text-sm">
-                  <td className="py-2">{formatDateAR(r.requestedAt)}</td>
+                  <td className="py-2">
+                    {formatDateAR(r.requestedAt)}
+                    {r.operationNumber ? (
+                      <div className="text-xs text-t-dim">{r.operationNumber}</div>
+                    ) : null}
+                  </td>
                   <td className="py-2">
                     <p className="font-medium">{r.investor.name}</p>
                   </td>

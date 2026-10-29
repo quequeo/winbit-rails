@@ -15,6 +15,8 @@ class PublicPendingRequestHistoryItemSerializer
       status: request.status,
       createdAt: request.requested_at,
       method: request.method,
+      operationNumber: request.operation_number,
+      currency: request.currency,
       network: request.network,
       notes: request.notes,
       attachmentUrl: request.attachment_url

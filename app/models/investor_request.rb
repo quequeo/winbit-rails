@@ -19,6 +19,7 @@ class InvestorRequest < ApplicationRecord
   NETWORKS = %w[TRC20 BEP20 ERC20 POLYGON].freeze
   CRYPTO_WITHDRAWAL_METHODS = %w[CRYPTO].freeze
   ARS_METHODS = %w[CASH_ARS TRANSFER_ARS].freeze
+  ASSETS = %w[USDT USDC USD].freeze
 
   belongs_to :investor
   belongs_to :reversed_by, class_name: 'User', optional: true
@@ -29,10 +30,24 @@ class InvestorRequest < ApplicationRecord
   validates :method, presence: true, inclusion: { in: METHODS }
   validates :status, presence: true, inclusion: { in: STATUSES }
   validates :amount, numericality: { greater_than: 0 }
+  validates :asset, inclusion: { in: ASSETS }, allow_nil: true
 
   validate :network_allowed
   validate :crypto_withdrawal_destination_required
   validate :lemontag_required_for_lemon_cash
+
+  # Moneda real de la operación: la cargada en la solicitud, o la que se
+  # deduce del método (las transferencias y el efectivo en dólares son USD).
+  def currency
+    return asset if asset.present?
+    return 'ARS' if ARS_METHODS.include?(method)
+
+    case method
+    when 'USDT', 'USDC' then method
+    when 'CRYPTO', 'LEMON_CASH' then 'USDT'
+    else 'USD'
+    end
+  end
 
   private
 

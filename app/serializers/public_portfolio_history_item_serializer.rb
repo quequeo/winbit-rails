@@ -10,6 +10,7 @@ class PublicPortfolioHistoryItemSerializer
       investorId: history.investor_id,
       date: history.date,
       event: history.event,
+      operationNumber: history.operation_number,
       amount: history.amount.to_f,
       previousBalance: history.previous_balance.to_f,
       newBalance: history.new_balance.to_f,

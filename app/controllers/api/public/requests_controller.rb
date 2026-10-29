@@ -13,6 +13,7 @@ module Api
         lemontag = payload[:lemontag]
         transaction_hash = payload[:transactionHash]
         attachment_url = payload[:attachmentUrl]
+        asset = payload[:asset].presence
 
         if email.blank?
           return render_error('Email is required', status: :bad_request)
@@ -54,6 +55,7 @@ module Api
           amount: amount_num,
           method: method,
           network: network,
+          asset: asset,
           wallet_address: wallet_address,
           lemontag: lemontag,
           transaction_hash: transaction_hash,
@@ -90,11 +92,11 @@ module Api
       def request_params
         if params[:request].present?
           params.require(:request).permit(
-            :email, :type, :amount, :method, :network, :lemontag, :transactionHash, :attachmentUrl, :walletAddress
+            :email, :type, :amount, :method, :network, :lemontag, :transactionHash, :attachmentUrl, :walletAddress, :asset
           )
         else
           params.permit(
-            :email, :type, :amount, :method, :network, :lemontag, :transactionHash, :attachmentUrl, :walletAddress
+            :email, :type, :amount, :method, :network, :lemontag, :transactionHash, :attachmentUrl, :walletAddress, :asset
           )
         end
       end

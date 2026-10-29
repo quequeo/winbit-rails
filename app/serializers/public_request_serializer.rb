@@ -10,6 +10,8 @@ class PublicRequestSerializer
       type: request.request_type,
       amount: request.amount.to_f,
       method: request.method,
+      operationNumber: request.operation_number,
+      currency: request.currency,
       status: request.status,
       lemontag: request.lemontag,
       transactionHash: request.transaction_hash,
