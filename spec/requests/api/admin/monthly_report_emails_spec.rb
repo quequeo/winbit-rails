@@ -136,4 +136,79 @@ RSpec.describe 'Admin monthly report emails API', type: :request do
       expect(recipients).not_to include('monitoapps@gmail.com', 'old@test.com')
     end
   end
+
+  describe 'scheduled mass send' do
+    let(:monday_8am) { Time.find_zone('America/Argentina/Buenos_Aires').local(2026, 11, 2, 8) }
+
+    it 'schedules the send for later without sending anything now' do
+      travel_to Time.zone.local(2026, 10, 30, 19) do
+        post '/api/admin/v1/monthly_report_emails/schedule', params: {
+          month: '2026-07', subject: 'Hola {{nombre}}', body: 'Adjunto', scheduled_for: monday_8am.iso8601
+        }
+      end
+
+      expect(response).to have_http_status(:created)
+      json = JSON.parse(response.body)
+      expect(json.dig('data', 'status')).to eq('SCHEDULED')
+      expect(Time.zone.parse(json.dig('data', 'scheduledFor'))).to eq(monday_8am)
+      expect(ActionMailer::Base.deliveries).to be_empty
+    end
+
+    it 'rejects a time in the past and a second schedule for the same month' do
+      post '/api/admin/v1/monthly_report_emails/schedule', params: {
+        month: '2026-07', subject: 'Hola', body: 'Adjunto', scheduled_for: 1.hour.ago.iso8601
+      }
+      expect(response).to have_http_status(:unprocessable_content)
+
+      ScheduledMonthlyReportEmail.create!(month: '2026-07', subject: 'a', body: 'b', scheduled_for: 1.day.from_now)
+      login_as(admin, scope: :user)
+      post '/api/admin/v1/monthly_report_emails/schedule', params: {
+        month: '2026-07', subject: 'Hola', body: 'Adjunto', scheduled_for: 2.days.from_now.iso8601
+      }
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(JSON.parse(response.body)['error']).to include('Ya hay un envío programado')
+    end
+
+    it 'lists and cancels a pending schedule' do
+      record = ScheduledMonthlyReportEmail.create!(month: '2026-07', subject: 'a', body: 'b', scheduled_for: 1.day.from_now)
+
+      get '/api/admin/v1/monthly_report_emails/schedules', params: { month: '2026-07' }
+      expect(JSON.parse(response.body)['data'].map { |r| r['id'] }).to eq([ record.id ])
+
+      login_as(admin, scope: :user)
+      post "/api/admin/v1/monthly_report_emails/schedules/#{record.id}/cancel"
+      expect(response).to have_http_status(:ok)
+      expect(record.reload.status).to eq('CANCELED')
+
+      login_as(admin, scope: :user)
+      post "/api/admin/v1/monthly_report_emails/schedules/#{record.id}/cancel"
+      expect(response).to have_http_status(:unprocessable_content)
+    end
+
+    it 'sends to the eligible investors once the time arrives, only once' do
+      record = ScheduledMonthlyReportEmail.create!(
+        month: '2026-07', subject: 'Hola {{nombre}}', body: 'Adjunto', scheduled_for: monday_8am, scheduled_by: admin
+      )
+
+      expect(InvestorMonthlyReportEmails::SendScheduled.call(now: monday_8am - 1.minute)).to eq(0)
+      expect(ActionMailer::Base.deliveries).to be_empty
+
+      expect(InvestorMonthlyReportEmails::SendScheduled.call(now: monday_8am + 30.seconds)).to eq(1)
+      expect(ActionMailer::Base.deliveries.flat_map(&:to)).to contain_exactly('tulio@test.com', 'ana@test.com')
+      expect(record.reload).to have_attributes(status: 'SENT', queued_count: 2, failure_count: 0)
+      expect(record.sent_at).to be_present
+
+      expect(InvestorMonthlyReportEmails::SendScheduled.call(now: monday_8am + 2.minutes)).to eq(0)
+      expect(ActionMailer::Base.deliveries.size).to eq(2)
+    end
+
+    it 'does not send a canceled schedule' do
+      ScheduledMonthlyReportEmail.create!(
+        month: '2026-07', subject: 'Hola', body: 'Adjunto', scheduled_for: monday_8am, status: 'CANCELED'
+      )
+
+      expect(InvestorMonthlyReportEmails::SendScheduled.call(now: monday_8am + 1.minute)).to eq(0)
+      expect(ActionMailer::Base.deliveries).to be_empty
+    end
+  end
 end

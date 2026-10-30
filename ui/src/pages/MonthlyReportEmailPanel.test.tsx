@@ -9,6 +9,9 @@ vi.mock("../lib/api", () => ({
     previewMonthlyReportEmail: vi.fn(),
     sendMonthlyReportEmailOne: vi.fn(),
     sendMonthlyReportEmailMass: vi.fn(),
+    getMonthlyReportEmailSchedules: vi.fn(),
+    scheduleMonthlyReportEmailMass: vi.fn(),
+    cancelMonthlyReportEmailSchedule: vi.fn(),
   },
 }));
 
@@ -54,6 +57,7 @@ describe("MonthlyReportEmailPanel", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(api.previewMonthlyReportEmail).mockResolvedValue(previewPayload);
+    vi.mocked(api.getMonthlyReportEmailSchedules).mockResolvedValue({ data: [] });
   });
 
   it("previews recipients with name, email, PDF and balance", async () => {
@@ -115,5 +119,76 @@ describe("MonthlyReportEmailPanel", () => {
         confirm: true,
       });
     });
+  });
+
+  it("schedules the mass send for a chosen date and time", async () => {
+    const user = userEvent.setup();
+    vi.mocked(api.scheduleMonthlyReportEmailMass).mockResolvedValue({ data: {} });
+    vi.mocked(api.getMonthlyReportEmailSchedules)
+      .mockResolvedValueOnce({ data: [] })
+      .mockResolvedValue({
+        data: [
+          {
+            id: "s-1",
+            month: "2026-07",
+            subject: "Winbit | Reporte {{mes}}",
+            scheduledFor: new Date(2026, 10, 2, 8, 0).toISOString(),
+            status: "SCHEDULED",
+            scheduledBy: "Admin",
+          },
+        ],
+      });
+
+    render(<MonthlyReportEmailPanel month="2026-07" />);
+    await screen.findByText("Tulio Capparelli");
+
+    const input = screen.getByLabelText("Fecha y hora de envío");
+    await user.clear(input);
+    await user.type(input, "2026-11-02T08:00");
+    await user.click(screen.getByRole("button", { name: "Programar envío" }));
+    await user.click(await screen.findByRole("button", { name: "Programar" }));
+
+    await waitFor(() => {
+      expect(api.scheduleMonthlyReportEmailMass).toHaveBeenCalledWith(
+        expect.objectContaining({
+          month: "2026-07",
+          scheduled_for: new Date(2026, 10, 2, 8, 0).toISOString(),
+        }),
+      );
+    });
+    expect(
+      await screen.findByText(/Programado para el lunes 02\/11 a las 08:00/),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Enviar a todos los elegibles/i }),
+    ).toBeDisabled();
+  });
+
+  it("cancels a pending scheduled send", async () => {
+    const user = userEvent.setup();
+    vi.mocked(api.cancelMonthlyReportEmailSchedule).mockResolvedValue({ data: {} });
+    vi.mocked(api.getMonthlyReportEmailSchedules)
+      .mockResolvedValueOnce({
+        data: [
+          {
+            id: "s-1",
+            month: "2026-07",
+            subject: "Asunto",
+            scheduledFor: new Date(2026, 10, 2, 8, 0).toISOString(),
+            status: "SCHEDULED",
+          },
+        ],
+      })
+      .mockResolvedValue({ data: [] });
+
+    render(<MonthlyReportEmailPanel month="2026-07" />);
+    await user.click(
+      await screen.findByRole("button", { name: "Cancelar programación" }),
+    );
+
+    expect(api.cancelMonthlyReportEmailSchedule).toHaveBeenCalledWith("s-1");
+    expect(
+      await screen.findByText("Envío programado cancelado."),
+    ).toBeInTheDocument();
   });
 });

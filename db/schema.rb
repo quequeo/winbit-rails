@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_10_29_120000) do
+ActiveRecord::Schema[8.0].define(version: 2026_10_30_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -237,6 +237,24 @@ ActiveRecord::Schema[8.0].define(version: 2026_10_29_120000) do
     t.check_constraint "status::text = ANY (ARRAY['PENDING'::character varying::text, 'APPROVED'::character varying::text, 'REJECTED'::character varying::text, 'REVERSED'::character varying::text])", name: "requests_status_check"
   end
 
+  create_table "scheduled_monthly_report_emails", id: :string, force: :cascade do |t|
+    t.string "month", null: false
+    t.string "subject", null: false
+    t.text "body", null: false
+    t.datetime "scheduled_for", null: false
+    t.string "status", default: "SCHEDULED", null: false
+    t.string "scheduled_by_id"
+    t.datetime "sent_at"
+    t.integer "queued_count"
+    t.integer "skipped_count"
+    t.integer "failure_count"
+    t.text "error"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["month"], name: "index_scheduled_monthly_report_emails_on_month"
+    t.index ["status", "scheduled_for"], name: "idx_on_status_scheduled_for_9000e54ed3"
+  end
+
   create_table "strategy_operations", id: :string, force: :cascade do |t|
     t.date "operation_date", null: false
     t.string "asset", null: false
@@ -331,6 +349,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_10_29_120000) do
   add_foreign_key "request_receipt_pdfs", "requests", on_delete: :cascade
   add_foreign_key "requests", "investors"
   add_foreign_key "requests", "users", column: "reversed_by_id"
+  add_foreign_key "scheduled_monthly_report_emails", "users", column: "scheduled_by_id"
   add_foreign_key "strategy_operations", "users", column: "created_by_id"
   add_foreign_key "trading_fees", "investors"
   add_foreign_key "trading_fees", "requests", column: "withdrawal_request_id"

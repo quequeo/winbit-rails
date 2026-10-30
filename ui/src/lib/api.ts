@@ -767,4 +767,22 @@ export const api = {
       method: "POST",
       body: JSON.stringify(body),
     }),
+  getMonthlyReportEmailSchedules: (month: string) =>
+    request(
+      `${ADMIN_API_PREFIX}/monthly_report_emails/schedules?month=${encodeURIComponent(month)}`,
+    ),
+  scheduleMonthlyReportEmailMass: (body: {
+    month: string;
+    subject: string;
+    body: string;
+    scheduled_for: string;
+  }) =>
+    request(`${ADMIN_API_PREFIX}/monthly_report_emails/schedule`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  cancelMonthlyReportEmailSchedule: (id: string) =>
+    request(`${ADMIN_API_PREFIX}/monthly_report_emails/schedules/${id}/cancel`, {
+      method: "POST",
+    }),
 };
