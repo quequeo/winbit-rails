@@ -10,10 +10,15 @@ module InvestorMonthlyReportPdfs
     # the table/acumulado bar below it, up to 12 months of history.
     WIDTH = 1000
     HEIGHT = 120
-    PAD_LEFT = 10
     PAD_RIGHT = 10
     PAD_TOP = 26
     PAD_BOTTOM = 22
+    GRID_FRACTIONS = [0, 0.5, 1].freeze
+    AXIS_FONT_SIZE = 14
+    # Generous per-character width for the axis font, so the left gutter
+    # always fits the widest "USD 123.456" value and the line starts after it.
+    AXIS_CHAR_WIDTH = 8.4
+    AXIS_GAP = 12
 
     def self.build(rows:, initial_value:, initial_label:)
       new(rows:, initial_value:, initial_label:).build
@@ -34,6 +39,8 @@ module InvestorMonthlyReportPdfs
       vmax = values.max
       vrange = (vmax - vmin).zero? ? 1.0 : (vmax - vmin)
       n = values.size
+      axis_values = GRID_FRACTIONS.map { |frac| [frac, "USD #{money(vmin + (vrange * frac))}"] }
+      @plot_left = (axis_values.map { |_, text| text.length }.max * AXIS_CHAR_WIDTH).ceil + AXIS_GAP
 
       points = values.each_with_index.map { |v, i| [x_at(i, n), y_at(v, vmin, vrange)] }
       path = "M #{points.map { |x, y| "#{x.round(1)},#{y.round(1)}" }.join(' L ')}"
@@ -41,7 +48,7 @@ module InvestorMonthlyReportPdfs
 
       <<~SVG
         <svg viewBox="0 0 #{WIDTH} #{HEIGHT}" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-          #{gridlines(vmin, vrange)}
+          #{gridlines(axis_values)}
           <path d="#{area_path}" fill="#479785" opacity=".07" />
           <path d="#{path}" fill="none" stroke="#479785" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" />
           #{dots(points)}
@@ -54,11 +61,15 @@ module InvestorMonthlyReportPdfs
     private
 
     def x_at(index, count)
-      PAD_LEFT + (WIDTH - PAD_LEFT - PAD_RIGHT) * index.to_f / (count - 1)
+      @plot_left + (WIDTH - @plot_left - PAD_RIGHT) * index.to_f / (count - 1)
     end
 
     def y_at(value, vmin, vrange)
-      PAD_TOP + (HEIGHT - PAD_TOP - PAD_BOTTOM) * (1 - ((value - vmin) / vrange))
+      grid_y((value - vmin) / vrange)
+    end
+
+    def grid_y(frac)
+      PAD_TOP + (HEIGHT - PAD_TOP - PAD_BOTTOM) * (1 - frac)
     end
 
     def dots(points)
@@ -70,13 +81,14 @@ module InvestorMonthlyReportPdfs
       end.join
     end
 
-    def gridlines(vmin, vrange)
-      [0, 0.5, 1].map do |frac|
-        y = PAD_TOP + (HEIGHT - PAD_TOP - PAD_BOTTOM) * (1 - frac)
-        val = vmin + (vrange * frac)
+    # USD values live in a left gutter, right-aligned against the plot and
+    # vertically centered on their gridline, so the line never crosses them.
+    def gridlines(axis_values)
+      axis_values.map do |frac, text|
+        y = grid_y(frac)
         <<~LINE
-          <line x1="#{PAD_LEFT}" y1="#{y.round(1)}" x2="#{WIDTH - PAD_RIGHT}" y2="#{y.round(1)}" stroke="#28312D" stroke-width="1"/>
-          <text x="0" y="#{(y - 4).round(1)}" font-size="14" fill="#A7AAA2">USD #{money(val)}</text>
+          <line x1="#{@plot_left}" y1="#{y.round(1)}" x2="#{WIDTH - PAD_RIGHT}" y2="#{y.round(1)}" stroke="#28312D" stroke-width="1"/>
+          <text x="#{@plot_left - AXIS_GAP}" y="#{(y + 5).round(1)}" font-size="#{AXIS_FONT_SIZE}" fill="#A7AAA2" text-anchor="end">#{text}</text>
         LINE
       end.join
     end
@@ -100,7 +112,7 @@ module InvestorMonthlyReportPdfs
 
     def money(value)
       whole = value.round.to_i.abs
-      formatted = whole.to_s.reverse.gsub(/(\d{3})(?=\d)/, '\\1.').reverse
+      formatted = whole.to_s.reverse.gsub(/(\d{3})(?=\d)/, '\1.').reverse
       value.negative? ? "-#{formatted}" : formatted
     end
   end
