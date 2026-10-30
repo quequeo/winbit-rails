@@ -52,6 +52,44 @@ type Props = {
   month: string;
 };
 
+type Schedule = {
+  id: string;
+  month: string;
+  subject: string;
+  scheduledFor: string;
+  status: "SCHEDULED" | "SENDING" | "SENT" | "CANCELED" | "FAILED";
+  sentAt?: string | null;
+  queuedCount?: number | null;
+  skippedCount?: number | null;
+  failureCount?: number | null;
+  scheduledBy?: string | null;
+};
+
+const WEEKDAYS = [
+  "domingo",
+  "lunes",
+  "martes",
+  "miércoles",
+  "jueves",
+  "viernes",
+  "sábado",
+];
+
+const pad2 = (n: number) => String(n).padStart(2, "0");
+
+// Próximo día hábil a las 8:00 (hora local del navegador).
+const nextBusinessMorning = (now = new Date()) => {
+  const d = new Date(now);
+  d.setDate(d.getDate() + 1);
+  while (d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() + 1);
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}T08:00`;
+};
+
+const formatScheduleDate = (iso: string) => {
+  const d = new Date(iso);
+  return `${WEEKDAYS[d.getDay()]} ${pad2(d.getDate())}/${pad2(d.getMonth() + 1)} a las ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+};
+
 export const MonthlyReportEmailPanel = ({ month }: Props) => {
   const [subject, setSubject] = useState(DEFAULT_SUBJECT);
   const [body, setBody] = useState(DEFAULT_BODY);
@@ -62,6 +100,29 @@ export const MonthlyReportEmailPanel = ({ month }: Props) => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [showMassDialog, setShowMassDialog] = useState(false);
+  const [schedules, setSchedules] = useState<Schedule[]>([]);
+  const [scheduleAt, setScheduleAt] = useState(() => nextBusinessMorning());
+  const [showScheduleDialog, setShowScheduleDialog] = useState(false);
+
+  const loadSchedules = useCallback(async () => {
+    try {
+      const res = (await api.getMonthlyReportEmailSchedules(month)) as {
+        data?: Schedule[];
+      };
+      setSchedules(res?.data ?? []);
+    } catch {
+      setSchedules([]);
+    }
+  }, [month]);
+
+  useEffect(() => {
+    void loadSchedules();
+  }, [loadSchedules]);
+
+  const pendingSchedule = schedules.find(
+    (s) => s.status === "SCHEDULED" || s.status === "SENDING",
+  );
+  const lastSent = schedules.find((s) => s.status === "SENT");
 
   const loadPreview = useCallback(async () => {
     setLoadingPreview(true);
@@ -155,6 +216,48 @@ export const MonthlyReportEmailPanel = ({ month }: Props) => {
     }
   };
 
+  const handleSchedule = async () => {
+    setSending(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      const scheduledFor = new Date(scheduleAt);
+      if (Number.isNaN(scheduledFor.getTime())) {
+        throw new Error("Elegí una fecha y hora válidas.");
+      }
+      await api.scheduleMonthlyReportEmailMass({
+        month,
+        subject,
+        body,
+        scheduled_for: scheduledFor.toISOString(),
+      });
+      setSuccess(
+        `Envío programado para el ${formatScheduleDate(scheduledFor.toISOString())}.`,
+      );
+      await loadSchedules();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error al programar el envío");
+    } finally {
+      setSending(false);
+      setShowScheduleDialog(false);
+    }
+  };
+
+  const handleCancelSchedule = async (id: string) => {
+    setSending(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      await api.cancelMonthlyReportEmailSchedule(id);
+      setSuccess("Envío programado cancelado.");
+      await loadSchedules();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error al cancelar");
+    } finally {
+      setSending(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="admin-card p-6 space-y-4">
@@ -230,7 +333,12 @@ export const MonthlyReportEmailPanel = ({ month }: Props) => {
           </Button>
           <Button
             type="button"
-            disabled={sending || audienceCount === 0 || Boolean(investorId)}
+            disabled={
+              sending ||
+              audienceCount === 0 ||
+              Boolean(investorId) ||
+              Boolean(pendingSchedule)
+            }
             onClick={() => setShowMassDialog(true)}
           >
             Enviar a todos los elegibles
@@ -257,6 +365,70 @@ export const MonthlyReportEmailPanel = ({ month }: Props) => {
             ) : null}
           </p>
         </div>
+      </div>
+
+      <div className="admin-card p-6 space-y-3">
+        <h3 className="text-sm font-semibold text-t-primary">
+          Programar envío a todos los elegibles
+        </h3>
+        {pendingSchedule ? (
+          <div className="flex flex-wrap items-center gap-3">
+            <p className="text-sm text-success">
+              {pendingSchedule.status === "SENDING"
+                ? "Enviando ahora…"
+                : `Programado para el ${formatScheduleDate(pendingSchedule.scheduledFor)}`}
+              {pendingSchedule.scheduledBy
+                ? ` (por ${pendingSchedule.scheduledBy})`
+                : ""}
+              . Asunto: “{pendingSchedule.subject}”.
+            </p>
+            {pendingSchedule.status === "SCHEDULED" ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={sending}
+                onClick={() => void handleCancelSchedule(pendingSchedule.id)}
+              >
+                Cancelar programación
+              </Button>
+            ) : null}
+          </div>
+        ) : (
+          <div className="flex flex-wrap items-center gap-3">
+            <input
+              type="datetime-local"
+              value={scheduleAt}
+              onChange={(e) => setScheduleAt(e.target.value)}
+              aria-label="Fecha y hora de envío"
+              className="rounded-md border border-[rgba(71,151,133,0.25)] bg-[#111513] px-3 py-2 text-sm text-t-primary focus:border-primary focus:outline-none"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              disabled={
+                sending ||
+                audienceCount === 0 ||
+                Boolean(investorId) ||
+                !scheduleAt
+              }
+              onClick={() => setShowScheduleDialog(true)}
+            >
+              Programar envío
+            </Button>
+          </div>
+        )}
+        <p className="text-xs text-t-dim">
+          Sale solo a la hora elegida, con el asunto y el cuerpo que están
+          escritos al programar. Los destinatarios y los PDFs se toman al
+          momento del envío: si regenerás un PDF antes, sale el último.
+        </p>
+        {lastSent ? (
+          <p className="text-xs text-t-muted">
+            Último envío programado: {formatScheduleDate(lastSent.sentAt || lastSent.scheduledFor)} ·{" "}
+            {lastSent.queuedCount ?? 0} enviados, {lastSent.failureCount ?? 0} fallos.
+          </p>
+        ) : null}
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
@@ -392,6 +564,20 @@ export const MonthlyReportEmailPanel = ({ month }: Props) => {
           audienceCount === 1 ? "inversor" : "inversores"
         } (ACTIVE, con PDF y balance mayor a 0), con el PDF adjunto. ¿Continuar?`}
         confirmText="Enviar ahora"
+        confirmVariant="primary"
+      />
+
+      <ConfirmDialog
+        isOpen={showScheduleDialog}
+        onClose={() => setShowScheduleDialog(false)}
+        onConfirm={() => {
+          void handleSchedule();
+        }}
+        title="Confirmar envío programado"
+        message={`El reporte de ${month} se va a enviar el ${
+          scheduleAt ? formatScheduleDate(new Date(scheduleAt).toISOString()) : "—"
+        } a los inversores elegibles en ese momento (hoy: ${audienceCount}), con el PDF adjunto. ¿Programar?`}
+        confirmText="Programar"
         confirmVariant="primary"
       />
     </div>

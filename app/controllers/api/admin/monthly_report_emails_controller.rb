@@ -81,7 +81,94 @@ module Api
         render json: { data: serialize_send_result(result) }
       end
 
+      # GET /api/admin/monthly_report_emails/schedules?month=YYYY-MM
+      def schedules
+        month = parse_month_param
+        return if performed?
+
+        records = ScheduledMonthlyReportEmail.where(month: month).order(created_at: :desc).limit(10)
+        render json: { data: records.map { |record| serialize_schedule(record) } }
+      end
+
+      # POST /api/admin/monthly_report_emails/schedule
+      def schedule
+        month = parse_month_param
+        return if performed?
+
+        subject, body = require_template_params
+        return if performed?
+
+        scheduled_for = parse_scheduled_for
+        return if performed?
+
+        if ScheduledMonthlyReportEmail.scheduled.exists?(month: month)
+          render_error('Ya hay un envío programado para este mes. Cancelalo antes de programar otro.', status: :unprocessable_content)
+          return
+        end
+
+        record = ScheduledMonthlyReportEmail.create!(
+          month: month,
+          subject: subject,
+          body: body,
+          scheduled_for: scheduled_for,
+          scheduled_by: current_user
+        )
+
+        render json: { data: serialize_schedule(record) }, status: :created
+      end
+
+      # POST /api/admin/monthly_report_emails/schedules/:id/cancel
+      def cancel_schedule
+        record = ScheduledMonthlyReportEmail.find_by(id: params[:id])
+        return render_error('Envío programado no encontrado', status: :not_found) unless record
+
+        record.with_lock do
+          unless record.status == 'SCHEDULED'
+            render_error('Solo se puede cancelar un envío que todavía no salió', status: :unprocessable_content)
+            next
+          end
+
+          record.update!(status: 'CANCELED')
+        end
+        return if performed?
+
+        render json: { data: serialize_schedule(record) }
+      end
+
       private
+
+      def parse_scheduled_for
+        scheduled_for = Time.zone.parse(params[:scheduled_for].to_s)
+        if scheduled_for.nil?
+          render_error('Fecha y hora de envío inválidas', status: :unprocessable_content)
+          return
+        end
+        unless scheduled_for.future?
+          render_error('La fecha y hora de envío tiene que ser futura', status: :unprocessable_content)
+          return
+        end
+
+        scheduled_for
+      rescue ArgumentError
+        render_error('Fecha y hora de envío inválidas', status: :unprocessable_content)
+        nil
+      end
+
+      def serialize_schedule(record)
+        {
+          id: record.id,
+          month: record.month,
+          subject: record.subject,
+          body: record.body,
+          scheduledFor: record.scheduled_for&.iso8601,
+          status: record.status,
+          sentAt: record.sent_at&.iso8601,
+          queuedCount: record.queued_count,
+          skippedCount: record.skipped_count,
+          failureCount: record.failure_count,
+          scheduledBy: record.scheduled_by&.name
+        }
+      end
 
       def parse_month_param
         raw = params[:month].presence
