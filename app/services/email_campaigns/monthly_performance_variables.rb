@@ -5,33 +5,47 @@ module EmailCampaigns
   #
   # Available variables:
   #   {{nombre}}       — investor name
+  #   {{primer_nombre}} — first name only
   #   {{email}}        — investor email
   #   {{ganancia_usd}} — monthly RDO M $ (Argentine $X.XXX,XX) or "—" if missing
   #   {{ganancia_pct}} — monthly RDO M % (X,XX%) or "—" if missing
   #   {{mes}}          — report month YYYY-MM
+  #   {{mes_nombre}} / {{mes_titulo}} — "octubre 2026" / "Octubre 2026"
+  #   {{rentabilidad_mes}} — monthly return %, net of the service cost, number only (2,14)
+  #   {{acumulado_anual}}  — year-to-date return %, net, number only (9,36)
+  #   {{capital}}          — portfolio value at the report date (11.107,48)
+  # The monthly figures are the same ones the PDF report shows.
   class MonthlyPerformanceVariables
     MISSING = '—'
+    MONTH_NAMES = %w[_ enero febrero marzo abril mayo junio julio agosto septiembre octubre noviembre diciembre].freeze
 
     class << self
       def call(investor:, report_month:)
         month_date = normalize_month(report_month)
         month_key = month_date.strftime('%Y-%m')
         report = MonthlyReportBuilder.new(investor: investor, report_month: month_date).build
-        row = find_month_row(report, month_key)
+        row = report[:month_row]
+        summary = report[:summary]
 
         {
           'nombre' => investor.name.to_s,
+          'primer_nombre' => investor.name.to_s.split.first.to_s,
           'email' => investor.email.to_s,
           'ganancia_usd' => format_currency_or_missing(row&.dig(:return_usd)),
           'ganancia_pct' => format_percent_or_missing(row&.dig(:return_percent)),
           'mes' => month_key,
+          'mes_nombre' => "#{MONTH_NAMES[month_date.month]} #{month_date.year}",
+          'mes_titulo' => "#{MONTH_NAMES[month_date.month].capitalize} #{month_date.year}",
           'ganancia_usd_raw' => row&.dig(:return_usd),
           'ganancia_pct_raw' => row&.dig(:return_percent),
+          'rentabilidad_mes' => format_number_or_missing(row&.dig(:return_percent)),
+          'acumulado_anual' => format_number_or_missing(summary[:accumulated_2026_percent]),
+          'capital' => format_number_or_missing(summary[:portfolio_value_usd]),
         }
       end
 
       def available_variable_names
-        %w[nombre email ganancia_usd ganancia_pct mes]
+        %w[nombre primer_nombre email rentabilidad_mes acumulado_anual capital mes_nombre mes_titulo ganancia_usd ganancia_pct mes]
       end
 
       private
@@ -51,10 +65,10 @@ module EmailCampaigns
         end
       end
 
-      def find_month_row(report, month_key)
-        Array(report[:annex_rows]).find do |r|
-          r[:month] == month_key && !r[:opening_snapshot] && !r[:entry_row]
-        end
+      def format_number_or_missing(amount)
+        return MISSING if amount.nil?
+
+        format_currency(amount).delete_prefix('$')
       end
 
       def format_currency_or_missing(amount)

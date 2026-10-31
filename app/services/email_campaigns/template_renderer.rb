@@ -1,27 +1,55 @@
 # frozen_string_literal: true
 
 module EmailCampaigns
-  # Renders plain-text subject/body with {{variable}} substitution.
-  # Values are inserted as plain text; HTML escaping happens when building body HTML.
+  # Renders the subject/body an admin writes, with variable substitution.
+  #
+  # Variables: {{nombre}} or {nombre}. Single braces only replace known
+  # variables, so any other text between braces is left as written.
+  #
+  # The HTML body also supports:
+  #   **texto**            -> bold
+  #   *texto*              -> italic
+  #   [Botón: texto]       -> button to the investor app (also [Boton: ...])
+  # Values are inserted as plain text and everything is HTML-escaped first.
   class TemplateRenderer
-    VARIABLE_PATTERN = /\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/
+    VARIABLE_PATTERN = /\{\{\s*([a-zA-Z0-9_]+)\s*\}\}|\{\s*([a-zA-Z0-9_]+)\s*\}/
+    BUTTON_PATTERN = /\[\s*Bot[oó]n\s*:\s*([^\]]+?)\s*\]/i
+    BUTTON_STYLE = 'display:inline-block;background:#3F8F7B;color:#FFFFFF;font-weight:bold;' \
+                   'text-decoration:none;padding:12px 26px;border-radius:6px;'
 
     class << self
       def render_plain(template, variables)
         vars = stringify_keys(variables)
         template.to_s.gsub(VARIABLE_PATTERN) do
-          key = Regexp.last_match(1)
-          vars.fetch(key) { "{{#{key}}}" }.to_s
+          match = Regexp.last_match
+          key = match[1] || match[2]
+          vars.key?(key) ? vars[key].to_s : match[0]
         end
       end
 
-      # Escapes HTML then converts newlines to <br> for mailer body.
+      # Escapes HTML, applies the formatting above and converts newlines to
+      # <br> for the mailer body.
       def render_html(template, variables)
-        plain = render_plain(template, variables)
-        ERB::Util.html_escape(plain).gsub(/\r\n|\r|\n/, '<br>')
+        html = ERB::Util.html_escape(render_plain(template, variables)).to_str
+        html = html.gsub(/\*\*(.+?)\*\*/, '<strong>\1</strong>')
+        html = html.gsub(/(?<![*\w])\*(?!\s)([^*\n]+?)(?<!\s)\*(?![*\w])/, '<em>\1</em>')
+        html = html.gsub(BUTTON_PATTERN) { button_html(Regexp.last_match(1)) }
+        html.gsub(/\r\n|\r|\n/, '<br>')
+      end
+
+      def button?(template)
+        template.to_s.match?(BUTTON_PATTERN)
+      end
+
+      def app_url
+        "#{ENV.fetch('FRONTEND_URL', 'https://winbit-6579c.web.app')}/dashboard"
       end
 
       private
+
+      def button_html(label)
+        %(<a href="#{app_url}" style="#{BUTTON_STYLE}">#{label}</a>)
+      end
 
       def stringify_keys(variables)
         variables.each_with_object({}) do |(k, v), h|

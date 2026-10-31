@@ -157,6 +157,20 @@ RSpec.describe InvestorMailer, type: :mailer do
         expect(mail.attachments.size).to eq(1)
         expect(mail.attachments.first.filename).to eq('informe.pdf')
       end
+
+      it 'campaign_message adds the app button and the signature unless the body has its own button' do
+        default = described_class.campaign_message(investor, subject: 'A', body_html: 'Hola', force: true)
+        own = described_class.campaign_message(
+          investor, subject: 'A', force: true,
+          body_html: EmailCampaigns::TemplateRenderer.render_html('Hola [Botón: Entrar]', {})
+        )
+
+        expect(default.html_part&.body.to_s.presence || default.body.to_s).to include('Ver mi cuenta en la app')
+        own_html = own.html_part&.body.to_s.presence || own.body.to_s
+        expect(own_html).to include('Entrar</a>')
+        expect(own_html).not_to include('Ver mi cuenta en la app')
+        expect(own_html).to include('contacto@winbit.com.ar')
+      end
     end
 
     describe 'whitelist with different email formats' do
