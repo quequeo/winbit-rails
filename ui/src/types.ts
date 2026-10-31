@@ -18,9 +18,13 @@ export interface ApiInvestorPortfolio {
   annualReturnPercent?: number;
   strategyReturnYtdUSD?: number;
   strategyReturnYtdPercent?: number;
+  strategyReturnYtdNetUSD?: number;
+  strategyReturnYtdNetPercent?: number;
   strategyReturnYtdFrom?: string | null;
   strategyReturnAllUSD?: number;
   strategyReturnAllPercent?: number;
+  strategyReturnAllNetUSD?: number;
+  strategyReturnAllNetPercent?: number;
   strategyReturnAllFrom?: string | null;
   updatedAt?: string;
 }

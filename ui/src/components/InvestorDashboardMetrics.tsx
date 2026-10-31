@@ -66,14 +66,14 @@ export function InvestorDashboardMetrics({ portfolio, compact = false }: Props) 
       </div>
       <MetricCell
         label={`Resultado estrategia ${year} (USD / %)`}
-        usd={portfolio.strategyReturnYtdUSD}
-        percent={portfolio.strategyReturnYtdPercent}
+        usd={portfolio.strategyReturnYtdNetUSD ?? portfolio.strategyReturnYtdUSD}
+        percent={portfolio.strategyReturnYtdNetPercent ?? portfolio.strategyReturnYtdPercent}
         compact={compact}
       />
       <MetricCell
         label="Resultado estrategia histórico (USD / %)"
-        usd={portfolio.strategyReturnAllUSD}
-        percent={portfolio.strategyReturnAllPercent}
+        usd={portfolio.strategyReturnAllNetUSD ?? portfolio.strategyReturnAllUSD}
+        percent={portfolio.strategyReturnAllNetPercent ?? portfolio.strategyReturnAllPercent}
         compact={compact}
       />
       <MetricCell
@@ -114,10 +114,10 @@ export function InvestorDashboardTableCells({
 
   const rows: Array<{ value: number | null | undefined; kind: "usd" | "pct" }> = [
     { value: portfolio.totalInvested, kind: "usd" },
-    { value: portfolio.strategyReturnYtdUSD, kind: "usd" },
-    { value: portfolio.strategyReturnYtdPercent, kind: "pct" },
-    { value: portfolio.strategyReturnAllUSD, kind: "usd" },
-    { value: portfolio.strategyReturnAllPercent, kind: "pct" },
+    { value: portfolio.strategyReturnYtdNetUSD ?? portfolio.strategyReturnYtdUSD, kind: "usd" },
+    { value: portfolio.strategyReturnYtdNetPercent ?? portfolio.strategyReturnYtdPercent, kind: "pct" },
+    { value: portfolio.strategyReturnAllNetUSD ?? portfolio.strategyReturnAllUSD, kind: "usd" },
+    { value: portfolio.strategyReturnAllNetPercent ?? portfolio.strategyReturnAllPercent, kind: "pct" },
     { value: portfolio.accumulatedReturnUSD, kind: "usd" },
     { value: portfolio.accumulatedReturnPercent, kind: "pct" },
     { value: portfolio.annualReturnUSD, kind: "usd" },

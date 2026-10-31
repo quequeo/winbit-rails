@@ -127,8 +127,8 @@ class MonthlyReportBuilder
   # This rewinds the live figure to `as_of` instead of re-deriving it from scratch (re-deriving
   # from annex_rows alone would lose "genesis" investors' real pre-migration history, which only
   # exists baked into this compounding baseline, not as separate PortfolioHistory rows) and then
-  # nets out trading fees paid up to that same cutoff (InvestorTradingFeesPaid - the same
-  # approach already used for the investor-facing app's net YTD/all-time figures).
+  # nets out trading fees paid in that same window (StrategyReturnNetOfFees - the same
+  # netting InvestorPortfolioDashboardPayload applies to the admin and investor-app figures).
   #
   # USD accumulates additively (one delta per day - see compound_strategy_returns!), so
   # unwinding it is a plain subtraction of what happened after the cutoff. Percent compounds
@@ -173,18 +173,10 @@ class MonthlyReportBuilder
     gross_usd_as_of = bd(gross_usd.to_s) - usd_after_cutoff
     gross_percent_as_of = (factor_as_of - bd('1')) * 100
 
-    fees_as_of = InvestorTradingFeesPaid.total(investor_id: @investor.id, to: as_of)
-    net_usd_as_of = (gross_usd_as_of - fees_as_of).round(2, :half_up)
-
-    net_percent_as_of =
-      if gross_percent_as_of.zero? || gross_usd_as_of.zero?
-        bd('0')
-      else
-        base_capital = gross_usd_as_of / (gross_percent_as_of / 100)
-        base_capital.positive? ? ((net_usd_as_of / base_capital) * 100).round(4, :half_up) : bd('0')
-      end
-
-    { usd: net_usd_as_of.to_f, percent: net_percent_as_of.to_f }
+    StrategyReturnNetOfFees.call(
+      investor_id: @investor.id, gross_usd: gross_usd_as_of, gross_percent: gross_percent_as_of,
+      from: from, to: as_of
+    )
   end
 
   # For an investor already active before the report year, this is simply

@@ -44,6 +44,10 @@ describe("InvestorsPage", () => {
           strategyReturnYtdPercent: 6.5,
           strategyReturnAllUSD: 400,
           strategyReturnAllPercent: 18.2,
+          strategyReturnYtdNetUSD: 100,
+          strategyReturnYtdNetPercent: 5.4,
+          strategyReturnAllNetUSD: 380,
+          strategyReturnAllNetPercent: 17.3,
           accumulatedReturnUSD: 200,
           accumulatedReturnPercent: 25,
           annualReturnUSD: 120,
@@ -100,7 +104,8 @@ describe("InvestorsPage", () => {
       });
 
       expect(screen.getAllByText(/Resultado estrategia \d{4}/).length).toBeGreaterThan(0);
-      expect(screen.getAllByText(/\+6\.50%/).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/\+5\.40%/).length).toBeGreaterThan(0);
+      expect(screen.queryByText(/\+6\.50%/)).not.toBeInTheDocument();
     });
 
     it("renders error message when fetch fails", async () => {
