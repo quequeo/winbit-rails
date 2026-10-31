@@ -127,6 +127,8 @@ class InvestorMailer < ApplicationMailer
   def campaign_message(investor, subject:, body_html:, force: false, attachment: nil)
     @investor = investor
     @body_html = body_html
+    # A [Botón: ...] written in the body replaces the default button at the end.
+    @body_has_button = body_html.to_s.include?(EmailCampaigns::TemplateRenderer::BUTTON_STYLE)
 
     unless force
       return unless NotificationGate.should_send_to_investor?(investor.email)

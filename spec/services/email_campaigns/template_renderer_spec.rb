@@ -15,6 +15,11 @@ RSpec.describe EmailCampaigns::TemplateRenderer do
     it 'leaves unknown variables intact' do
       expect(described_class.render_plain('X {{foo}}', {})).to eq('X {{foo}}')
     end
+
+    it 'also substitutes single-brace variables, leaving other braces as written' do
+      result = described_class.render_plain('Hola {nombre}, {otra cosa} {foo}', { 'nombre' => 'Ana' })
+      expect(result).to eq('Hola Ana, {otra cosa} {foo}')
+    end
   end
 
   describe '.render_html' do
@@ -24,6 +29,20 @@ RSpec.describe EmailCampaigns::TemplateRenderer do
         { 'nombre' => '<b>Ana</b>' }
       )
       expect(result).to eq('Hola &lt;b&gt;Ana&lt;/b&gt;<br>&lt;script&gt;')
+    end
+
+    it 'renders **bold**, *italic* and a [Botón: ...] to the investor app' do
+      result = described_class.render_html(
+        "Rentabilidad de **{rentabilidad_mes}%**
+[Botón: Ver mi cuenta en la app →]
+*El equipo de Winbit*",
+        { 'rentabilidad_mes' => '2,14' }
+      )
+      expect(result).to include('Rentabilidad de <strong>2,14%</strong>')
+      expect(result).to include(%(href="#{described_class.app_url}"))
+      expect(result).to include('>Ver mi cuenta en la app →</a>')
+      expect(result).to include('<em>El equipo de Winbit</em>')
+      expect(result).not_to include('[Botón')
     end
   end
 end
@@ -51,5 +70,11 @@ RSpec.describe EmailCampaigns::MonthlyPerformanceVariables do
     expect(vars['mes']).to eq('2026-04')
     expect(vars['ganancia_usd']).to eq('$158,50')
     expect(vars['ganancia_pct']).to eq('2,50%')
+    expect(vars['primer_nombre']).to eq('Ana')
+    expect(vars['mes_nombre']).to eq('abril 2026')
+    expect(vars['mes_titulo']).to eq('Abril 2026')
+    expect(vars['rentabilidad_mes']).to eq('2,50')
+    expect(vars['capital']).to eq('6.484,00')
+    expect(vars['acumulado_anual']).not_to be_nil
   end
 end

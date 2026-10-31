@@ -5,16 +5,25 @@ import { Button } from "./ui/Button";
 import { Input } from "./ui/Input";
 import { ConfirmDialog } from "./ui/ConfirmDialog";
 
-const DEFAULT_SUBJECT = "Winbit | Reporte {{mes}}";
+const DEFAULT_SUBJECT = "Winbit | Reporte mensual | {mes_titulo}";
 
-const DEFAULT_BODY = `Hola {{nombre}},
+const DEFAULT_BODY = `Buenos días {primer_nombre}, ¿cómo estás?
 
-Adjuntamos tu reporte de rendimiento de {{mes}}.
+Adjuntamos el **reporte mensual de {mes_nombre}**. Tu capital obtuvo una rentabilidad de **{rentabilidad_mes}%** en el mes, y el acumulado del año es de **{acumulado_anual}%**.
 
-Ganancia del mes: {{ganancia_pct}} ({{ganancia_usd}}).
+Recordá que en el reporte vas a encontrar el detalle de cada una de las operaciones del mes. La idea es que puedas ver qué hay detrás de los movimientos de tu capital, no solo el número final.
 
-Saludos,
-Equipo Winbit`;
+**Custodia del capital**
+A raíz del reciente incidente de seguridad que afectó a Binance, queremos llevarte tranquilidad: el capital administrado por Winbit se custodia en USD en entidades bancarias reguladas en el exterior, no en exchanges ni en billeteras cripto. Solo mantenemos una pequeña reserva líquida en USDT, que nos permite procesar en el día las solicitudes de retiro. Durante la semana te vamos a enviar un correo con más detalle sobre cómo se custodia y se protege tu capital.
+
+**Un canal más directo**
+Además, de ahora en más vamos a estar en contacto por WhatsApp, desde el número de Winbit, para que tengas una vía más rápida ante cualquier consulta.
+
+Al cierre del mes, tu capital administrado es de **USD {capital}**. Si querés, podés sumar capital cuando quieras desde la app, sin monto mínimo.
+
+[Botón: Ver mi cuenta en la app →]
+
+*El equipo de Winbit*`;
 
 type Recipient = {
   id: string;
@@ -304,14 +313,29 @@ export const MonthlyReportEmailPanel = ({ month }: Props) => {
             className="w-full rounded-md border border-[rgba(71,151,133,0.25)] bg-[#111513] px-3 py-2 text-sm text-t-primary focus:border-primary focus:outline-none focus:ring-1 focus:ring-[rgba(71,151,133,0.3)]"
           />
           <p className="mt-2 text-xs text-t-dim">
-            Variables:{" "}
-            <code className="text-primary">{"{{nombre}}"}</code>,{" "}
-            <code className="text-primary">{"{{ganancia_usd}}"}</code>,{" "}
-            <code className="text-primary">{"{{ganancia_pct}}"}</code>,{" "}
-            <code className="text-primary">{"{{email}}"}</code>,{" "}
-            <code className="text-primary">{"{{mes}}"}</code>.{" "}
-            <code className="text-primary">{"{{nombre}}"}</code> usa el nombre
-            completo, igual que en Campañas.
+            Variables (con una o dos llaves):{" "}
+            {[
+              "primer_nombre",
+              "nombre",
+              "rentabilidad_mes",
+              "acumulado_anual",
+              "capital",
+              "mes_nombre",
+              "mes_titulo",
+              "ganancia_usd",
+              "ganancia_pct",
+            ].map((name, index) => (
+              <span key={name}>
+                {index > 0 && ", "}
+                <code className="text-primary">{`{${name}}`}</code>
+              </span>
+            ))}
+            . Los valores son los mismos del reporte PDF de cada inversor,
+            netos del costo del servicio. Formato:{" "}
+            <code className="text-primary">**negrita**</code>,{" "}
+            <code className="text-primary">*cursiva*</code> y{" "}
+            <code className="text-primary">[Botón: texto]</code> para el botón
+            a la app. La firma de Winbit se agrega sola al final.
           </p>
         </div>
 
