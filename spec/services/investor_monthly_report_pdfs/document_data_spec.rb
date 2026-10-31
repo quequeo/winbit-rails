@@ -135,12 +135,10 @@ RSpec.describe InvestorMonthlyReportPdfs::DocumentData do
       expect(page[:ops_summary][:count]).to eq(2)
       expect(page[:ops_summary][:positive]).to eq(1)
       expect(page[:ops_summary][:negative]).to eq(1)
-      expect(page[:ops_summary][:service_cost]).to eq('0 USD')
-      expect(page[:ops_summary][:service_cost_class]).to eq('')
     end
   end
 
-  it "shows the month's service cost and a net result equal to the resumen's monthly return" do
+  it 'shows the result of the operations in the operations annex, without the service cost' do
     PortfolioHistory.create!(
       investor: investor, event: 'TRADING_FEE', amount: -62.03,
       previous_balance: 6812.07, new_balance: 6750.04,
@@ -149,9 +147,8 @@ RSpec.describe InvestorMonthlyReportPdfs::DocumentData do
 
     travel_to Time.zone.local(2026, 5, 31, 12, 0, 0) do
       data = described_class.call(investor: investor, report_month: '2026-05')
-      expect(data[:ops_pages].last[:ops_summary][:service_cost]).to eq('-62 USD')
-      expect(data[:ops_pages].last[:ops_summary][:service_cost_class]).to eq('neg')
-      expect(data[:ops_pages].last[:ops_summary][:net_result]).to eq('-133 USD') # operaciones (-71) - costo del servicio (62)
+      expect(data[:ops_pages].last[:ops_summary]).not_to have_key(:service_cost)
+      expect(data[:ops_pages].last[:ops_summary][:net_result]).to eq('-71 USD')
     end
   end
 

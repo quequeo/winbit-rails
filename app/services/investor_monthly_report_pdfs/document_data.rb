@@ -126,21 +126,17 @@ module InvestorMonthlyReportPdfs
 
     def ops_summary
       report = operations_report
-      # Cada operación es un resultado antes del costo del servicio, que se
-      # cobra aparte. "Resultado neto" = suma de las operaciones - costo del
-      # servicio: el mismo rendimiento mensual de la página de resumen.
-      service_cost = current_month_row&.dig(:service_cost).to_f
-      net_result = report.net_result_usd.to_f - service_cost
+      # Es un anexo de operaciones: muestra el resultado de las operaciones
+      # (la suma del $ de cada una), sin el costo del servicio, que se cobra
+      # aparte al cierre del período.
       winbit_monthly_return = @report[:summary][:winbit_monthly_return_percent]
       {
         count: report.count,
         positive: report.positive,
         negative: report.negative,
         break_even: report.break_even,
-        net_result: signed_amount_with_unit(net_result),
-        net_result_class: sign_class(net_result),
-        service_cost: signed_amount_with_unit(-service_cost),
-        service_cost_class: sign_class(-service_cost),
+        net_result: signed_amount_with_unit(report.net_result_usd),
+        net_result_class: sign_class(report.net_result_usd),
         monthly_return_percent: signed_percent(winbit_monthly_return),
         # Es el rendimiento general de Winbit, no el del inversor: el color
         # tiene que seguir el signo de esta cifra, no el de data[:monthly].

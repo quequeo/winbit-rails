@@ -16,7 +16,8 @@ module InvestorMonthlyReportPdfs
     # (no solo sus datos), para que los PDFs ya generados queden marcados
     # como desactualizados y "Generar todos" los rehaga.
     # 2: rendimiento mensual neto del costo del servicio.
-    CALCULATION_VERSION = 2
+    # 3: el anexo de operaciones muestra solo el resultado de las operaciones.
+    CALCULATION_VERSION = 3
 
     def self.for_investors(month:, investor_ids:)
       new(month:).for_investors(investor_ids)
