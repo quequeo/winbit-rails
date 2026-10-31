@@ -14,6 +14,21 @@ import {
 } from "../components/InvestorDashboardMetrics";
 
 const dashboardYear = () => new Date().getFullYear();
+const DASHBOARD_MONTHS = [
+  "ene",
+  "feb",
+  "mar",
+  "abr",
+  "may",
+  "jun",
+  "jul",
+  "ago",
+  "sep",
+  "oct",
+  "nov",
+  "dic",
+];
+const dashboardMonth = () => DASHBOARD_MONTHS[new Date().getMonth()];
 
 const frequencyLabel = (freq: string) => {
   if (freq === "MONTHLY") return "Mensual";
@@ -454,7 +469,7 @@ export const InvestorsPage = () => {
       {/* Desktop/tablet: table */}
       <div className="hidden md:block admin-card p-6">
         <p className="mb-4 text-sm text-t-muted">
-          Métricas del panel inversor (winbit-app) para controles y auditoría.
+          Mismos valores que el reporte PDF y la app del inversor, netos del costo del servicio.
         </p>
         <div className="overflow-x-auto">
           <table className="min-w-max w-full">
@@ -463,20 +478,22 @@ export const InvestorsPage = () => {
                 <th className="pb-3 pr-4 sticky left-0 bg-dark-card/95">Nombre</th>
                 <th className="pb-3 pr-4">Email</th>
                 <th className="pb-3 pr-4 text-center">Status</th>
-                <th className="pb-3 pr-4 text-right">Capital actual</th>
-                <th className="pb-3 pr-4 text-right">Total invertido</th>
+                <th className="pb-3 pr-4 text-right">Valor del portafolio</th>
+                <th className="pb-3 pr-4 text-right">Capital aportado neto</th>
                 <th className="pb-3 pr-4 text-right">
-                  Resultado {dashboardYear()} (USD)
+                  Rend. {dashboardMonth()} (USD)
                 </th>
                 <th className="pb-3 pr-4 text-right">
-                  Resultado {dashboardYear()} (%)
+                  Rend. {dashboardMonth()} (%)
                 </th>
-                <th className="pb-3 pr-4 text-right">Resultado hist. (USD)</th>
-                <th className="pb-3 pr-4 text-right">Resultado hist. (%)</th>
-                <th className="pb-3 pr-4 text-right">Rent. acum. (USD)</th>
-                <th className="pb-3 pr-4 text-right">Rent. acum. (%)</th>
-                <th className="pb-3 pr-4 text-right">Rent. anual (USD)</th>
-                <th className="pb-3 pr-4 text-right">Rent. anual (%)</th>
+                <th className="pb-3 pr-4 text-right">
+                  Acum. {dashboardYear()} (USD)
+                </th>
+                <th className="pb-3 pr-4 text-right">
+                  Acum. {dashboardYear()} (%)
+                </th>
+                <th className="pb-3 pr-4 text-right">Desde ingreso (USD)</th>
+                <th className="pb-3 pr-4 text-right">Desde ingreso (%)</th>
                 <th className="pb-3 pr-4 text-center">Fee</th>
                 <th className="pb-3 pr-4 text-center">Auth</th>
                 <th className="pb-3 text-right">Acciones</th>

@@ -12,6 +12,12 @@ module InvestorMonthlyReportPdfs
   # portfolio_histories no tiene updated_at y así también se detecta lo que
   # se borra.
   class DataSignature
+    # Se sube cada vez que cambia la forma de calcular o mostrar el reporte
+    # (no solo sus datos), para que los PDFs ya generados queden marcados
+    # como desactualizados y "Generar todos" los rehaga.
+    # 2: rendimiento mensual neto del costo del servicio.
+    CALCULATION_VERSION = 2
+
     def self.for_investors(month:, investor_ids:)
       new(month:).for_investors(investor_ids)
     end
@@ -42,7 +48,7 @@ module InvestorMonthlyReportPdfs
       shared = month_wide_values
 
       ids.index_with do |id|
-        digest([ histories[id], annex_rows[id], shared ])
+        digest([ CALCULATION_VERSION, histories[id], annex_rows[id], shared ])
       end
     end
 

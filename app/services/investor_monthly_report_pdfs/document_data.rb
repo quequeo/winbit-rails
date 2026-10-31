@@ -70,8 +70,7 @@ module InvestorMonthlyReportPdfs
     private
 
     def current_month_row
-      key = @report_month.strftime('%Y-%m')
-      @report[:annex_rows].find { |r| r[:month] == key && !r[:opening_snapshot] && !r[:entry_row] }
+      @report[:month_row]
     end
 
     def evo_rows
@@ -127,19 +126,19 @@ module InvestorMonthlyReportPdfs
 
     def ops_summary
       report = operations_report
-      # "Resultado neto" es el resultado bruto de las operaciones del mes (suma
-      # del $ de cada operación) y no incluye el costo del servicio, que se
-      # cobra aparte. Mostrar ese costo al lado explica la diferencia con las
-      # cifras netas del resumen y de la evolución.
+      # Cada operación es un resultado antes del costo del servicio, que se
+      # cobra aparte. "Resultado neto" = suma de las operaciones - costo del
+      # servicio: el mismo rendimiento mensual de la página de resumen.
       service_cost = current_month_row&.dig(:service_cost).to_f
+      net_result = report.net_result_usd.to_f - service_cost
       winbit_monthly_return = @report[:summary][:winbit_monthly_return_percent]
       {
         count: report.count,
         positive: report.positive,
         negative: report.negative,
         break_even: report.break_even,
-        net_result: signed_amount_with_unit(report.net_result_usd),
-        net_result_class: sign_class(report.net_result_usd),
+        net_result: signed_amount_with_unit(net_result),
+        net_result_class: sign_class(net_result),
         service_cost: signed_amount_with_unit(-service_cost),
         service_cost_class: sign_class(-service_cost),
         monthly_return_percent: signed_percent(winbit_monthly_return),

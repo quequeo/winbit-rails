@@ -226,7 +226,7 @@ table { width: 100%; border-collapse: collapse; }
     <div class="chart"><%= data[:chart_svg].html_safe %></div>
     <% dense_evo = data[:evo_rows].size > 8 %>
     <table class="tev<%= ' denso' if dense_evo %>">
-      <thead><tr><th>Mes</th><th>Valor portafolio (USD)</th><th>Ingresos (USD)</th><th>Retiros (USD)</th><th>Costo servicio* (USD)</th><th>Rendimiento %</th><th>Rendimiento (USD)</th></tr></thead>
+      <thead><tr><th>Mes</th><th>Valor portafolio (USD)</th><th>Ingresos (USD)</th><th>Retiros (USD)</th><th>Costo servicio* (USD)</th><th>Rendimiento neto %</th><th>Rendimiento neto (USD)</th></tr></thead>
       <tbody>
         <% data[:evo_rows].each do |row| %>
           <tr<%= ' class="cur"'.html_safe if row[:last] %>>
@@ -295,8 +295,8 @@ table { width: 100%; border-collapse: collapse; }
         <div><div class="k">Positivas</div><div class="v pos"><%= page[:ops_summary][:positive] %></div></div>
         <div><div class="k">Negativas</div><div class="v neg"><%= page[:ops_summary][:negative] %></div></div>
         <div><div class="k">Break even</div><div class="v neu"><%= page[:ops_summary][:break_even] %></div></div>
-        <div><div class="k">Resultado neto</div><div class="v <%= page[:ops_summary][:net_result_class] %>"><%= page[:ops_summary][:net_result] %></div></div>
         <div><div class="k">Costo servicio</div><div class="v <%= page[:ops_summary][:service_cost_class] %>"><%= page[:ops_summary][:service_cost] %></div></div>
+        <div><div class="k">Resultado neto</div><div class="v <%= page[:ops_summary][:net_result_class] %>"><%= page[:ops_summary][:net_result] %></div></div>
         <div><div class="k">Rendimiento del mes</div><div class="v <%= page[:ops_summary][:monthly_return_class] %>"><%= page[:ops_summary][:monthly_return_percent] %></div></div>
       </div>
     <% end %>

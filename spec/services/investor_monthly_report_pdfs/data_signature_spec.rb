@@ -62,4 +62,10 @@ RSpec.describe InvestorMonthlyReportPdfs::DataSignature do
     )
     expect(signature).not_to eq(before)
   end
+
+  it 'changes when the way the report is calculated changes, even with the same data' do
+    before = signature
+    stub_const("#{described_class}::CALCULATION_VERSION", described_class::CALCULATION_VERSION + 1)
+    expect(signature).not_to eq(before)
+  end
 end

@@ -112,7 +112,7 @@ RSpec.describe MonthlyReportBuilder do
       end
     end
 
-    it 'reports gross RDO M when CST was charged in the month' do
+    it 'reports RDO M net of the CST charged in the month' do
       PortfolioHistory.create!(
         investor: investor,
         event: 'TRADING_FEE',
@@ -128,9 +128,8 @@ RSpec.describe MonthlyReportBuilder do
         may_row = report[:annex_rows].find { |r| r[:month] == '2026-05' }
 
         expect(may_row[:service_cost]).to eq(30.0)
-        expect(may_row[:return_usd]).to be_within(0.01).of(-116.25)
-        expect(may_row[:return_usd]).not_to be_within(0.01).of(-146.25)
-        expect(may_row[:return_percent]).to be_within(0.05).of(-1.79)
+        expect(may_row[:return_usd]).to be_within(0.01).of(-146.25)
+        expect(may_row[:return_percent]).to be_within(0.05).of(-2.25)
       end
     end
 
@@ -281,17 +280,20 @@ RSpec.describe MonthlyReportBuilder do
       end
     end
 
-    it 'uses the panel TWR-based YTD (not the annex/gross RDO sum, which understates return under withdrawals)' do
+    it 'nets the spreadsheet CST out of its month and uses the panel TWR-based YTD (not the annex sum)' do
       report = described_class.new(investor: investor, report_month: Date.new(2026, 4, 1)).build
       data_rows = report[:annex_rows].reject { |r| r[:opening_snapshot] || r[:entry_row] }
-      gross = data_rows.sum { |r| r[:return_usd].to_f }
+      march = data_rows.find { |r| r[:month] == '2026-03' }
+      net = data_rows.sum { |r| r[:return_usd].to_f }
       cst = data_rows.sum { |r| r[:service_cost].to_f }
 
-      expect(gross).to eq(197.0)
+      expect(march[:return_usd]).to eq(26.0)
+      expect(march[:return_percent]).to eq(0.94)
+      expect(net).to eq(159.0)
       expect(cst).to eq(38.0)
       expect(report[:summary][:accumulated_2026_usd]).to eq(107.72)
       expect(report[:summary][:accumulated_2026_percent]).to be_within(0.01).of(3.9724)
-      expect(report[:summary][:accumulated_2026_usd]).not_to eq(gross - cst)
+      expect(report[:summary][:accumulated_2026_usd]).not_to eq(net)
     end
   end
 end

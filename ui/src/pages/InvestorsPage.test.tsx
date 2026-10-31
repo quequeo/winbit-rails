@@ -44,6 +44,9 @@ describe("InvestorsPage", () => {
           strategyReturnYtdPercent: 6.5,
           strategyReturnAllUSD: 400,
           strategyReturnAllPercent: 18.2,
+          netContributedUSD: 750,
+          monthReturnNetUSD: 12,
+          monthReturnNetPercent: 1.2,
           strategyReturnYtdNetUSD: 100,
           strategyReturnYtdNetPercent: 5.4,
           strategyReturnAllNetUSD: 380,
@@ -103,7 +106,9 @@ describe("InvestorsPage", () => {
         expect(screen.getAllByText("Panel inversor (mismos datos que winbit-app)").length).toBeGreaterThan(0);
       });
 
-      expect(screen.getAllByText(/Resultado estrategia \d{4}/).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/Rendimiento acumulado \d{4}/).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/\+1\.20%/).length).toBeGreaterThan(0);
+      expect(screen.getAllByText("Capital aportado neto").length).toBeGreaterThan(0);
       expect(screen.getAllByText(/\+5\.40%/).length).toBeGreaterThan(0);
       expect(screen.queryByText(/\+6\.50%/)).not.toBeInTheDocument();
     });

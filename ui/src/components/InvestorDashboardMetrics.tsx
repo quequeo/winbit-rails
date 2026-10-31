@@ -1,11 +1,30 @@
 import { formatCurrencyAR, formatPercentAR } from "../lib/formatters";
 import type { ApiInvestorPortfolio } from "../types";
 
+// Same figures, labels and calculation as page 2 of the monthly PDF report
+// and the investor app: every return is net of the service cost.
+
 type Props = {
   portfolio?: ApiInvestorPortfolio | null;
   compact?: boolean;
 };
 
+const MONTH_NAMES = [
+  "Enero",
+  "Febrero",
+  "Marzo",
+  "Abril",
+  "Mayo",
+  "Junio",
+  "Julio",
+  "Agosto",
+  "Septiembre",
+  "Octubre",
+  "Noviembre",
+  "Diciembre",
+];
+
+const currentMonthName = () => MONTH_NAMES[new Date().getMonth()];
 const currentYear = () => new Date().getFullYear();
 
 function MetricCell({
@@ -39,7 +58,6 @@ export function InvestorDashboardMetrics({ portfolio, compact = false }: Props) 
     return <p className="text-xs text-t-dim">Sin portfolio</p>;
   }
 
-  const year = currentYear();
   const valueClass = compact
     ? "mt-0.5 font-mono text-xs font-semibold text-t-primary"
     : "mt-1 font-mono text-sm font-semibold text-t-primary";
@@ -53,44 +71,40 @@ export function InvestorDashboardMetrics({ portfolio, compact = false }: Props) 
       }
     >
       <div>
-        <p className="text-xs text-t-dim">Capital actual</p>
+        <p className="text-xs text-t-dim">Valor del portafolio</p>
         <p className={valueClass}>
           {formatCurrencyAR(portfolio.currentBalance ?? 0)}
         </p>
       </div>
       <div>
-        <p className="text-xs text-t-dim">Total invertido</p>
+        <p className="text-xs text-t-dim">Capital aportado neto</p>
         <p className={valueClass}>
-          {formatCurrencyAR(portfolio.totalInvested ?? 0)}
+          {formatCurrencyAR(portfolio.netContributedUSD ?? 0)}
         </p>
       </div>
       <MetricCell
-        label={`Resultado estrategia ${year} (USD / %)`}
-        usd={portfolio.strategyReturnYtdNetUSD ?? portfolio.strategyReturnYtdUSD}
-        percent={portfolio.strategyReturnYtdNetPercent ?? portfolio.strategyReturnYtdPercent}
+        label={`Rendimiento mensual · ${currentMonthName()} ${currentYear()}`}
+        usd={portfolio.monthReturnNetUSD}
+        percent={portfolio.monthReturnNetPercent}
         compact={compact}
       />
       <MetricCell
-        label="Resultado estrategia histórico (USD / %)"
-        usd={portfolio.strategyReturnAllNetUSD ?? portfolio.strategyReturnAllUSD}
-        percent={portfolio.strategyReturnAllNetPercent ?? portfolio.strategyReturnAllPercent}
+        label={`Rendimiento acumulado ${currentYear()}`}
+        usd={portfolio.strategyReturnYtdNetUSD}
+        percent={portfolio.strategyReturnYtdNetPercent}
         compact={compact}
       />
       <MetricCell
-        label="Rentabilidad acumulada (USD / %)"
-        usd={portfolio.accumulatedReturnUSD}
-        percent={portfolio.accumulatedReturnPercent}
-        compact={compact}
-      />
-      <MetricCell
-        label="Rentabilidad anual (USD / %)"
-        usd={portfolio.annualReturnUSD}
-        percent={portfolio.annualReturnPercent}
+        label="Rendimiento acumulado desde el ingreso"
+        usd={portfolio.strategyReturnAllNetUSD}
+        percent={portfolio.strategyReturnAllNetPercent}
         compact={compact}
       />
     </div>
   );
 }
+
+const INVESTOR_DASHBOARD_TABLE_COLUMNS = 7;
 
 export function InvestorDashboardTableCells({
   portfolio,
@@ -100,7 +114,7 @@ export function InvestorDashboardTableCells({
   if (!portfolio) {
     return (
       <>
-        {Array.from({ length: 9 }).map((_, index) => (
+        {Array.from({ length: INVESTOR_DASHBOARD_TABLE_COLUMNS }).map((_, index) => (
           <td
             key={index}
             className="py-3 pr-4 text-right font-mono text-xs text-t-dim"
@@ -113,15 +127,13 @@ export function InvestorDashboardTableCells({
   }
 
   const rows: Array<{ value: number | null | undefined; kind: "usd" | "pct" }> = [
-    { value: portfolio.totalInvested, kind: "usd" },
-    { value: portfolio.strategyReturnYtdNetUSD ?? portfolio.strategyReturnYtdUSD, kind: "usd" },
-    { value: portfolio.strategyReturnYtdNetPercent ?? portfolio.strategyReturnYtdPercent, kind: "pct" },
-    { value: portfolio.strategyReturnAllNetUSD ?? portfolio.strategyReturnAllUSD, kind: "usd" },
-    { value: portfolio.strategyReturnAllNetPercent ?? portfolio.strategyReturnAllPercent, kind: "pct" },
-    { value: portfolio.accumulatedReturnUSD, kind: "usd" },
-    { value: portfolio.accumulatedReturnPercent, kind: "pct" },
-    { value: portfolio.annualReturnUSD, kind: "usd" },
-    { value: portfolio.annualReturnPercent, kind: "pct" },
+    { value: portfolio.netContributedUSD, kind: "usd" },
+    { value: portfolio.monthReturnNetUSD, kind: "usd" },
+    { value: portfolio.monthReturnNetPercent, kind: "pct" },
+    { value: portfolio.strategyReturnYtdNetUSD, kind: "usd" },
+    { value: portfolio.strategyReturnYtdNetPercent, kind: "pct" },
+    { value: portfolio.strategyReturnAllNetUSD, kind: "usd" },
+    { value: portfolio.strategyReturnAllNetPercent, kind: "pct" },
   ];
 
   return (
