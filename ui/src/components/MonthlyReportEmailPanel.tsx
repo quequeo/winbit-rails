@@ -7,23 +7,19 @@ import { ConfirmDialog } from "./ui/ConfirmDialog";
 
 const DEFAULT_SUBJECT = "Winbit | Reporte mensual | {mes_titulo}";
 
-const DEFAULT_BODY = `Buenos días {primer_nombre}, ¿cómo estás?
+const DEFAULT_BODY = `Hola, {primer_nombre}, ¿cómo estás?
 
-Adjuntamos el **reporte mensual de {mes_nombre}**. Tu capital obtuvo una rentabilidad de **{rentabilidad_mes}%** en el mes, y el acumulado del año es de **{acumulado_anual}%**.
+Adjuntamos el **reporte mensual de {mes_nombre}**. En el mes, tu capital tuvo un resultado de **{rentabilidad_mes}%**, y en lo que va del año, de **{acumulado_anual}%**. Al cierre del mes, tu capital administrado es de **USD {capital}**.
 
-Recordá que en el reporte vas a encontrar el detalle de cada una de las operaciones del mes. La idea es que puedas ver qué hay detrás de los movimientos de tu capital, no solo el número final.
+En el reporte está el detalle de cada operación del mes, para que puedas ver qué hay detrás del resultado y no solo el número final.
 
-**Custodia del capital**
-A raíz del reciente incidente de seguridad que afectó a Binance, queremos llevarte tranquilidad: el capital administrado por Winbit se custodia en USD en entidades bancarias reguladas en el exterior, no en exchanges ni en billeteras cripto. Solo mantenemos una pequeña reserva líquida en USDT, que nos permite procesar en el día las solicitudes de retiro. Durante la semana te vamos a enviar un correo con más detalle sobre cómo se custodia y se protege tu capital.
-
-**Un canal más directo**
-Además, de ahora en más vamos a estar en contacto por WhatsApp, desde el número de Winbit, para que tengas una vía más rápida ante cualquier consulta.
-
-Al cierre del mes, tu capital administrado es de **USD {capital}**. Si querés, podés sumar capital cuando quieras desde la app, sin monto mínimo.
+Si querés sumar capital, podés hacerlo en cualquier momento desde la app, sin monto mínimo.
 
 [Botón: Ver mi cuenta en la app →]
 
-*El equipo de Winbit*`;
+Ante cualquier consulta, escribinos por WhatsApp o respondé este correo.
+
+**El equipo de Winbit**`;
 
 type Recipient = {
   id: string;
@@ -103,6 +99,7 @@ export const MonthlyReportEmailPanel = ({ month }: Props) => {
   const [subject, setSubject] = useState(DEFAULT_SUBJECT);
   const [body, setBody] = useState(DEFAULT_BODY);
   const [investorId, setInvestorId] = useState("");
+  const [testEmail, setTestEmail] = useState("");
   const [preview, setPreview] = useState<PreviewData | null>(null);
   const [loadingPreview, setLoadingPreview] = useState(false);
   const [sending, setSending] = useState(false);
@@ -166,7 +163,7 @@ export const MonthlyReportEmailPanel = ({ month }: Props) => {
   const skippedInactiveCount = skipped.length - skippedActive.length;
   const sampleName = preview?.sampleInvestor?.name || "—";
 
-  const handleSendOne = async () => {
+  const handleSendOne = async (toTestEmail?: string) => {
     if (!investorId) {
       setError("Seleccioná un inversor de la lista para enviar uno.");
       return;
@@ -180,11 +177,14 @@ export const MonthlyReportEmailPanel = ({ month }: Props) => {
         subject,
         body,
         investor_id: investorId,
+        ...(toTestEmail ? { test_email: toTestEmail } : {}),
       })) as { data?: { queuedCount?: number; failureCount?: number } };
       const queued = res?.data?.queuedCount ?? 0;
       const failures = res?.data?.failureCount ?? 0;
       setSuccess(
-        `Email enviado a 1 inversor con el PDF del mes (queued=${queued}, fallos=${failures}).`,
+        toTestEmail
+          ? `Prueba enviada a ${toTestEmail} con el mail y el PDF de este inversor (queued=${queued}, fallos=${failures}).`
+          : `Email enviado a 1 inversor con el PDF del mes (queued=${queued}, fallos=${failures}).`,
       );
       await loadPreview();
     } catch (e) {
@@ -354,6 +354,23 @@ export const MonthlyReportEmailPanel = ({ month }: Props) => {
             disabled={sending || !investorId}
           >
             Enviar a este inversor
+          </Button>
+          <div className="w-60">
+            <Input
+              type="email"
+              value={testEmail}
+              onChange={(e) => setTestEmail(e.target.value)}
+              placeholder="correo para la prueba"
+              aria-label="Correo de prueba"
+            />
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => void handleSendOne(testEmail.trim())}
+            disabled={sending || !investorId || !testEmail.trim()}
+          >
+            Enviar prueba
           </Button>
           <Button
             type="button"

@@ -94,6 +94,33 @@ describe("MonthlyReportEmailPanel", () => {
     });
   });
 
+  it("sends a test of the selected investor's email to another address", async () => {
+    const user = userEvent.setup();
+    vi.mocked(api.sendMonthlyReportEmailOne).mockResolvedValue({
+      data: { queuedCount: 1, failureCount: 0 },
+    });
+
+    render(<MonthlyReportEmailPanel month="2026-07" />);
+    await user.click(await screen.findByText("Tulio Capparelli"));
+    await user.type(
+      screen.getByLabelText("Correo de prueba"),
+      "contacto@winbit.com.ar",
+    );
+    await user.click(screen.getByRole("button", { name: "Enviar prueba" }));
+
+    await waitFor(() => {
+      expect(api.sendMonthlyReportEmailOne).toHaveBeenCalledWith(
+        expect.objectContaining({
+          investor_id: "inv-1",
+          test_email: "contacto@winbit.com.ar",
+        }),
+      );
+    });
+    expect(
+      await screen.findByText(/Prueba enviada a contacto@winbit.com.ar/),
+    ).toBeInTheDocument();
+  });
+
   it("asks for confirmation before mass send", async () => {
     const user = userEvent.setup();
     vi.mocked(api.sendMonthlyReportEmailMass).mockResolvedValue({

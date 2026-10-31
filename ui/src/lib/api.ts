@@ -752,6 +752,7 @@ export const api = {
     subject: string;
     body: string;
     investor_id: string;
+    test_email?: string;
   }) =>
     request(`${ADMIN_API_PREFIX}/monthly_report_emails/send_one`, {
       method: "POST",

@@ -96,6 +96,31 @@ RSpec.describe 'Admin monthly report emails API', type: :request do
       expect(mail.reply_to).to eq([ 'contacto@winbit.com.ar' ])
     end
 
+    it "sends a test of that investor's email and PDF to another address" do
+      post '/api/admin/v1/monthly_report_emails/send_one', params: {
+        month: '2026-07',
+        subject: 'Informe {{mes}} — {{nombre}}',
+        body: 'Hola {nombre}',
+        investor_id: tulio.id,
+        test_email: 'contacto@winbit.com.ar'
+      }
+
+      expect(response).to have_http_status(:ok)
+      mail = ActionMailer::Base.deliveries.last
+      expect(mail.to).to eq([ 'contacto@winbit.com.ar' ])
+      expect(mail.subject).to eq('Informe 2026-07 — Tulio Capparelli')
+      expect(mail.attachments.first.filename).to eq('Reporte julio 2026 - TULIO CAPPARELLI.pdf')
+    end
+
+    it 'rejects an invalid test address' do
+      post '/api/admin/v1/monthly_report_emails/send_one', params: {
+        month: '2026-07', subject: 'Informe', body: 'Hola', investor_id: tulio.id, test_email: 'no-es-un-mail'
+      }
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(ActionMailer::Base.deliveries).to be_empty
+    end
+
     it 'rejects zero-balance investors' do
       post '/api/admin/v1/monthly_report_emails/send_one', params: {
         month: '2026-07',

@@ -19,12 +19,19 @@ module Api
       end
 
       # POST /api/admin/monthly_report_emails/send_one
+      # With test_email, sends that investor's email (and PDF) to that address instead.
       def send_one
         month = parse_month_param
         return if performed?
 
         subject, body = require_template_params
         return if performed?
+
+        test_email = params[:test_email].to_s.strip.presence
+        if test_email && !test_email.match?(URI::MailTo::EMAIL_REGEXP)
+          render_error('El correo de prueba no es válido', status: :unprocessable_content)
+          return
+        end
 
         investor = find_investor_by_id(id: params.require(:investor_id))
         return if performed?
@@ -44,7 +51,8 @@ module Api
           month: month,
           subject: subject,
           body: body,
-          investor_ids: [ investor.id ]
+          investor_ids: [ investor.id ],
+          to_email: test_email
         )
 
         render json: { data: serialize_send_result(result) }

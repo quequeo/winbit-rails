@@ -124,7 +124,8 @@ class InvestorMailer < ApplicationMailer
   # Email de campaña personalizado (informe mensual, etc.).
   # force: true omite NotificationGate — solo para envíos iniciados por admin.
   # attachment: optional Hash/Payload with :filename, :content, :content_type (PDF/XLSX).
-  def campaign_message(investor, subject:, body_html:, force: false, attachment: nil)
+  # to: sends to another address instead of the investor's (test sends).
+  def campaign_message(investor, subject:, body_html:, force: false, attachment: nil, to: nil)
     @investor = investor
     @body_html = body_html
     # A [Botón: ...] written in the body replaces the default button at the end.
@@ -134,12 +135,12 @@ class InvestorMailer < ApplicationMailer
       return unless NotificationGate.should_send_to_investor?(investor.email)
     end
 
-    return if investor.email.blank?
+    return if investor.email.blank? && to.blank?
 
     attach_campaign_file(attachment) if attachment.present?
 
     mail(
-      to: investor.email,
+      to: to.presence || investor.email,
       subject: subject.to_s
     )
   end
