@@ -6,18 +6,19 @@ module EmailCampaigns
     Result = Struct.new(:queued, :skipped, :failures, :total_audience, keyword_init: true)
     Failure = Struct.new(:investor_id, :email, :error, keyword_init: true)
 
-    def self.call(month:, subject:, body:, investor_ids: nil, force: true, attachments_by_investor_id: {})
+    def self.call(month:, subject:, body:, investor_ids: nil, force: true, attachments_by_investor_id: {}, to_email: nil)
       new(
         month: month,
         subject: subject,
         body: body,
         investor_ids: investor_ids,
         force: force,
-        attachments_by_investor_id: attachments_by_investor_id
+        attachments_by_investor_id: attachments_by_investor_id,
+        to_email: to_email
       ).call
     end
 
-    def initialize(month:, subject:, body:, investor_ids: nil, force: true, attachments_by_investor_id: {})
+    def initialize(month:, subject:, body:, investor_ids: nil, force: true, attachments_by_investor_id: {}, to_email: nil)
       @month = month
       @subject = subject
       @body = body
@@ -25,6 +26,8 @@ module EmailCampaigns
       @force = force
       # Investor ids are UUIDs (strings). Never use to_i — "57d1ee81…".to_i => 57.
       @attachments_by_investor_id = (attachments_by_investor_id || {}).transform_keys { |k| k.to_s }
+      # Test send: every message goes to this address instead of the investor's.
+      @to_email = to_email.presence
     end
 
     def call
@@ -48,7 +51,8 @@ module EmailCampaigns
           subject: rendered_subject,
           body_html: rendered_body_html,
           force: @force,
-          attachment: attachment
+          attachment: attachment,
+          to: @to_email
         )
 
         # Attachments carry binary payloads that Active Job may not serialize safely.
@@ -60,7 +64,7 @@ module EmailCampaigns
 
         queued << {
           investor_id: investor.id,
-          email: investor.email,
+          email: @to_email || investor.email,
           attached: !attachment.nil?,
         }
       rescue StandardError => e

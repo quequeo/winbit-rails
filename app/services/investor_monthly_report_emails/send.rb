@@ -3,15 +3,16 @@
 module InvestorMonthlyReportEmails
   # Sends monthly report emails with the stored PDF attached. Reuses campaign mailer.
   class Send
-    def self.call(month:, subject:, body:, investor_ids: nil)
-      new(month: month, subject: subject, body: body, investor_ids: investor_ids).call
+    def self.call(month:, subject:, body:, investor_ids: nil, to_email: nil)
+      new(month: month, subject: subject, body: body, investor_ids: investor_ids, to_email: to_email).call
     end
 
-    def initialize(month:, subject:, body:, investor_ids: nil)
+    def initialize(month:, subject:, body:, investor_ids: nil, to_email: nil)
       @month = month
       @subject = subject
       @body = body
       @investor_ids = Array(investor_ids).presence
+      @to_email = to_email
     end
 
     def call
@@ -32,7 +33,8 @@ module InvestorMonthlyReportEmails
         body: @body,
         investor_ids: ids_with_pdf,
         force: true,
-        attachments_by_investor_id: attachments
+        attachments_by_investor_id: attachments,
+        to_email: @to_email
       )
     end
 
