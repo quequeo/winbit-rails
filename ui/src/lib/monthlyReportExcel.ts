@@ -182,9 +182,9 @@ function appendAnnexBlock(
   const rowsForTotals = report.annexRows.filter(
     (row) => !row.openingSnapshot && !row.entryRow,
   );
-  // Monthly RDO M $ is gross; CST is separate. TOTAL RDO must be net so it
-  // matches Resumen "Acumulado 2026 (USD)" (and sum(gross) − sum(CST)).
-  const totalReturnUsdGross = rowsForTotals.reduce(
+  // Monthly RDO M $ is already net of CST (CST is shown on its own for
+  // reference), so TOTAL RDO is their plain sum, matching Resumen "Acumulado 2026 (USD)".
+  const totalReturnUsdNet = rowsForTotals.reduce(
     (acc, row) => acc + (row.returnUsd ?? 0),
     0,
   );
@@ -200,7 +200,6 @@ function appendAnnexBlock(
     (acc, row) => acc + (row.serviceCost ?? 0),
     0,
   );
-  const totalReturnUsdNet = totalReturnUsdGross - totalCst;
   const ytdFromSummary = report.summary.accumulated2026Usd;
   const totalReturnForSheet =
     ytdFromSummary != null && Number.isFinite(ytdFromSummary)

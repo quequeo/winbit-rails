@@ -140,7 +140,7 @@ RSpec.describe InvestorMonthlyReportPdfs::DocumentData do
     end
   end
 
-  it "shows the month's trading fee next to the raw trading result, so the gap vs. the (fee-netted) resumen/evolución figures is explained" do
+  it "shows the month's service cost and a net result equal to the resumen's monthly return" do
     PortfolioHistory.create!(
       investor: investor, event: 'TRADING_FEE', amount: -62.03,
       previous_balance: 6812.07, new_balance: 6750.04,
@@ -151,6 +151,7 @@ RSpec.describe InvestorMonthlyReportPdfs::DocumentData do
       data = described_class.call(investor: investor, report_month: '2026-05')
       expect(data[:ops_pages].last[:ops_summary][:service_cost]).to eq('-62 USD')
       expect(data[:ops_pages].last[:ops_summary][:service_cost_class]).to eq('neg')
+      expect(data[:ops_pages].last[:ops_summary][:net_result]).to eq('-133 USD') # operaciones (-71) - costo del servicio (62)
     end
   end
 

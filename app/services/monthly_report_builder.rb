@@ -29,9 +29,10 @@ class MonthlyReportBuilder
 
   def build
     annex_rows = build_annex_rows
-    dashboard = InvestorPortfolioDashboardPayload.build(investor: @investor) || {}
+    dashboard = InvestorPortfolioDashboardPayload.gross(investor: @investor) || {}
     summary = build_summary(dashboard, annex_rows:)
     align_entry_month_return!(annex_rows, summary)
+    month_key = @report_month.strftime('%Y-%m')
 
     {
       investor: {
@@ -42,6 +43,9 @@ class MonthlyReportBuilder
       report_month: @report_month.strftime('%Y-%m'),
       summary: summary,
       annex_rows: annex_rows,
+      # The report month's own row: "Rendimiento mensual" in the PDF, the
+      # admin's Inversores tab and the investor app all read it from here.
+      month_row: annex_rows.find { |r| r[:month] == month_key && !r[:opening_snapshot] && !r[:entry_row] },
     }
   end
 
@@ -49,7 +53,7 @@ class MonthlyReportBuilder
 
   # If the investor's entire history is this one report month, "rendimiento
   # mensual" and "acumulado desde el ingreso" cover the exact same period -
-  # but they're computed via different formulas (this row: gross return
+  # but they're computed via different formulas (this row: net return
   # over that month's deposit; since_entry: the TWR-unwound summary figure
   # - see accumulated_net_as_of), so without this they can show two
   # different-looking numbers for what's actually the same thing (seen in
@@ -280,12 +284,23 @@ class MonthlyReportBuilder
     )
   end
 
+  # The spreadsheet's RDO M $ / % are gross of the service cost (CST column);
+  # every figure shown is net, so the cost comes out here, the same as for
+  # platform rows. The percent keeps the sheet's own base: the previous close
+  # it was measured against.
   def spreadsheet_rows
+    previous_value = nil
     @investor.investor_monthly_annex_rows.spreadsheet.ordered.map do |row|
+      implied_base = row.return_percent.to_f.zero? ? nil : bd(row.return_usd.to_f) / (bd(row.return_percent.to_f) / 100)
+      base = previous_value.to_f.positive? ? bd(previous_value) : implied_base
+      net = net_of_service_cost(
+        return_usd: row.return_usd, return_percent: row.return_percent, service_cost: row.service_cost, base: base
+      )
+      previous_value = row.portfolio_value
       serialize_row(
         month: row.month,
-        return_percent: row.return_percent&.to_f,
-        return_usd: row.return_usd&.to_f,
+        return_percent: net[:percent],
+        return_usd: net[:usd],
         deposits: row.deposits.to_f,
         withdrawals: row.withdrawals.to_f,
         service_cost: row.service_cost.to_f,
@@ -306,12 +321,11 @@ class MonthlyReportBuilder
     end_value = portfolio_value_at(month_end)
     previous_close = previous_row&.dig(:portfolio_value).to_f
 
+    # Net of the service cost: the cost is a balance drop like any other, so
+    # it's already out of end_value. The CST column still shows it on its own.
     net_return_usd = (
       bd(end_value) - bd(previous_close) - bd(flows[:deposits]) + bd(flows[:withdrawals])
     ).round(2, :half_up)
-
-    # RDO M $ / % = gross Winbit return; CST is shown separately in its own column.
-    gross_return_usd = (net_return_usd + bd(flows[:service_cost])).round(2, :half_up)
 
     # For an investor's first-ever month, previous_close is 0 - there's no
     # prior balance to measure a percent return against. The capital they
@@ -323,7 +337,7 @@ class MonthlyReportBuilder
     # balance before that deposit).
     base_capital = previous_close.positive? ? bd(previous_close) : bd(flows[:deposits])
     return_percent = if base_capital.positive?
-                       ((gross_return_usd / base_capital) * 100).round(2, :half_up)
+                       ((net_return_usd / base_capital) * 100).round(2, :half_up)
     else
                        BigDecimal('0')
     end
@@ -331,7 +345,7 @@ class MonthlyReportBuilder
     serialize_row(
       month: month,
       return_percent: return_percent.to_f,
-      return_usd: gross_return_usd.to_f,
+      return_usd: net_return_usd.to_f,
       deposits: flows[:deposits],
       withdrawals: flows[:withdrawals],
       service_cost: flows[:service_cost],
@@ -471,6 +485,14 @@ class MonthlyReportBuilder
     return MONTH_LABELS[month_key] || month_key if opening_snapshot && month_key == '2025-12'
 
     MONTH_LABELS[month_key] || month_key
+  end
+
+  def net_of_service_cost(return_usd:, return_percent:, service_cost:, base:)
+    return { usd: return_usd&.to_f, percent: return_percent&.to_f } if return_usd.nil? || service_cost.to_f.zero?
+
+    net_usd = (bd(return_usd) - bd(service_cost)).round(2, :half_up)
+    net_percent = base.to_f.positive? ? ((net_usd / base) * 100).round(2, :half_up).to_f : return_percent&.to_f
+    { usd: net_usd.to_f, percent: net_percent }
   end
 
   def bd(value)

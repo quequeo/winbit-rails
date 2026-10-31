@@ -1,8 +1,18 @@
 # frozen_string_literal: true
 
+# Portfolio figures shown in the admin's Inversores tab and in the investor
+# app. Every return here is net of the service cost and comes from
+# MonthlyReportBuilder for the current month - the same calculation as the
+# monthly PDF - so the three always show the same numbers.
 class InvestorPortfolioDashboardPayload
   def self.build(investor:)
     new(investor:).build
+  end
+
+  # Raw stored/gross figures only. MonthlyReportBuilder starts from these, so
+  # it can't go through #build (which itself runs the builder).
+  def self.gross(investor:)
+    new(investor:).gross
   end
 
   def initialize(investor:)
@@ -10,19 +20,27 @@ class InvestorPortfolioDashboardPayload
   end
 
   def build
+    payload = gross
+    return nil unless payload
+
+    report = MonthlyReportBuilder.new(investor: investor, report_month: Date.current).build
+    summary = report[:summary]
+    month_row = report[:month_row]
+
+    payload.merge(
+      netContributedUSD: summary[:net_contributed_after_withdrawals_usd].to_f,
+      monthReturnNetUSD: month_row&.dig(:return_usd).to_f,
+      monthReturnNetPercent: month_row&.dig(:return_percent).to_f,
+      strategyReturnYtdNetUSD: summary[:accumulated_2026_usd].to_f,
+      strategyReturnYtdNetPercent: summary[:accumulated_2026_percent].to_f,
+      strategyReturnAllNetUSD: summary[:accumulated_since_entry_usd].to_f,
+      strategyReturnAllNetPercent: summary[:accumulated_since_entry_percent].to_f,
+    )
+  end
+
+  def gross
     portfolio = investor.portfolio
     return nil unless portfolio
-
-    ytd_net = net_of_fees(
-      stored: !portfolio.strategy_return_ytd_usd.nil?,
-      gross_usd: strategy_ytd_usd(portfolio), gross_percent: strategy_ytd_percent(portfolio),
-      from: Time.zone.local(Date.current.year, 1, 1, 0, 0, 0)
-    )
-    all_net = net_of_fees(
-      stored: !portfolio.strategy_return_all_usd.nil?,
-      gross_usd: strategy_all_usd(portfolio), gross_percent: strategy_all_percent(portfolio),
-      from: nil
-    )
 
     {
       currentBalance: portfolio.current_balance.to_f,
@@ -33,13 +51,9 @@ class InvestorPortfolioDashboardPayload
       annualReturnPercent: portfolio.annual_return_percent.to_f,
       strategyReturnYtdUSD: strategy_ytd_usd(portfolio),
       strategyReturnYtdPercent: strategy_ytd_percent(portfolio),
-      strategyReturnYtdNetUSD: ytd_net[:usd],
-      strategyReturnYtdNetPercent: ytd_net[:percent],
       strategyReturnYtdFrom: ytd_return&.effective_start_at&.to_date&.strftime('%Y-%m-%d'),
       strategyReturnAllUSD: strategy_all_usd(portfolio),
       strategyReturnAllPercent: strategy_all_percent(portfolio),
-      strategyReturnAllNetUSD: all_net[:usd],
-      strategyReturnAllNetPercent: all_net[:percent],
       strategyReturnAllFrom: all_return&.effective_start_at&.to_date&.strftime('%Y-%m-%d'),
       updatedAt: portfolio.updated_at,
     }
@@ -48,19 +62,6 @@ class InvestorPortfolioDashboardPayload
   private
 
   attr_reader :investor
-
-  # The stored strategy_return_* figures are gross (they compound daily and
-  # never see TRADING_FEE). The TimeWeightedReturnCalculator fallback already
-  # counts fees as performance, so it is net as is - netting it again would
-  # charge the service cost twice.
-  def net_of_fees(stored:, gross_usd:, gross_percent:, from:)
-    return { usd: gross_usd.to_f, percent: gross_percent.to_f } unless stored
-
-    StrategyReturnNetOfFees.call(
-      investor_id: investor.id, gross_usd: gross_usd, gross_percent: gross_percent,
-      from: from, to: Time.current
-    )
-  end
 
   def strategy_ytd_usd(portfolio)
     return portfolio.strategy_return_ytd_usd.to_f unless portfolio.strategy_return_ytd_usd.nil?

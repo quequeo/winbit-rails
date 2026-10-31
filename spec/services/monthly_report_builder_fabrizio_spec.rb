@@ -79,19 +79,17 @@ RSpec.describe MonthlyReportBuilder do
       )
     end
 
-    it 'keeps monthly RDO gross in the annex rows, and summary YTD uses the panel TWR figure net of fees' do
+    it 'shows monthly RDO net of the service cost, and summary YTD uses the panel TWR figure net of fees' do
       travel_to Time.zone.local(2026, 6, 25, 12, 0, 0) do
         report = described_class.new(investor: investor, report_month: Date.new(2026, 6, 1)).build
         data_rows = report[:annex_rows].reject { |r| r[:opening_snapshot] || r[:entry_row] }
 
-        expect(data_rows.map { |r| r[:return_usd] }).to eq([-1, 161, 164, 179, -131, 117])
+        expect(data_rows.map { |r| r[:return_usd] }).to eq([-1, 161, 67, 179, -131, 68])
         expect(data_rows.map { |r| r[:service_cost] }).to eq([0, 0, 97, 0, 0, 49])
 
-        total_rdo_gross = data_rows.sum { |r| r[:return_usd].to_f }
+        total_rdo_net = data_rows.sum { |r| r[:return_usd].to_f }
         total_cst = data_rows.sum { |r| r[:service_cost].to_f }
-        total_rdo_net = total_rdo_gross - total_cst
 
-        expect(total_rdo_gross).to eq(489.0)
         expect(total_cst).to eq(146.0)
         expect(total_rdo_net).to eq(343.0)
         # TWR-based (panel strategy_return_ytd_usd), not the annex net RDO sum -

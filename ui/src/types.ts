@@ -16,6 +16,9 @@ export interface ApiInvestorPortfolio {
   accumulatedReturnPercent?: number;
   annualReturnUSD?: number;
   annualReturnPercent?: number;
+  netContributedUSD?: number;
+  monthReturnNetUSD?: number;
+  monthReturnNetPercent?: number;
   strategyReturnYtdUSD?: number;
   strategyReturnYtdPercent?: number;
   strategyReturnYtdNetUSD?: number;

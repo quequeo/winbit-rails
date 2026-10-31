@@ -42,23 +42,23 @@ module InvestorMonthlyReportPdfs
     end
 
     def current_month_row
-      key = @report_month.strftime('%Y-%m')
-      @report[:annex_rows].find { |r| r[:month] == key && !r[:opening_snapshot] && !r[:entry_row] }
+      @report[:month_row]
     end
 
     # Trades come from the investor's own OPERATING_RESULT PortfolioHistory
     # rows (see MonthlyOperationsReport), so this should always tie out
-    # exactly to the annex row's gross monthly return - any gap means a
-    # trade is missing/duplicated or a daily result wasn't attributed.
+    # exactly to the annex row's monthly return before the service cost (the
+    # row itself is net) - any gap means a trade is missing/duplicated or a
+    # daily result wasn't attributed.
     def check_operations_sum
       row = current_month_row
       return [] unless row && row[:return_usd]
 
       ops_total = @operations.trades.sum(&:result_usd)
-      expected = row[:return_usd].to_f
+      expected = row[:return_usd].to_f + row[:service_cost].to_f
       return [] if (ops_total - expected).abs <= 0.5
 
-      ["La suma de las operaciones del mes da #{money(ops_total)} y el rendimiento mensual informado es #{money(expected)}."]
+      ["La suma de las operaciones del mes da #{money(ops_total)} y el rendimiento mensual antes del costo del servicio es #{money(expected)}."]
     end
 
     def check_missing_direction
@@ -79,7 +79,7 @@ module InvestorMonthlyReportPdfs
       rows = year_to_date_rows
       return [] if rows.empty?
 
-      expected = rows.sum { |r| r[:return_usd].to_f - r[:service_cost].to_f }
+      expected = rows.sum { |r| r[:return_usd].to_f }
       actual = summary[:accumulated_2026_usd].to_f
       tolerance = [5.0, actual.abs * 0.1].max
       return [] if (expected - actual).abs <= tolerance
