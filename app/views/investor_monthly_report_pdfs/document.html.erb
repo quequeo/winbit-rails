@@ -130,7 +130,7 @@ table { width: 100%; border-collapse: collapse; }
 .tops.holgado td { padding: 8px 6px; font-size: 11px; }
 .tops.denso td { padding: 1.8px 6px; font-size: 9.6px; }
 .opnote { font-size: 9.5px; color: var(--tinta2); margin-top: 8px; }
-.sumbar { position: absolute; left: 56px; right: 56px; bottom: 50px; display: grid; grid-template-columns: repeat(7, 1fr);
+.sumbar { position: absolute; left: 56px; right: 56px; bottom: 50px; display: grid; grid-template-columns: repeat(6, 1fr);
           border-top: 1px solid var(--verde); }
 .sumbar > div { text-align: center; padding: 7px 4px 6px; }
 .sumbar > div + div { border-left: 1px solid var(--linea-crema); }
@@ -295,8 +295,7 @@ table { width: 100%; border-collapse: collapse; }
         <div><div class="k">Positivas</div><div class="v pos"><%= page[:ops_summary][:positive] %></div></div>
         <div><div class="k">Negativas</div><div class="v neg"><%= page[:ops_summary][:negative] %></div></div>
         <div><div class="k">Break even</div><div class="v neu"><%= page[:ops_summary][:break_even] %></div></div>
-        <div><div class="k">Costo servicio</div><div class="v <%= page[:ops_summary][:service_cost_class] %>"><%= page[:ops_summary][:service_cost] %></div></div>
-        <div><div class="k">Resultado neto</div><div class="v <%= page[:ops_summary][:net_result_class] %>"><%= page[:ops_summary][:net_result] %></div></div>
+        <div><div class="k">Resultado operaciones</div><div class="v <%= page[:ops_summary][:net_result_class] %>"><%= page[:ops_summary][:net_result] %></div></div>
         <div><div class="k">Rendimiento del mes</div><div class="v <%= page[:ops_summary][:monthly_return_class] %>"><%= page[:ops_summary][:monthly_return_percent] %></div></div>
       </div>
     <% end %>
