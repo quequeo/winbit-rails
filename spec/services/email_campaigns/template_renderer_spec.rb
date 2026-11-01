@@ -44,6 +44,14 @@ RSpec.describe EmailCampaigns::TemplateRenderer do
       expect(result).to include('<em>El equipo de Winbit</em>')
       expect(result).not_to include('[Botón')
     end
+
+    it "links [texto](url) and Winbit's WhatsApp number" do
+      result = described_class.render_html('Escribinos por [WhatsApp](https://wa.me/5491141783126) al **+54 9 11 4178-3126**', {})
+
+      expect(result).to include(%(<a href="https://wa.me/5491141783126" style="#{described_class::LINK_STYLE}">WhatsApp</a>))
+      expect(result).to include('<strong><a href="https://wa.me/5491141783126"')
+      expect(result).to include('>+54 9 11 4178-3126</a></strong>')
+    end
   end
 end
 

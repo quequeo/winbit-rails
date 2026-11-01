@@ -17,7 +17,7 @@ Si querés sumar capital, podés hacerlo en cualquier momento desde la app, sin 
 
 [Botón: Ver mi cuenta en la app →]
 
-Ante cualquier consulta, escribinos por WhatsApp o respondé este correo.
+Ante cualquier consulta, escribinos por [WhatsApp](https://wa.me/5491141783126) o respondé este correo.
 
 **El equipo de Winbit**`;
 
@@ -343,7 +343,9 @@ export const MonthlyReportEmailPanel = ({ month }: Props) => {
             <code className="text-primary">**negrita**</code>,{" "}
             <code className="text-primary">*cursiva*</code> y{" "}
             <code className="text-primary">[Botón: texto]</code> para el botón
-            a la app. La firma de Winbit se agrega sola al final.
+            a la app,{" "}
+            <code className="text-primary">[texto](https://...)</code> para un
+            enlace (el número de WhatsApp de Winbit se enlaza solo). La firma de Winbit se agrega sola al final.
           </p>
         </div>
 
