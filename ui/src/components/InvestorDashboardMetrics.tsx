@@ -71,7 +71,7 @@ export function InvestorDashboardMetrics({ portfolio, compact = false }: Props) 
       }
     >
       <div>
-        <p className="text-xs text-t-dim">Valor del portafolio</p>
+        <p className="text-xs text-t-dim">Capital administrado</p>
         <p className={valueClass}>
           {formatCurrencyAR(portfolio.currentBalance ?? 0)}
         </p>

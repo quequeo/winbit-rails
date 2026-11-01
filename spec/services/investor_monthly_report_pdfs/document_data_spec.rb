@@ -120,7 +120,7 @@ RSpec.describe InvestorMonthlyReportPdfs::DocumentData do
       expect(data[:year_opening][:value]).to eq('6.044')
 
       expect(data[:evo_rows].size).to eq(5)
-      expect(data[:evo_rows].last[:label]).to eq('May-26')
+      expect(data[:evo_rows].last[:label]).to eq('May-26') # mayo también se abrevia May
       expect(data[:evo_rows].last[:last]).to be(true)
 
       expect(data[:chart_svg]).to include('<svg')
@@ -128,6 +128,10 @@ RSpec.describe InvestorMonthlyReportPdfs::DocumentData do
       expect(data[:ops_pages].size).to eq(1)
       page = data[:ops_pages].first
       expect(page[:trades].size).to eq(2)
+      expect(page[:trades].map { |t| t[:direction] }).to eq(%w[Compra Venta])
+      expect(page[:trades].map { |t| t[:ratio] }).to eq(['0,90:1', 'N/A'])
+      expect(page[:trades].first[:result_usd]).to match(/\A[+-]\d+,\d{2}\z/)
+      expect(data[:evo_rows].map { |r| r[:label] }).to include('Ene-26', 'Abr-26')
       expect(page[:assets]).to contain_exactly(
         { code: 'MNQ', name: 'Micro E-mini Nasdaq-100' },
         { code: 'MES', name: 'Micro E-mini S&P 500' },
@@ -148,11 +152,11 @@ RSpec.describe InvestorMonthlyReportPdfs::DocumentData do
     travel_to Time.zone.local(2026, 5, 31, 12, 0, 0) do
       data = described_class.call(investor: investor, report_month: '2026-05')
       expect(data[:ops_pages].last[:ops_summary]).not_to have_key(:service_cost)
-      expect(data[:ops_pages].last[:ops_summary][:net_result]).to eq('-71 USD')
+      expect(data[:ops_pages].last[:ops_summary][:net_result]).to eq('-71,25 USD')
     end
   end
 
-  it "colors Winbit's monthly return by its own sign, not by the investor's monthly result" do
+  it "shows the account's own monthly return in the operations annex, the same as the resumen" do
     allow(MonthlyReportBuilder).to receive(:new).and_wrap_original do |original, **kwargs|
       builder = original.call(**kwargs)
       allow(builder).to receive(:build).and_wrap_original do |build|
@@ -168,8 +172,9 @@ RSpec.describe InvestorMonthlyReportPdfs::DocumentData do
     travel_to Time.zone.local(2026, 5, 29, 12, 0, 0) do
       data = described_class.call(investor: investor, report_month: '2026-05')
       expect(data[:monthly][:class]).to eq('neg')
-      expect(data[:ops_pages].last[:ops_summary][:monthly_return_percent]).to eq('+1,4 %')
-      expect(data[:ops_pages].last[:ops_summary][:monthly_return_class]).to eq('pos')
+      expect(data[:ops_pages].last[:ops_summary][:monthly_return_percent]).to eq('-0,3%')
+      expect(data[:ops_pages].last[:ops_summary][:monthly_return_percent]).to eq(data[:monthly][:percent])
+      expect(data[:ops_pages].last[:ops_summary][:monthly_return_class]).to eq('neg')
     end
   end
 

@@ -478,7 +478,7 @@ export const InvestorsPage = () => {
                 <th className="pb-3 pr-4 sticky left-0 bg-dark-card/95">Nombre</th>
                 <th className="pb-3 pr-4">Email</th>
                 <th className="pb-3 pr-4 text-center">Status</th>
-                <th className="pb-3 pr-4 text-right">Valor del portafolio</th>
+                <th className="pb-3 pr-4 text-right">Capital administrado</th>
                 <th className="pb-3 pr-4 text-right">Capital aportado neto</th>
                 <th className="pb-3 pr-4 text-right">
                   Rend. {dashboardMonth()} (USD)

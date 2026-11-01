@@ -48,7 +48,7 @@ module InvestorMonthlyReportPdfs
 
       <<~SVG
         <svg viewBox="0 0 #{WIDTH} #{HEIGHT}" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-          #{gridlines(axis_values)}
+          #{gridlines(axis_values, end_text: "USD #{money(values.last)}")}
           <path d="#{area_path}" fill="#479785" opacity=".07" />
           <path d="#{path}" fill="none" stroke="#479785" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" />
           #{dots(points)}
@@ -83,11 +83,15 @@ module InvestorMonthlyReportPdfs
 
     # USD values live in a left gutter, right-aligned against the plot and
     # vertically centered on their gridline, so the line never crosses them.
-    def gridlines(axis_values)
+    # A value already shown as the end point's label isn't repeated on the axis.
+    def gridlines(axis_values, end_text:)
       axis_values.map do |frac, text|
         y = grid_y(frac)
+        line = %(<line x1="#{@plot_left}" y1="#{y.round(1)}" x2="#{WIDTH - PAD_RIGHT}" y2="#{y.round(1)}" stroke="#28312D" stroke-width="1"/>)
+        next line if text == end_text
+
         <<~LINE
-          <line x1="#{@plot_left}" y1="#{y.round(1)}" x2="#{WIDTH - PAD_RIGHT}" y2="#{y.round(1)}" stroke="#28312D" stroke-width="1"/>
+          #{line}
           <text x="#{@plot_left - AXIS_GAP}" y="#{(y + 5).round(1)}" font-size="#{AXIS_FONT_SIZE}" fill="#A7AAA2" text-anchor="end">#{text}</text>
         LINE
       end.join

@@ -24,6 +24,8 @@ module InvestorMonthlyReportPdfs
     # stats bar (last ops page).
     OPS_PAGE_LIMIT = 14
 
+    DIRECTIONS = { 'LONG' => 'Compra', 'SHORT' => 'Venta' }.freeze
+
     def self.call(investor:, report_month:)
       new(investor:, report_month:).call
     end
@@ -49,7 +51,7 @@ module InvestorMonthlyReportPdfs
         # MonthlyReportBuilder#build_summary). The PDF's own label promises
         # net, so this needs net_contributed_after_withdrawals_usd.
         net_contributed: amount(summary[:net_contributed_after_withdrawals_usd]),
-        monthly: signed_pair(current_month_row&.dig(:return_percent), current_month_row&.dig(:return_usd)),
+        monthly: signed_pair(current_month_row&.dig(:return_percent), current_month_row && displayed_result_usd(current_month_row)),
         ytd: signed_pair(summary[:accumulated_2026_percent], summary[:accumulated_2026_usd]),
         since_entry: signed_pair(summary[:accumulated_since_entry_percent], summary[:accumulated_since_entry_usd]),
         year_opening: {
@@ -61,7 +63,7 @@ module InvestorMonthlyReportPdfs
         chart_svg: ChartSvg.build(
           rows: evo_rows_for_chart,
           initial_value: summary[:year_opening_balance_usd].to_f,
-          initial_label: Date.parse(summary[:year_opening_date]).strftime('%b-%y')
+          initial_label: MonthlyReportBuilder.month_label(Date.parse(summary[:year_opening_date]).strftime('%Y-%m'))
         ),
         ops_pages: ops_pages,
       }
@@ -84,11 +86,23 @@ module InvestorMonthlyReportPdfs
           service_cost: amount(r[:service_cost]),
           return_percent: signed_percent(r[:return_percent]),
           return_percent_class: sign_class(r[:return_percent]),
-          return_usd: signed_amount(r[:return_usd]),
-          return_usd_class: sign_class(r[:return_usd]),
+          return_usd: signed_amount(displayed_result_usd(r)),
+          return_usd_class: sign_class(displayed_result_usd(r)),
           last: i == rows.size - 1,
         }
       end
+    end
+
+    # The month's USD result as shown: whole-dollar value - previous value -
+    # deposits + withdrawals, with the same rounded figures the table shows,
+    # so every row adds up if the investor checks it.
+    def displayed_result_usd(row)
+      index = @report[:annex_rows].index(row)
+      previous = index&.positive? ? @report[:annex_rows][index - 1] : nil
+      return row[:return_usd].to_f.round if previous.nil? || previous[:portfolio_value].nil? || row[:portfolio_value].nil?
+
+      row[:portfolio_value].to_f.round - previous[:portfolio_value].to_f.round -
+        row[:deposits].to_f.round + row[:withdrawals].to_f.round
     end
 
     def evo_rows_for_chart
@@ -114,13 +128,13 @@ module InvestorMonthlyReportPdfs
       {
         date: trade.date.strftime('%d/%m'),
         asset: trade.asset,
-        direction: trade.direction || '-',
+        direction: DIRECTIONS.fetch(trade.direction, trade.direction.presence || '-'),
         opened_at: trade.opened_at.presence || '-',
         closed_at: trade.closed_at.presence || '-',
-        result_usd: signed_amount(trade.result_usd),
-        result_percent: signed_percent(trade.result_percent),
+        result_usd: signed_amount(trade.result_usd, decimals: 2),
+        result_percent: break_even?(trade) ? '0,0%' : signed_percent(trade.result_percent),
         result_class: trade_result_class(trade.result_label),
-        ratio: signed_ratio(trade.ratio),
+        ratio: trade.result_label == 'POSITIVO' && trade.ratio ? ratio(trade.ratio) : 'N/A',
       }
     end
 
@@ -129,18 +143,18 @@ module InvestorMonthlyReportPdfs
       # Es un anexo de operaciones: muestra el resultado de las operaciones
       # (la suma del $ de cada una), sin el costo del servicio, que se cobra
       # aparte al cierre del período.
-      winbit_monthly_return = @report[:summary][:winbit_monthly_return_percent]
+      # El rendimiento del mes de esta cuenta: el mismo de la hoja 2 y de la
+      # tabla de evolución.
+      monthly_return = current_month_row&.dig(:return_percent)
       {
         count: report.count,
         positive: report.positive,
         negative: report.negative,
         break_even: report.break_even,
-        net_result: signed_amount_with_unit(report.net_result_usd),
+        net_result: "#{signed_amount(report.net_result_usd, decimals: 2)} USD",
         net_result_class: sign_class(report.net_result_usd),
-        monthly_return_percent: signed_percent(winbit_monthly_return),
-        # Es el rendimiento general de Winbit, no el del inversor: el color
-        # tiene que seguir el signo de esta cifra, no el de data[:monthly].
-        monthly_return_class: sign_class(winbit_monthly_return),
+        monthly_return_percent: signed_percent(monthly_return),
+        monthly_return_class: sign_class(monthly_return),
       }
     end
 
@@ -197,18 +211,22 @@ module InvestorMonthlyReportPdfs
     def amount(value, decimals: 0)
       return '0' if value.nil?
 
-      formatted = format("%.#{decimals}f", value.to_f.abs)
+      # Rounds half up (2.164,50 -> 2.165), the same as every other figure here;
+      # printf alone would round half to even.
+      formatted = format("%.#{decimals}f", value.to_f.abs.round(decimals))
       whole, dec = formatted.split('.')
       whole = whole.reverse.gsub(/(\d{3})(?=\d)/, '\\1.').reverse
       text = dec ? "#{whole},#{dec}" : whole
       value.to_f.negative? ? "-#{text}" : text
     end
 
+    # Never shows "-0": a value that rounds to zero has no sign.
     def signed_amount(value, decimals: 0)
       return '0' if value.nil?
 
-      sign = value.to_f.positive? ? '+' : (value.to_f.negative? ? '-' : '')
-      "#{sign}#{amount(value.to_f.abs, decimals: decimals)}"
+      rounded = value.to_f.round(decimals)
+      sign = rounded.positive? ? '+' : (rounded.negative? ? '-' : '')
+      "#{sign}#{amount(rounded.abs, decimals: decimals)}"
     end
 
     def signed_amount_with_unit(value)
@@ -216,17 +234,20 @@ module InvestorMonthlyReportPdfs
     end
 
     def signed_percent(value, decimals: 1)
-      return '0,0 %' if value.nil?
+      return '0,0%' if value.nil?
 
-      sign = value.to_f.positive? ? '+' : (value.to_f.negative? ? '-' : '')
-      "#{sign}#{amount(value.to_f.abs, decimals: decimals)} %"
+      rounded = value.to_f.round(decimals)
+      sign = rounded.positive? ? '+' : (rounded.negative? ? '-' : '')
+      "#{sign}#{amount(rounded.abs, decimals: decimals)}%"
     end
 
-    def signed_ratio(value)
-      return '—' if value.nil?
+    # Relación resultado / riesgo asumido, sin signo: "1,07:1".
+    def ratio(value)
+      "#{format('%.2f', value.to_f.abs).tr('.', ',')}:1"
+    end
 
-      sign = value.to_f.positive? ? '+' : (value.to_f.negative? ? '-' : '')
-      "#{sign}#{format('%.2f', value.to_f.abs).tr('.', ',')} R"
+    def break_even?(trade)
+      %w[BE+ BE-].include?(trade.result_label)
     end
   end
 end

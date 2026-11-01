@@ -6,21 +6,7 @@ class MonthlyReportBuilder
   SPREADSHEET_LAST_MONTH = Date.new(2026, 4, 1)
   POST_GENESIS_FLOW_START = Time.zone.local(2026, 5, 4).beginning_of_day
 
-  MONTH_LABELS = {
-    '2025-12' => 'Dec-25',
-    '2026-01' => 'Jan-26',
-    '2026-02' => 'Feb-26',
-    '2026-03' => 'Mar-26',
-    '2026-04' => 'Apr-26',
-    '2026-05' => 'May-26',
-    '2026-06' => 'Jun-26',
-    '2026-07' => 'Jul-26',
-    '2026-08' => 'Aug-26',
-    '2026-09' => 'Sep-26',
-    '2026-10' => 'Oct-26',
-    '2026-11' => 'Nov-26',
-    '2026-12' => 'Dec-26',
-  }.freeze
+  MONTH_ABBREVIATIONS = %w[Ene Feb Mar Abr May Jun Jul Ago Sep Oct Nov Dic].freeze
 
   def initialize(investor:, report_month:)
     @investor = investor
@@ -284,23 +270,21 @@ class MonthlyReportBuilder
     )
   end
 
-  # The spreadsheet's RDO M $ / % are gross of the service cost (CST column);
-  # every figure shown is net, so the cost comes out here, the same as for
-  # platform rows. The percent keeps the sheet's own base: the previous close
-  # it was measured against.
+  # Each month's result comes from the table's own values, the same as for
+  # platform rows: value - previous value - deposits + withdrawals, over the
+  # previous value (or the deposits, for a first month). The spreadsheet's own
+  # RDO M $ / % are not used: they were gross of the service cost and its
+  # percent was the firm-wide one, which doesn't hold for an investor who
+  # deposited or withdrew that month.
   def spreadsheet_rows
     previous_value = nil
     @investor.investor_monthly_annex_rows.spreadsheet.ordered.map do |row|
-      implied_base = row.return_percent.to_f.zero? ? nil : bd(row.return_usd.to_f) / (bd(row.return_percent.to_f) / 100)
-      base = previous_value.to_f.positive? ? bd(previous_value) : implied_base
-      net = net_of_service_cost(
-        return_usd: row.return_usd, return_percent: row.return_percent, service_cost: row.service_cost, base: base
-      )
+      result = spreadsheet_result(row, previous_value)
       previous_value = row.portfolio_value
       serialize_row(
         month: row.month,
-        return_percent: net[:percent],
-        return_usd: net[:usd],
+        return_percent: result[:percent],
+        return_usd: result[:usd],
         deposits: row.deposits.to_f,
         withdrawals: row.withdrawals.to_f,
         service_cost: row.service_cost.to_f,
@@ -310,6 +294,17 @@ class MonthlyReportBuilder
         source: row.source,
       )
     end
+  end
+
+  def spreadsheet_result(row, previous_value)
+    if previous_value.nil? || row.portfolio_value.nil?
+      return { usd: row.return_usd&.to_f, percent: row.return_percent&.to_f }
+    end
+
+    usd = (bd(row.portfolio_value) - bd(previous_value) - bd(row.deposits.to_f) + bd(row.withdrawals.to_f)).round(2, :half_up)
+    base = previous_value.to_f.positive? ? bd(previous_value) : bd(row.deposits.to_f)
+    percent = base.positive? ? ((usd / base) * 100).round(2, :half_up).to_f : 0.0
+    { usd: usd.to_f, percent: percent }
   end
 
   def build_platform_row(month, previous_row:, migrated_from_spreadsheet:)
@@ -482,17 +477,16 @@ class MonthlyReportBuilder
 
   def row_label(month_key, opening_snapshot:, entry_row:)
     return 'INGRESO' if entry_row
-    return MONTH_LABELS[month_key] || month_key if opening_snapshot && month_key == '2025-12'
 
-    MONTH_LABELS[month_key] || month_key
+    self.class.month_label(month_key)
   end
 
-  def net_of_service_cost(return_usd:, return_percent:, service_cost:, base:)
-    return { usd: return_usd&.to_f, percent: return_percent&.to_f } if return_usd.nil? || service_cost.to_f.zero?
+  # "2026-02" -> "Feb-26", always in Spanish (not the system locale).
+  def self.month_label(month_key)
+    year, month = month_key.to_s.split('-').map(&:to_i)
+    return month_key.to_s unless year && month&.between?(1, 12)
 
-    net_usd = (bd(return_usd) - bd(service_cost)).round(2, :half_up)
-    net_percent = base.to_f.positive? ? ((net_usd / base) * 100).round(2, :half_up).to_f : return_percent&.to_f
-    { usd: net_usd.to_f, percent: net_percent }
+    "#{MONTH_ABBREVIATIONS[month - 1]}-#{format('%02d', year % 100)}"
   end
 
   def bd(value)
