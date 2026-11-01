@@ -162,9 +162,17 @@ export const MonthlyReportEmailPanel = ({ month }: Props) => {
   );
   const skippedInactiveCount = skipped.length - skippedActive.length;
   const sampleName = preview?.sampleInvestor?.name || "—";
+  // A test uses the selected investor, or the preview's sample one if none
+  // was picked, so it can be sent without choosing anybody first.
+  const testInvestorId = investorId || preview?.sampleInvestor?.id || "";
+  const testInvestorName =
+    recipients.find((row) => row.id === testInvestorId)?.name ||
+    preview?.sampleInvestor?.name ||
+    "—";
 
   const handleSendOne = async (toTestEmail?: string) => {
-    if (!investorId) {
+    const targetId = toTestEmail ? testInvestorId : investorId;
+    if (!targetId) {
       setError("Seleccioná un inversor de la lista para enviar uno.");
       return;
     }
@@ -176,7 +184,7 @@ export const MonthlyReportEmailPanel = ({ month }: Props) => {
         month,
         subject,
         body,
-        investor_id: investorId,
+        investor_id: targetId,
         ...(toTestEmail ? { test_email: toTestEmail } : {}),
       })) as { data?: { queuedCount?: number; failureCount?: number } };
       const queued = res?.data?.queuedCount ?? 0;
@@ -355,23 +363,6 @@ export const MonthlyReportEmailPanel = ({ month }: Props) => {
           >
             Enviar a este inversor
           </Button>
-          <div className="w-60">
-            <Input
-              type="email"
-              value={testEmail}
-              onChange={(e) => setTestEmail(e.target.value)}
-              placeholder="correo para la prueba"
-              aria-label="Correo de prueba"
-            />
-          </div>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => void handleSendOne(testEmail.trim())}
-            disabled={sending || !investorId || !testEmail.trim()}
-          >
-            Enviar prueba
-          </Button>
           <Button
             type="button"
             disabled={
@@ -405,6 +396,34 @@ export const MonthlyReportEmailPanel = ({ month }: Props) => {
               </>
             ) : null}
           </p>
+        </div>
+      </div>
+
+      <div className="admin-card p-6 space-y-3">
+        <h3 className="text-sm font-semibold text-t-primary">
+          Enviar una prueba
+        </h3>
+        <p className="text-xs text-t-dim">
+          {`Te llega el mail con el PDF de ${testInvestorName} a la dirección que pongas, tal como lo recibiría el inversor. No se le manda nada al inversor. Para probar con otro, tocalo en la lista de destinatarios.`}
+        </p>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="w-72">
+            <Input
+              type="email"
+              value={testEmail}
+              onChange={(e) => setTestEmail(e.target.value)}
+              placeholder="tu correo, ej. contacto@winbit.com.ar"
+              aria-label="Correo de prueba"
+            />
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => void handleSendOne(testEmail.trim())}
+            disabled={sending || !testInvestorId || !testEmail.trim()}
+          >
+            Enviar prueba
+          </Button>
         </div>
       </div>
 
