@@ -33,7 +33,29 @@ RSpec.describe 'OutgoingEmails scheduling' do
 
     it 'refuses to schedule sent emails' do
       email.update!(status: 'SENT')
-      expect { described_class.call(outgoing_email: email) }.to raise_error(StandardError, /pendientes/)
+      expect { described_class.call(outgoing_email: email) }.to raise_error(StandardError, /ya está programado/)
+      expect { described_class.call(outgoing_email: email, at: 1.day.from_now) }.to raise_error(StandardError, /enviado/)
+    end
+
+    it 'does not schedule twice with the default time' do
+      described_class.call(outgoing_email: email)
+      expect { described_class.call(outgoing_email: email) }.to raise_error(StandardError, /ya está programado/)
+    end
+
+    it 'schedules at a chosen date and time, also when it was already scheduled' do
+      described_class.call(outgoing_email: email)
+      described_class.call(outgoing_email: email, scheduled_by: admin, at: '2099-11-02T10:30:00-03:00')
+
+      expect(email.reload).to have_attributes(status: 'SCHEDULED', scheduled_by: admin)
+      expect(email.scheduled_for).to eq(Time.zone.parse('2099-11-02T13:30:00Z'))
+    end
+
+    it 'rejects past or invalid times' do
+      expect { described_class.call(outgoing_email: email, at: 1.hour.ago.iso8601) }
+        .to raise_error(OutgoingEmails::Schedule::InvalidTime, /futura/)
+      expect { described_class.call(outgoing_email: email, at: 'mañana') }
+        .to raise_error(OutgoingEmails::Schedule::InvalidTime, /válida/)
+      expect(email.reload.status).to eq('DRAFT')
     end
   end
 
