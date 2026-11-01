@@ -30,8 +30,10 @@ module InvestorMonthlyReportPdfs
       [
         *check_operations_sum,
         *check_missing_direction,
+        *check_rows,
         *check_accumulated_year,
         *check_last_annex_value,
+        *check_negative_zero,
       ]
     end
 
@@ -67,24 +69,60 @@ module InvestorMonthlyReportPdfs
       end
     end
 
-    # accumulated_2026_usd comes from the live TWR-compounding field (not
-    # summed from annex rows - see MonthlyReportBuilder#accumulated_net_as_of),
-    # so it can legitimately diverge from a plain sum of the year's rows for
-    # investors with large interim withdrawals (same reason the annex sum
-    # isn't used directly - see the Fabrizio Bruno / Crocci case spec). The
-    # tolerance is scaled, not fixed, to avoid false alarms for those cases
-    # while still catching a real break (the bug this whole fix addresses
-    # showed up as an 18%+ gap).
+    # Every month's row has to close with its own values: previous value +
+    # result + deposits - withdrawals = value, and its percent = result over
+    # the previous value (0,05 pp). An investor's first month has no previous
+    # value, so its percent is left out.
+    def check_rows
+      rows = @report[:annex_rows]
+      year_to_date_rows.filter_map do |row|
+        index = rows.index(row)
+        previous = index&.positive? ? rows[index - 1] : nil
+        next if previous.nil? || previous[:portfolio_value].nil? || row[:return_usd].nil?
+
+        expected_usd = row[:portfolio_value].to_f - previous[:portfolio_value].to_f - row[:deposits].to_f + row[:withdrawals].to_f
+        if (expected_usd - row[:return_usd].to_f).abs > 0.5
+          next "#{row[:label]}: el resultado informado es #{money(row[:return_usd])} y según los valores de la tabla es #{money(expected_usd)}."
+        end
+
+        next unless previous[:portfolio_value].to_f.positive?
+
+        expected_percent = row[:return_usd].to_f / previous[:portfolio_value].to_f * 100
+        next if (expected_percent - row[:return_percent].to_f).abs <= 0.05
+
+        "#{row[:label]}: el rendimiento informado es #{format('%.2f', row[:return_percent].to_f)}% y según los valores es #{format('%.2f', expected_percent)}%."
+      end
+    end
+
+    # The year's accumulated result comes from the strategy figures, net of
+    # the service cost; it has to match what the table's own values add up to.
     def check_accumulated_year
       rows = year_to_date_rows
       return [] if rows.empty?
 
       expected = rows.sum { |r| r[:return_usd].to_f }
       actual = summary[:accumulated_2026_usd].to_f
-      tolerance = [5.0, actual.abs * 0.1].max
-      return [] if (expected - actual).abs <= tolerance
+      return [] if (expected - actual).abs <= 2
 
-      ["El acumulado #{@report_month.year} informado es #{money(actual)}, pero la suma neta de las filas del año da #{money(expected)}."]
+      ["El acumulado #{@report_month.year} informado es #{money(actual)}, pero los valores de la tabla del año dan #{money(expected)}."]
+    end
+
+    # Nothing in the PDF may read "-0" (or "-0,0%").
+    def check_negative_zero
+      cells = collect_strings(DocumentData.call(investor: @investor, report_month: @report_month))
+      bad = cells.select { |text| text.match?(/(?<![\d,.])-0(?:,0+)?(?![\d,])/) }
+      return [] if bad.empty?
+
+      ["Hay celdas que muestran \"-0\": #{bad.uniq.first(3).join(', ')}."]
+    end
+
+    def collect_strings(value)
+      case value
+      when String then [ value ]
+      when Hash then value.except(:chart_svg).values.flat_map { |v| collect_strings(v) }
+      when Array then value.flat_map { |v| collect_strings(v) }
+      else []
+      end
     end
 
     # The last year-to-date annex row and the summary's portfolio value are

@@ -28,7 +28,13 @@ RSpec.describe InvestorMonthlyReportPdfs::ChartSvg do
 
     label_xs = svg.scan(/<text x="([\d.]+)" [^>]*font-size="14"[^>]*>USD /).flatten.map(&:to_f)
     first_point_x = svg[/<circle cx="([\d.]+)"/, 1].to_f
-    expect(label_xs.size).to eq(3)
+    expect(label_xs.size).to eq(2) # the top value is the end point's own label
     expect(label_xs).to all(be < first_point_x)
+  end
+
+  it "doesn't repeat the end value on the axis" do
+    svg = described_class.build(rows: [{ label: 'Ene-26', portfolio_value: 2207 }], initial_value: 1962, initial_label: 'Dic-25')
+
+    expect(svg.scan('USD 2.207').size).to eq(1)
   end
 end

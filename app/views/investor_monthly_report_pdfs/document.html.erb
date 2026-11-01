@@ -177,9 +177,9 @@ table { width: 100%; border-collapse: collapse; }
     <div class="res">
       <div>
         <div class="blk">
-          <div class="label">Valor del portafolio</div>
+          <div class="label">Capital administrado</div>
           <div class="big">USD <%= data[:portfolio_value] %></div>
-          <div class="note">Valor del portafolio al <%= data[:as_of_date] %></div>
+          <div class="note">Capital administrado al <%= data[:as_of_date] %></div>
         </div>
         <div class="blk">
           <div class="label">Capital aportado neto</div>
@@ -204,7 +204,7 @@ table { width: 100%; border-collapse: collapse; }
       </div>
     </div>
   </div>
-  <div class="fnote">Rendimiento neto = rendimiento operativo &minus; costo del servicio aplicado al per&iacute;odo.</div>
+  <div class="fnote">Rendimiento neto = rendimiento operativo &minus; comisi&oacute;n de gesti&oacute;n liquidada en el per&iacute;odo.</div>
   <div class="foot"><span>Reporte mensual de rendimiento &middot; <%= data[:month_label_full] %></span><span><%= data[:investor_name] %></span></div>
 </section>
 
@@ -222,11 +222,11 @@ table { width: 100%; border-collapse: collapse; }
         <div class="row"><span class="d"><%= data[:year_opening][:date] %></span><span class="v">USD <%= data[:year_opening][:value] %></span></div>
       </div>
     </div>
-    <div class="label" style="margin-top:18px">Evoluci&oacute;n del valor del portafolio</div>
+    <div class="label" style="margin-top:18px">Evoluci&oacute;n del capital administrado</div>
     <div class="chart"><%= data[:chart_svg].html_safe %></div>
     <% dense_evo = data[:evo_rows].size > 8 %>
     <table class="tev<%= ' denso' if dense_evo %>">
-      <thead><tr><th>Mes</th><th>Valor portafolio (USD)</th><th>Ingresos (USD)</th><th>Retiros (USD)</th><th>Costo servicio* (USD)</th><th>Rendimiento neto %</th><th>Rendimiento neto (USD)</th></tr></thead>
+      <thead><tr><th>Mes</th><th>Capital administrado (USD)</th><th>Ingresos (USD)</th><th>Retiros (USD)</th><th>Comisi&oacute;n de gesti&oacute;n* (USD)</th><th>Rendimiento neto %</th><th>Rendimiento neto (USD)</th></tr></thead>
       <tbody>
         <% data[:evo_rows].each do |row| %>
           <tr<%= ' class="cur"'.html_safe if row[:last] %>>
@@ -242,7 +242,7 @@ table { width: 100%; border-collapse: collapse; }
       </tbody>
     </table>
     <div class="acum"><span class="t">ACUMULADO <%= year %></span><span class="vals"><span class="<%= data[:evo_total][:class] %>"><%= data[:evo_total][:percent] %></span><span><%= data[:evo_total][:usd] %></span></span></div>
-    <div class="fn">* Importe correspondiente al servicio de gesti&oacute;n aplicado en el per&iacute;odo indicado.</div>
+    <div class="fn">* Comisi&oacute;n de gesti&oacute;n liquidada en el per&iacute;odo indicado.</div>
   </div>
   <div class="foot"><span>Reporte mensual de rendimiento &middot; <%= data[:month_label_full] %></span><span><%= data[:investor_name] %></span></div>
 </section>
@@ -267,7 +267,7 @@ table { width: 100%; border-collapse: collapse; }
       <% end %>
       <table class="tops<%= density %>">
         <thead><tr>
-          <th>Fecha</th><th>Activo</th><th>Direcci&oacute;n</th><th class="r">Apertura</th><th class="r">Cierre</th>
+          <th>Fecha</th><th>Activo</th><th>Direcci&oacute;n</th><th class="r">Apertura (ARG)</th><th class="r">Cierre (ARG)</th>
           <th class="r">Resultado (USD)</th><th class="r">Rend. %</th><th class="r">Ratio</th>
         </tr></thead>
         <tbody>
@@ -286,7 +286,7 @@ table { width: 100%; border-collapse: collapse; }
         </tbody>
       </table>
       <% if page[:last] %>
-        <div class="opnote">Ratio: relaci&oacute;n entre el resultado de la operaci&oacute;n y el riesgo inicialmente asumido. BE: break even (resultado cercano a cero). USD: resultado atribuido a esta cuenta.</div>
+        <div class="opnote">Ratio: relaci&oacute;n entre el resultado de la operaci&oacute;n y el riesgo asumido al abrirla. Se informa solo en operaciones positivas. BE: break even (resultado cercano a cero). USD: resultado atribuido a esta cuenta. Horarios en hora de Argentina (UTC&minus;3).</div>
       <% end %>
     </div>
     <% if page[:last] %>
@@ -310,7 +310,7 @@ table { width: 100%; border-collapse: collapse; }
     <div class="contact">
       <div class="label">Contacto</div>
       <div class="rule"></div>
-      <p>+54 9 11 4178-3126</p>
+      <p>WhatsApp: +54 9 11 4178-3126</p>
       <p>contacto@winbit.com.ar</p>
       <p class="web">winbit.com.ar</p>
     </div>

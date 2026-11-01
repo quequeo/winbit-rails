@@ -287,6 +287,9 @@ RSpec.describe MonthlyReportBuilder do
       net = data_rows.sum { |r| r[:return_usd].to_f }
       cst = data_rows.sum { |r| r[:service_cost].to_f }
 
+      february = data_rows.find { |r| r[:month] == '2026-02' }
+      expect(february[:return_usd]).to eq(63.0)
+      expect(february[:return_percent]).to eq(2.32) # 63 / 2.712, not the sheet's firm-wide 2,0%
       expect(march[:return_usd]).to eq(26.0)
       expect(march[:return_percent]).to eq(0.94)
       expect(net).to eq(159.0)
