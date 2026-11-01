@@ -49,6 +49,19 @@ RSpec.describe 'Admin outgoing emails', type: :request do
       expect(JSON.parse(response.body)['data']['scheduledFor']).to be_present
     end
 
+    it 'reschedules at a chosen date and time' do
+      draft.update!(status: 'SCHEDULED', scheduled_for: 1.hour.from_now)
+      post "/api/admin/outgoing_emails/#{draft.id}/schedule", params: { scheduled_for: '2099-11-02T10:30:00-03:00' }
+      expect(response).to have_http_status(:ok)
+      expect(draft.reload.scheduled_for).to eq(Time.zone.parse('2099-11-02T13:30:00Z'))
+    end
+
+    it 'rejects a past date and time' do
+      post "/api/admin/outgoing_emails/#{draft.id}/schedule", params: { scheduled_for: 1.hour.ago.iso8601 }
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(draft.reload.status).to eq('DRAFT')
+    end
+
     it 'cancels a schedule' do
       draft.update!(status: 'SCHEDULED', scheduled_for: 1.hour.from_now)
       post "/api/admin/outgoing_emails/#{draft.id}/unschedule"

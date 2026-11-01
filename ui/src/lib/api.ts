@@ -166,9 +166,10 @@ export const api = {
     request(`${ADMIN_API_PREFIX}/outgoing_emails/${id}/send`, {
       method: "POST",
     }),
-  scheduleOutgoingEmail: (id: string) =>
+  scheduleOutgoingEmail: (id: string, scheduledFor?: string) =>
     request(`${ADMIN_API_PREFIX}/outgoing_emails/${id}/schedule`, {
       method: "POST",
+      body: JSON.stringify(scheduledFor ? { scheduled_for: scheduledFor } : {}),
     }),
   unscheduleOutgoingEmail: (id: string) =>
     request(`${ADMIN_API_PREFIX}/outgoing_emails/${id}/unschedule`, {

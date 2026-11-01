@@ -37,7 +37,9 @@ module Api
       end
 
       def schedule
-        OutgoingEmails::Schedule.call(outgoing_email: @email, scheduled_by: current_user)
+        OutgoingEmails::Schedule.call(
+          outgoing_email: @email, scheduled_by: current_user, at: params.permit(:id, :scheduled_for)[:scheduled_for]
+        )
 
         ActivityLogger.log(
           user: current_user,
