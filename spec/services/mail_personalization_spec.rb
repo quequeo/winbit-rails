@@ -8,31 +8,37 @@ RSpec.describe MailPersonalization do
   end
 
   describe '.greeting' do
-    it 'greets by the Argentina time of sending' do
-      expect(described_class.greeting(at(15, 8))).to eq('Buenos días')
-      expect(described_class.greeting(at(15, 18))).to eq('Buenas tardes')
-      expect(described_class.greeting(at(15, 21))).to eq('Buenas noches')
+    it 'always says Hola' do
+      expect(described_class.greeting(at(15, 8))).to eq('Hola')
+      expect(described_class.greeting(at(15, 21))).to eq('Hola')
     end
   end
 
   describe '.requested_when' do
-    it 'refers to today, yesterday or the weekday and date' do
-      expect(described_class.requested_when(at(15, 14), at(15, 18))).to eq('el día de hoy')
-      expect(described_class.requested_when(at(14, 17), at(15, 8))).to eq('el día de ayer')
-      expect(described_class.requested_when(at(16, 17), at(19, 8))).to eq('el viernes 16/10')
+    it 'uses the dd/mm/aaaa date, never today or yesterday' do
+      expect(described_class.requested_when(at(15, 14), at(15, 18))).to eq('el 15/10/2026')
+      expect(described_class.requested_when(at(14, 17), at(15, 8))).to eq('el 14/10/2026')
     end
 
     it 'falls back when the request time is unknown' do
-      expect(described_class.requested_when(nil, at(15, 8))).to eq('recientemente')
+      expect(described_class.requested_when(nil)).to eq('recientemente')
     end
   end
 
   describe '.apply' do
-    it 'replaces the draft tokens' do
+    it 'replaces the tokens of drafts built with the previous format' do
       html = "<p>#{described_class::GREETING_TOKEN}, Luis</p><p>solicitado #{described_class::REQUESTED_TOKEN}.</p>"
 
-      expect(described_class.apply(html, requested_at: at(14, 17), at: at(15, 8)))
-        .to eq('<p>Buenos días, Luis</p><p>solicitado el día de ayer.</p>')
+      expect(described_class.apply(html, requested_at: at(14, 17)))
+        .to eq('<p>Hola, Luis</p><p>solicitado el 14/10/2026.</p>')
+    end
+  end
+
+  describe '.processing_term' do
+    it 'promises the same day before 16:00 on business days and the next business day otherwise' do
+      expect(described_class.processing_term(at(15, 10))).to eq('La vamos a procesar hoy antes de las 18:00.')
+      expect(described_class.processing_term(at(15, 17))).to include('próximo día hábil')
+      expect(described_class.processing_term(at(17, 10))).to include('próximo día hábil')
     end
   end
 

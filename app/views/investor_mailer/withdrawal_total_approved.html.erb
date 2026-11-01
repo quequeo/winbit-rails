@@ -1,0 +1,19 @@
+<div style="font-family: Arial, Helvetica, sans-serif; font-size: 15px; line-height: 1.6; color: #222222; max-width: 600px;">
+  <p style="margin: 0 0 14px 0;">Hola, <%= @data[:first_name] %>, ¿cómo estás?</p>
+
+  <p style="margin: 0 0 14px 0;">Te confirmamos que se procesó el retiro total de tu capital, por <strong><%= @data[:amount_label] %></strong>, solicitado el <%= @data[:requested_on] %>. Adjuntamos el <strong>comprobante de retiro total</strong>.</p>
+
+  <% if @data[:fee_label] %>
+    <p style="margin: 0 0 14px 0;">Junto con el retiro se liquidó la comisión de gestión de <strong><%= @data[:fee_label] %></strong>, equivalente al <%= @data[:fee_percentage] %>% de la nueva rentabilidad positiva generada desde la última liquidación.</p>
+  <% end %>
+
+  <% if @data[:result][:amount].positive? %>
+    <p style="margin: 0 0 14px 0;">Desde tu primer aporte, el <%= @data[:result][:since] %>, tu capital obtuvo un resultado neto de <strong><%= @data[:result][:label] %></strong><% if @data[:result][:percentage] %> (<strong><%= @data[:result][:percentage] %>%</strong>)<% end %>, ya descontadas las comisiones.</p>
+  <% else %>
+    <p style="margin: 0 0 14px 0;">En el comprobante adjunto vas a encontrar el detalle del retiro, y en la aplicación, el historial completo de tu cuenta.</p>
+  <% end %>
+
+  <p style="margin: 0;">Gracias por la confianza durante todo este tiempo. Fue un gusto gestionar tu capital. Tu acceso a la <a href="<%= frontend_url %>" style="color: #39836D;">aplicación</a> sigue activo para consultar tu historial y tus comprobantes, y si en algún momento querés volver a invertir, vamos a estar a disposición.</p>
+
+  <%= render partial: 'investor_mailer/signature' %>
+</div>

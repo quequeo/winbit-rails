@@ -207,6 +207,20 @@ export const OutgoingEmailsPage = () => {
                 >
                   Enviar ahora
                 </Button>
+                {detail.hasReceipt ? (
+                  <Button
+                    variant="outline"
+                    disabled={busy}
+                    onClick={() =>
+                      run(async () => {
+                        const res = await api.regenerateOutgoingEmail(detail.id);
+                        setDetail((res as { data: ApiOutgoingEmail }).data);
+                      })
+                    }
+                  >
+                    Actualizar formato
+                  </Button>
+                ) : null}
                 <Button
                   variant="outline"
                   disabled={busy}

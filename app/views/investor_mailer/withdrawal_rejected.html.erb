@@ -1,13 +1,13 @@
 <div style="font-family: Arial, Helvetica, sans-serif; font-size: 15px; line-height: 1.6; color: #222222; max-width: 600px;">
-  <p style="margin: 0 0 14px 0;"><%= saludo %>, <%= @first_name %> ¿cómo estás?</p>
+  <p style="margin: 0 0 14px 0;">Hola, <%= @first_name %>, ¿cómo estás?</p>
 
-  <p style="margin: 0 0 14px 0;">Te informamos que no pudimos procesar el retiro de <strong><%= @amount_label %></strong> solicitado <%= solicitado(@request) %>. Tu capital no tuvo cambios.</p>
+  <p style="margin: 0 0 14px 0;">Te informamos que no pudimos procesar el retiro de <strong><%= @amount_label %></strong> solicitado el <%= @requested_on %>. Tu capital no tuvo cambios.</p>
 
-  <% if @show_reason %>
+  <% if @reason.present? %>
     <p style="margin: 0 0 14px 0;"><strong>Motivo:</strong> <%= @reason %></p>
   <% end %>
 
-  <p style="margin: 0;">Si tenés alguna duda o querés volver a realizar la solicitud, respondé este correo y te ayudamos.</p>
+  <p style="margin: 0;">Si querés volver a hacer la solicitud o tenés alguna consulta, escribinos por <a href="https://wa.me/5491141783126" style="color: #39836D;">WhatsApp</a> o respondé este correo.</p>
 
   <%= render partial: 'investor_mailer/signature' %>
 </div>

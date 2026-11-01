@@ -1,0 +1,13 @@
+Hola, <%= @data[:first_name] %>, ¿cómo estás?
+
+Te confirmamos que se procesó el retiro total de tu capital, por <%= @data[:amount_label] %>, solicitado el <%= @data[:requested_on] %>. Adjuntamos el comprobante de retiro total.
+
+<% if @data[:fee_label] %>
+Junto con el retiro se liquidó la comisión de gestión de <%= @data[:fee_label] %>, equivalente al <%= @data[:fee_percentage] %>% de la nueva rentabilidad positiva generada desde la última liquidación.
+
+<% end %>
+<% if @data[:result][:amount].positive? %>Desde tu primer aporte, el <%= @data[:result][:since] %>, tu capital obtuvo un resultado neto de <%= @data[:result][:label] %><% if @data[:result][:percentage] %> (<%= @data[:result][:percentage] %>%)<% end %>, ya descontadas las comisiones.<% else %>En el comprobante adjunto vas a encontrar el detalle del retiro, y en la aplicación, el historial completo de tu cuenta.<% end %>
+
+Gracias por la confianza durante todo este tiempo. Fue un gusto gestionar tu capital. Tu acceso a la aplicación (<%= frontend_url %>) sigue activo para consultar tu historial y tus comprobantes, y si en algún momento querés volver a invertir, vamos a estar a disposición.
+
+<%= render partial: 'investor_mailer/signature' %>

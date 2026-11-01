@@ -18,16 +18,24 @@ module OutgoingEmails
     def call
       return nil if @investor.email.blank?
 
-      message = build_message
       OutgoingEmail.create!(
         investor: @investor,
         investor_request: @request,
         kind: @kind,
         to_email: @investor.email,
-        subject: message.subject,
-        body_html: html_body(message),
-        scheduled_for: scheduled_for
+        scheduled_for: scheduled_for,
+        **rendered
       )
+    end
+
+    # Asunto y cuerpos (HTML y texto plano) del mail, sin guardarlo.
+    def rendered
+      message = build_message
+      {
+        subject: message.subject,
+        body_html: (message.html_part || message).body.decoded,
+        body_text: message.text_part&.body&.decoded,
+      }
     end
 
     private
@@ -49,10 +57,6 @@ module OutgoingEmails
       else
         raise ArgumentError, "Tipo de mail no soportado: #{@kind}"
       end
-    end
-
-    def html_body(message)
-      (message.html_part || message).body.decoded
     end
   end
 end

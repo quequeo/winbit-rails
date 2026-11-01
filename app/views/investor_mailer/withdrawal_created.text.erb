@@ -1,0 +1,7 @@
+Hola, <%= @first_name %>, ¿cómo estás?
+
+Recibimos tu solicitud de retiro por <%= @amount_label %> el <%= @requested_on %> a las <%= @requested_time %>. <%= @processing_term %>
+
+Cuando esté procesado, te vamos a enviar el comprobante por este medio. Si no reconocés esta solicitud, escribinos de inmediato por WhatsApp (+54 9 11 4178-3126).
+
+<%= render partial: 'investor_mailer/signature' %>

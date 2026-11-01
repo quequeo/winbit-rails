@@ -19,7 +19,8 @@ RSpec.describe OutgoingEmails::Draft do
     expect(draft.status).to eq('DRAFT')
     expect(draft.to_email).to eq('draft@test.com')
     expect(draft.subject).to include('Retiro procesado')
-    expect(draft.body_html).to include(MailPersonalization::GREETING_TOKEN)
+    expect(draft.body_html).to include('Hola, Draft, ¿cómo estás?')
+    expect(draft.body_text).to include('Hola, Draft, ¿cómo estás?')
     expect(draft.body_html).to include('<html')
     expect(draft.investor_request).to eq(request)
   end

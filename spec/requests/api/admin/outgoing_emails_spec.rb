@@ -82,6 +82,24 @@ RSpec.describe 'Admin outgoing emails', type: :request do
       expect(response).to have_http_status(:unprocessable_entity)
     end
 
+    it 'updates a receipt draft to the current format' do
+      request = InvestorRequest.create!(investor: investor, request_type: 'DEPOSIT', method: 'USDT', amount: 100,
+                                        status: 'APPROVED', processed_at: Time.current, operation_number: 'A-2026-0001')
+      draft.update!(kind: 'DEPOSIT_APPROVED', investor_request: request)
+      allow(RequestReceiptPdfs::Generate).to receive(:call)
+
+      post "/api/admin/outgoing_emails/#{draft.id}/regenerate"
+
+      expect(response).to have_http_status(:ok)
+      expect(JSON.parse(response.body)['data']['bodyHtml']).to include('Te damos la bienvenida a Winbit')
+      expect(ActivityLog.where(action: 'regenerate_outgoing_email').count).to eq(1)
+    end
+
+    it 'does not update emails without a receipt' do
+      post "/api/admin/outgoing_emails/#{draft.id}/regenerate"
+      expect(response).to have_http_status(:unprocessable_entity)
+    end
+
     it 'returns 404 for unknown ids' do
       get '/api/admin/outgoing_emails/nope'
       expect(response).to have_http_status(:not_found)

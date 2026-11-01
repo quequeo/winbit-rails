@@ -285,6 +285,7 @@ Requiere sesión de admin. Usada por el backoffice.
 | POST | `/outgoing_emails/:id/discard` | Descarta el borrador. |
 | POST | `/outgoing_emails/:id/schedule` | Confirma el borrador: queda programado y sale solo a las 18:00 (aprobado antes de las 18:00 y pedido antes de las 16:00) o a las 8:00 del siguiente día hábil. |
 | POST | `/outgoing_emails/:id/unschedule` | Cancela la programación y vuelve a borrador. |
+| POST | `/outgoing_emails/:id/regenerate` | Rearma un correo pendiente de ingreso o retiro aprobado con los textos vigentes y regenera su comprobante. Mantiene estado y hora programada. |
 | GET | `/deposit_options` | Opciones de depósito |
 | GET | `/daily_operating_results` | Operativa diaria |
 | GET | `/daily_operating_results/series` | Serie diaria (params: `months`/`offset` o `from`/`to` YYYY-MM-DD) para gráficos/Excel |

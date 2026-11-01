@@ -1,0 +1,7 @@
+Hola, <%= @first_name %>, ¿cómo estás?
+
+Recibimos tu solicitud de ingreso por <%= @amount_label %> el <%= @requested_on %> a las <%= @requested_time %>.<% if @cash_request %> Nos vamos a comunicar con vos para coordinar la entrega del efectivo.<% end %>
+
+Cuando esté acreditado, te vamos a enviar el comprobante por este medio. Ante cualquier consulta, escribinos por WhatsApp o respondé este correo.
+
+<%= render partial: 'investor_mailer/signature' %>

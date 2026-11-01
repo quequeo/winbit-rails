@@ -1,0 +1,11 @@
+Hola, <%= @first_name %>, ¿cómo estás?
+
+Te informamos que no pudimos procesar el retiro de <%= @amount_label %> solicitado el <%= @requested_on %>. Tu capital no tuvo cambios.
+
+<% if @reason.present? %>
+Motivo: <%= @reason %>
+
+<% end %>
+Si querés volver a hacer la solicitud o tenés alguna consulta, escribinos por WhatsApp o respondé este correo.
+
+<%= render partial: 'investor_mailer/signature' %>

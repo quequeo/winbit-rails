@@ -7,11 +7,12 @@ RSpec.describe OutgoingEmails::SendEmail do
   let(:investor) { Investor.create!(email: 'send@test.com', name: 'Send Inv', status: 'ACTIVE') }
   let(:request) do
     InvestorRequest.create!(investor: investor, request_type: 'DEPOSIT', method: 'USDT', amount: 50,
-                            status: 'APPROVED', processed_at: Time.current)
+                            status: 'APPROVED', processed_at: Time.current, operation_number: 'A-2026-0001')
   end
   let(:email) do
     OutgoingEmail.create!(investor: investor, investor_request: request, kind: 'DEPOSIT_APPROVED',
-                          to_email: investor.email, subject: 'Winbit | Depósito acreditado', body_html: '<p>Hola</p>')
+                          to_email: investor.email, subject: 'Winbit | Depósito acreditado', body_html: '<p>Hola</p>',
+                          body_text: 'Hola')
   end
 
   before do
@@ -28,7 +29,9 @@ RSpec.describe OutgoingEmails::SendEmail do
     expect(mail.to).to eq([ 'send@test.com' ])
     expect(mail.subject).to eq('Winbit | Depósito acreditado')
     expect(mail.attachments.size).to eq(1)
-    expect(mail.attachments.first.filename).to start_with('Aporte de capital')
+    expect(mail.attachments.first.filename).to eq('Winbit_Comprobante_Aporte_A-2026-0001.pdf')
+    expect(mail.text_part.decoded).to eq('Hola')
+    expect(mail.html_part.decoded).to include('<p>Hola</p>')
     expect(email.reload).to have_attributes(status: 'SENT', sent_by: admin)
     expect(email.sent_at).to be_present
   end

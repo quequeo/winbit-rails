@@ -41,41 +41,69 @@ RSpec.describe InvestorMailer, type: :mailer do
     ]).destroy_all
   end
 
+
+  let(:admin) { User.create!(email: 'mailer-admin@test.com', name: 'Admin', role: 'ADMIN') }
+
+  def html(mail)
+    mail.html_part.decoded
+  end
+
+  def text(mail)
+    mail.text_part.decoded
+  end
+
+  def ar(*args)
+    MailPersonalization::ZONE.local(*args)
+  end
+
+  def history(event, amount, new_balance, date, operation_number: nil)
+    previous = event == 'DEPOSIT' ? new_balance - amount : new_balance + amount
+    PortfolioHistory.create!(investor_id: investor.id, event: event, amount: amount, previous_balance: previous,
+                             new_balance: new_balance, status: 'COMPLETED', date: date, operation_number: operation_number)
+  end
+
+  def approve(request, balance_after:, operation_number:)
+    request.update!(status: 'APPROVED', processed_at: ar(2026, 10, 15, 19), operation_number: operation_number,
+                    requested_at: ar(2026, 10, 14, 10))
+    history(request.request_type, request.amount, balance_after, request.processed_at, operation_number: operation_number)
+  end
+
   describe '#deposit_created' do
     let(:mail) { described_class.deposit_created(investor, deposit_request) }
 
-    it 'renders the headers' do
-      expect(mail.subject).to start_with('Winbit | Solicitud de depósito recibida |')
-      expect(mail.to).to eq(['john@example.com'])
-    end
+    it 'confirms the request with the date and time, in HTML and plain text' do
+      deposit_request.update!(requested_at: ar(2026, 10, 14, 10, 5))
 
-    it 'renders the body' do
-      expect(mail.body.encoded).to match(/solicitud de depósito/)
-      expect(mail.body.encoded).to match(/USDT/)
+      expect(mail.subject).to eq('Winbit | Solicitud de ingreso recibida | 1.000,00 USDT')
+      expect(mail.to).to eq([ 'john@example.com' ])
+      expect(html(mail)).to include('Hola, John, ¿cómo estás?', 'el 14/10/2026 a las 10:05', 'El equipo de Winbit')
+      expect(text(mail)).to include('Recibimos tu solicitud de ingreso por 1.000,00 USDT')
     end
   end
 
   describe '#deposit_approved' do
-    before { portfolio } # Ensure portfolio exists
+    before { portfolio }
 
-    let(:mail) { described_class.deposit_approved(investor, deposit_request) }
+    it 'sends the welcome mail for the initial contribution' do
+      approve(deposit_request, balance_after: 1000, operation_number: 'A-2026-0001')
+      mail = described_class.deposit_approved(investor, deposit_request)
 
-    it 'renders the headers' do
-      expect(mail.subject).to start_with('Winbit | Ingreso procesado |')
-      expect(mail.to).to eq(['john@example.com'])
+      expect(mail.subject).to eq('Winbit | Bienvenida y aporte de capital | 1.000,00 USDT')
+      expect(html(mail)).to include('Te damos la bienvenida a Winbit', 'recibido el 15/10/2026', 'Tipo de cuenta: <strong>Inversor</strong>',
+                                    'la comisión es de USD 30,00', 'Ver mi cuenta en la app')
+      expect(text(mail)).to include('Capital inicial: USD 1.000,00')
     end
 
-    it 'renders the body' do
-      expect(mail.body.encoded).to match('fue procesado el ingreso')
-      expect(mail.body.encoded).to match('comprobante de ingreso')
-    end
-
-    it 'always expresses amounts in USDT, even for USDC deposits' do
+    it 'confirms a later deposit in its real currency with the capital in USD' do
       deposit_request.update!(method: 'USDC')
-      usdc_mail = described_class.deposit_approved(investor, deposit_request)
+      approve(deposit_request, balance_after: 5000, operation_number: 'I-2026-0002')
+      mail = described_class.deposit_approved(investor, deposit_request)
 
-      expect(usdc_mail.subject).to include('USDT')
-      expect(usdc_mail.subject).not_to include('USDC')
+      expect(mail.subject).to eq('Winbit | Ingreso acreditado | 1.000,00 USDC')
+      expect(html(mail)).to include('Te confirmamos que se acreditó el ingreso de <strong>1.000,00 USDC</strong> recibido el 15/10/2026',
+                                    'tu capital administrado es de <strong>USD 5.000,00</strong>, y ya se refleja en tu cuenta',
+                                    'Ante cualquier consulta, escribinos por')
+      expect(html(mail)).not_to match(/Buenos días|Buenas tardes|egreso|Winbit Finance/)
     end
   end
 
@@ -83,144 +111,77 @@ RSpec.describe InvestorMailer, type: :mailer do
     let(:reason) { 'Comprobante inválido' }
     let(:mail) { described_class.deposit_rejected(investor, deposit_request, reason) }
 
-    it 'renders the headers' do
+    it 'renders the headers and the reason' do
       expect(mail.subject).to start_with('Winbit | Ingreso no procesado |')
-      expect(mail.to).to eq(['john@example.com'])
-    end
-
-    it 'renders the body' do
-      expect(mail.body.encoded).to match(/no pudimos procesar el ingreso/)
-      expect(mail.body.encoded).to match(/Comprobante inválido/)
+      expect(html(mail)).to include('no pudimos procesar el ingreso', 'Comprobante inválido')
     end
 
     it 'hides the generic admin note as a reason' do
       generic = described_class.deposit_rejected(investor, deposit_request, 'Rechazado por el administrador')
-      expect(generic.body.encoded).not_to match(/Motivo/)
+      expect(html(generic)).not_to include('Motivo')
     end
   end
 
   describe '#withdrawal_created' do
-    before do
-      portfolio
-      InvestorRequest.create!(
-        investor: investor,
-        request_type: 'DEPOSIT',
-        amount: 10_000,
-        method: 'USDT',
-        network: 'TRC20',
-        status: 'APPROVED',
-        requested_at: 10.days.ago,
-        processed_at: 10.days.ago
-      )
-    end
-
     let(:mail) { described_class.withdrawal_created(investor, withdrawal_request) }
 
-    it 'renders the headers' do
-      expect(mail.subject).to start_with('Winbit | Solicitud de retiro recibida |')
-      expect(mail.to).to eq(['john@example.com'])
-    end
+    it 'tells when the request will be processed' do
+      withdrawal_request.update!(requested_at: ar(2026, 10, 14, 17, 30))
 
-    it 'renders the body' do
-      expect(mail.body.encoded).to match('retiro')
-      expect(mail.body.encoded).to match('16:00')
-    end
-
-    it 'shows balance posterior without estimado when there is no fee' do
-      expect(mail.body.encoded).to match('Balance posterior')
-      expect(mail.body.encoded).not_to match(/estimado/i)
-      expect(mail.body.encoded).to match('9.500,00 USDT') # 10000 - 500
-    end
-
-    context 'when there is pending profit (CST)' do
-      before do
-        investor.update!(trading_fee_percentage: 30)
-        portfolio.update!(current_balance: 10_000, total_invested: 8_000)
-        InvestorRequest.where(investor: investor, request_type: 'DEPOSIT', status: 'APPROVED').delete_all
-        InvestorRequest.create!(
-          investor: investor,
-          request_type: 'DEPOSIT',
-          amount: 8_000,
-          method: 'USDT',
-          network: 'TRC20',
-          status: 'APPROVED',
-          requested_at: 10.days.ago,
-          processed_at: 10.days.ago
-        )
-      end
-
-      it 'shows balance net of commission' do
-        # profit 2000 → fee 600 → balance after = 10000 - 500 - 600 = 8900
-        expect(mail.body.encoded).to match('Balance posterior \(neto de comisión\)')
-        expect(mail.body.encoded).to match('Comisión por servicios')
-        expect(mail.body.encoded).to match('600,00 USDT')
-        expect(mail.body.encoded).to match('8.900,00 USDT')
-        expect(mail.body.encoded).not_to match(/estimado/i)
-      end
+      expect(mail.subject).to eq('Winbit | Solicitud de retiro recibida | 500,00 USDT')
+      expect(html(mail)).to include('el 14/10/2026 a las 17:30', 'a partir de las 8:00 del próximo día hábil',
+                                    'Si no reconocés esta solicitud')
     end
   end
 
   describe '#withdrawal_approved' do
-    before { portfolio } # Ensure portfolio exists
+    before { portfolio }
 
-    let(:mail) { described_class.withdrawal_approved(investor, withdrawal_request) }
+    it 'reports the fee in USD from the same record as the receipt' do
+      approve(withdrawal_request, balance_after: 4722.76, operation_number: 'R-2026-0001')
+      TradingFee.create!(investor: investor, applied_by: admin, source: 'WITHDRAWAL', withdrawal_request_id: withdrawal_request.id,
+                         withdrawal_amount: 500, profit_amount: 100, fee_percentage: 30, fee_amount: 30,
+                         applied_at: withdrawal_request.processed_at, period_start: Date.new(2026, 10, 15), period_end: Date.new(2026, 10, 16))
+      mail = described_class.withdrawal_approved(investor, withdrawal_request)
 
-    it 'renders the headers' do
-      expect(mail.subject).to start_with('Winbit | Retiro procesado |')
-      expect(mail.to).to eq(['john@example.com'])
+      expect(mail.subject).to eq('Winbit | Retiro procesado | 500,00 USDT')
+      expect(html(mail)).to include('se procesó el retiro de <strong>500,00 USDT</strong> solicitado el 14/10/2026',
+                                    'comprobante de retiro', 'comisión de gestión de <strong>USD 30,00</strong>',
+                                    'equivalente al 30% de la nueva rentabilidad positiva generada desde la última liquidación',
+                                    'USD 4.722,76')
     end
 
-    it 'renders the body' do
-      expect(mail.body.encoded).to match(/fue procesado el retiro/)
-      expect(mail.body.encoded).to match(/comprobante de egreso/)
-      expect(mail.body.encoded).not_to match(/comisión por servicios de trading/)
+    it 'leaves the fee paragraph out when there was no commission' do
+      approve(withdrawal_request, balance_after: 9500, operation_number: 'R-2026-0001')
+
+      expect(html(described_class.withdrawal_approved(investor, withdrawal_request))).not_to include('comisión de gestión')
     end
 
-    it 'includes withdrawal trading fee details when provided' do
-      fee_data = {
-        fee_amount: BigDecimal('30.50'),
-        fee_percentage: BigDecimal('30')
-      }
-      mail_with_fee = described_class.withdrawal_approved(investor, withdrawal_request, fee_data)
+    it 'sends the farewell mail with the net result on a total withdrawal' do
+      history('DEPOSIT', 400, 400, ar(2025, 10, 2, 19))
+      approve(withdrawal_request, balance_after: 0, operation_number: 'R-2026-0001')
+      mail = described_class.withdrawal_approved(investor, withdrawal_request)
 
-      expect(mail_with_fee.body.encoded).to match(/comisión por servicios de trading/)
-      expect(mail_with_fee.body.encoded).to match(/30,50 USDT/)
-      expect(mail_with_fee.body.encoded).to match(/30% de la rentabilidad acumulada/)
+      expect(mail.subject).to eq('Winbit | Retiro total procesado | 500,00 USDT')
+      expect(html(mail)).to include('retiro total de tu capital', 'Desde tu primer aporte, el 02/10/2025',
+                                    '<strong>+USD 100,00</strong> (<strong>25%</strong>)')
+    end
+
+    it 'skips the result when it was not positive' do
+      history('DEPOSIT', 800, 800, ar(2025, 10, 2, 19))
+      approve(withdrawal_request, balance_after: 0, operation_number: 'R-2026-0001')
+
+      expect(html(described_class.withdrawal_approved(investor, withdrawal_request)))
+        .to include('vas a encontrar el detalle del retiro').and(satisfy { |body| !body.include?('resultado neto') })
     end
   end
 
   describe '#withdrawal_rejected' do
-    let(:reason) { 'Lemontag incorrecto' }
-    let(:mail) { described_class.withdrawal_rejected(investor, withdrawal_request, reason) }
+    let(:mail) { described_class.withdrawal_rejected(investor, withdrawal_request, 'Lemontag incorrecto') }
 
-    it 'renders the headers' do
+    it 'renders the reason and says the capital did not change' do
       expect(mail.subject).to start_with('Winbit | Retiro no procesado |')
-      expect(mail.to).to eq(['john@example.com'])
-    end
-
-    it 'renders the body' do
-      expect(mail.body.encoded).to match(/no pudimos procesar el retiro/)
-      expect(mail.body.encoded).to match(/Lemontag incorrecto/)
-      expect(mail.body.encoded).to match(/capital no tuvo cambios/)
-    end
-  end
-
-  describe '#deposit_created with TRANSFER_ARS' do
-    let(:ars_request) do
-      InvestorRequest.create!(
-        investor: investor,
-        request_type: 'DEPOSIT',
-        amount: 150_000,
-        method: 'TRANSFER_ARS',
-        status: 'PENDING',
-        requested_at: Time.current
-      )
-    end
-    let(:mail) { described_class.deposit_created(investor, ars_request) }
-
-    it 'uses ARS in the subject amount' do
-      expect(mail.subject).to include('ARS')
-      expect(mail.subject).not_to include('USDT')
+      expect(html(mail)).to include('no pudimos procesar el retiro', 'Lemontag incorrecto', 'capital no tuvo cambios')
     end
   end
 end

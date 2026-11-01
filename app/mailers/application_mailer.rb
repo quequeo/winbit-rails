@@ -3,25 +3,11 @@ class ApplicationMailer < ActionMailer::Base
   default from: ENV.fetch('RESEND_FROM_EMAIL', 'Winbit <onboarding@resend.dev>'),
           reply_to: ENV.fetch('RESEND_REPLY_TO', 'contacto@winbit.com.ar')
   layout "mailer"
-  helper_method :saludo, :solicitado, :email_asset_url
+  helper_method :email_asset_url
 
   DEFAULT_REJECTION_NOTE = 'Rechazado por el administrador'
 
   private
-
-  # En los borradores (@defer_personalization) quedan marcadores que se
-  # completan al previsualizar y al enviar, con la hora real de salida.
-  def saludo
-    return MailPersonalization::GREETING_TOKEN if @defer_personalization
-
-    MailPersonalization.greeting(Time.current)
-  end
-
-  def solicitado(request)
-    return MailPersonalization::REQUESTED_TOKEN if @defer_personalization
-
-    MailPersonalization.requested_when(request.requested_at, Time.current)
-  end
 
   def email_asset_url(path)
     "#{ENV.fetch('ADMIN_PUBLIC_URL', 'https://admin.winbit.com.ar')}#{path}"

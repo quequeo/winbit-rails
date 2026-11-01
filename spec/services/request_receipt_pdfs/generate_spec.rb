@@ -7,13 +7,13 @@ RSpec.describe RequestReceiptPdfs::Generate do
   let(:req) do
     InvestorRequest.create!(
       investor: investor, request_type: 'WITHDRAWAL', method: 'USDT', amount: 100,
-      network: 'TRC20', wallet_address: 'TXyz', status: 'APPROVED', processed_at: Time.zone.local(2026, 10, 9, 19)
+      network: 'TRC20', wallet_address: 'TXyz', status: 'APPROVED', operation_number: 'R-2026-0142', processed_at: Time.zone.local(2026, 10, 9, 19)
     )
   end
 
   it 'renders the template and stores a PDF, replacing any previous one' do
     allow(Grover).to receive(:new).and_wrap_original do |_m, html|
-      expect(html).to include('Comprobante de egreso', 'LISANDRO FILARDI', '4.637,02')
+      expect(html).to include('Comprobante de retiro', 'Lisandro Filardi', 'R-2026-0142', 'USD 4.637,02', '100,00 USDT')
       instance_double(Grover, to_pdf: '%PDF-1.4 fake')
     end
     allow(InvestorMonthlyReportPdfs::EnsureChromeInstalled).to receive(:call)
@@ -23,7 +23,7 @@ RSpec.describe RequestReceiptPdfs::Generate do
 
     expect(second.id).to eq(first.id)
     expect(RequestReceiptPdf.where(request_id: req.id).count).to eq(1)
-    expect(second.original_filename).to eq('Retiro de capital – Lisandro Filardi - 100 USDT - 09.10.2026.pdf')
+    expect(second.original_filename).to eq('Winbit_Comprobante_Retiro_R-2026-0142.pdf')
   end
 
   it 'refuses non-approved requests' do

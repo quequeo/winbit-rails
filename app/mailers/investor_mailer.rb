@@ -7,47 +7,41 @@ class InvestorMailer < ApplicationMailer
 
   # Email cuando el cliente crea una solicitud de depósito
   def deposit_created(investor, request)
-    @investor = investor
-    @request = request
-    @amount_label = request_amount_label(request)
-    @method_label = method_label(request)
-    @cash_request = cash_request?(request)
-    @requested_at_label = requested_at_label(request)
+    assign_request_received(investor, request)
 
     return unless NotificationGate.should_send_to_investor?(investor.email)
 
     mail(
       to: investor.email,
-      subject: "Winbit | Solicitud de depósito recibida | #{@amount_label}"
+      subject: "Winbit | Solicitud de ingreso recibida | #{@amount_label}"
     )
   end
 
-  # Email cuando el admin aprueba el depósito
+  # Email cuando el admin aprueba el depósito: bienvenida si es el aporte
+  # inicial, confirmación de ingreso si no. Mismos datos que el comprobante.
   def deposit_approved(investor, request, force: false)
-    @investor = investor
-    @request = request
-    @first_name = MailPersonalization.first_name(investor.name)
-    @defer_personalization = force
-    @amount_label = request_amount_label(request)
-    @new_balance_usdt = format_amount_with_unit(investor.portfolio&.current_balance || 0, balance_unit(request))
+    assign_movement(investor, request)
 
     return if !force && !NotificationGate.should_send_to_investor?(investor.email)
 
-    mail(
-      to: investor.email,
-      subject: "Winbit | Ingreso procesado | #{@amount_label}"
-    )
+    if @data[:kind] == :aporte
+      @fee_example = MoneyFormat.usd(BigDecimal(investor.trading_fee_percentage.to_s))
+      mail(
+        to: investor.email,
+        subject: "Winbit | Bienvenida y aporte de capital | #{@data[:amount_label]}",
+        template_name: 'initial_deposit_approved'
+      )
+    else
+      mail(
+        to: investor.email,
+        subject: "Winbit | Ingreso acreditado | #{@data[:amount_label]}"
+      )
+    end
   end
 
   # Email cuando el admin rechaza el depósito
   def deposit_rejected(investor, request, reason = nil, force: false)
-    @investor = investor
-    @request = request
-    @first_name = MailPersonalization.first_name(investor.name)
-    @defer_personalization = force
-    @amount_label = request_amount_label(request)
-    @reason = rejection_reason(reason)
-    @show_reason = @reason.present?
+    assign_rejection(investor, request, reason)
 
     return if !force && !NotificationGate.should_send_to_investor?(investor.email)
 
@@ -61,14 +55,7 @@ class InvestorMailer < ApplicationMailer
 
   # Email cuando el cliente solicita un retiro
   def withdrawal_created(investor, request)
-    @investor = investor
-    @request = request
-    @amount_label = request_amount_label(request)
-    @is_full = request.amount >= (investor.portfolio&.current_balance || 0) * 0.99
-    @method_label = method_label(request)
-    @cash_request = cash_request?(request)
-    @requested_at_label = requested_at_label(request)
-    assign_withdrawal_balance_preview(investor, request)
+    assign_request_received(investor, request)
 
     return unless NotificationGate.should_send_to_investor?(investor.email)
 
@@ -78,38 +65,30 @@ class InvestorMailer < ApplicationMailer
     )
   end
 
-  # Email cuando el admin aprueba el retiro
-  def withdrawal_approved(investor, request, withdrawal_fee = nil, force: false)
-    @investor = investor
-    @request = request
-    @first_name = MailPersonalization.first_name(investor.name)
-    @defer_personalization = force
-    @fee_percentage_label = percentage_label(withdrawal_fee&.dig(:fee_percentage))
-    @amount_label = request_amount_label(request)
-    fee_amount = BigDecimal(withdrawal_fee&.dig(:fee_amount).presence.to_s.presence || '0')
-    total_deducted = (BigDecimal(request.amount.to_s) + fee_amount).round(2, :half_up)
-    @withdrawal_fee_amount_label = format_amount_for_request(fee_amount, request)
-    @total_deducted_label = format_amount_for_request(total_deducted, request)
-    @show_withdrawal_fee = fee_amount.positive?
-    @new_balance_usdt = format_amount_with_unit(investor.portfolio&.current_balance || 0, balance_unit(request))
+  # Email cuando el admin aprueba el retiro. La comisión sale del mismo
+  # registro que el comprobante (TradingFee del retiro), no de un parámetro.
+  def withdrawal_approved(investor, request, _withdrawal_fee = nil, force: false)
+    assign_movement(investor, request)
 
     return if !force && !NotificationGate.should_send_to_investor?(investor.email)
 
-    mail(
-      to: investor.email,
-      subject: "Winbit | Retiro procesado | #{@amount_label}"
-    )
+    if @data[:kind] == :retiro_total
+      mail(
+        to: investor.email,
+        subject: "Winbit | Retiro total procesado | #{@data[:amount_label]}",
+        template_name: 'withdrawal_total_approved'
+      )
+    else
+      mail(
+        to: investor.email,
+        subject: "Winbit | Retiro procesado | #{@data[:amount_label]}"
+      )
+    end
   end
 
   # Email cuando el admin rechaza el retiro
   def withdrawal_rejected(investor, request, reason = nil, force: false)
-    @investor = investor
-    @request = request
-    @first_name = MailPersonalization.first_name(investor.name)
-    @defer_personalization = force
-    @amount_label = request_amount_label(request)
-    @reason = rejection_reason(reason)
-    @show_reason = @reason.present?
+    assign_rejection(investor, request, reason)
 
     return if !force && !NotificationGate.should_send_to_investor?(investor.email)
 
@@ -157,41 +136,48 @@ class InvestorMailer < ApplicationMailer
       }
     end
 
+    requested_at = outgoing_email.investor_request&.requested_at
     mail(to: outgoing_email.to_email, subject: outgoing_email.subject) do |format|
-      body = MailPersonalization.apply(
-        outgoing_email.body_html,
-        requested_at: outgoing_email.investor_request&.requested_at,
-        at: Time.current
-      )
+      if outgoing_email.body_text.present?
+        text = MailPersonalization.apply(outgoing_email.body_text, requested_at: requested_at)
+        format.text { render plain: text }
+      end
+      body = MailPersonalization.apply(outgoing_email.body_html, requested_at: requested_at)
       format.html { render html: body.html_safe, layout: false }
     end
-  end
-
-  # === COMISIONES DE TRADING ===
-
-  # Email cuando se aplica una comisión de trading
-  def trading_fee_applied(investor, trading_fee)
-    @investor = investor
-    @trading_fee = trading_fee
-    @fee_amount = format_currency(trading_fee.fee_amount)
-    @profit_amount = format_currency(trading_fee.profit_amount)
-    @fee_percentage = trading_fee.fee_percentage
-    @period_start = I18n.l(trading_fee.period_start, format: :long)
-    @period_end = I18n.l(trading_fee.period_end, format: :long)
-    @new_balance = format_currency(investor.portfolio&.current_balance || 0)
-
-    return unless NotificationGate.should_send_to_investor?(investor.email)
-
-    mail(
-      to: investor.email,
-      subject: 'Comisión por Servicios de Trading Aplicada'
-    )
   end
 
   private
 
   def frontend_url
-    ENV.fetch('FRONTEND_URL', 'https://winbit-6579c.web.app')
+    ENV.fetch('FRONTEND_URL', 'https://app.winbit.com.ar')
+  end
+
+  def assign_movement(investor, request)
+    @investor = investor
+    @request = request
+    @data = RequestReceiptPdfs::DocumentData.call(request: request)
+  end
+
+  def assign_rejection(investor, request, reason)
+    @investor = investor
+    @request = request
+    @first_name = MailPersonalization.first_name(investor.name)
+    @amount_label = MoneyFormat.amount(request.amount, request.currency)
+    @requested_on = MailPersonalization.short_date(request.requested_at)
+    @reason = rejection_reason(reason)
+  end
+
+  def assign_request_received(investor, request)
+    @investor = investor
+    @request = request
+    @first_name = MailPersonalization.first_name(investor.name)
+    @amount_label = MoneyFormat.amount(request.amount, request.currency)
+    requested_at = (request.requested_at || Time.current).in_time_zone(MailPersonalization::ZONE)
+    @requested_on = requested_at.strftime('%d/%m/%Y')
+    @requested_time = requested_at.strftime('%H:%M')
+    @processing_term = MailPersonalization.processing_term(requested_at)
+    @cash_request = cash_request?(request)
   end
 
   def attach_campaign_file(attachment)
