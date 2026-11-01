@@ -1,43 +1,50 @@
 # frozen_string_literal: true
 
-# Saludo y referencia a la fecha del pedido según el momento real de envío.
-# Los borradores de la bandeja guardan marcadores (GREETING_TOKEN,
-# REQUESTED_TOKEN) que se completan al previsualizar y al enviar, porque la
-# hora de salida (18:00 u 8:00) se conoce recién al programarlos.
+# Saludo, fechas y plazos de los mails al inversor. El saludo es siempre
+# "Hola" y las fechas van en dd/mm/aaaa (nunca "hoy" ni "ayer"), porque el
+# mail se puede leer a cualquier hora. Los marcadores GREETING_TOKEN y
+# REQUESTED_TOKEN quedan para los borradores generados con el formato
+# anterior.
 module MailPersonalization
   ZONE = ActiveSupport::TimeZone['America/Argentina/Buenos_Aires']
   GREETING_TOKEN = '%%SALUDO%%'
   REQUESTED_TOKEN = '%%SOLICITADO%%'
-  WEEKDAYS = %w[domingo lunes martes miércoles jueves viernes sábado].freeze
+  CUTOFF_HOUR = 16
 
   module_function
 
-  def greeting(at)
-    hour = at.in_time_zone(ZONE).hour
-    if hour < 12
-      'Buenos días'
-    elsif hour < 20
-      'Buenas tardes'
-    else
-      'Buenas noches'
-    end
+  def greeting(_at = nil)
+    'Hola'
   end
 
-  def requested_when(requested_at, at)
+  def requested_when(requested_at, _at = nil)
     return 'recientemente' if requested_at.blank?
 
-    requested = requested_at.in_time_zone(ZONE).to_date
-    days = (at.in_time_zone(ZONE).to_date - requested).to_i
-    return 'el día de hoy' if days <= 0
-    return 'el día de ayer' if days == 1
-
-    "el #{WEEKDAYS[requested.wday]} #{requested.strftime('%d/%m')}"
+    "el #{short_date(requested_at)}"
   end
 
-  def apply(html, requested_at:, at:)
+  def apply(html, requested_at:, at: nil)
     html.to_s
         .gsub(GREETING_TOKEN, greeting(at))
         .gsub(REQUESTED_TOKEN, requested_when(requested_at, at))
+  end
+
+  def short_date(time)
+    return nil if time.blank?
+
+    time.in_time_zone(ZONE).strftime('%d/%m/%Y')
+  end
+
+  # Plazo del mail "Solicitud recibida": lo pedido un día hábil hasta las
+  # 16:00 se procesa ese día antes de las 18:00; el resto, desde las 8:00
+  # del día hábil siguiente.
+  def processing_term(requested_at)
+    local = requested_at.in_time_zone(ZONE)
+    if local.on_weekday? && local.hour < CUTOFF_HOUR
+      'La vamos a procesar hoy antes de las 18:00.'
+    else
+      'La vamos a procesar a partir de las 8:00 del próximo día hábil.'
+    end
   end
 
   def first_name(full_name)

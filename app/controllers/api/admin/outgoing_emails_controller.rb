@@ -1,7 +1,7 @@
 module Api
   module Admin
     class OutgoingEmailsController < BaseController
-      before_action :set_email, only: [:show, :deliver, :discard, :schedule, :unschedule]
+      before_action :set_email, only: [:show, :deliver, :discard, :schedule, :unschedule, :regenerate]
 
       def index
         scope = OutgoingEmail.includes(:investor, :investor_request).recent_first
@@ -64,6 +64,21 @@ module Api
         )
 
         head :no_content
+      end
+
+      def regenerate
+        OutgoingEmails::Regenerate.call(outgoing_email: @email)
+
+        ActivityLogger.log(
+          user: current_user,
+          action: 'regenerate_outgoing_email',
+          target: @email,
+          metadata: { label: "#{@email.kind} - #{@email.to_email}" }
+        )
+
+        render json: { data: OutgoingEmailSerializer.new(@email, include_body: true).as_json }
+      rescue OutgoingEmails::Regenerate::NotRegenerable => e
+        render_error(e.message, status: :unprocessable_entity)
       end
 
       def discard

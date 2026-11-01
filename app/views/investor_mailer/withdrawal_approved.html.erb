@@ -1,15 +1,17 @@
 <div style="font-family: Arial, Helvetica, sans-serif; font-size: 15px; line-height: 1.6; color: #222222; max-width: 600px;">
-  <p style="margin: 0 0 14px 0;"><%= saludo %>, <%= @first_name %> ¿cómo estás?</p>
+  <p style="margin: 0 0 14px 0;">Hola, <%= @data[:first_name] %>, ¿cómo estás?</p>
 
-  <p style="margin: 0 0 14px 0;">Te informamos que fue procesado el retiro de <strong><%= @amount_label %></strong> solicitado <%= solicitado(@request) %>. Te adjuntamos por este medio el <strong>comprobante de egreso</strong>.</p>
+  <p style="margin: 0 0 14px 0;">Te confirmamos que se procesó el retiro de <strong><%= @data[:amount_label] %></strong> solicitado el <%= @data[:requested_on] %>. Adjuntamos el <strong>comprobante de retiro</strong>.</p>
 
-  <% if @show_withdrawal_fee %>
-    <p style="margin: 0 0 14px 0;">Junto con el retiro se aplicó la comisión por servicios de trading de <strong><%= @withdrawal_fee_amount_label %></strong><% if @fee_percentage_label %> (<%= @fee_percentage_label %> de la rentabilidad acumulada)<% end %>.</p>
+  <% if @data[:fee_label] %>
+    <p style="margin: 0 0 14px 0;">Junto con el retiro se liquidó la comisión de gestión de <strong><%= @data[:fee_label] %></strong>, equivalente al <%= @data[:fee_percentage] %>% de la nueva rentabilidad positiva generada desde la última liquidación.</p>
   <% end %>
 
-  <p style="margin: 0 0 14px 0;">Tras esta operación, tu capital asciende a <strong><%= @new_balance_usdt %></strong>.</p>
+  <p style="margin: 0 0 14px 0;">Con esta operación, tu capital administrado es de <strong><%= @data[:capital_label] %></strong>, y ya se refleja en tu cuenta.</p>
 
-  <p style="margin: 0;">Cualquier duda o consulta, estamos a disposición.</p>
+  <%= render partial: 'investor_mailer/app_button' %>
+
+  <%= render partial: 'investor_mailer/contact_line' %>
 
   <%= render partial: 'investor_mailer/signature' %>
 </div>

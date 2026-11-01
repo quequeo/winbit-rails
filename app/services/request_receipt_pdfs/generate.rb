@@ -9,14 +9,11 @@ module RequestReceiptPdfs
       new(request:, balance_after:).call
     end
 
-    # "Retiro de capital – Nombre - 200 USDT - 16.08.2026"
-    def self.filename_for(request)
-      data = DocumentData.call(request: request)
-      kind = request.request_type == 'WITHDRAWAL' ? 'Retiro de capital' : 'Aporte de capital'
-      amount = data[:amount].delete_suffix(',00')
-      date = (request.processed_at || Time.current).in_time_zone.strftime('%d.%m.%Y')
-      name = request.investor.name.to_s.tr('\\\\/', '  ').squish
-      "#{kind} – #{name} - #{amount} #{data[:unit]} - #{date}.pdf"
+    # Winbit_Comprobante_Retiro_R-2026-0142.pdf
+    def self.filename_for(request, data = DocumentData.call(request: request))
+      reference = data[:operation_number].presence ||
+                  (request.processed_at || Time.current).in_time_zone(DocumentData::ZONE).strftime('%Y%m%d')
+      "Winbit_Comprobante_#{data[:file_kind]}_#{reference}.pdf"
     end
 
     def initialize(request:, balance_after: nil)
@@ -27,10 +24,11 @@ module RequestReceiptPdfs
     def call
       raise StandardError, 'Solo se genera comprobante para solicitudes aprobadas' unless @request.status == 'APPROVED'
 
-      bytes = render_pdf
+      data = DocumentData.call(request: @request, balance_after: @balance_after)
+      bytes = render_pdf(data)
       record = RequestReceiptPdf.find_or_initialize_by(request_id: @request.id)
       record.assign_attributes(
-        original_filename: filename,
+        original_filename: self.class.filename_for(@request, data),
         content_type: 'application/pdf',
         byte_size: bytes.bytesize,
         pdf_data: bytes
@@ -41,13 +39,8 @@ module RequestReceiptPdfs
 
     private
 
-    def filename
-      self.class.filename_for(@request)
-    end
-
-    def render_pdf
+    def render_pdf(data)
       InvestorMonthlyReportPdfs::EnsureChromeInstalled.call
-      data = DocumentData.call(request: @request, balance_after: @balance_after)
       html = ActionController::Base.renderer.render(
         template: 'request_receipt_pdfs/document',
         layout: false,

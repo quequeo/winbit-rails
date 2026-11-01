@@ -1,11 +1,13 @@
 <div style="font-family: Arial, Helvetica, sans-serif; font-size: 15px; line-height: 1.6; color: #222222; max-width: 600px;">
-  <p style="margin: 0 0 14px 0;"><%= saludo %>, <%= @first_name %> ¿cómo estás?</p>
+  <p style="margin: 0 0 14px 0;">Hola, <%= @data[:first_name] %>, ¿cómo estás?</p>
 
-  <p style="margin: 0 0 14px 0;">Te informamos que fue procesado el ingreso de <strong><%= @amount_label %></strong> solicitado <%= solicitado(@request) %>. Te adjuntamos por este medio el <strong>comprobante de ingreso</strong>.</p>
+  <p style="margin: 0 0 14px 0;">Te confirmamos que se acreditó el ingreso de <strong><%= @data[:amount_label] %></strong> recibido el <%= @data[:date_short] %>. Adjuntamos el <strong>comprobante de ingreso</strong>.</p>
 
-  <p style="margin: 0 0 14px 0;">Tras esta operación, tu capital actual asciende a <strong><%= @new_balance_usdt %></strong>, y ya se encuentra reflejado en la <a href="<%= frontend_url %>" style="color: #39836D;">aplicación</a>.</p>
+  <p style="margin: 0 0 14px 0;">Con esta operación, tu capital administrado es de <strong><%= @data[:capital_label] %></strong>, y ya se refleja en tu cuenta.</p>
 
-  <p style="margin: 0;">Cualquier duda o consulta, estamos a disposición.</p>
+  <%= render partial: 'investor_mailer/app_button' %>
+
+  <%= render partial: 'investor_mailer/contact_line' %>
 
   <%= render partial: 'investor_mailer/signature' %>
 </div>

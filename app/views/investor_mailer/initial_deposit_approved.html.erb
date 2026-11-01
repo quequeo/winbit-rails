@@ -1,0 +1,43 @@
+<% h = 'margin: 18px 0 4px 0; font-weight: bold;' %>
+<div style="font-family: Arial, Helvetica, sans-serif; font-size: 15px; line-height: 1.6; color: #222222; max-width: 600px;">
+  <p style="margin: 0 0 14px 0;">Hola, <%= @data[:first_name] %>, ¿cómo estás?</p>
+
+  <p style="margin: 0 0 14px 0;">Te damos la bienvenida a Winbit. Confirmamos la acreditación de tu aporte inicial de <strong><%= @data[:amount_label] %></strong>, recibido el <%= @data[:date_short] %>. Adjuntamos el <strong>comprobante de aporte inicial</strong>, que deja constancia del capital ingresado y de las condiciones del servicio.</p>
+
+  <p style="margin: 0 0 14px 0;">A partir de hoy, tu capital pasa a formar parte del capital administrado por Winbit. Lo gestionamos con operaciones intradía en contratos de futuros de mercados internacionales, con foco en el crecimiento de largo plazo. Cada jornada tiene un límite de pérdida del 1% del capital administrado, definido antes de operar, y las posiciones se abren y se cierran en el día.</p>
+
+  <p style="<%= h %>">Tu cuenta</p>
+  <p style="margin: 0 0 14px 0;">Tipo de cuenta: <strong><%= @data[:account_type][:name] %></strong><br>Capital inicial: <strong><%= @data[:capital_label] %></strong></p>
+
+  <p style="<%= h %>">Comisión</p>
+  <p style="margin: 0 0 8px 0;">Winbit cobra una comisión del <strong><%= @data[:account_type][:percentage] %>% sobre la nueva rentabilidad positiva</strong>. No se cobra por administrar el capital ni por ingresar o retirar fondos.</p>
+  <p style="margin: 0 0 14px 0;">La comisión se liquida al cierre de cada trimestre (31/3, 30/6, 30/9 y 31/12), o al momento de un retiro, solo si hubo rentabilidad nueva desde la última liquidación. Por ejemplo: si tu capital pasa de USD 1.000 a USD 1.100, la comisión es de <%= @fee_example %>. Si en un período el resultado es negativo, no se cobra comisión hasta recuperar el valor anterior.</p>
+
+  <p style="<%= h %>">Seguimiento desde la app</p>
+  <p style="margin: 0 0 8px 0;">Desde <a href="<%= frontend_url %>" style="color: #39836D;">app.winbit.com.ar</a> podés ver el valor actualizado de tu capital, su evolución, la rentabilidad en USD y en porcentaje, tus movimientos y tus comprobantes. También podés solicitar ingresos y retiros.</p>
+  <p style="margin: 0 0 14px 0;">Para entrar, elegí "Acceder con Google" con la cuenta asociada a este correo.</p>
+
+  <%= render partial: 'investor_mailer/app_button' %>
+
+  <p style="margin: 0 0 4px 0;">Para tenerla como aplicación en el celular:</p>
+  <ul style="margin: 0 0 14px 0; padding-left: 20px;">
+    <li><strong>Android (Chrome):</strong> entrá a app.winbit.com.ar, tocá el menú &#8942; y elegí "Instalar aplicación".</li>
+    <li><strong>iPhone (Safari):</strong> entrá a app.winbit.com.ar, tocá Compartir y elegí "Agregar a pantalla de inicio".</li>
+  </ul>
+
+  <p style="<%= h %>">Retiros</p>
+  <p style="margin: 0 0 14px 0;">Podés solicitar un retiro en cualquier momento, sin plazos de permanencia. Las solicitudes recibidas hasta las 16:00 se procesan el mismo día antes de las 18:00; las posteriores, a partir de las 8:00 del día hábil siguiente.</p>
+
+  <p style="<%= h %>">Reporte mensual</p>
+  <p style="margin: 0 0 14px 0;">En los primeros días de cada mes vas a recibir un reporte con el resultado del mes y el resumen de tu cuenta.</p>
+
+  <p style="<%= h %>">Custodia</p>
+  <p style="margin: 0 0 14px 0;">El capital administrado se custodia en entidades bancarias reguladas en el exterior, no en exchanges. Solo mantenemos una pequeña reserva en USDT, que nos permite procesar los retiros en el día. Cada ingreso y cada retiro queda registrado con su comprobante.</p>
+
+  <p style="<%= h %>">WhatsApp</p>
+  <p style="margin: 0 0 14px 0;">Nuestro número oficial es el <a href="https://wa.me/5491141783126" style="color: #39836D;">+54 9 11 4178-3126</a>. Por ningún canal te vamos a pedir contraseñas, códigos ni que transfieras fondos a una cuenta distinta de la habitual.</p>
+
+  <p style="margin: 0;">Gracias por confiar en Winbit. Ante cualquier consulta, escribinos por <a href="https://wa.me/5491141783126" style="color: #39836D;">WhatsApp</a> o respondé este correo.</p>
+
+  <%= render partial: 'investor_mailer/signature' %>
+</div>

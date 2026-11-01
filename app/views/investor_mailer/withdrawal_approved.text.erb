@@ -1,0 +1,15 @@
+Hola, <%= @data[:first_name] %>, ¿cómo estás?
+
+Te confirmamos que se procesó el retiro de <%= @data[:amount_label] %> solicitado el <%= @data[:requested_on] %>. Adjuntamos el comprobante de retiro.
+
+<% if @data[:fee_label] %>
+Junto con el retiro se liquidó la comisión de gestión de <%= @data[:fee_label] %>, equivalente al <%= @data[:fee_percentage] %>% de la nueva rentabilidad positiva generada desde la última liquidación.
+
+<% end %>
+Con esta operación, tu capital administrado es de <%= @data[:capital_label] %>, y ya se refleja en tu cuenta.
+
+Ver mi cuenta en la app: <%= frontend_url %>
+
+Ante cualquier consulta, escribinos por WhatsApp o respondé este correo.
+
+<%= render partial: 'investor_mailer/signature' %>

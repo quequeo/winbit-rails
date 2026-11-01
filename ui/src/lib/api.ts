@@ -174,6 +174,10 @@ export const api = {
     request(`${ADMIN_API_PREFIX}/outgoing_emails/${id}/unschedule`, {
       method: "POST",
     }),
+  regenerateOutgoingEmail: (id: string) =>
+    request(`${ADMIN_API_PREFIX}/outgoing_emails/${id}/regenerate`, {
+      method: "POST",
+    }),
   discardOutgoingEmail: (id: string) =>
     request(`${ADMIN_API_PREFIX}/outgoing_emails/${id}/discard`, {
       method: "POST",

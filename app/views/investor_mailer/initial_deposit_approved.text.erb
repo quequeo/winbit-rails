@@ -1,0 +1,37 @@
+Hola, <%= @data[:first_name] %>, ¿cómo estás?
+
+Te damos la bienvenida a Winbit. Confirmamos la acreditación de tu aporte inicial de <%= @data[:amount_label] %>, recibido el <%= @data[:date_short] %>. Adjuntamos el comprobante de aporte inicial, que deja constancia del capital ingresado y de las condiciones del servicio.
+
+A partir de hoy, tu capital pasa a formar parte del capital administrado por Winbit. Lo gestionamos con operaciones intradía en contratos de futuros de mercados internacionales, con foco en el crecimiento de largo plazo. Cada jornada tiene un límite de pérdida del 1% del capital administrado, definido antes de operar, y las posiciones se abren y se cierran en el día.
+
+TU CUENTA
+Tipo de cuenta: <%= @data[:account_type][:name] %>
+Capital inicial: <%= @data[:capital_label] %>
+
+COMISIÓN
+Winbit cobra una comisión del <%= @data[:account_type][:percentage] %>% sobre la nueva rentabilidad positiva. No se cobra por administrar el capital ni por ingresar o retirar fondos.
+La comisión se liquida al cierre de cada trimestre (31/3, 30/6, 30/9 y 31/12), o al momento de un retiro, solo si hubo rentabilidad nueva desde la última liquidación. Por ejemplo: si tu capital pasa de USD 1.000 a USD 1.100, la comisión es de <%= @fee_example %>. Si en un período el resultado es negativo, no se cobra comisión hasta recuperar el valor anterior.
+
+SEGUIMIENTO DESDE LA APP
+Desde <%= frontend_url %> podés ver el valor actualizado de tu capital, su evolución, la rentabilidad en USD y en porcentaje, tus movimientos y tus comprobantes. También podés solicitar ingresos y retiros.
+Para entrar, elegí "Acceder con Google" con la cuenta asociada a este correo.
+
+Para tenerla como aplicación en el celular:
+- Android (Chrome): entrá a app.winbit.com.ar, tocá el menú de tres puntos y elegí "Instalar aplicación".
+- iPhone (Safari): entrá a app.winbit.com.ar, tocá Compartir y elegí "Agregar a pantalla de inicio".
+
+RETIROS
+Podés solicitar un retiro en cualquier momento, sin plazos de permanencia. Las solicitudes recibidas hasta las 16:00 se procesan el mismo día antes de las 18:00; las posteriores, a partir de las 8:00 del día hábil siguiente.
+
+REPORTE MENSUAL
+En los primeros días de cada mes vas a recibir un reporte con el resultado del mes y el resumen de tu cuenta.
+
+CUSTODIA
+El capital administrado se custodia en entidades bancarias reguladas en el exterior, no en exchanges. Solo mantenemos una pequeña reserva en USDT, que nos permite procesar los retiros en el día. Cada ingreso y cada retiro queda registrado con su comprobante.
+
+WHATSAPP
+Nuestro número oficial es el +54 9 11 4178-3126. Por ningún canal te vamos a pedir contraseñas, códigos ni que transfieras fondos a una cuenta distinta de la habitual.
+
+Gracias por confiar en Winbit. Ante cualquier consulta, escribinos por WhatsApp o respondé este correo.
+
+<%= render partial: 'investor_mailer/signature' %>
