@@ -48,4 +48,38 @@ RSpec.describe InvestorMonthlyReportEmails::Send do
     expect(mail.attachments.first.body.decoded).to eq('%PDF-1.4 tulio')
     expect(mail.reply_to).to eq([ 'contacto@winbit.com.ar' ])
   end
+
+  it 'logs each delivered report as sent, so it shows in the history' do
+    described_class.call(month: '2026-07', subject: 'Hola {{nombre}}', body: 'Adjunto tu reporte')
+
+    logged = OutgoingEmail.find_by!(kind: 'MONTHLY_REPORT')
+    expect(OutgoingEmail.count).to eq(1)
+    expect(logged).to have_attributes(
+      investor: tulio,
+      status: 'SENT',
+      to_email: 'tulio@test.com',
+      subject: 'Hola Tulio Capparelli'
+    )
+    expect(logged.sent_at).to be_present
+    expect(logged.body_html).to include('Adjunto tu reporte')
+    expect(OutgoingEmail.pending).to be_empty
+  end
+
+  it 'does not log test sends' do
+    described_class.call(
+      month: '2026-07', subject: 'Hola', body: 'Prueba', investor_ids: [ tulio.id ], to_email: 'prueba@test.com'
+    )
+
+    expect(ActionMailer::Base.deliveries.last.to).to eq([ 'prueba@test.com' ])
+    expect(OutgoingEmail.count).to eq(0)
+  end
+
+  it 'keeps the delivery as successful when logging fails' do
+    allow(OutgoingEmail).to receive(:create!).and_raise(ActiveRecord::RecordInvalid.new(OutgoingEmail.new))
+
+    result = described_class.call(month: '2026-07', subject: 'Hola', body: 'Adjunto')
+
+    expect(result.queued.size).to eq(1)
+    expect(result.failures).to be_empty
+  end
 end

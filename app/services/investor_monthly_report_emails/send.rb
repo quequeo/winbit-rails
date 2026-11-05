@@ -34,7 +34,8 @@ module InvestorMonthlyReportEmails
         investor_ids: ids_with_pdf,
         force: true,
         attachments_by_investor_id: attachments,
-        to_email: @to_email
+        to_email: @to_email,
+        record_as: @to_email ? nil : 'MONTHLY_REPORT'
       )
     end
 

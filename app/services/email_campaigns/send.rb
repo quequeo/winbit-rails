@@ -6,7 +6,8 @@ module EmailCampaigns
     Result = Struct.new(:queued, :skipped, :failures, :total_audience, keyword_init: true)
     Failure = Struct.new(:investor_id, :email, :error, keyword_init: true)
 
-    def self.call(month:, subject:, body:, investor_ids: nil, force: true, attachments_by_investor_id: {}, to_email: nil)
+    def self.call(month:, subject:, body:, investor_ids: nil, force: true, attachments_by_investor_id: {}, to_email: nil,
+                  record_as: nil)
       new(
         month: month,
         subject: subject,
@@ -14,11 +15,13 @@ module EmailCampaigns
         investor_ids: investor_ids,
         force: force,
         attachments_by_investor_id: attachments_by_investor_id,
-        to_email: to_email
+        to_email: to_email,
+        record_as: record_as
       ).call
     end
 
-    def initialize(month:, subject:, body:, investor_ids: nil, force: true, attachments_by_investor_id: {}, to_email: nil)
+    def initialize(month:, subject:, body:, investor_ids: nil, force: true, attachments_by_investor_id: {}, to_email: nil,
+                   record_as: nil)
       @month = month
       @subject = subject
       @body = body
@@ -28,6 +31,8 @@ module EmailCampaigns
       @attachments_by_investor_id = (attachments_by_investor_id || {}).transform_keys { |k| k.to_s }
       # Test send: every message goes to this address instead of the investor's.
       @to_email = to_email.presence
+      # OutgoingEmail kind under which each delivered message is logged; nil logs nothing.
+      @record_as = record_as
     end
 
     def call
@@ -67,6 +72,7 @@ module EmailCampaigns
           email: @to_email || investor.email,
           attached: !attachment.nil?,
         }
+        record_sent(investor, message.message)
       rescue StandardError => e
         Rails.logger.error(
           "[EmailCampaigns::Send] investor=#{investor.id} email=#{investor.email}: #{e.class}: #{e.message}"
@@ -83,6 +89,24 @@ module EmailCampaigns
     end
 
     private
+
+    # The email already left: a logging problem must not report it as failed.
+    def record_sent(investor, mail)
+      return if @record_as.blank?
+
+      OutgoingEmail.create!(
+        investor: investor,
+        kind: @record_as,
+        status: 'SENT',
+        sent_at: Time.current,
+        to_email: investor.email,
+        subject: mail.subject,
+        body_html: (mail.html_part || mail).body.decoded,
+        body_text: mail.text_part&.body&.decoded
+      )
+    rescue StandardError => e
+      Rails.logger.error("[EmailCampaigns::Send] no se registró el envío a investor=#{investor.id}: #{e.message}")
+    end
 
     def investors
       scope = Investor.where(status: 'ACTIVE').where.not(email: [nil, ''])
