@@ -12,6 +12,7 @@ const KIND_LABELS: Record<string, string> = {
   WITHDRAWAL_REJECTED: "Retiro rechazado",
   INVESTOR_WELCOME: "Alta de inversor",
   INVESTOR_DEACTIVATED: "Baja de inversor",
+  MONTHLY_REPORT: "Reporte mensual",
 };
 
 const STATUS_LABELS: Record<string, string> = {
