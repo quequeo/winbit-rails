@@ -22,6 +22,19 @@ const STATUS_LABELS: Record<string, string> = {
   DISCARDED: "Descartado",
 };
 
+// El historial trae todos los correos; "Pendientes" solo los que requieren una acción.
+type View = "pending" | "all";
+
+const PENDING_STATUSES = ["DRAFT", "SCHEDULED", "FAILED"];
+
+const listDateLabel = (e: ApiOutgoingEmail): string => {
+  if (e.status === "SENT" && e.sentAt) return formatDateAR(e.sentAt);
+  if (PENDING_STATUSES.includes(e.status) && e.scheduledFor) {
+    return `Sale ${formatDateAR(e.scheduledFor)}`;
+  }
+  return formatDateAR(e.createdAt);
+};
+
 // Argentina no tiene horario de verano: siempre UTC-3.
 const AR_OFFSET = "-03:00";
 
@@ -33,6 +46,7 @@ const toArInput = (iso: string | null | undefined): string => {
 };
 
 export const OutgoingEmailsPage = () => {
+  const [view, setView] = useState<View>("pending");
   const [emails, setEmails] = useState<ApiOutgoingEmail[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -48,7 +62,7 @@ export const OutgoingEmailsPage = () => {
   const load = useCallback(() => {
     setLoading(true);
     api
-      .getOutgoingEmails()
+      .getOutgoingEmails(view === "all" ? "all" : undefined)
       .then((res) => {
         const r = res as { data?: { emails?: ApiOutgoingEmail[] } };
         const list = r?.data?.emails ?? [];
@@ -61,7 +75,7 @@ export const OutgoingEmailsPage = () => {
       })
       .catch((e: unknown) => setError(e instanceof Error ? e.message : "Error"))
       .finally(() => setLoading(false));
-  }, []);
+  }, [view]);
 
   useEffect(() => {
     load();
@@ -85,6 +99,14 @@ export const OutgoingEmailsPage = () => {
       active = false;
     };
   }, [selectedId, reloadKey]);
+
+  const changeView = (next: View) => {
+    if (next === view) return;
+    setView(next);
+    setEditingTime(false);
+    setNotice(null);
+    setError(null);
+  };
 
   const selectEmail = (id: string) => {
     setSelectedId(id);
@@ -134,13 +156,33 @@ export const OutgoingEmailsPage = () => {
     }
   };
 
+  const detailIsPending = detail
+    ? PENDING_STATUSES.includes(detail.status)
+    : false;
+
   return (
     <div>
-      <h2 className="text-3xl text-t-primary">Correos para enviar</h2>
+      <h2 className="text-3xl text-t-primary">Correos</h2>
       <p className="mt-1 text-sm text-t-muted">
-        Revisá el mail y el comprobante adjunto. Nada se envía al inversor hasta
-        que toques Enviar.
+        {view === "pending"
+          ? "Revisá el mail y el comprobante adjunto. Nada se envía al inversor hasta que toques Enviar."
+          : "Registro de los correos a inversores: pendientes, enviados y descartados."}
       </p>
+
+      <div className="mt-4 flex gap-2">
+        <Button
+          variant={view === "pending" ? "default" : "outline"}
+          onClick={() => changeView("pending")}
+        >
+          Pendientes
+        </Button>
+        <Button
+          variant={view === "all" ? "default" : "outline"}
+          onClick={() => changeView("all")}
+        >
+          Historial
+        </Button>
+      </div>
 
       {error ? <p className="mt-4 text-sm text-error">{error}</p> : null}
       {notice ? (
@@ -153,7 +195,9 @@ export const OutgoingEmailsPage = () => {
         <p className="mt-6 text-t-muted">Cargando...</p>
       ) : emails.length === 0 ? (
         <div className="admin-card mt-6 p-6 text-t-muted">
-          No hay correos pendientes.
+          {view === "pending"
+            ? "No hay correos pendientes."
+            : "Todavía no hay correos registrados."}
         </div>
       ) : (
         <div className="mt-6 grid gap-6 lg:grid-cols-[340px_1fr]">
@@ -175,9 +219,7 @@ export const OutgoingEmailsPage = () => {
                   </p>
                   <p className="text-xs text-t-muted">
                     {STATUS_LABELS[e.status] ?? e.status}
-                    {e.scheduledFor
-                      ? ` · Sale ${formatDateAR(e.scheduledFor)}`
-                      : ` · ${formatDateAR(e.createdAt)}`}
+                    {` · ${listDateLabel(e)}`}
                   </p>
                 </button>
               </li>
@@ -191,7 +233,21 @@ export const OutgoingEmailsPage = () => {
                 <dd className="text-t-primary">{detail.to}</dd>
                 <dt className="text-t-muted">Asunto</dt>
                 <dd className="text-t-primary">{detail.subject}</dd>
-                {detail.scheduledFor ? (
+                {detail.status === "SENT" && detail.sentAt ? (
+                  <>
+                    <dt className="text-t-muted">Enviado</dt>
+                    <dd className="text-t-primary">
+                      {formatDateAR(detail.sentAt)}
+                    </dd>
+                  </>
+                ) : null}
+                {detail.status === "DISCARDED" ? (
+                  <>
+                    <dt className="text-t-muted">Estado</dt>
+                    <dd className="text-t-primary">Descartado, no se envió</dd>
+                  </>
+                ) : null}
+                {detailIsPending && detail.scheduledFor ? (
                   <>
                     <dt className="text-t-muted">Salida</dt>
                     <dd className="text-t-primary">
@@ -264,71 +320,73 @@ export const OutgoingEmailsPage = () => {
                 className="mt-4 h-[520px] w-full rounded-lg border border-b-default bg-white"
               />
 
-              <div className="mt-4 flex flex-wrap gap-2">
-                {detail.status === "SCHEDULED" ? (
+              {detailIsPending ? (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {detail.status === "SCHEDULED" ? (
+                    <Button
+                      disabled={busy}
+                      onClick={() =>
+                        run(
+                          () => api.unscheduleOutgoingEmail(detail.id),
+                          "Programación cancelada: el correo volvió a quedar para revisar.",
+                        )
+                      }
+                    >
+                      Cancelar programación
+                    </Button>
+                  ) : (
+                    <Button
+                      disabled={busy}
+                      onClick={() => setConfirm("schedule")}
+                    >
+                      Programar envío
+                    </Button>
+                  )}
                   <Button
+                    variant="outline"
                     disabled={busy}
-                    onClick={() =>
-                      run(
-                        () => api.unscheduleOutgoingEmail(detail.id),
-                        "Programación cancelada: el correo volvió a quedar para revisar.",
-                      )
-                    }
+                    onClick={() => {
+                      setTimeValue(toArInput(detail.scheduledFor));
+                      setEditingTime(true);
+                    }}
                   >
-                    Cancelar programación
+                    Modificar fecha y hora
                   </Button>
-                ) : (
                   <Button
+                    variant="outline"
                     disabled={busy}
-                    onClick={() => setConfirm("schedule")}
+                    onClick={() => setConfirm("send")}
                   >
-                    Programar envío
+                    Enviar ahora
                   </Button>
-                )}
-                <Button
-                  variant="outline"
-                  disabled={busy}
-                  onClick={() => {
-                    setTimeValue(toArInput(detail.scheduledFor));
-                    setEditingTime(true);
-                  }}
-                >
-                  Modificar fecha y hora
-                </Button>
-                <Button
-                  variant="outline"
-                  disabled={busy}
-                  onClick={() => setConfirm("send")}
-                >
-                  Enviar ahora
-                </Button>
-                {detail.hasReceipt ? (
+                  {detail.hasReceipt ? (
+                    <Button
+                      variant="outline"
+                      disabled={busy}
+                      onClick={() =>
+                        run(
+                          () => api.regenerateOutgoingEmail(detail.id),
+                          "Listo: el correo y el comprobante se actualizaron al formato vigente.",
+                        )
+                      }
+                    >
+                      Actualizar formato
+                    </Button>
+                  ) : null}
                   <Button
                     variant="outline"
                     disabled={busy}
                     onClick={() =>
                       run(
-                        () => api.regenerateOutgoingEmail(detail.id),
-                        "Listo: el correo y el comprobante se actualizaron al formato vigente.",
+                        () => api.discardOutgoingEmail(detail.id),
+                        "Correo descartado.",
                       )
                     }
                   >
-                    Actualizar formato
+                    Descartar
                   </Button>
-                ) : null}
-                <Button
-                  variant="outline"
-                  disabled={busy}
-                  onClick={() =>
-                    run(
-                      () => api.discardOutgoingEmail(detail.id),
-                      "Correo descartado.",
-                    )
-                  }
-                >
-                  Descartar
-                </Button>
-              </div>
+                </div>
+              ) : null}
             </div>
           ) : null}
         </div>

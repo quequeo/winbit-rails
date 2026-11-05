@@ -162,6 +162,57 @@ describe("OutgoingEmailsPage", () => {
     );
   });
 
+  it("shows sent emails in the history, without actions", async () => {
+    const sent = {
+      ...email,
+      id: "e2",
+      status: "SENT",
+      scheduledFor: "2026-10-10T13:00:00Z",
+      sentAt: "2026-10-10T13:00:00Z",
+    };
+    vi.mocked(api.getOutgoingEmails).mockImplementation(async (status) =>
+      status === "all"
+        ? { data: { emails: [sent, email], pendingCount: 1 } }
+        : { data: { emails: [email], pendingCount: 1 } },
+    );
+    vi.mocked(api.getOutgoingEmail).mockImplementation(async (id) =>
+      id === "e2"
+        ? { data: { ...sent, bodyHtml: "<p>Hola</p>" } }
+        : { data: { ...email, bodyHtml: "<p>Hola</p>" } },
+    );
+    render(<OutgoingEmailsPage />);
+    await screen.findByRole("button", { name: "Programar envío" });
+    await userEvent.click(screen.getByRole("button", { name: "Historial" }));
+    await waitFor(() =>
+      expect(api.getOutgoingEmails).toHaveBeenLastCalledWith("all"),
+    );
+    await userEvent.click(
+      await screen.findByRole("button", { name: /Enviado ·/ }),
+    );
+    expect(await screen.findByText("Enviado")).toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("button", { name: "Enviar ahora" }),
+      ).not.toBeInTheDocument(),
+    );
+    expect(
+      screen.queryByRole("button", { name: "Descartar" }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText("Salida")).not.toBeInTheDocument();
+  });
+
+  it("keeps the actions on pending emails inside the history", async () => {
+    vi.mocked(api.getOutgoingEmails).mockResolvedValue({
+      data: { emails: [email], pendingCount: 1 },
+    });
+    render(<OutgoingEmailsPage />);
+    await screen.findByRole("button", { name: "Programar envío" });
+    await userEvent.click(screen.getByRole("button", { name: "Historial" }));
+    expect(
+      await screen.findByRole("button", { name: "Enviar ahora" }),
+    ).toBeInTheDocument();
+  });
+
   it("discards a draft", async () => {
     vi.mocked(api.discardOutgoingEmail).mockResolvedValue(null as never);
     render(<OutgoingEmailsPage />);
