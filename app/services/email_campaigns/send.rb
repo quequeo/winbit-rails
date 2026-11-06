@@ -65,8 +65,8 @@ module EmailCampaigns
         )
 
         # Attachments carry binary payloads that Active Job may not serialize safely.
-        # A logged email has to be really sent, not just queued.
-        if attachment || @record_as.present?
+        # Logged emails and test sends have to really go out, not just be queued.
+        if attachment || @record_as.present? || @to_email
           message.deliver_now
         else
           message.deliver_later

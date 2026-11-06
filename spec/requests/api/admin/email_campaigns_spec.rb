@@ -299,6 +299,7 @@ RSpec.describe 'Admin Email Campaigns API', type: :request do
       expect(record).to have_attributes(status: 'SCHEDULED', investor_ids: nil, scheduled_by: admin, app_button: false)
       expect(ActionMailer::Base.deliveries).to be_empty
 
+      login_as(admin, scope: :user)
       get '/api/admin/v1/email_campaigns/schedules'
       expect(JSON.parse(response.body)['data'].first['id']).to eq(record.id)
     end
