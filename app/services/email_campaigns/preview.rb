@@ -14,15 +14,22 @@ module EmailCampaigns
       keyword_init: true
     )
 
-    def self.call(month:, subject: nil, body: nil, investor_id: nil)
-      new(month: month, subject: subject, body: body, investor_id: investor_id).call
+    def self.call(month:, subject: nil, body: nil, investor_id: nil, sample_investor_id: nil)
+      new(
+        month: month,
+        subject: subject,
+        body: body,
+        investor_id: investor_id,
+        sample_investor_id: sample_investor_id
+      ).call
     end
 
-    def initialize(month:, subject: nil, body: nil, investor_id: nil)
+    def initialize(month:, subject: nil, body: nil, investor_id: nil, sample_investor_id: nil)
       @month = month
       @subject = subject
       @body = body
       @investor_id = investor_id
+      @sample_investor_id = sample_investor_id
     end
 
     def call
@@ -88,9 +95,10 @@ module EmailCampaigns
     end
 
     def pick_sample(recipients)
-      return recipients.first if @investor_id.blank?
+      wanted = @sample_investor_id.presence || @investor_id
+      return recipients.first if wanted.blank?
 
-      recipients.find { |r| r[:id].to_s == @investor_id.to_s } || recipients.first
+      recipients.find { |r| r[:id].to_s == wanted.to_s } || recipients.first
     end
   end
 end

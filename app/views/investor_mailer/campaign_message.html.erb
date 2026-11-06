@@ -8,7 +8,7 @@
   <div style="max-width:600px;margin:0 auto;padding:24px 20px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#2B2F2D;">
     <%= @body_html.html_safe %>
 
-    <% unless @body_has_button %>
+    <% if @show_app_button %>
       <p style="margin:24px 0 0 0;">
         <a href="<%= EmailCampaigns::TemplateRenderer.app_url %>" style="<%= EmailCampaigns::TemplateRenderer::BUTTON_STYLE %>">Ver mi cuenta en la app &rarr;</a>
       </p>

@@ -102,6 +102,9 @@ Rails.application.routes.draw do
       get 'email_campaigns/preview', to: 'email_campaigns#preview', format: false
       post 'email_campaigns/send_one', to: 'email_campaigns#send_one', format: false
       post 'email_campaigns/send_mass', to: 'email_campaigns#send_mass', format: false
+      get 'email_campaigns/schedules', to: 'email_campaigns#schedules', format: false
+      post 'email_campaigns/schedule', to: 'email_campaigns#schedule', format: false
+      post 'email_campaigns/schedules/:id/cancel', to: 'email_campaigns#cancel_schedule', format: false
 
       get 'monthly_report_pdfs', to: 'investor_monthly_report_pdfs#index', format: false
       post 'monthly_report_pdfs/bulk', to: 'investor_monthly_report_pdfs#bulk', format: false
@@ -185,6 +188,9 @@ Rails.application.routes.draw do
         get 'email_campaigns/preview', to: 'email_campaigns#preview', format: false
         post 'email_campaigns/send_one', to: 'email_campaigns#send_one', format: false
         post 'email_campaigns/send_mass', to: 'email_campaigns#send_mass', format: false
+        get 'email_campaigns/schedules', to: 'email_campaigns#schedules', format: false
+        post 'email_campaigns/schedule', to: 'email_campaigns#schedule', format: false
+        post 'email_campaigns/schedules/:id/cancel', to: 'email_campaigns#cancel_schedule', format: false
 
         get 'monthly_report_pdfs', to: 'investor_monthly_report_pdfs#index', format: false
         post 'monthly_report_pdfs/bulk', to: 'investor_monthly_report_pdfs#bulk', format: false

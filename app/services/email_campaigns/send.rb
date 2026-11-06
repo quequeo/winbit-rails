@@ -7,7 +7,7 @@ module EmailCampaigns
     Failure = Struct.new(:investor_id, :email, :error, keyword_init: true)
 
     def self.call(month:, subject:, body:, investor_ids: nil, force: true, attachments_by_investor_id: {}, to_email: nil,
-                  record_as: nil)
+                  record_as: nil, app_button: true)
       new(
         month: month,
         subject: subject,
@@ -16,16 +16,18 @@ module EmailCampaigns
         force: force,
         attachments_by_investor_id: attachments_by_investor_id,
         to_email: to_email,
-        record_as: record_as
+        record_as: record_as,
+        app_button: app_button
       ).call
     end
 
     def initialize(month:, subject:, body:, investor_ids: nil, force: true, attachments_by_investor_id: {}, to_email: nil,
-                   record_as: nil)
+                   record_as: nil, app_button: true)
       @month = month
       @subject = subject
       @body = body
-      @investor_ids = Array(investor_ids).presence
+      # nil means every active investor; an empty list means nobody, never everyone.
+      @investor_ids = investor_ids.nil? ? nil : Array(investor_ids)
       @force = force
       # Investor ids are UUIDs (strings). Never use to_i — "57d1ee81…".to_i => 57.
       @attachments_by_investor_id = (attachments_by_investor_id || {}).transform_keys { |k| k.to_s }
@@ -33,6 +35,7 @@ module EmailCampaigns
       @to_email = to_email.presence
       # OutgoingEmail kind under which each delivered message is logged; nil logs nothing.
       @record_as = record_as
+      @app_button = app_button
     end
 
     def call
@@ -57,11 +60,13 @@ module EmailCampaigns
           body_html: rendered_body_html,
           force: @force,
           attachment: attachment,
-          to: @to_email
+          to: @to_email,
+          app_button: @app_button
         )
 
         # Attachments carry binary payloads that Active Job may not serialize safely.
-        if attachment
+        # A logged email has to be really sent, not just queued.
+        if attachment || @record_as.present?
           message.deliver_now
         else
           message.deliver_later
@@ -110,7 +115,7 @@ module EmailCampaigns
 
     def investors
       scope = Investor.where(status: 'ACTIVE').where.not(email: [nil, ''])
-      scope = scope.where(id: @investor_ids) if @investor_ids
+      scope = scope.where(id: @investor_ids) unless @investor_ids.nil?
       scope.order(:id)
     end
   end

@@ -207,4 +207,154 @@ RSpec.describe 'Admin Email Campaigns API', type: :request do
       pdf.close!
     end
   end
+
+  describe 'choosing recipients' do
+    let(:base) { { month: '2026-04', subject: 'Hola {{nombre}}', body: 'Texto', confirm: true } }
+
+    it 'sends only to the chosen investors and logs each one as sent' do
+      post '/api/admin/v1/email_campaigns/send_mass',
+           params: base.merge(audience: 'selected', investor_ids: [ investor_b.id ])
+
+      expect(response).to have_http_status(:ok)
+      expect(ActionMailer::Base.deliveries.flat_map(&:to)).to eq([ 'bob@example.com' ])
+      logged = OutgoingEmail.find_by!(kind: 'CAMPAIGN')
+      expect(logged).to have_attributes(investor: investor_b, status: 'SENT', subject: 'Hola Bob')
+      expect(logged.sent_at).to be_present
+      expect(OutgoingEmail.pending).to be_empty
+    end
+
+    it 'sends nothing when the selection is empty' do
+      post '/api/admin/v1/email_campaigns/send_mass', params: base.merge(audience: 'selected')
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(ActionMailer::Base.deliveries).to be_empty
+    end
+
+    it 'rejects investors that are not active' do
+      post '/api/admin/v1/email_campaigns/send_mass',
+           params: base.merge(audience: 'selected', investor_ids: [ investor_a.id, inactive.id ])
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(ActionMailer::Base.deliveries).to be_empty
+    end
+
+    it 'never sends to everyone from an empty list' do
+      EmailCampaigns::Send.call(month: '2026-04', subject: 'Hola', body: 'Texto', investor_ids: [])
+
+      expect(ActionMailer::Base.deliveries).to be_empty
+    end
+  end
+
+  describe 'the app button' do
+    let(:base) { { month: '2026-04', subject: 'Hola', body: 'Texto', investor_id: investor_a.id } }
+
+    it 'is left out unless requested' do
+      post '/api/admin/v1/email_campaigns/send_one', params: base
+
+      expect(ActionMailer::Base.deliveries.last.body.to_s).not_to include('Ver mi cuenta en la app')
+    end
+
+    it 'is added when requested' do
+      post '/api/admin/v1/email_campaigns/send_one', params: base.merge(app_button: true)
+
+      expect(ActionMailer::Base.deliveries.last.body.to_s).to include('Ver mi cuenta en la app')
+    end
+  end
+
+  describe 'test sends' do
+    it 'goes to the given address and is not logged' do
+      post '/api/admin/v1/email_campaigns/send_one', params: {
+        month: '2026-04', subject: 'Hola {{nombre}}', body: 'Texto', investor_id: investor_a.id,
+        test_email: 'flor@example.com'
+      }
+
+      expect(response).to have_http_status(:ok)
+      mail = ActionMailer::Base.deliveries.last
+      expect(mail.to).to eq([ 'flor@example.com' ])
+      expect(mail.subject).to eq('Hola Ana')
+      expect(OutgoingEmail.count).to eq(0)
+    end
+
+    it 'rejects an invalid address' do
+      post '/api/admin/v1/email_campaigns/send_one', params: {
+        month: '2026-04', subject: 'Hola', body: 'Texto', investor_id: investor_a.id, test_email: 'no-es-mail'
+      }
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(ActionMailer::Base.deliveries).to be_empty
+    end
+  end
+
+  describe 'scheduling' do
+    let(:monday_8am) { 3.days.from_now.change(usec: 0) }
+    let(:base) do
+      { month: '2026-04', subject: 'Hola {{nombre}}', body: 'Texto', scheduled_for: monday_8am.iso8601 }
+    end
+
+    it 'schedules for everyone without sending anything yet' do
+      post '/api/admin/v1/email_campaigns/schedule', params: base
+
+      expect(response).to have_http_status(:created)
+      record = ScheduledCampaignEmail.last
+      expect(record).to have_attributes(status: 'SCHEDULED', investor_ids: nil, scheduled_by: admin, app_button: false)
+      expect(ActionMailer::Base.deliveries).to be_empty
+
+      get '/api/admin/v1/email_campaigns/schedules'
+      expect(JSON.parse(response.body)['data'].first['id']).to eq(record.id)
+    end
+
+    it 'rejects a date in the past' do
+      post '/api/admin/v1/email_campaigns/schedule', params: base.merge(scheduled_for: 1.hour.ago.iso8601)
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(ScheduledCampaignEmail.count).to eq(0)
+    end
+
+    it 'rejects an empty selection' do
+      post '/api/admin/v1/email_campaigns/schedule', params: base.merge(audience: 'selected')
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(ScheduledCampaignEmail.count).to eq(0)
+    end
+
+    it 'sends to everyone active once the time arrives, only once, and logs it' do
+      record = ScheduledCampaignEmail.create!(
+        month: '2026-04', subject: 'Hola {{nombre}}', body: 'Texto', scheduled_for: monday_8am, scheduled_by: admin
+      )
+
+      expect(EmailCampaigns::SendScheduled.call(now: monday_8am - 1.minute)).to eq(0)
+      expect(ActionMailer::Base.deliveries).to be_empty
+
+      expect(EmailCampaigns::SendScheduled.call(now: monday_8am + 30.seconds)).to eq(1)
+      expect(ActionMailer::Base.deliveries.flat_map(&:to)).to contain_exactly('ana@example.com', 'bob@example.com')
+      expect(record.reload).to have_attributes(status: 'SENT', queued_count: 2, failure_count: 0)
+      expect(OutgoingEmail.where(kind: 'CAMPAIGN', status: 'SENT').count).to eq(2)
+
+      expect(EmailCampaigns::SendScheduled.call(now: monday_8am + 2.minutes)).to eq(0)
+      expect(ActionMailer::Base.deliveries.size).to eq(2)
+    end
+
+    it 'sends only to the chosen investors' do
+      ScheduledCampaignEmail.create!(
+        month: '2026-04', subject: 'Hola', body: 'Texto', scheduled_for: monday_8am, investor_ids: [ investor_a.id ]
+      )
+
+      EmailCampaigns::SendScheduled.call(now: monday_8am + 1.minute)
+
+      expect(ActionMailer::Base.deliveries.flat_map(&:to)).to eq([ 'ana@example.com' ])
+    end
+
+    it 'does not send a canceled schedule' do
+      record = ScheduledCampaignEmail.create!(
+        month: '2026-04', subject: 'Hola', body: 'Texto', scheduled_for: monday_8am
+      )
+
+      post "/api/admin/v1/email_campaigns/schedules/#{record.id}/cancel"
+      expect(response).to have_http_status(:ok)
+      expect(record.reload.status).to eq('CANCELED')
+
+      expect(EmailCampaigns::SendScheduled.call(now: monday_8am + 1.minute)).to eq(0)
+      expect(ActionMailer::Base.deliveries).to be_empty
+    end
+  end
 end

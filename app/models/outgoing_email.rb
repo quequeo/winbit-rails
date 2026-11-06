@@ -2,7 +2,8 @@
 
 # Mail al inversor generado por el sistema que espera revisión humana antes
 # de salir. Se envía solo cuando un admin lo confirma. Los reportes mensuales
-# no pasan por esa revisión: se registran acá ya enviados, para el historial.
+# y las campañas no pasan por esa revisión: se registran acá ya enviados, para
+# el historial.
 class OutgoingEmail < ApplicationRecord
   KINDS = %w[
     DEPOSIT_APPROVED
@@ -12,6 +13,7 @@ class OutgoingEmail < ApplicationRecord
     INVESTOR_WELCOME
     INVESTOR_DEACTIVATED
     MONTHLY_REPORT
+    CAMPAIGN
   ].freeze
   RECEIPT_KINDS = %w[DEPOSIT_APPROVED WITHDRAWAL_APPROVED].freeze
   STATUSES = %w[DRAFT SCHEDULED SENT DISCARDED FAILED].freeze
