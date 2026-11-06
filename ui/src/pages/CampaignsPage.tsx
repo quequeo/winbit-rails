@@ -5,21 +5,27 @@ import { downloadMonthlyReportExcel } from "../lib/monthlyReportExcel";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 import { ConfirmDialog } from "../components/ui/ConfirmDialog";
+import { formatDateAR } from "../lib/formatters";
 import type { MonthlyReport } from "../types";
 
-const DEFAULT_SUBJECT =
-  "Winbit | Informe de rendimiento {{mes}}";
+const DEFAULT_SUBJECT = "Winbit | ";
 
-const DEFAULT_BODY = `Hola {{nombre}},
+const DEFAULT_BODY = `Hola, {primer_nombre}, ¿cómo estás?
 
-Te compartimos el resumen de rendimiento de {{mes}}.
 
-Ganancia del mes: {{ganancia_pct}} ({{ganancia_usd}}).
 
-Podés ver el detalle en tu panel de inversión.
+**El equipo de Winbit**`;
 
-Saludos,
-Equipo Winbit`;
+// Argentina no tiene horario de verano: siempre UTC-3.
+const AR_OFFSET = "-03:00";
+
+const SCHEDULE_STATUS_LABELS: Record<string, string> = {
+  SCHEDULED: "Programado",
+  SENDING: "Enviando",
+  SENT: "Enviado",
+  CANCELED: "Cancelado",
+  FAILED: "Falló",
+};
 
 const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024;
 const ALLOWED_ATTACHMENT_EXT = /\.(pdf|xlsx)$/i;
@@ -50,6 +56,18 @@ type PreviewData = {
   sampleInvestor?: { id: number | string; name: string; email: string } | null;
 };
 
+type Schedule = {
+  id: string;
+  subject: string;
+  scheduledFor: string;
+  status: string;
+  audienceCount?: number | null;
+  queuedCount?: number | null;
+  failureCount?: number | null;
+};
+
+type Audience = "all" | "selected";
+
 function validateAttachmentFile(file: File): string | null {
   if (!ALLOWED_ATTACHMENT_EXT.test(file.name)) {
     return "Solo se permiten PDF o XLSX";
@@ -70,7 +88,18 @@ export const CampaignsPage = () => {
   const [month, setMonth] = useState(defaultCampaignMonth);
   const [subject, setSubject] = useState(DEFAULT_SUBJECT);
   const [body, setBody] = useState(DEFAULT_BODY);
-  const [investorId, setInvestorId] = useState(investorIdParam);
+  const [audience, setAudience] = useState<Audience>(
+    investorIdParam ? "selected" : "all",
+  );
+  const [selectedIds, setSelectedIds] = useState<string[]>(
+    investorIdParam ? [investorIdParam] : [],
+  );
+  const [sampleId, setSampleId] = useState(investorIdParam);
+  const [appButton, setAppButton] = useState(false);
+  const [testEmail, setTestEmail] = useState("");
+  const [scheduleAt, setScheduleAt] = useState("");
+  const [schedules, setSchedules] = useState<Schedule[]>([]);
+  const [showScheduleDialog, setShowScheduleDialog] = useState(false);
   const [preview, setPreview] = useState<PreviewData | null>(null);
   const [loadingPreview, setLoadingPreview] = useState(false);
   const [sending, setSending] = useState(false);
@@ -79,14 +108,34 @@ export const CampaignsPage = () => {
   const [confirmMass, setConfirmMass] = useState(false);
   const [showMassDialog, setShowMassDialog] = useState(false);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
-  const [attachmentsById, setAttachmentsById] = useState<
-    Record<string, File>
-  >({});
+  const [attachmentsById, setAttachmentsById] = useState<Record<string, File>>(
+    {},
+  );
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   useEffect(() => {
-    if (investorIdParam) setInvestorId(investorIdParam);
+    if (!investorIdParam) return;
+    setAudience("selected");
+    setSelectedIds([investorIdParam]);
+    setSampleId(investorIdParam);
   }, [investorIdParam]);
+
+  const loadSchedules = useCallback(async () => {
+    try {
+      const res = (await api.getEmailCampaignSchedules()) as {
+        data?: Schedule[];
+      };
+      setSchedules(res?.data ?? []);
+    } catch (e) {
+      setError(
+        e instanceof Error ? e.message : "Error al cargar los programados",
+      );
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadSchedules();
+  }, [loadSchedules]);
 
   const loadPreview = useCallback(async () => {
     setLoadingPreview(true);
@@ -96,7 +145,7 @@ export const CampaignsPage = () => {
         month,
         subject,
         body,
-        investor_id: investorId || undefined,
+        sample_investor_id: sampleId || undefined,
       })) as { data?: PreviewData };
       setPreview(res?.data ?? null);
     } catch (e) {
@@ -105,16 +154,19 @@ export const CampaignsPage = () => {
     } finally {
       setLoadingPreview(false);
     }
-  }, [month, subject, body, investorId]);
+  }, [month, subject, body, sampleId]);
 
   useEffect(() => {
     void loadPreview();
-  }, [month, investorId]); // eslint-disable-line react-hooks/exhaustive-deps -- preview on month/investor; subject/body via button
+  }, [month, sampleId]); // eslint-disable-line react-hooks/exhaustive-deps -- preview on month/sample; subject/body via button
 
-  const audienceCount = preview?.audienceCount ?? 0;
-  const modeLabel = investorId
-    ? "Envío a un inversor"
-    : "Campaña masiva (activos)";
+  const activeCount = preview?.audienceCount ?? 0;
+  const audienceCount =
+    audience === "selected" ? selectedIds.length : activeCount;
+  const investorIdsToSend = audience === "selected" ? selectedIds : undefined;
+  const sendDisabled = sending || audienceCount === 0;
+  const modeLabel =
+    audience === "selected" ? "Inversores elegidos" : "Todos los activos";
 
   const sampleName = preview?.sampleInvestor?.name || "—";
   const attachmentCount = Object.keys(attachmentsById).length;
@@ -149,36 +201,81 @@ export const CampaignsPage = () => {
     if (input) input.value = "";
   };
 
-  const handleSendOne = async () => {
-    if (!investorId) {
-      setError("Seleccioná un inversor (o usá el link desde Inversores).");
+  const toggleSelected = (id: string, checked: boolean) => {
+    setSelectedIds((prev) =>
+      checked ? [...new Set([...prev, id])] : prev.filter((x) => x !== id),
+    );
+  };
+
+  const handleSendTest = async () => {
+    const sample = preview?.sampleInvestor;
+    if (!sample) {
+      setError("No hay un inversor de ejemplo para armar la prueba.");
       return;
     }
     setSending(true);
     setError(null);
     setSuccess(null);
     try {
-      const attachment = attachmentsById[investorId] || null;
+      const id = String(sample.id);
       const res = (await api.sendEmailCampaignOne({
         month,
         subject,
         body,
-        investor_id: investorId,
-        attachment,
-      })) as {
-        data?: { queuedCount?: number; failureCount?: number };
-      };
-      const queued = res?.data?.queuedCount ?? 0;
-      const failures = res?.data?.failureCount ?? 0;
-      const attachedNote = attachment ? ` (con adjunto ${attachment.name})` : "";
-      setSuccess(
-        `Email encolado para 1 inversor${attachedNote} (queued=${queued}, fallos=${failures}).`,
-      );
-      await loadPreview();
+        investor_id: id,
+        attachment: attachmentsById[id] || null,
+        test_email: testEmail.trim(),
+        app_button: appButton,
+      })) as { data?: { failureCount?: number } };
+      if ((res?.data?.failureCount ?? 0) > 0) {
+        setError("No se pudo enviar la prueba.");
+      } else {
+        setSuccess(
+          `Prueba enviada a ${testEmail.trim()}, con los datos de ${sample.name}.`,
+        );
+      }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Error al enviar");
+      setError(e instanceof Error ? e.message : "Error al enviar la prueba");
     } finally {
       setSending(false);
+    }
+  };
+
+  const handleSchedule = async () => {
+    setSending(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      await api.scheduleEmailCampaign({
+        month,
+        subject,
+        body,
+        scheduled_for: `${scheduleAt}:00${AR_OFFSET}`,
+        investor_ids: investorIdsToSend,
+        app_button: appButton,
+      });
+      setSuccess(
+        `Listo: el correo quedó programado para ${audienceCount} inversores.`,
+      );
+      setScheduleAt("");
+      await loadSchedules();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error al programar");
+    } finally {
+      setSending(false);
+      setShowScheduleDialog(false);
+    }
+  };
+
+  const handleCancelSchedule = async (id: string) => {
+    setError(null);
+    setSuccess(null);
+    try {
+      await api.cancelEmailCampaignSchedule(id);
+      setSuccess("Envío programado cancelado.");
+      await loadSchedules();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error al cancelar");
     }
   };
 
@@ -197,6 +294,8 @@ export const CampaignsPage = () => {
         body,
         confirm: true,
         attachmentsByInvestorId: attachmentsById,
+        investor_ids: investorIdsToSend,
+        app_button: appButton,
       })) as {
         data?: {
           queuedCount?: number;
@@ -207,9 +306,7 @@ export const CampaignsPage = () => {
       };
       const d = res?.data;
       const attachedNote =
-        attachmentCount > 0
-          ? ` (${attachmentCount} con adjunto)`
-          : "";
+        attachmentCount > 0 ? ` (${attachmentCount} con adjunto)` : "";
       setSuccess(
         `Campaña encolada: ${d?.queuedCount ?? 0} enviados${attachedNote}, ${d?.skippedCount ?? 0} omitidos, ${d?.failureCount ?? 0} fallos (audiencia ${d?.totalAudience ?? 0}).`,
       );
@@ -223,10 +320,7 @@ export const CampaignsPage = () => {
     }
   };
 
-  const recipientsPreview = useMemo(
-    () => preview?.recipients || [],
-    [preview],
-  );
+  const recipientsPreview = useMemo(() => preview?.recipients || [], [preview]);
 
   const handleDownloadReport = async (recipient: Recipient) => {
     const id = String(recipient.id);
@@ -252,16 +346,12 @@ export const CampaignsPage = () => {
             Campañas / Emails
           </h2>
           <p className="mt-1 text-sm text-t-muted">
-            Informe mensual personalizado. Las campañas admin se envían aunque
-            las notificaciones globales estén desactivadas. From:{" "}
-            <code className="text-t-dim">noreply@winbit.com.ar</code> · Reply-To:{" "}
-            <code className="text-t-dim">winbit.cfds@gmail.com</code>.
+            Correos personalizados a inversores, para enviar en el momento o
+            programar. Se envían aunque las notificaciones globales estén
+            desactivadas, y quedan en el Historial de Correos.
           </p>
         </div>
-        <Link
-          to="/investors"
-          className="text-sm text-primary hover:underline"
-        >
+        <Link to="/investors" className="text-sm text-primary hover:underline">
           Volver a inversores
         </Link>
       </div>
@@ -281,7 +371,7 @@ export const CampaignsPage = () => {
         <div className="grid gap-4 md:grid-cols-3">
           <div>
             <label className="mb-1 block text-sm font-medium text-t-muted">
-              Mes del informe
+              Mes de referencia
             </label>
             <Input
               type="month"
@@ -289,23 +379,32 @@ export const CampaignsPage = () => {
               onChange={(e) => setMonth(e.target.value)}
             />
             <p className="mt-1 text-xs text-t-dim">
-              Por defecto: mes calendario anterior (completo).
+              Define los datos de las variables de rendimiento.
             </p>
           </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium text-t-muted">
-              Inversor (opcional, envío individual)
+          <fieldset>
+            <legend className="mb-1 block text-sm font-medium text-t-muted">
+              Destinatarios
+            </legend>
+            <label className="flex items-center gap-2 text-sm text-t-primary">
+              <input
+                type="radio"
+                name="audience"
+                checked={audience === "all"}
+                onChange={() => setAudience("all")}
+              />
+              Todos los activos
             </label>
-            <Input
-              type="text"
-              value={investorId}
-              onChange={(e) => setInvestorId(e.target.value.trim())}
-              placeholder="ID del inversor"
-            />
-            <p className="mt-1 text-xs text-t-dim">
-              Vacío = audiencia masiva (ACTIVE con email).
-            </p>
-          </div>
+            <label className="mt-1 flex items-center gap-2 text-sm text-t-primary">
+              <input
+                type="radio"
+                name="audience"
+                checked={audience === "selected"}
+                onChange={() => setAudience("selected")}
+              />
+              Elegir inversores
+            </label>
+          </fieldset>
           <div className="flex items-end">
             <p className="text-sm text-t-muted">
               Modo: <span className="text-t-primary">{modeLabel}</span>
@@ -348,6 +447,7 @@ export const CampaignsPage = () => {
           />
           <p className="mt-2 text-xs text-t-dim">
             Variables:{" "}
+            <code className="text-primary">{"{{primer_nombre}}"}</code>,{" "}
             <code className="text-primary">{"{{nombre}}"}</code>,{" "}
             <code className="text-primary">{"{{ganancia_usd}}"}</code>,{" "}
             <code className="text-primary">{"{{ganancia_pct}}"}</code>,{" "}
@@ -357,7 +457,16 @@ export const CampaignsPage = () => {
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-3">
+        <label className="flex items-center gap-2 text-sm text-t-muted">
+          <input
+            type="checkbox"
+            checked={appButton}
+            onChange={(e) => setAppButton(e.target.checked)}
+          />
+          Agregar el botón "Ver mi cuenta en la app" al final
+        </label>
+
+        <div>
           <Button
             type="button"
             variant="outline"
@@ -366,23 +475,79 @@ export const CampaignsPage = () => {
           >
             {loadingPreview ? "Actualizando…" : "Actualizar preview"}
           </Button>
-          <Button
-            type="button"
-            onClick={() => void handleSendOne()}
-            disabled={sending || !investorId}
-          >
-            Enviar a este inversor
-          </Button>
-          <Button
-            type="button"
-            disabled={sending || audienceCount === 0 || Boolean(investorId)}
-            onClick={() => setShowMassDialog(true)}
-          >
-            Enviar a todos (activos)
-          </Button>
         </div>
 
-        {!investorId ? (
+        <div className="grid gap-4 md:grid-cols-2">
+          <div>
+            <label
+              htmlFor="campaignTestEmail"
+              className="mb-1 block text-sm font-medium text-t-muted"
+            >
+              1. Enviar una prueba a
+            </label>
+            <div className="flex gap-2">
+              <Input
+                id="campaignTestEmail"
+                type="email"
+                value={testEmail}
+                onChange={(e) => setTestEmail(e.target.value)}
+                placeholder="tu@correo.com"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                disabled={
+                  sending || !testEmail.trim() || !preview?.sampleInvestor
+                }
+                onClick={() => void handleSendTest()}
+              >
+                Enviar prueba
+              </Button>
+            </div>
+            <p className="mt-1 text-xs text-t-dim">
+              Solo llega a ese correo, con los datos de {sampleName}. No queda
+              en el Historial.
+            </p>
+          </div>
+          <div>
+            <label
+              htmlFor="campaignScheduleAt"
+              className="mb-1 block text-sm font-medium text-t-muted"
+            >
+              2. Programar para (hora de Argentina)
+            </label>
+            <div className="flex gap-2">
+              <Input
+                id="campaignScheduleAt"
+                type="datetime-local"
+                value={scheduleAt}
+                onChange={(e) => setScheduleAt(e.target.value)}
+              />
+              <Button
+                type="button"
+                disabled={sendDisabled || !scheduleAt || attachmentCount > 0}
+                onClick={() => setShowScheduleDialog(true)}
+              >
+                Programar
+              </Button>
+            </div>
+            <p className="mt-1 text-xs text-t-dim">
+              {attachmentCount > 0
+                ? "Los correos con adjunto no se pueden programar: enviá ahora o quitá los adjuntos."
+                : `Sale solo a ${audienceCount} inversores.`}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3 border-t border-b-default pt-4">
+          <Button
+            type="button"
+            variant="outline"
+            disabled={sendDisabled}
+            onClick={() => setShowMassDialog(true)}
+          >
+            Enviar ahora
+          </Button>
           <label className="flex items-start gap-2 text-sm text-t-muted">
             <input
               type="checkbox"
@@ -390,13 +555,49 @@ export const CampaignsPage = () => {
               onChange={(e) => setConfirmMass(e.target.checked)}
               className="mt-1"
             />
-            <span>
-              Confirmo envío a {audienceCount} inversores activos (omite
-              NotificationGate; usa Resend).
-            </span>
+            <span>Confirmo envío a {audienceCount} inversores</span>
           </label>
-        ) : null}
+        </div>
       </div>
+
+      {schedules.length > 0 ? (
+        <div className="admin-card p-6">
+          <h3 className="mb-3 text-sm font-semibold text-t-primary">
+            Envíos programados
+          </h3>
+          <ul className="space-y-2 text-sm">
+            {schedules.map((s) => (
+              <li
+                key={s.id}
+                className="flex flex-wrap items-center justify-between gap-2 border-t border-b-default pt-2"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-t-primary">{s.subject}</p>
+                  <p className="text-xs text-t-muted">
+                    {SCHEDULE_STATUS_LABELS[s.status] ?? s.status} ·{" "}
+                    {formatDateAR(s.scheduledFor)} ·{" "}
+                    {s.audienceCount
+                      ? `${s.audienceCount} inversores`
+                      : "Todos los activos"}
+                    {s.status === "SENT"
+                      ? ` · ${s.queuedCount ?? 0} enviados, ${s.failureCount ?? 0} fallos`
+                      : ""}
+                  </p>
+                </div>
+                {s.status === "SCHEDULED" ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => void handleCancelSchedule(s.id)}
+                  >
+                    Cancelar
+                  </Button>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
 
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="admin-card p-6">
@@ -418,16 +619,21 @@ export const CampaignsPage = () => {
 
         <div className="admin-card p-6">
           <h3 className="mb-3 text-sm font-semibold text-t-primary">
-            Destinatarios ({audienceCount})
+            Inversores activos ({activeCount})
           </h3>
           <p className="mb-2 text-xs text-t-dim">
-            ↓ descarga el Excel del mes. 📎 sube un adjunto PDF/XLSX (máx.
-            10MB) por inversor; solo se envía a quienes tengan archivo.
+            Tocá un nombre para verlo en el preview. ↓ descarga el Excel del
+            mes. Podés subir un adjunto PDF/XLSX (máx. 10MB) por inversor.
           </p>
           <div className="max-h-96 overflow-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-t-dim">
+                  {audience === "selected" ? (
+                    <th className="pb-2 pr-2">
+                      <span className="sr-only">Elegir</span>
+                    </th>
+                  ) : null}
                   <th className="pb-2 pr-2">Nombre</th>
                   <th className="pb-2 pr-2">USD</th>
                   <th className="pb-2 pr-2">%</th>
@@ -440,12 +646,24 @@ export const CampaignsPage = () => {
                   const file = attachmentsById[id];
                   return (
                     <tr key={id} className="border-t border-b-default">
+                      {audience === "selected" ? (
+                        <td className="py-2 pr-2">
+                          <input
+                            type="checkbox"
+                            aria-label={`Elegir a ${r.name}`}
+                            checked={selectedIds.includes(id)}
+                            onChange={(e) =>
+                              toggleSelected(id, e.target.checked)
+                            }
+                          />
+                        </td>
+                      ) : null}
                       <td className="py-2 pr-2">
                         <div className="flex items-center gap-1.5 min-w-0">
                           <button
                             type="button"
                             className="min-w-0 truncate text-left text-primary hover:underline"
-                            onClick={() => setInvestorId(id)}
+                            onClick={() => setSampleId(id)}
                           >
                             {r.name}
                           </button>
@@ -521,13 +739,25 @@ export const CampaignsPage = () => {
           }
           void handleSendMass();
         }}
-        title="Confirmar envío masivo"
-        message={`Se encolarán emails personalizados a ${audienceCount} inversores ACTIVE del mes ${month}${
+        title="Confirmar envío"
+        message={`Se enviará ahora mismo a ${audienceCount} inversores${
           attachmentCount > 0
             ? ` (${attachmentCount} con adjunto PDF/XLSX)`
             : ""
         }. ¿Continuar?`}
         confirmText="Enviar ahora"
+        confirmVariant="primary"
+      />
+
+      <ConfirmDialog
+        isOpen={showScheduleDialog}
+        onClose={() => setShowScheduleDialog(false)}
+        onConfirm={() => void handleSchedule()}
+        title="Programar envío"
+        message={`Saldrá automáticamente a ${audienceCount} inversores el ${
+          scheduleAt ? formatDateAR(`${scheduleAt}:00${AR_OFFSET}`) : ""
+        }. ¿Confirmás?`}
+        confirmText="Programar"
         confirmVariant="primary"
       />
     </div>

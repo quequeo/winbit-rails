@@ -83,7 +83,11 @@ export const api = {
     const suffix = qs.toString() ? `?${qs.toString()}` : "";
     return request(`${ADMIN_API_PREFIX}/dashboard${suffix}`);
   },
-  getAdminInvestors: (params?: { sort_by?: string; sort_order?: string; q?: string }) => {
+  getAdminInvestors: (params?: {
+    sort_by?: string;
+    sort_order?: string;
+    q?: string;
+  }) => {
     const qs = new URLSearchParams();
     if (params?.sort_by) qs.set("sort_by", params.sort_by);
     if (params?.sort_order) qs.set("sort_order", params.sort_order);
@@ -95,7 +99,9 @@ export const api = {
     const qs = new URLSearchParams();
     if (month) qs.set("month", month);
     const suffix = qs.toString() ? `?${qs.toString()}` : "";
-    return request(`${ADMIN_API_PREFIX}/investors/${investorId}/monthly_report${suffix}`);
+    return request(
+      `${ADMIN_API_PREFIX}/investors/${investorId}/monthly_report${suffix}`,
+    );
   },
   signOut: () => request("/users/sign_out", { method: "DELETE" }),
   getAdminRequests: (params?: {
@@ -359,7 +365,8 @@ export const api = {
   }) => {
     const qs = new URLSearchParams();
     qs.set("date", params.date);
-    if (params.percent !== undefined) qs.set("percent", params.percent.toString());
+    if (params.percent !== undefined)
+      qs.set("percent", params.percent.toString());
     if (params.amount_usd !== undefined)
       qs.set("amount_usd", params.amount_usd.toString());
     if (params.notes) qs.set("notes", params.notes);
@@ -573,14 +580,18 @@ export const api = {
     month: string;
     subject?: string;
     body?: string;
-    investor_id?: string;
+    sample_investor_id?: string;
   }) => {
     const qs = new URLSearchParams();
     qs.set("month", params.month);
     if (params.subject) qs.set("subject", params.subject);
     if (params.body) qs.set("body", params.body);
-    if (params.investor_id) qs.set("investor_id", params.investor_id);
-    return request(`${ADMIN_API_PREFIX}/email_campaigns/preview?${qs.toString()}`);
+    if (params.sample_investor_id) {
+      qs.set("sample_investor_id", params.sample_investor_id);
+    }
+    return request(
+      `${ADMIN_API_PREFIX}/email_campaigns/preview?${qs.toString()}`,
+    );
   },
   sendEmailCampaignOne: (body: {
     month: string;
@@ -588,6 +599,8 @@ export const api = {
     body: string;
     investor_id: string;
     attachment?: File | null;
+    test_email?: string;
+    app_button?: boolean;
   }) => {
     if (body.attachment) {
       const form = new FormData();
@@ -596,6 +609,8 @@ export const api = {
       form.append("body", body.body);
       form.append("investor_id", body.investor_id);
       form.append("attachment", body.attachment);
+      if (body.test_email) form.append("test_email", body.test_email);
+      form.append("app_button", body.app_button ? "true" : "false");
       return requestForm(`${ADMIN_API_PREFIX}/email_campaigns/send_one`, form);
     }
     return request(`${ADMIN_API_PREFIX}/email_campaigns/send_one`, {
@@ -605,6 +620,8 @@ export const api = {
         subject: body.subject,
         body: body.body,
         investor_id: body.investor_id,
+        test_email: body.test_email,
+        app_button: body.app_button,
       }),
     });
   },
@@ -614,6 +631,8 @@ export const api = {
     body: string;
     confirm: boolean;
     attachmentsByInvestorId?: Record<string, File>;
+    investor_ids?: string[];
+    app_button?: boolean;
   }) => {
     const attachments = body.attachmentsByInvestorId || {};
     const hasAttachments = Object.keys(attachments).length > 0;
@@ -623,6 +642,11 @@ export const api = {
       form.append("subject", body.subject);
       form.append("body", body.body);
       form.append("confirm", body.confirm ? "true" : "false");
+      form.append("app_button", body.app_button ? "true" : "false");
+      if (body.investor_ids) {
+        form.append("audience", "selected");
+        body.investor_ids.forEach((id) => form.append("investor_ids[]", id));
+      }
       Object.entries(attachments).forEach(([investorId, file]) => {
         form.append(`attachments[${investorId}]`, file);
       });
@@ -635,9 +659,40 @@ export const api = {
         subject: body.subject,
         body: body.body,
         confirm: body.confirm,
+        app_button: body.app_button,
+        ...(body.investor_ids
+          ? { audience: "selected", investor_ids: body.investor_ids }
+          : {}),
       }),
     });
   },
+  getEmailCampaignSchedules: () =>
+    request(`${ADMIN_API_PREFIX}/email_campaigns/schedules`),
+  scheduleEmailCampaign: (body: {
+    month: string;
+    subject: string;
+    body: string;
+    scheduled_for: string;
+    investor_ids?: string[];
+    app_button?: boolean;
+  }) =>
+    request(`${ADMIN_API_PREFIX}/email_campaigns/schedule`, {
+      method: "POST",
+      body: JSON.stringify({
+        month: body.month,
+        subject: body.subject,
+        body: body.body,
+        scheduled_for: body.scheduled_for,
+        app_button: body.app_button,
+        ...(body.investor_ids
+          ? { audience: "selected", investor_ids: body.investor_ids }
+          : {}),
+      }),
+    }),
+  cancelEmailCampaignSchedule: (id: string) =>
+    request(`${ADMIN_API_PREFIX}/email_campaigns/schedules/${id}/cancel`, {
+      method: "POST",
+    }),
   getMonthlyReportPdfs: (month: string) => {
     const qs = new URLSearchParams({ month });
     return request(`${ADMIN_API_PREFIX}/monthly_report_pdfs?${qs.toString()}`);
@@ -788,7 +843,10 @@ export const api = {
       body: JSON.stringify(body),
     }),
   cancelMonthlyReportEmailSchedule: (id: string) =>
-    request(`${ADMIN_API_PREFIX}/monthly_report_emails/schedules/${id}/cancel`, {
-      method: "POST",
-    }),
+    request(
+      `${ADMIN_API_PREFIX}/monthly_report_emails/schedules/${id}/cancel`,
+      {
+        method: "POST",
+      },
+    ),
 };

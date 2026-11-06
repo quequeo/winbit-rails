@@ -13,6 +13,7 @@ const KIND_LABELS: Record<string, string> = {
   INVESTOR_WELCOME: "Alta de inversor",
   INVESTOR_DEACTIVATED: "Baja de inversor",
   MONTHLY_REPORT: "Reporte mensual",
+  CAMPAIGN: "Campaña",
 };
 
 const STATUS_LABELS: Record<string, string> = {

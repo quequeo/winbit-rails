@@ -3,6 +3,8 @@
 module Api
   module Admin
     class EmailCampaignsController < BaseController
+      RECORD_KIND = 'CAMPAIGN'
+
       # GET /api/admin/email_campaigns/preview
       def preview
         month = parse_month_param
@@ -12,7 +14,8 @@ module Api
           month: month.strftime('%Y-%m'),
           subject: params[:subject],
           body: params[:body],
-          investor_id: params[:investor_id]
+          investor_id: params[:investor_id],
+          sample_investor_id: params[:sample_investor_id]
         )
 
         render json: {
@@ -30,12 +33,19 @@ module Api
 
       # POST /api/admin/email_campaigns/send_one
       # Optional multipart field: attachment (PDF/XLSX ≤10MB)
+      # With test_email, sends that investor's email to that address instead and logs nothing.
       def send_one
         month = parse_month_param
         return if performed?
 
         subject, body = require_template_params
         return if performed?
+
+        test_email = params[:test_email].to_s.strip.presence
+        if test_email && !test_email.match?(URI::MailTo::EMAIL_REGEXP)
+          render_error('El correo de prueba no es válido', status: :unprocessable_content)
+          return
+        end
 
         investor = find_investor_by_id(id: params.require(:investor_id))
         return if performed?
@@ -58,7 +68,10 @@ module Api
           body: body,
           investor_ids: [investor.id],
           force: true,
-          attachments_by_investor_id: attachments_by_id
+          attachments_by_investor_id: attachments_by_id,
+          to_email: test_email,
+          app_button: app_button_param,
+          record_as: test_email ? nil : RECORD_KIND
         )
 
         render json: { data: serialize_send_result(result) }
@@ -81,6 +94,9 @@ module Api
           return
         end
 
+        investor_ids = parse_investor_ids
+        return if performed?
+
         attachments_by_id = parse_mass_attachments
         return if performed?
 
@@ -88,14 +104,124 @@ module Api
           month: month.strftime('%Y-%m'),
           subject: subject,
           body: body,
+          investor_ids: investor_ids,
           force: true,
-          attachments_by_investor_id: attachments_by_id
+          attachments_by_investor_id: attachments_by_id,
+          app_button: app_button_param,
+          record_as: RECORD_KIND
         )
 
         render json: { data: serialize_send_result(result) }
       end
 
+      # GET /api/admin/email_campaigns/schedules
+      def schedules
+        records = ScheduledCampaignEmail.includes(:scheduled_by).recent_first.limit(20)
+        render json: { data: records.map { |record| serialize_schedule(record) } }
+      end
+
+      # POST /api/admin/email_campaigns/schedule
+      def schedule
+        month = parse_month_param
+        return if performed?
+
+        subject, body = require_template_params
+        return if performed?
+
+        investor_ids = parse_investor_ids
+        return if performed?
+
+        scheduled_for = parse_scheduled_for
+        return if performed?
+
+        record = ScheduledCampaignEmail.create!(
+          month: month.strftime('%Y-%m'),
+          subject: subject,
+          body: body,
+          scheduled_for: scheduled_for,
+          investor_ids: investor_ids,
+          app_button: app_button_param,
+          scheduled_by: current_user
+        )
+
+        render json: { data: serialize_schedule(record) }, status: :created
+      end
+
+      # POST /api/admin/email_campaigns/schedules/:id/cancel
+      def cancel_schedule
+        record = ScheduledCampaignEmail.find_by(id: params[:id])
+        return render_error('Envío programado no encontrado', status: :not_found) unless record
+
+        record.with_lock do
+          unless record.status == 'SCHEDULED'
+            render_error('Solo se puede cancelar un envío que todavía no salió', status: :unprocessable_content)
+            next
+          end
+
+          record.update!(status: 'CANCELED')
+        end
+        return if performed?
+
+        render json: { data: serialize_schedule(record) }
+      end
+
       private
+
+      def app_button_param
+        ActiveModel::Type::Boolean.new.cast(params[:app_button]) == true
+      end
+
+      # nil means every active investor. A selection must name active investors:
+      # an empty one is an error, so it can never end up going to everyone.
+      def parse_investor_ids
+        return nil unless params[:audience] == 'selected' || params.key?(:investor_ids)
+
+        ids = Array(params[:investor_ids]).map(&:to_s).compact_blank.uniq
+        if ids.empty?
+          render_error('Elegí al menos un inversor', status: :unprocessable_content)
+          return nil
+        end
+
+        active_ids = Investor.where(id: ids, status: 'ACTIVE').pluck(:id).map(&:to_s)
+        return ids if active_ids.size == ids.size
+
+        render_error('Hay inversores elegidos que no están activos', status: :unprocessable_content)
+        nil
+      end
+
+      def parse_scheduled_for
+        scheduled_for = Time.zone.parse(params[:scheduled_for].to_s)
+        if scheduled_for.nil?
+          render_error('Fecha y hora de envío inválidas', status: :unprocessable_content)
+          return
+        end
+        unless scheduled_for.future?
+          render_error('La fecha y hora de envío tiene que ser futura', status: :unprocessable_content)
+          return
+        end
+
+        scheduled_for
+      rescue ArgumentError
+        render_error('Fecha y hora de envío inválidas', status: :unprocessable_content)
+        nil
+      end
+
+      def serialize_schedule(record)
+        {
+          id: record.id,
+          month: record.month,
+          subject: record.subject,
+          scheduledFor: record.scheduled_for&.iso8601,
+          status: record.status,
+          audienceCount: record.investor_ids&.size,
+          appButton: record.app_button,
+          sentAt: record.sent_at&.iso8601,
+          queuedCount: record.queued_count,
+          skippedCount: record.skipped_count,
+          failureCount: record.failure_count,
+          scheduledBy: record.scheduled_by&.name,
+        }
+      end
 
       def parse_month_param
         raw = params[:month].presence
