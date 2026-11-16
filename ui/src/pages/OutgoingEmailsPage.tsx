@@ -14,6 +14,8 @@ const KIND_LABELS: Record<string, string> = {
   INVESTOR_DEACTIVATED: "Baja de inversor",
   MONTHLY_REPORT: "Reporte mensual",
   CAMPAIGN: "Campaña",
+  DEPOSIT_RECEIVED: "Solicitud de ingreso recibida",
+  WITHDRAWAL_RECEIVED: "Solicitud de retiro recibida",
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -22,6 +24,7 @@ const STATUS_LABELS: Record<string, string> = {
   FAILED: "Falló el envío",
   SENT: "Enviado",
   DISCARDED: "Descartado",
+  SKIPPED: "No enviado (avisos apagados)",
 };
 
 // El historial trae todos los correos; "Pendientes" solo los que requieren una acción.

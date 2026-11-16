@@ -366,4 +366,20 @@ RSpec.describe 'Public requests', type: :request do
     json = JSON.parse(response.body)
     expect(json.dig('data', 'status')).to eq('PENDING')
   end
+
+  it 'POST /api/public/requests deja registrado en Correos el aviso de solicitud recibida' do
+    investor = Investor.create!(email: 'aviso@example.com', name: 'aviso', status: 'ACTIVE')
+    Portfolio.create!(investor_id: investor.id, current_balance: 100, total_invested: 100)
+    AppSetting.set(AppSetting::INVESTOR_NOTIFICATIONS_ENABLED, 'true')
+
+    post '/api/public/requests',
+         params: { email: investor.email, type: 'DEPOSIT', amount: 50, method: 'CASH_USD' },
+         as: :json
+
+    expect(response).to have_http_status(:created)
+    request_id = JSON.parse(response.body).dig('data', 'id')
+    email = OutgoingEmail.find_by!(request_id: request_id)
+    expect(email.kind).to eq('DEPOSIT_RECEIVED')
+    expect(email.status).to eq('SENT')
+  end
 end
