@@ -68,17 +68,7 @@ module Api
           return render_error('Invalid request data', status: :bad_request, details: req.errors.to_hash)
         end
 
-        begin
-          if req.request_type == 'DEPOSIT'
-            InvestorMailer.deposit_created(investor, req).deliver_later
-            AdminMailer.new_deposit_notification(req).deliver_later
-          elsif req.request_type == 'WITHDRAWAL'
-            InvestorMailer.withdrawal_created(investor, req).deliver_later
-            AdminMailer.new_withdrawal_notification(req).deliver_later
-          end
-        rescue => e
-          Rails.logger.error("Failed to send email notification: #{e.message}")
-        end
+        Requests::NotifyCreated.call(request: req)
 
         render json: {
           data: PublicRequestSerializer.new(req).as_json

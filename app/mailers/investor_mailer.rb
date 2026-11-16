@@ -6,10 +6,10 @@ class InvestorMailer < ApplicationMailer
   # === DEPÓSITOS ===
 
   # Email cuando el cliente crea una solicitud de depósito
-  def deposit_created(investor, request)
+  def deposit_created(investor, request, force: false)
     assign_request_received(investor, request)
 
-    return unless NotificationGate.should_send_to_investor?(investor.email)
+    return if !force && !NotificationGate.should_send_to_investor?(investor.email)
 
     mail(
       to: investor.email,
@@ -54,10 +54,10 @@ class InvestorMailer < ApplicationMailer
   # === RETIROS ===
 
   # Email cuando el cliente solicita un retiro
-  def withdrawal_created(investor, request)
+  def withdrawal_created(investor, request, force: false)
     assign_request_received(investor, request)
 
-    return unless NotificationGate.should_send_to_investor?(investor.email)
+    return if !force && !NotificationGate.should_send_to_investor?(investor.email)
 
     mail(
       to: investor.email,
