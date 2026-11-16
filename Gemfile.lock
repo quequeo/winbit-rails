@@ -239,6 +239,7 @@ GEM
     omniauth-oauth2 (1.9.0)
       oauth2 (>= 2.0.2, < 3)
       omniauth (~> 2.0)
+    openssl (4.0.2)
     orm_adapter (0.5.0)
     ostruct (0.6.3)
     parallel (1.27.0)
@@ -424,6 +425,9 @@ GEM
     version_gem (1.1.9)
     warden (1.2.9)
       rack (>= 2.0.9)
+    web-push (3.1.0)
+      jwt (~> 3.0)
+      openssl (>= 3.0)
     websocket-driver (0.8.0)
       base64
       websocket-extensions (>= 0.1.0)
@@ -460,6 +464,7 @@ DEPENDENCIES
   solid_queue
   thruster
   tzinfo-data
+  web-push (~> 3.0)
 
 RUBY VERSION
    ruby 3.3.9p170

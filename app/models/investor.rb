@@ -8,6 +8,7 @@ class Investor < ApplicationRecord
   has_many :portfolio_histories, dependent: :destroy
   has_many :trading_fees, dependent: :destroy
   has_many :investor_requests, dependent: :destroy
+  has_many :push_subscriptions, dependent: :destroy
   has_many :investor_monthly_annex_rows, dependent: :destroy
   has_many :investor_monthly_report_pdfs, dependent: :destroy
 

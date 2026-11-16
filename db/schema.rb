@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_11_09_120000) do
+ActiveRecord::Schema[8.0].define(version: 2026_11_16_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -199,6 +199,19 @@ ActiveRecord::Schema[8.0].define(version: 2026_11_09_120000) do
     t.index ["investor_id"], name: "index_portfolios_on_investor_id", unique: true
   end
 
+  create_table "push_subscriptions", id: :string, force: :cascade do |t|
+    t.string "investor_id", null: false
+    t.text "endpoint", null: false
+    t.string "p256dh", null: false
+    t.string "auth", null: false
+    t.string "user_agent"
+    t.datetime "last_sent_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["endpoint"], name: "index_push_subscriptions_on_endpoint", unique: true
+    t.index ["investor_id"], name: "index_push_subscriptions_on_investor_id"
+  end
+
   create_table "request_receipt_pdfs", id: :string, force: :cascade do |t|
     t.string "request_id", null: false
     t.string "original_filename", null: false
@@ -367,6 +380,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_11_09_120000) do
   add_foreign_key "outgoing_emails", "users", column: "sent_by_id"
   add_foreign_key "portfolio_histories", "investors"
   add_foreign_key "portfolios", "investors"
+  add_foreign_key "push_subscriptions", "investors"
   add_foreign_key "request_receipt_pdfs", "requests", on_delete: :cascade
   add_foreign_key "requests", "investors"
   add_foreign_key "requests", "users", column: "reversed_by_id"

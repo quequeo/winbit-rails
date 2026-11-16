@@ -29,6 +29,9 @@ module Requests
         # Continue even if email fails
       end
 
+      # Aviso al celular del inversor (si activó los avisos en la app).
+      PushNotifications::RequestProcessed.call(request: req, outcome: 'REJECTED')
+
       true
     end
   end
