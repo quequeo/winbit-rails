@@ -525,7 +525,7 @@ RSpec.describe 'Public requests', type: :request do
       expect(old.cancelled_at).to be_present
 
       new_request = InvestorRequest.find(json.dig('data', 'id'))
-      expect(InvestorMailer).to have_received(:deposit_created).with(investor, new_request)
+      expect(InvestorMailer).to have_received(:deposit_created).with(investor, new_request, force: true)
       expect(AdminMailer).to have_received(:new_deposit_notification).with(new_request, old)
       expect(AdminMailer).not_to have_received(:request_cancelled_notification)
     end
