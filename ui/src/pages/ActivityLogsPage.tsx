@@ -107,6 +107,7 @@ export const ActivityLogsPage = () => {
     PENDING: "Pendiente",
     APPROVED: "Aprobado",
     REJECTED: "Rechazado",
+    CANCELLED: "Cancelada por el inversor",
   };
 
   const formatValue = (key: string, value: unknown): string => {

@@ -4,8 +4,9 @@
 class AdminMailer < ApplicationMailer
   OPERATIONS_INBOX = 'contacto@winbit.com.ar'
 
-  # Email cuando se crea una nueva solicitud de depósito
-  def new_deposit_notification(request)
+  # Email cuando se crea una nueva solicitud de depósito.
+  # replaced_request: la solicitud pendiente que el inversor corrigió con esta (queda cancelada).
+  def new_deposit_notification(request, replaced_request = nil)
     @request = request
     @investor = request.investor
     @amount_label = request_amount_label(request)
@@ -13,15 +14,16 @@ class AdminMailer < ApplicationMailer
     @review_url = backoffice_url("/requests")
     @method_label = method_label(request)
     @requested_at_label = requested_at_label(request)
+    assign_replaced_request(replaced_request)
 
     mail(
       to: operations_inbox,
-      subject: "[Winbit] Nueva solicitud DEPÓSITO · #{@investor.name} · #{@amount_label}"
+      subject: "[Winbit] Nueva solicitud DEPÓSITO#{correction_suffix} · #{@investor.name} · #{@amount_label}"
     )
   end
 
   # Email cuando se crea una nueva solicitud de retiro
-  def new_withdrawal_notification(request)
+  def new_withdrawal_notification(request, replaced_request = nil)
     @request = request
     @investor = request.investor
     @amount_label = request_amount_label(request)
@@ -30,10 +32,27 @@ class AdminMailer < ApplicationMailer
     @requested_at_label = requested_at_label(request)
     @is_full = request.amount >= (@investor.portfolio&.current_balance || 0) * 0.99
     assign_withdrawal_balance_preview(@investor, request)
+    assign_replaced_request(replaced_request)
 
     mail(
       to: operations_inbox,
-      subject: "[Winbit] Nueva solicitud RETIRO · #{@investor.name} · #{@amount_label}"
+      subject: "[Winbit] Nueva solicitud RETIRO#{correction_suffix} · #{@investor.name} · #{@amount_label}"
+    )
+  end
+
+  # Email cuando el inversor cancela una solicitud pendiente desde la app.
+  def request_cancelled_notification(request)
+    @request = request
+    @investor = request.investor
+    @type_label = request.request_type == 'DEPOSIT' ? 'Depósito' : 'Retiro'
+    @amount_label = request_amount_label(request)
+    @method_label = method_label(request)
+    @requested_at_label = requested_at_label(request)
+    @review_url = backoffice_url("/requests")
+
+    mail(
+      to: operations_inbox,
+      subject: "[Winbit] Solicitud cancelada por el inversor · #{@type_label.upcase} · #{@investor.name} · #{@amount_label}"
     )
   end
 
@@ -75,5 +94,17 @@ class AdminMailer < ApplicationMailer
 
   def operations_inbox
     [OPERATIONS_INBOX.downcase]
+  end
+
+  def assign_replaced_request(replaced_request)
+    @replaced_request = replaced_request
+    return unless replaced_request
+
+    @replaced_amount_label = request_amount_label(replaced_request)
+    @replaced_requested_at_label = requested_at_label(replaced_request)
+  end
+
+  def correction_suffix
+    @replaced_request ? ' (corrige una anterior)' : ''
   end
 end

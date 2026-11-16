@@ -10,7 +10,12 @@ module Requests
       raise StandardError, 'Solicitud no encontrada' unless req
       raise StandardError, 'Solo se pueden rechazar solicitudes pendientes' unless req.status == 'PENDING'
 
-      req.update!(status: 'REJECTED', processed_at: Time.current, notes: @notes)
+      # Bloqueo y re-chequeo: el inversor puede haberla cancelado mientras tanto.
+      req.with_lock do
+        raise StandardError, 'Solo se pueden rechazar solicitudes pendientes' unless req.status == 'PENDING'
+
+        req.update!(status: 'REJECTED', processed_at: Time.current, notes: @notes)
+      end
 
       # Leave the rejection email as a draft for admin review
       begin

@@ -542,6 +542,23 @@ RSpec.describe 'Public investors', type: :request do
     expect(pending_deposit['attachmentUrl']).to eq('https://example.com/receipt.jpg')
   end
 
+  it 'GET /api/public/investor/:email/history includes cancelled requests' do
+    investor = Investor.create!(email: 'cancelled-history@example.com', name: 'ch', status: 'ACTIVE')
+    cancelled_at = Time.current.change(usec: 0)
+    req = InvestorRequest.create!(
+      investor: investor, request_type: 'WITHDRAWAL', amount: 70, method: 'USDT',
+      status: 'CANCELLED', requested_at: Time.current - 1.hour, cancelled_at: cancelled_at
+    )
+
+    get "/api/public/investor/#{CGI.escape(investor.email)}/history"
+
+    expect(response).to have_http_status(:ok)
+    item = JSON.parse(response.body)['data'].find { |it| it['id'] == "request_#{req.id}" }
+    expect(item['status']).to eq('CANCELLED')
+    expect(item['amount']).to eq(70.0)
+    expect(Time.zone.parse(item['cancelledAt'])).to eq(cancelled_at)
+  end
+
   it 'GET /api/public/investor/:email/history includes attachmentUrl on approved deposits' do
     investor = Investor.create!(email: 'deposit-attach@example.com', name: 'da', status: 'ACTIVE')
     Portfolio.create!(investor: investor, current_balance: 0, total_invested: 0)

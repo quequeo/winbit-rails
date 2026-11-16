@@ -619,4 +619,56 @@ describe("RequestsPage", () => {
       expect(api.resetRequestApprovalToPending).toHaveBeenCalledWith("wd-1");
     });
   });
+
+  describe("Cancelada por el inversor", () => {
+    const oneCancelled = {
+      data: {
+        requests: [
+          {
+            id: "cx-1",
+            investor: { id: "1", name: "Investor One" },
+            type: "DEPOSIT",
+            method: "USDT",
+            amount: 300,
+            network: "TRC20",
+            status: "CANCELLED",
+            requestedAt: "2024-01-06T10:00:00Z",
+          },
+        ],
+        pendingCount: 0,
+      },
+    };
+
+    it("muestra la etiqueta y no ofrece aprobar ni rechazar", async () => {
+      vi.mocked(api.getAdminRequests).mockResolvedValue(oneCancelled);
+
+      render(<RequestsPage />);
+
+      const labels = await screen.findAllByText("Cancelada por el inversor");
+      expect(labels.length).toBeGreaterThan(0);
+      expect(
+        screen.queryByRole("button", { name: "Aprobar" }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: "Rechazar" }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("permite filtrar por cancelados", async () => {
+      vi.mocked(api.getAdminRequests).mockResolvedValue(oneCancelled);
+
+      render(<RequestsPage />);
+
+      const statusSelect = await screen.findByLabelText("Estado");
+      fireEvent.change(statusSelect, { target: { value: "CANCELLED" } });
+
+      await waitFor(() => {
+        expect(api.getAdminRequests).toHaveBeenCalledWith({
+          status: "CANCELLED",
+          type: undefined,
+          investor_id: undefined,
+        });
+      });
+    });
+  });
 });

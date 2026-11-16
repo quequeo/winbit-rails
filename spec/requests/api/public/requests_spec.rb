@@ -382,4 +382,199 @@ RSpec.describe 'Public requests', type: :request do
     expect(email.kind).to eq('DEPOSIT_RECEIVED')
     expect(email.status).to eq('SENT')
   end
+
+  def create_pending_request(investor, type: 'DEPOSIT', amount: 100, status: 'PENDING')
+    InvestorRequest.create!(
+      investor: investor,
+      request_type: type,
+      amount: amount,
+      method: 'USDT',
+      network: 'TRC20',
+      status: status,
+      requested_at: 1.hour.ago
+    )
+  end
+
+  describe 'POST /api/public/requests/:id/cancel' do
+    let(:investor) { Investor.create!(email: 'cancel@example.com', name: 'cancel', status: 'ACTIVE') }
+    let(:other_investor) { Investor.create!(email: 'other@example.com', name: 'other', status: 'ACTIVE') }
+
+    before do
+      allow(AdminMailer).to receive(:request_cancelled_notification).and_call_original
+    end
+
+    it 'cancels a pending request and notifies the admins' do
+      req = create_pending_request(investor)
+
+      post "/api/public/requests/#{req.id}/cancel", params: { email: investor.email }, as: :json
+
+      expect(response).to have_http_status(:ok)
+      json = JSON.parse(response.body)
+      expect(json.dig('data', 'id')).to eq(req.id)
+      expect(json.dig('data', 'status')).to eq('CANCELLED')
+      expect(json.dig('data', 'cancelledAt')).to be_present
+
+      req.reload
+      expect(req.status).to eq('CANCELLED')
+      expect(req.cancelled_at).to be_present
+      expect(AdminMailer).to have_received(:request_cancelled_notification).with(req)
+    end
+
+    it 'works on the v1 route and with params wrapped under request' do
+      req = create_pending_request(investor, type: 'WITHDRAWAL', amount: 20)
+
+      post "/api/public/v1/requests/#{req.id}/cancel", params: { request: { email: investor.email } }, as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(req.reload.status).to eq('CANCELLED')
+    end
+
+    it 'returns 404 when the request belongs to another investor' do
+      req = create_pending_request(other_investor)
+
+      post "/api/public/requests/#{req.id}/cancel", params: { email: investor.email }, as: :json
+
+      expect(response).to have_http_status(:not_found)
+      expect(JSON.parse(response.body)['error']).to eq('Request not found')
+      expect(req.reload.status).to eq('PENDING')
+      expect(AdminMailer).not_to have_received(:request_cancelled_notification)
+    end
+
+    it 'returns 404 when the email does not exist or the id is unknown' do
+      req = create_pending_request(investor)
+
+      post "/api/public/requests/#{req.id}/cancel", params: { email: 'nobody@example.com' }, as: :json
+      expect(response).to have_http_status(:not_found)
+      expect(JSON.parse(response.body)['error']).to eq('Request not found')
+
+      post '/api/public/requests/does-not-exist/cancel', params: { email: investor.email }, as: :json
+      expect(response).to have_http_status(:not_found)
+      expect(req.reload.status).to eq('PENDING')
+    end
+
+    it 'returns 422 when the request was already processed' do
+      req = create_pending_request(investor, status: 'APPROVED')
+
+      post "/api/public/requests/#{req.id}/cancel", params: { email: investor.email }, as: :json
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(JSON.parse(response.body)['error']).to eq('La solicitud ya fue procesada y no se puede cancelar')
+      expect(req.reload.status).to eq('APPROVED')
+      expect(req.cancelled_at).to be_nil
+      expect(AdminMailer).not_to have_received(:request_cancelled_notification)
+    end
+
+    it 'returns 422 when the request is already cancelled' do
+      req = create_pending_request(investor)
+      req.update!(status: 'CANCELLED', cancelled_at: 1.minute.ago)
+
+      post "/api/public/requests/#{req.id}/cancel", params: { email: investor.email }, as: :json
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(JSON.parse(response.body)['error']).to eq('La solicitud ya fue procesada y no se puede cancelar')
+    end
+
+    it 'still cancels when the admin notification fails' do
+      req = create_pending_request(investor)
+      allow(AdminMailer).to receive(:request_cancelled_notification).and_raise(StandardError, 'mailer failed')
+
+      post "/api/public/requests/#{req.id}/cancel", params: { email: investor.email }, as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(req.reload.status).to eq('CANCELLED')
+    end
+  end
+
+  describe 'POST /api/public/requests with replacesRequestId' do
+    let(:investor) { Investor.create!(email: 'fix@example.com', name: 'fix', status: 'ACTIVE') }
+    let(:other_investor) { Investor.create!(email: 'fix-other@example.com', name: 'fix other', status: 'ACTIVE') }
+
+    before do
+      Portfolio.create!(investor_id: investor.id, current_balance: 1000, total_invested: 1000)
+      allow(InvestorMailer).to receive(:deposit_created).and_call_original
+      allow(AdminMailer).to receive(:new_deposit_notification).and_call_original
+      allow(AdminMailer).to receive(:request_cancelled_notification).and_call_original
+    end
+
+    def correction_params(old_request, amount: 150)
+      {
+        email: investor.email,
+        type: 'DEPOSIT',
+        amount: amount,
+        method: 'USDT',
+        network: 'TRC20',
+        attachmentUrl: 'data:image/png;base64,fix',
+        replacesRequestId: old_request.id
+      }
+    end
+
+    it 'creates the new request and cancels the old one' do
+      old = create_pending_request(investor, amount: 100)
+
+      expect do
+        post '/api/public/requests', params: correction_params(old), as: :json
+      end.to change(InvestorRequest, :count).by(1)
+
+      expect(response).to have_http_status(:created)
+      json = JSON.parse(response.body)
+      expect(json.dig('data', 'status')).to eq('PENDING')
+      expect(json.dig('data', 'amount')).to eq(150.0)
+
+      old.reload
+      expect(old.status).to eq('CANCELLED')
+      expect(old.cancelled_at).to be_present
+
+      new_request = InvestorRequest.find(json.dig('data', 'id'))
+      expect(InvestorMailer).to have_received(:deposit_created).with(investor, new_request, force: true)
+      expect(AdminMailer).to have_received(:new_deposit_notification).with(new_request, old)
+      expect(AdminMailer).not_to have_received(:request_cancelled_notification)
+    end
+
+    it 'accepts replacesRequestId wrapped under request' do
+      old = create_pending_request(investor, amount: 100)
+
+      post '/api/public/requests', params: { request: correction_params(old) }, as: :json
+
+      expect(response).to have_http_status(:created)
+      expect(old.reload.status).to eq('CANCELLED')
+    end
+
+    it 'returns 422 and creates nothing when the old request is not pending' do
+      old = create_pending_request(investor, amount: 100, status: 'APPROVED')
+
+      expect do
+        post '/api/public/requests', params: correction_params(old), as: :json
+      end.not_to change(InvestorRequest, :count)
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(JSON.parse(response.body)['error']).to eq('La solicitud original ya fue procesada y no se puede corregir')
+      expect(old.reload.status).to eq('APPROVED')
+      expect(AdminMailer).not_to have_received(:new_deposit_notification)
+    end
+
+    it 'returns 422 and creates nothing when the correction changes the request type' do
+      old = create_pending_request(investor, amount: 100)
+      old.update_column(:request_type, 'WITHDRAWAL')
+
+      expect do
+        post '/api/public/requests', params: correction_params(old), as: :json
+      end.not_to change(InvestorRequest, :count)
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(JSON.parse(response.body)['error']).to eq('La corrección tiene que ser del mismo tipo que la solicitud original')
+      expect(old.reload.status).to eq('PENDING')
+    end
+
+    it "returns 404 and creates nothing when the old request is another investor's" do
+      old = create_pending_request(other_investor, amount: 100)
+
+      expect do
+        post '/api/public/requests', params: correction_params(old), as: :json
+      end.not_to change(InvestorRequest, :count)
+
+      expect(response).to have_http_status(:not_found)
+      expect(JSON.parse(response.body)['error']).to eq('Request not found')
+      expect(old.reload.status).to eq('PENDING')
+    end
+  end
 end

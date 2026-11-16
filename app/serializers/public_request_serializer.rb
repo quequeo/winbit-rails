@@ -20,7 +20,8 @@ class PublicRequestSerializer
       notes: request.notes,
       attachmentUrl: request.attachment_url,
       requestedAt: request.requested_at,
-      processedAt: request.processed_at
+      processedAt: request.processed_at,
+      cancelledAt: request.cancelled_at
     }
   end
 

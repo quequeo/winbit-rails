@@ -26,6 +26,10 @@ module Requests
       balance_after = nil
 
       ActiveRecord::Base.transaction do
+        # Bloqueo y re-chequeo: el inversor puede haberla cancelado mientras tanto.
+        req.lock!
+        raise StandardError, 'Solo se pueden aprobar solicitudes pendientes' unless req.status == 'PENDING'
+
         req.update!(status: 'APPROVED', processed_at: processed_at)
         OperationNumber.assign!(req)
 

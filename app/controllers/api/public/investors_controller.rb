@@ -128,7 +128,7 @@ module Api
 
       def serialized_pending_requests(investor)
         investor.investor_requests
-                .where(status: ['PENDING', 'REJECTED'])
+                .where(status: ['PENDING', 'REJECTED', 'CANCELLED'])
                 .order(requested_at: :desc)
                 .map { |request| PublicPendingRequestHistoryItemSerializer.new(request).as_json }
       end

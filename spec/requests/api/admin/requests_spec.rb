@@ -239,6 +239,62 @@ RSpec.describe 'Admin requests', type: :request do
     expect(req.status).to eq('PENDING')
   end
 
+  describe 'requests cancelled by the investor' do
+    let(:investor) { Investor.create!(email: 'cancelled-admin@example.com', name: 'ca', status: 'ACTIVE') }
+    let!(:portfolio) { Portfolio.create!(investor_id: investor.id, current_balance: 100, total_invested: 100) }
+    let(:req) do
+      InvestorRequest.create!(
+        investor_id: investor.id,
+        request_type: 'DEPOSIT',
+        amount: 50,
+        method: 'USDT',
+        status: 'CANCELLED',
+        requested_at: 1.hour.ago,
+        cancelled_at: Time.current
+      )
+    end
+
+    it 'cannot be approved' do
+      post "/api/admin/requests/#{req.id}/approve"
+
+      expect(response).to have_http_status(:bad_request)
+      expect(req.reload.status).to eq('CANCELLED')
+      expect(portfolio.reload.current_balance.to_f).to eq(100.0)
+      expect(PortfolioHistory.where(investor_id: investor.id)).to be_empty
+    end
+
+    it 'cannot be rejected' do
+      post "/api/admin/requests/#{req.id}/reject"
+
+      expect(response).to have_http_status(:bad_request)
+      expect(req.reload.status).to eq('CANCELLED')
+    end
+
+    it 'cannot be edited' do
+      patch "/api/admin/requests/#{req.id}", params: {
+        investor_id: investor.id,
+        request_type: 'DEPOSIT',
+        method: 'USDT',
+        amount: 80
+      }
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(JSON.parse(response.body)['error']).to eq('No se puede editar una solicitud cancelada por el inversor')
+      expect(req.reload.amount.to_f).to eq(50.0)
+    end
+
+    it 'is not counted as pending in the requests list' do
+      req
+
+      get '/api/admin/requests', params: { status: 'CANCELLED' }
+
+      expect(response).to have_http_status(:ok)
+      data = JSON.parse(response.body)['data']
+      expect(data['requests'].map { |r| r['status'] }).to eq(['CANCELLED'])
+      expect(data['pendingCount']).to eq(0)
+    end
+  end
+
   it 'PATCH /api/admin/requests/:id returns bad_request when required params are missing' do
     investor = Investor.create!(email: 'missing-update@example.com', name: 'mu', status: 'ACTIVE')
     req = InvestorRequest.create!(

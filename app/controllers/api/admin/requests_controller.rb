@@ -61,6 +61,10 @@ module Api
       end
 
       def update
+        if @request.status == 'CANCELLED'
+          return render_error('No se puede editar una solicitud cancelada por el inversor', status: :unprocessable_content)
+        end
+
         permitted = params.permit(
           :investor_id, :request_type, :method, :amount, :network, :wallet_address, :lemontag, :status, :asset
         )

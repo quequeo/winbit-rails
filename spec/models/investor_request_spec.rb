@@ -348,4 +348,29 @@ RSpec.describe InvestorRequest, type: :model do
       expect(request.method).to eq('SWIFT')
     end
   end
+
+  describe '#cancel_by_investor!' do
+    let(:request) do
+      InvestorRequest.create!(investor: investor, request_type: 'DEPOSIT', method: 'USDT', amount: 1000)
+    end
+
+    it 'accepts CANCELLED as a status' do
+      expect(InvestorRequest::STATUSES).to include('CANCELLED')
+    end
+
+    it 'cancels a pending request' do
+      request.cancel_by_investor!
+
+      request.reload
+      expect(request.status).to eq('CANCELLED')
+      expect(request.cancelled_at).to be_present
+    end
+
+    it 'raises NotCancellable when the request is not pending' do
+      request.update!(status: 'APPROVED', processed_at: Time.current)
+
+      expect { request.cancel_by_investor! }.to raise_error(InvestorRequest::NotCancellable)
+      expect(request.reload.status).to eq('APPROVED')
+    end
+  end
 end
