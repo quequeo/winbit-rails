@@ -25,6 +25,14 @@ RSpec.describe Requests::Reject, type: :service do
         expect(request.processed_at).to be_present
       end
 
+      it 'avisa al celular del inversor que se rechazó' do
+        allow(PushNotifications::RequestProcessed).to receive(:call)
+
+        described_class.new(request_id: request.id).call
+
+        expect(PushNotifications::RequestProcessed).to have_received(:call).with(request: request, outcome: 'REJECTED')
+      end
+
       it 'sets the processed_at timestamp' do
         freeze_time = Time.current
         travel_to freeze_time do

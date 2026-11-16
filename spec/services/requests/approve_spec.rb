@@ -57,6 +57,14 @@ RSpec.describe Requests::Approve, type: :service do
         expect(request.processed_at).to be_present
       end
 
+      it 'avisa al celular del inversor que se aprobó' do
+        allow(PushNotifications::RequestProcessed).to receive(:call)
+
+        described_class.new(request_id: request.id, approved_by: admin).call
+
+        expect(PushNotifications::RequestProcessed).to have_received(:call).with(request: request, outcome: 'APPROVED')
+      end
+
       it 'updates portfolio balance' do
         service = described_class.new(request_id: request.id, approved_by: admin)
         service.call

@@ -40,3 +40,6 @@ gem "rubyzip", "~> 2.3"
 # already installed by the existing heroku-postbuild) and, on Heroku, a Chrome buildpack
 # (see README) - not needed locally if Chrome/Chromium is already on the machine.
 gem "grover", "~> 1.2"
+
+# Avisos al celular del inversor (Web Push, claves VAPID en VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY)
+gem "web-push", "~> 3.0"

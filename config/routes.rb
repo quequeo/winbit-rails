@@ -19,6 +19,9 @@ Rails.application.routes.draw do
       post 'requests', to: 'requests#create', format: false
       post 'requests/:id/cancel', to: 'requests#cancel', format: false
       get 'strategy_operations', to: 'strategy_operations#index', format: false
+      get 'push/config', to: 'push_subscriptions#config_info', format: false
+      post 'push/subscriptions', to: 'push_subscriptions#create', format: false
+      delete 'push/subscriptions', to: 'push_subscriptions#destroy', format: false
 
       scope :v1 do
         post 'auth/login', to: 'auth#login', format: false
@@ -34,6 +37,9 @@ Rails.application.routes.draw do
         post 'requests', to: 'requests#create', format: false
         post 'requests/:id/cancel', to: 'requests#cancel', format: false
         get 'strategy_operations', to: 'strategy_operations#index', format: false
+        get 'push/config', to: 'push_subscriptions#config_info', format: false
+        post 'push/subscriptions', to: 'push_subscriptions#create', format: false
+        delete 'push/subscriptions', to: 'push_subscriptions#destroy', format: false
       end
     end
 
