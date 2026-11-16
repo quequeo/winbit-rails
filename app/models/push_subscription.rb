@@ -6,6 +6,6 @@
 class PushSubscription < ApplicationRecord
   belongs_to :investor
 
-  validates :endpoint, presence: true, uniqueness: true, format: { with: %r{\Ahttps://}i }
+  validates :endpoint, presence: true, uniqueness: true, format: { with: %r{\Ahttps://\S+\z}i }
   validates :p256dh, :auth, presence: true
 end
