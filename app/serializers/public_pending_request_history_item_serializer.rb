@@ -18,8 +18,10 @@ class PublicPendingRequestHistoryItemSerializer
       operationNumber: request.operation_number,
       currency: request.currency,
       network: request.network,
+      asset: request.asset,
       notes: request.notes,
-      attachmentUrl: request.attachment_url
+      attachmentUrl: request.attachment_url,
+      cancelledAt: request.cancelled_at
     }
   end
 

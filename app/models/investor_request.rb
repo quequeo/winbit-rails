@@ -15,7 +15,8 @@ class InvestorRequest < ApplicationRecord
     TRANSFER_ARS
     CRYPTO
   ].freeze
-  STATUSES = %w[PENDING APPROVED REJECTED REVERSED].freeze
+  # CANCELLED: el inversor la anuló (o la corrigió con otra) mientras estaba pendiente.
+  STATUSES = %w[PENDING APPROVED REJECTED REVERSED CANCELLED].freeze
   NETWORKS = %w[TRC20 BEP20 ERC20 POLYGON].freeze
   CRYPTO_WITHDRAWAL_METHODS = %w[CRYPTO].freeze
   ARS_METHODS = %w[CASH_ARS TRANSFER_ARS].freeze
@@ -35,6 +36,18 @@ class InvestorRequest < ApplicationRecord
   validate :network_allowed
   validate :crypto_withdrawal_destination_required
   validate :lemontag_required_for_lemon_cash
+
+  class NotCancellable < StandardError; end
+
+  # Cancelación pedida por el inversor. Bloquea la fila para no pisarse con
+  # una aprobación o un rechazo del admin que ocurran al mismo tiempo.
+  def cancel_by_investor!
+    with_lock do
+      raise NotCancellable unless status == 'PENDING'
+
+      update!(status: 'CANCELLED', cancelled_at: Time.current)
+    end
+  end
 
   # Moneda real de la operación: la cargada en la solicitud, o la que se
   # deduce del método (las transferencias y el efectivo en dólares son USD).

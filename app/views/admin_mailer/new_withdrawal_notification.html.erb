@@ -89,6 +89,13 @@
     <h2 style="margin-top: 0; font-size: 18px;">Nuevo retiro – Requiere aprobación</h2>
     <p>Se ha registrado una solicitud de retiro que requiere validación manual.</p>
 
+    <% if @replaced_request %>
+      <div class="action">
+        <strong>Corrige una solicitud anterior</strong>
+        <p style="margin: 8px 0 0 0;">Reemplaza a la solicitud del <%= @replaced_requested_at_label %> por <%= @replaced_amount_label %> (#<%= @replaced_request.id %>), que quedó cancelada por el inversor.</p>
+      </div>
+    <% end %>
+
     <h3 style="margin-bottom: 8px; font-size: 15px;">Cliente</h3>
     <p style="margin: 0; font-size: 17px; font-weight: 700;"><%= @investor.name %></p>
     <p style="margin: 4px 0 20px 0; color: #6b7280;"><%= @investor.email %></p>

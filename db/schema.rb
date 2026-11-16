@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_11_06_120000) do
+ActiveRecord::Schema[8.0].define(version: 2026_11_09_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -228,6 +228,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_11_06_120000) do
     t.string "reversed_by_id"
     t.string "operation_number"
     t.string "asset"
+    t.datetime "cancelled_at"
     t.index ["investor_id", "status"], name: "index_requests_on_investor_id_and_status"
     t.index ["operation_number"], name: "index_requests_on_operation_number", unique: true
     t.index ["reversed_by_id"], name: "index_requests_on_reversed_by_id"
@@ -235,7 +236,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_11_06_120000) do
     t.check_constraint "asset IS NULL OR (asset::text = ANY (ARRAY['USDT'::character varying, 'USDC'::character varying, 'USD'::character varying]::text[]))", name: "requests_asset_check"
     t.check_constraint "network IS NULL OR (network::text = ANY (ARRAY['TRC20'::character varying::text, 'BEP20'::character varying::text, 'ERC20'::character varying::text, 'POLYGON'::character varying::text]))", name: "requests_network_check"
     t.check_constraint "request_type::text = ANY (ARRAY['DEPOSIT'::character varying::text, 'WITHDRAWAL'::character varying::text])", name: "requests_type_check"
-    t.check_constraint "status::text = ANY (ARRAY['PENDING'::character varying::text, 'APPROVED'::character varying::text, 'REJECTED'::character varying::text, 'REVERSED'::character varying::text])", name: "requests_status_check"
+    t.check_constraint "status::text = ANY (ARRAY['PENDING'::character varying::text, 'APPROVED'::character varying::text, 'REJECTED'::character varying::text, 'REVERSED'::character varying::text, 'CANCELLED'::character varying::text])", name: "requests_status_check"
   end
 
   create_table "scheduled_campaign_emails", id: :string, force: :cascade do |t|

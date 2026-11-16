@@ -234,6 +234,7 @@ Crear solicitud de depósito o retiro.
 - `method`: `CASH_ARS`, `CASH_USD`, `USDT`, `USDC`, `LEMON_CASH`, `SWIFT`, `CRYPTO`, etc.
 - `network`: `TRC20`, `BEP20`, `ERC20`, `POLYGON` (para crypto)
 - `transactionHash`, `attachmentUrl`, `lemontag` (opcionales; para depósitos no cash se requiere `attachmentUrl`)
+- `replacesRequestId` (opcional): id de una solicitud `PENDING` del mismo inversor que esta corrige. En la misma transacción se crea la nueva y la anterior pasa a `CANCELLED`. El aviso al admin menciona la solicitud corregida; no se manda el aviso de cancelación.
 
 **Respuesta 201:**
 ```json
@@ -250,7 +251,21 @@ Crear solicitud de depósito o retiro.
 }
 ```
 
-**Errores:** 400 (datos inválidos, saldo insuficiente para retiro), 404 (inversor no encontrado), 403 (inversor inactivo).
+**Errores:** 400 (datos inválidos, saldo insuficiente para retiro), 404 (inversor no encontrado, o `replacesRequestId` no existe o no es de ese inversor: `Request not found`), 403 (inversor inactivo), 422 (`replacesRequestId` ya no está pendiente: `La solicitud original ya fue procesada y no se puede corregir`; no se crea nada).
+
+---
+
+### POST /api/public/v1/requests/:id/cancel
+
+El inversor cancela una solicitud propia que sigue pendiente. También en `/api/public/requests/:id/cancel`.
+
+**Body (flat o bajo `request`):** `{ "email": "user@example.com" }`
+
+**Respuesta 200:** `{ "data": { ...solicitud, "status": "CANCELLED", "cancelledAt": "..." } }` (mismo formato que el create). Se avisa a los admins por mail; al inversor no.
+
+**Errores:** 404 `Request not found` (no existe una solicitud con ese id para ese email), 422 `La solicitud ya fue procesada y no se puede cancelar` (no está `PENDING`, incluye ya cancelada).
+
+Las solicitudes canceladas aparecen en `history` con `status: "CANCELLED"` e id `request_<id>`, igual que las pendientes y rechazadas. No afectan saldos ni comisiones, y el admin no puede aprobarlas, rechazarlas ni editarlas.
 
 ---
 

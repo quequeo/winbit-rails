@@ -7,6 +7,7 @@ const STATUS_LABELS: Record<string, string> = {
   APPROVED: "Aprobado",
   REJECTED: "Rechazado",
   REVERSED: "Revertido",
+  CANCELLED: "Cancelada por el inversor",
 };
 
 const TYPE_LABELS: Record<string, string> = {

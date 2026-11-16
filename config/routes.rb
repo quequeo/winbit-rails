@@ -17,6 +17,7 @@ Rails.application.routes.draw do
       get 'deposit_options', to: 'deposit_options#index', format: false
       get 'payment_methods', to: 'payment_methods#index', format: false
       post 'requests', to: 'requests#create', format: false
+      post 'requests/:id/cancel', to: 'requests#cancel', format: false
       get 'strategy_operations', to: 'strategy_operations#index', format: false
 
       scope :v1 do
@@ -31,6 +32,7 @@ Rails.application.routes.draw do
         get 'deposit_options', to: 'deposit_options#index', format: false
         get 'payment_methods', to: 'payment_methods#index', format: false
         post 'requests', to: 'requests#create', format: false
+        post 'requests/:id/cancel', to: 'requests#cancel', format: false
         get 'strategy_operations', to: 'strategy_operations#index', format: false
       end
     end

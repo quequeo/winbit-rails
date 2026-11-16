@@ -201,4 +201,64 @@ RSpec.describe AdminMailer, type: :mailer do
       expect(mail.body.encoded).to match('45,75')
     end
   end
+
+  describe 'corrections of a previous request' do
+    let(:replaced_request) do
+      InvestorRequest.create!(
+        investor: investor,
+        request_type: 'DEPOSIT',
+        amount: 100,
+        method: 'USDT',
+        network: 'TRC20',
+        status: 'CANCELLED',
+        requested_at: Time.zone.local(2026, 11, 8, 10, 30),
+        cancelled_at: Time.current
+      )
+    end
+
+    it 'mentions the replaced deposit in subject and body' do
+      mail = described_class.new_deposit_notification(deposit_request, replaced_request)
+
+      expect(mail.subject).to match('corrige una anterior')
+      body = mail.body.decoded
+      expect(body).to match('Corrige una solicitud anterior')
+      expect(body).to match('100,00 USDT')
+      expect(body).to match('08/11/2026')
+    end
+
+    it 'mentions the replaced withdrawal' do
+      portfolio
+      mail = described_class.new_withdrawal_notification(withdrawal_request, replaced_request)
+
+      expect(mail.subject).to match('corrige una anterior')
+      expect(mail.body.decoded).to match('Corrige una solicitud anterior')
+    end
+
+    it 'does not mention a correction when there is none' do
+      mail = described_class.new_deposit_notification(deposit_request)
+
+      expect(mail.subject).not_to match('corrige')
+      expect(mail.body.decoded).not_to match('Corrige una solicitud anterior')
+    end
+  end
+
+  describe '#request_cancelled_notification' do
+    let(:mail) { described_class.request_cancelled_notification(withdrawal_request) }
+
+    it 'renders the headers' do
+      expect(mail.subject).to match('Solicitud cancelada por el inversor')
+      expect(mail.subject).to match('RETIRO')
+      expect(mail.subject).to match('John Doe')
+      expect(mail.to).to eq(['contacto@winbit.com.ar'])
+    end
+
+    it 'renders the investor and request details' do
+      body = mail.body.decoded
+      expect(body).to match('John Doe')
+      expect(body).to match('john@example.com')
+      expect(body).to match('500,00 USDT')
+      expect(body).to match('Crypto \(TRC20\)')
+      expect(body).to match(withdrawal_request.id)
+    end
+  end
 end

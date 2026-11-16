@@ -20,12 +20,15 @@ module Requests
     SKIPPED_REASON = 'No salió: las notificaciones a inversores están apagadas ' \
                      '(Admin → Admins → Configuración).'
 
-    def self.call(request:)
-      new(request:).call
+    # replaced_request: la solicitud que esta corrige (y quedó cancelada), para
+    # que el aviso a operaciones lo aclare.
+    def self.call(request:, replaced_request: nil)
+      new(request:, replaced_request:).call
     end
 
-    def initialize(request:)
+    def initialize(request:, replaced_request: nil)
       @request = request
+      @replaced_request = replaced_request
       @investor = request.investor
     end
 
@@ -65,9 +68,9 @@ module Requests
     def notify_operations
       mail =
         if @request.request_type == 'DEPOSIT'
-          AdminMailer.new_deposit_notification(@request)
+          AdminMailer.new_deposit_notification(@request, @replaced_request)
         else
-          AdminMailer.new_withdrawal_notification(@request)
+          AdminMailer.new_withdrawal_notification(@request, @replaced_request)
         end
       mail.deliver_now
     rescue StandardError => e

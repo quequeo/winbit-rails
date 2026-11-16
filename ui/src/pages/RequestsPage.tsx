@@ -20,6 +20,27 @@ const METHOD_LABELS: Record<string, string> = {
 
 const formatMethod = (method: string) => METHOD_LABELS[method] ?? method;
 
+const STATUS_LABELS: Record<string, string> = {
+  PENDING: "Pendiente",
+  APPROVED: "Aprobado",
+  REJECTED: "Rechazado",
+  REVERSED: "Revertido",
+  CANCELLED: "Cancelada por el inversor",
+};
+
+const STATUS_BADGE_CLASSES: Record<string, string> = {
+  PENDING: "bg-warning/15 text-warning",
+  APPROVED: "bg-success/15 text-success",
+  REJECTED: "bg-error/15 text-error",
+  REVERSED: "bg-dark-section text-t-muted",
+  CANCELLED: "bg-dark-section text-t-dim",
+};
+
+const formatStatus = (status: string) => STATUS_LABELS[status] ?? status;
+
+const statusBadgeClass = (status: string) =>
+  STATUS_BADGE_CLASSES[status] ?? STATUS_BADGE_CLASSES.REJECTED;
+
 const looksLikePdf = (url: string) => /\.pdf/i.test(url);
 
 const AttachmentViewer = ({ url }: { url: string }) => {
@@ -556,6 +577,7 @@ export const RequestsPage = () => {
               <option value="APPROVED">Aprobados</option>
               <option value="REJECTED">Rechazados</option>
               <option value="REVERSED">Revertidos</option>
+              <option value="CANCELLED">Cancelados por el inversor</option>
             </select>
           </div>
           <div className="ml-auto">
@@ -589,23 +611,9 @@ export const RequestsPage = () => {
                 </p>
               </div>
               <span
-                className={`shrink-0 inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
-                  r.status === "PENDING"
-                    ? "bg-warning/15 text-warning"
-                    : r.status === "APPROVED"
-                      ? "bg-success/15 text-success"
-                      : r.status === "REVERSED"
-                        ? "bg-dark-section text-t-muted"
-                        : "bg-error/15 text-error"
-                }`}
+                className={`shrink-0 inline-flex rounded-full px-2 py-1 text-xs font-semibold ${statusBadgeClass(r.status)}`}
               >
-                {r.status === "PENDING"
-                  ? "Pendiente"
-                  : r.status === "APPROVED"
-                    ? "Aprobado"
-                    : r.status === "REVERSED"
-                      ? "Revertido"
-                      : "Rechazado"}
+                {formatStatus(r.status)}
               </span>
             </div>
 
@@ -768,23 +776,9 @@ export const RequestsPage = () => {
                   </td>
                   <td className="py-2">
                     <span
-                      className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
-                        r.status === "PENDING"
-                          ? "bg-warning/15 text-warning"
-                          : r.status === "APPROVED"
-                            ? "bg-success/15 text-success"
-                            : r.status === "REVERSED"
-                              ? "bg-dark-section text-t-muted"
-                              : "bg-error/15 text-error"
-                      }`}
+                      className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${statusBadgeClass(r.status)}`}
                     >
-                      {r.status === "PENDING"
-                        ? "Pendiente"
-                        : r.status === "APPROVED"
-                          ? "Aprobado"
-                          : r.status === "REVERSED"
-                            ? "Revertido"
-                            : "Rechazado"}
+                      {formatStatus(r.status)}
                     </span>
                   </td>
                   <td className="py-2 text-right">
