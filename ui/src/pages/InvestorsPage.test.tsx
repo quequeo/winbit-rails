@@ -155,6 +155,22 @@ describe("InvestorsPage", () => {
   });
 
   describe("Crear inversor", () => {
+    it("genera una contraseña aleatoria y la muestra", async () => {
+      vi.mocked(api.getAdminInvestors).mockResolvedValue(mockInvestors);
+      renderWithRouter(<InvestorsPage />);
+      fireEvent.click(
+        await screen.findByRole("button", { name: /\+ Agregar Inversor/i }),
+      );
+      fireEvent.click(
+        screen.getByRole("button", { name: /Generar contraseña aleatoria/i }),
+      );
+      const input = screen.getByPlaceholderText(
+        "Mínimo 6 caracteres",
+      ) as HTMLInputElement;
+      expect(input.value).toHaveLength(10);
+      expect(input.type).toBe("text");
+    });
+
     it('shows form when "Agregar Inversor" button is clicked', async () => {
       vi.mocked(api.getAdminInvestors).mockResolvedValue(mockInvestors);
 

@@ -92,4 +92,31 @@ describe("EditInvestorPage", () => {
       expect(screen.getByText("Investors list")).toBeInTheDocument(),
     );
   });
+
+  it("genera una contraseña aleatoria nueva", async () => {
+    vi.mocked(api.getAdminInvestors).mockResolvedValue({
+      data: [
+        {
+          id: "1",
+          email: "inv@test.com",
+          name: "Investor One",
+          status: "ACTIVE",
+          tradingFeeFrequency: "QUARTERLY",
+          tradingFeePercentage: 30,
+        },
+      ],
+    } as { data?: unknown[] });
+    renderRoute();
+    await waitFor(() =>
+      expect(screen.getByDisplayValue("inv@test.com")).toBeInTheDocument(),
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: /Generar contraseña aleatoria/i }),
+    );
+    const input = screen.getByPlaceholderText(
+      "Mínimo 6 caracteres",
+    ) as HTMLInputElement;
+    expect(input.value).toHaveLength(10);
+    expect(input.type).toBe("text");
+  });
 });
