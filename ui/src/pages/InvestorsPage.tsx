@@ -8,6 +8,7 @@ import { Input } from "../components/ui/Input";
 import { ConfirmDialog } from "../components/ui/ConfirmDialog";
 import { formatCurrencyAR } from "../lib/formatters";
 import type { ApiInvestor, MonthlyReport } from "../types";
+import { generatePassword } from "../lib/generatePassword";
 import {
   InvestorDashboardMetrics,
   InvestorDashboardTableCells,
@@ -274,10 +275,22 @@ export const InvestorsPage = () => {
                   )}
                 </button>
               </div>
-              <p className="mt-1 text-xs text-t-dim">
-                Opcional. Si no se establece, el inversor solo podrá acceder con
-                Google.
-              </p>
+              <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFormData({ ...formData, password: generatePassword() });
+                    setShowPassword(true);
+                  }}
+                  className="text-xs font-medium text-primary hover:underline"
+                >
+                  Generar contraseña aleatoria
+                </button>
+                <span className="text-xs text-t-dim">
+                  Para correos que no son de Gmail. Copiala para el mail de
+                  bienvenida: después no se puede volver a ver.
+                </span>
+              </div>
             </div>
             <div className="flex gap-3">
               <Button type="submit" disabled={submitting}>

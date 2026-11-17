@@ -4,6 +4,7 @@ import { api } from "../lib/api";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 import { Select } from "../components/ui/Select";
+import { generatePassword } from "../lib/generatePassword";
 import type { ApiInvestor } from "../types";
 
 export const EditInvestorPage = () => {
@@ -253,6 +254,16 @@ export const EditInvestorPage = () => {
                 )}
               </button>
             </div>
+            <button
+              type="button"
+              onClick={() => {
+                setForm({ ...form, newPassword: generatePassword() });
+                setShowNewPassword(true);
+              }}
+              className="mt-1 text-xs font-medium text-primary hover:underline"
+            >
+              Generar contraseña aleatoria
+            </button>
             <p className="mt-1 text-xs text-t-dim">
               Mínimo 6 caracteres. Solo se actualiza si completás este campo.
               Con password, el inversor puede entrar con email + contraseña (además de Google).
