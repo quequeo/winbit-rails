@@ -7,7 +7,7 @@ RSpec.describe OutgoingEmails::SendEmail do
   let(:investor) { Investor.create!(email: 'send@test.com', name: 'Send Inv', status: 'ACTIVE') }
   let(:request) do
     InvestorRequest.create!(investor: investor, request_type: 'DEPOSIT', method: 'USDT', amount: 50,
-                            status: 'APPROVED', processed_at: Time.current, operation_number: 'A-2026-0001')
+                            status: 'APPROVED', processed_at: Time.current, operation_number: 'I-2026-0001')
   end
   let(:email) do
     OutgoingEmail.create!(investor: investor, investor_request: request, kind: 'DEPOSIT_APPROVED',
@@ -29,7 +29,7 @@ RSpec.describe OutgoingEmails::SendEmail do
     expect(mail.to).to eq([ 'send@test.com' ])
     expect(mail.subject).to eq('Winbit | Depósito acreditado')
     expect(mail.attachments.size).to eq(1)
-    expect(mail.attachments.first.filename).to eq('Winbit_Comprobante_Aporte_A-2026-0001.pdf')
+    expect(mail.attachments.first.filename).to eq('Winbit_Comprobante_Ingreso_I-2026-0001.pdf')
     expect(mail.text_part.decoded).to eq('Hola')
     expect(mail.html_part.decoded).to include('<p>Hola</p>')
     expect(email.reload).to have_attributes(status: 'SENT', sent_by: admin)
@@ -49,5 +49,41 @@ RSpec.describe OutgoingEmails::SendEmail do
     expect(email.reload.status).to eq('FAILED')
     expect(email.error).to include('Net::ReadTimeout')
     expect(email).to be_pending
+  end
+
+  describe 'mail de alta (aporte inicial)' do
+    let(:welcome_email) do
+      request.update!(operation_number: 'A-2026-0002')
+      OutgoingEmail.create!(investor: investor, investor_request: request, kind: 'DEPOSIT_APPROVED',
+                            to_email: investor.email, subject: 'Send, bienvenida a Winbit',
+                            body_html: '<p>¡Hola, Send! Bienvenida a Winbit.</p>', body_text: 'Hola')
+    end
+
+    before { allow(WelcomeGuidePdfs::Generate).to receive(:call).and_return('%PDF-guide') }
+
+    it 'attaches the receipt and the welcome guide with the chosen greeting' do
+      described_class.call(outgoing_email: welcome_email)
+
+      mail = ActionMailer::Base.deliveries.last
+      expect(mail.attachments.map(&:filename)).to eq([ 'Winbit_Comprobante_Aporte_A-2026-0002.pdf',
+                                                        'Winbit_Guia_de_bienvenida.pdf' ])
+      expect(WelcomeGuidePdfs::Generate).to have_received(:call).with(investor: investor, greeting: 'bienvenida')
+    end
+
+    it 'refuses to send while the greeting is not chosen' do
+      welcome_email.update!(subject: 'Send, bienvenido/a a Winbit')
+
+      expect { described_class.call(outgoing_email: welcome_email) }
+        .to raise_error(WelcomeEmail::NotReady, /Bienvenido" o "Bienvenida/)
+      expect(ActionMailer::Base.deliveries).to be_empty
+      expect(welcome_email.reload.status).to eq('DRAFT')
+    end
+
+    it 'refuses to send while the initial password is missing' do
+      welcome_email.update!(body_html: "<p>tu contraseña inicial es #{WelcomeEmail::PASSWORD_MARK}</p>")
+
+      expect { described_class.call(outgoing_email: welcome_email) }
+        .to raise_error(WelcomeEmail::NotReady, /contraseña inicial/)
+    end
   end
 end

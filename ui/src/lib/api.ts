@@ -185,6 +185,31 @@ export const api = {
     request(`${ADMIN_API_PREFIX}/outgoing_emails/${id}/regenerate`, {
       method: "POST",
     }),
+  completeWelcomeEmail: (
+    id: string,
+    body: { greeting: "bienvenido" | "bienvenida" },
+  ) =>
+    request(`${ADMIN_API_PREFIX}/outgoing_emails/${id}/welcome`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  downloadWelcomeGuide: async (id: string) => {
+    const res = await fetch(
+      `${API_BASE_URL}${ADMIN_API_PREFIX}/outgoing_emails/${id}/welcome_guide`,
+      { credentials: "include", headers: { Accept: "application/pdf" } },
+    );
+    if (!res.ok) {
+      if (res.status === 401) throw new Error("Unauthorized");
+      throw new Error(`No se pudo generar la guía (${res.status})`);
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "Winbit_Guia_de_bienvenida.pdf";
+    link.click();
+    URL.revokeObjectURL(url);
+  },
   discardOutgoingEmail: (id: string) =>
     request(`${ADMIN_API_PREFIX}/outgoing_emails/${id}/discard`, {
       method: "POST",

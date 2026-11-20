@@ -19,16 +19,22 @@ class InvestorMailer < ApplicationMailer
 
   # Email cuando el admin aprueba el depósito: bienvenida si es el aporte
   # inicial, confirmación de ingreso si no. Mismos datos que el comprobante.
-  def deposit_approved(investor, request, force: false)
+  # En el aporte inicial, greeting ('bienvenido' o 'bienvenida') y password
+  # (contraseña inicial, solo si el inversor entra sin Google) los completa un
+  # admin en Correos; mientras falten, el borrador lleva marcas que bloquean
+  # el envío (ver WelcomeEmail). La Guía de bienvenida se adjunta al enviar.
+  def deposit_approved(investor, request, force: false, greeting: nil, password: nil)
     assign_movement(investor, request)
 
     return if !force && !NotificationGate.should_send_to_investor?(investor.email)
 
     if @data[:kind] == :aporte
-      @fee_example = MoneyFormat.usd(BigDecimal(investor.trading_fee_percentage.to_s))
+      @welcome_word = WelcomeEmail.word(greeting)
+      @uses_password = WelcomeEmail.uses_password_for?(investor)
+      @initial_password = password.presence || WelcomeEmail::PASSWORD_MARK
       mail(
         to: investor.email,
-        subject: "Winbit | Bienvenida y aporte de capital | #{@data[:amount_label]}",
+        subject: "#{@data[:first_name]}, #{@welcome_word.downcase} a Winbit",
         template_name: 'initial_deposit_approved'
       )
     else
@@ -133,6 +139,15 @@ class InvestorMailer < ApplicationMailer
       attachments[RequestReceiptPdfs::Generate.filename_for(request)] = {
         mime_type: receipt.content_type,
         content: receipt.pdf_data,
+      }
+    end
+
+    if WelcomeEmail.welcome?(outgoing_email)
+      attachments[WelcomeGuidePdfs::Generate::FILENAME] = {
+        mime_type: 'application/pdf',
+        content: WelcomeGuidePdfs::Generate.call(
+          investor: outgoing_email.investor, greeting: WelcomeEmail.greeting_of(outgoing_email)
+        ),
       }
     end
 

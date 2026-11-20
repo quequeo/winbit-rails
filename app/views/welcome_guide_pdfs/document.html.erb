@@ -1,0 +1,176 @@
+<%#
+  Guía de bienvenida (A4) que se adjunta al mail de alta - ver app/services/welcome_guide_pdfs/generate.rb.
+  Fuente aprobada por Federico el 17/11/2026: 03_App/Alta_inversor/Contrato_Winbit_v2/guia.html.
+
+  Locals:
+    data - Hash de WelcomeGuidePdfs::Generate#data
+%>
+<% assets = InvestorMonthlyReportPdfs::Assets %>
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Guía de bienvenida · <%= data[:first_name] %></title>
+<style>
+@font-face { font-family: "Plex"; font-weight: 400; src: url(<%= assets.font_data_uri(:sans_regular) %>) format("truetype"); }
+@font-face { font-family: "Plex"; font-weight: 500; src: url(<%= assets.font_data_uri(:sans_medium) %>) format("truetype"); }
+@font-face { font-family: "Plex"; font-weight: 600; src: url(<%= assets.font_data_uri(:sans_semibold) %>) format("truetype"); }
+@font-face { font-family: "PlexC"; font-weight: 600; src: url(<%= assets.font_data_uri(:condensed_semibold) %>) format("truetype"); }
+@font-face { font-family: "PlexC"; font-weight: 700; src: url(<%= assets.font_data_uri(:condensed_bold) %>) format("truetype"); }
+@page { size: A4; margin: 0; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: "Plex"; color: #1A1D1B; font-size: 10.4pt; line-height: 1.55; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.cover { height: 296.5mm; background: #262B29; color: #ECE4D5; padding: 26mm 22mm; display: flex; flex-direction: column; justify-content: space-between; page-break-after: always; position: relative; overflow: hidden; }
+.cover img { width: 92mm; }
+.cover .k { font-family: "PlexC"; font-weight: 600; letter-spacing: 2.5pt; font-size: 10pt; color: #479785; text-transform: uppercase; }
+.cover h1 { font-family: "PlexC"; font-weight: 700; font-size: 40pt; line-height: 1.02; text-transform: uppercase; margin-top: 4mm; }
+.cover h1 span { color: #479785; }
+.cover p { color: #A7AAA2; font-size: 12pt; max-width: 130mm; margin-top: 6mm; }
+.cover .line { position: absolute; right: -40mm; top: 40mm; width: 160mm; height: 300mm; border-left: 1pt solid rgba(57,131,109,.35); transform: skewX(-24deg); }
+.cover .foot { font-size: 9pt; color: #6E746F; }
+.pg { padding: 18mm 20mm 12mm; page-break-after: always; }
+.pg:last-child { page-break-after: auto; }
+.top { display: flex; justify-content: space-between; align-items: center; border-bottom: 1.2pt solid #39836D; padding-bottom: 4mm; margin-bottom: 8mm; }
+.top img { height: 9mm; }
+.top span { font-family: "PlexC"; font-weight: 600; font-size: 8pt; letter-spacing: 1.6pt; color: #39836D; text-transform: uppercase; }
+h2 { font-family: "PlexC"; font-weight: 700; font-size: 15pt; text-transform: uppercase; margin: 0 0 3mm; display: flex; gap: 3mm; align-items: baseline; }
+h2 b { color: #39836D; font-size: 12pt; }
+.sec { margin-bottom: 8mm; break-inside: avoid; }
+p { margin-bottom: 2mm; }
+.cards { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; margin-top: 3mm; }
+.card { border: 1pt solid #D7DAD6; border-radius: 3mm; padding: 4mm; }
+.card h3 { font-family: "PlexC"; font-weight: 700; font-size: 11pt; text-transform: uppercase; color: #2F6F5D; margin-bottom: 1.5mm; }
+.card p { font-size: 9.6pt; margin: 0; }
+.big { font-family: "PlexC"; font-weight: 700; font-size: 26pt; color: #39836D; line-height: 1; margin-bottom: 1mm; }
+.fine { font-size: 8.5pt; color: #6B716D; margin-top: 3mm; }
+.steps { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; }
+.step { background: #F2F5F3; border-radius: 3mm; padding: 4mm; }
+.step h3 { font-family: "PlexC"; font-weight: 700; font-size: 11pt; text-transform: uppercase; margin-bottom: 1.5mm; }
+ul { margin: 0 0 2mm 5mm; }
+li { margin-bottom: 1mm; }
+.contact { background: #262B29; color: #ECE4D5; border-radius: 3mm; padding: 5mm 6mm; display: flex; gap: 8mm; align-items: center; }
+.contact img { height: 10mm; }
+.contact div { font-size: 9.6pt; line-height: 1.6; }
+.f { font-weight: 600; }
+a { color: inherit; }
+.contact a { color: #ECE4D5; text-decoration: none; border-bottom: .6pt solid #479785; }
+.sec a[href*="instagram"] { color: #2F6F5D; text-decoration: none; border-bottom: .8pt solid #39836D; }
+.lead { font-weight: 600; margin-top: 3mm; }
+.cta { display: block; text-decoration: none; background: #262B29; color: #ECE4D5; border-radius: 3mm; padding: 5mm 6mm; margin-top: 4mm; border-left: 2.5mm solid #39836D; }
+.cta-k { display: block; font-family: "PlexC"; font-weight: 600; font-size: 8pt; letter-spacing: 1.8pt; color: #479785; text-transform: uppercase; }
+.cta-t { display: block; font-family: "PlexC"; font-weight: 700; font-size: 16pt; text-transform: uppercase; margin: 1mm 0; }
+.cta-u { display: block; font-size: 9.6pt; color: #A7AAA2; }
+.cta-u u { color: #ECE4D5; }
+.contact .lines { border-left: 1pt solid #28312D; padding-left: 7mm; font-size: 10.5pt; line-height: 1.9; }
+.contact .lines a { display: block; border: 0; }
+.contact img { height: 12mm; }
+.ico { width: 9mm; height: 9mm; fill: none; stroke: #39836D; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; margin-bottom: 1.5mm; display: block; }
+.contact .wa { display: inline-block; background: #39836D; color: #fff; font-weight: 600; font-size: 9.6pt; padding: 2mm 5mm; border-radius: 2mm; border: 0; margin-left: auto; }
+.f2 { color: #8FD1BE; }
+</style>
+</head>
+<body>
+
+<section class="cover">
+  <div class="line"></div>
+  <img src="<%= assets.data_uri(:guide_logo_dark) %>" alt="Winbit">
+  <div>
+    <div class="k">Guía de bienvenida</div>
+    <h1><span class="f2"><%= data[:welcome_word] %></span> a Winbit,<br><span><%= data[:first_name] %></span></h1>
+    <p>Gracias por elegirnos para hacer crecer tu capital. En esta guía te contamos cómo trabajamos, cómo cuidamos tu capital y cómo usar la app. Guardala: es tu documento de referencia.</p>
+  </div>
+  <div class="foot">winbit.com.ar · contacto@winbit.com.ar · WhatsApp +54 9 11 4178-3126</div>
+</section>
+
+<section class="pg">
+  <div class="top"><img src="<%= assets.data_uri(:guide_logo_light) %>" alt="Winbit"><span>Guía de bienvenida</span></div>
+
+  <div class="sec">
+    <h2><b>01</b> Tu capital, siempre en dólares</h2>
+    <p>Tu capital se mantiene en USD en todo momento. No se convierte a pesos ni a otras monedas.</p>
+  </div>
+
+  <div class="sec">
+    <h2><b>02</b> Cómo trabajamos</h2>
+    <p>En Winbit hacemos trading de manera profesional y diaria. Operamos en el <b>mercado de futuros de Chicago (CME, Chicago Mercantile Exchange)</b>, el mercado de futuros más importante del mundo, y con esas operaciones generamos la rentabilidad de tu capital.</p>
+    <p class="lead">Algunas características propias de nuestra forma de trabajar:</p>
+    <div class="cards">
+      <div class="card"><div class="big">1%</div><h3>Riesgo definido antes de operar</h3><p>Cada jornada tiene un límite de pérdida del 1% del capital administrado, fijado antes de entrar al mercado. Como máximo hacemos una operación por día, y hay días en que no operamos.</p></div>
+      <div class="card"><svg class="ico" viewBox="0 0 24 24"><path d="M3 17a9 9 0 0 1 18 0"/><path d="M12 17l4-5"/><circle cx="12" cy="17" r="1.2"/></svg><h3>Control del riesgo</h3><p>Ese límite es la base de nuestra gestión del riesgo: nos permite controlar cuánto se arriesga cada día y evitar movimientos bruscos del capital.</p></div>
+      <div class="card"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg><h3>Sin exposición de un día al otro</h3><p>Las operaciones duran minutos y se abren y se cierran en el día. Así reducimos la exposición del capital a la volatilidad del mercado fuera de esos minutos.</p></div>
+      <div class="card"><svg class="ico" viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg><h3>Crecimiento sostenido</h3><p>Buscamos que el capital crezca de forma constante a lo largo del tiempo.</p></div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h2><b>03</b> Ingresos y retiros</h2>
+    <ul>
+      <li>Ingresás capital cuando quieras, desde la app.</li>
+      <li>Retirás en cualquier momento, <b>sin plazos de permanencia</b>. Lo que pedís hasta las 16:00 se procesa ese mismo día antes de las 18:00; lo que pedís después, desde las 8:00 del día hábil siguiente.</li>
+      <li>Cada ingreso y cada retiro queda registrado con su comprobante numerado, que te enviamos por correo electrónico.</li>
+    </ul>
+  </div>
+</section>
+
+<section class="pg">
+  <div class="top"><img src="<%= assets.data_uri(:guide_logo_light) %>" alt="Winbit"><span>Guía de bienvenida</span></div>
+
+  <div class="sec">
+    <h2><b>04</b> Tu app</h2>
+    <p>Con la app seguís la evolución de tu capital y su rentabilidad, en USD y en porcentaje, ves tus movimientos y la operativa de cada día, hacés ingresos y pedís retiros, y recibís un aviso en el celular cuando se procesa cada solicitud.</p>
+
+    <a class="cta" href="https://app.winbit.com.ar/instalar/">
+      <span class="cta-k">Primer paso</span>
+      <span class="cta-t">Instalá la app en tu celular</span>
+      <span class="cta-u">Paso a paso con capturas, para Android y iPhone: <u>app.winbit.com.ar/instalar</u></span>
+    </a>
+
+    <p style="margin-top:4mm"><b>Cómo entrar</b> (en <a href="https://app.winbit.com.ar">app.winbit.com.ar</a>):</p>
+    <div class="steps">
+      <div class="step"><h3>Si tu correo es de Gmail</h3><p>Tocá <b>"Acceder con Google"</b> y elegí tu correo. Para entrar así desde el celular, tenés que tener <b>iniciada tu cuenta de Google en el teléfono</b> (la misma que nos pasaste).</p></div>
+      <div class="step"><h3>Si tu correo no es de Gmail</h3><p>Tu usuario es <b>tu correo</b> y la contraseña inicial te la enviamos en el mail de bienvenida. Después cambiala desde la app: tocá el <b>ícono de la persona</b> (arriba a la derecha) → <b>"Cambiar contraseña"</b>.</p></div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h2><b>05</b> Comisión</h2>
+    <p>Winbit cobra una comisión del <span class="f"><%= data[:fee_percentage] %>%</span> solo sobre la nueva rentabilidad positiva. No se cobra por administrar el capital ni por ingresar o retirar fondos. Se liquida al cierre de cada trimestre (31/3, 30/6, 30/9 y 31/12) o al retirar, solo si hubo rentabilidad nueva desde la última liquidación. Si un período es negativo, no se cobra hasta recuperar el valor anterior.</p>
+    <p>Por ejemplo, con tu comisión del <span class="f"><%= data[:fee_percentage] %>%</span>, si tu capital pasa de USD 1.000 a USD 1.100, la comisión es de <span class="f"><%= data[:fee_example] %></span>.</p>
+  </div>
+
+  <div class="sec">
+    <h2><b>06</b> Reporte mensual</h2>
+    <p>En los primeros días de cada mes te llega un reporte con el resultado del mes, el resumen de tu cuenta y los movimientos operativos, con el detalle de cada operación.</p>
+  </div>
+
+</section>
+
+<section class="pg">
+  <div class="top"><img src="<%= assets.data_uri(:guide_logo_light) %>" alt="Winbit"><span>Guía de bienvenida</span></div>
+
+  <div class="sec">
+    <h2><b>07</b> Custodia</h2>
+    <p>El capital se custodia en entidades bancarias reguladas en el exterior, no en exchanges de criptomonedas. Solo mantenemos una pequeña reserva en USDT para procesar los retiros en el día. Cada ingreso y cada retiro queda registrado con su comprobante, que te enviamos por correo electrónico.</p>
+  </div>
+
+  <div class="sec">
+    <h2><b>08</b> Seguimiento de las operaciones</h2>
+    <p>Compartimos la operativa en nuestro Instagram, un espacio pensado para quienes invierten con nosotros: <a href="https://www.instagram.com/winbit.capital/"><b>@winbit.capital</b></a></p>
+  </div>
+
+  <div class="sec">
+    <h2><b>09</b> Contacto y seguridad</h2>
+    <p>Por ningún canal te vamos a pedir contraseñas, códigos ni que transfieras fondos a una cuenta distinta de la habitual.</p>
+    <div class="contact">
+      <img src="<%= assets.data_uri(:guide_logo_dark) %>" alt="Winbit">
+      <div class="lines">
+        <a href="https://wa.me/5491141783126">WhatsApp +54 9 11 4178-3126</a>
+        <a href="mailto:contacto@winbit.com.ar">contacto@winbit.com.ar</a>
+        <a href="https://winbit.com.ar">winbit.com.ar</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+</body>
+</html>

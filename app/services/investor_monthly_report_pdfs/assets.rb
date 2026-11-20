@@ -20,6 +20,8 @@ module InvestorMonthlyReportPdfs
       back: ['back.jpg', 'image/jpeg'],
       receipt_logo: ['receipt-logo.png', 'image/png'],
       receipt_back: ['receipt-back.jpg', 'image/jpeg'],
+      guide_logo_light: ['guide-logo-light.png', 'image/png'],
+      guide_logo_dark: ['guide-logo-dark.png', 'image/png'],
     }.freeze
 
     # IBM Plex Sans (body text) + IBM Plex Sans Condensed (headline/number

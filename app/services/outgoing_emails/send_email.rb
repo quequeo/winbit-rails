@@ -23,6 +23,8 @@ module OutgoingEmails
     def call
       raise StandardError, 'Este correo ya fue enviado o descartado' unless @email.pending?
 
+      WelcomeEmail.ensure_ready!(@email)
+
       InvestorMailer.reviewed_message(@email).deliver_now
       @email.update!(status: 'SENT', sent_at: Time.current, sent_by: @sent_by, error: nil)
       @email

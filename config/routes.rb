@@ -69,6 +69,8 @@ Rails.application.routes.draw do
       post 'outgoing_emails/:id/schedule', to: 'outgoing_emails#schedule', format: false
       post 'outgoing_emails/:id/unschedule', to: 'outgoing_emails#unschedule', format: false
       post 'outgoing_emails/:id/regenerate', to: 'outgoing_emails#regenerate', format: false
+        post 'outgoing_emails/:id/welcome', to: 'outgoing_emails#welcome', format: false
+        get 'outgoing_emails/:id/welcome_guide', to: 'outgoing_emails#welcome_guide', format: false
       post 'requests/:id/reset_approval_to_pending', to: 'requests#reset_approval_to_pending', format: false
       resources :admins, only: [:index, :create, :update, :destroy], format: false
 
@@ -155,6 +157,8 @@ Rails.application.routes.draw do
         post 'outgoing_emails/:id/schedule', to: 'outgoing_emails#schedule', format: false
         post 'outgoing_emails/:id/unschedule', to: 'outgoing_emails#unschedule', format: false
         post 'outgoing_emails/:id/regenerate', to: 'outgoing_emails#regenerate', format: false
+        post 'outgoing_emails/:id/welcome', to: 'outgoing_emails#welcome', format: false
+        get 'outgoing_emails/:id/welcome_guide', to: 'outgoing_emails#welcome_guide', format: false
         post 'requests/:id/reset_approval_to_pending', to: 'requests#reset_approval_to_pending', format: false
         resources :admins, only: [:index, :create, :update, :destroy], format: false
 
