@@ -104,8 +104,86 @@ RSpec.describe 'Admin outgoing emails', type: :request do
       post "/api/admin/outgoing_emails/#{draft.id}/regenerate"
 
       expect(response).to have_http_status(:ok)
-      expect(JSON.parse(response.body)['data']['bodyHtml']).to include('Te damos la bienvenida a Winbit')
+      expect(JSON.parse(response.body)['data']['bodyHtml']).to include('Nos alegra mucho que nos elijas')
       expect(ActivityLog.where(action: 'regenerate_outgoing_email').count).to eq(1)
+    end
+
+    describe 'mail de alta' do
+      let(:request) do
+        InvestorRequest.create!(investor: investor, request_type: 'DEPOSIT', method: 'USDT', amount: 100,
+                                status: 'APPROVED', processed_at: Time.current, operation_number: 'A-2026-0001')
+      end
+      let(:welcome) { OutgoingEmails::Draft.call(kind: 'DEPOSIT_APPROVED', investor: investor, request: request) }
+
+      it 'shows what is missing and blocks sending' do
+        get "/api/admin/outgoing_emails/#{welcome.id}"
+        data = JSON.parse(response.body)['data']
+        expect(data['welcome']).to include('greeting' => nil, 'usesPassword' => true,
+                                           'guideFilename' => 'Winbit_Guia_de_bienvenida.pdf')
+        expect(data['welcome']['missing']).to eq([ 'elegí "Bienvenido" o "Bienvenida"',
+                                                   'generá la contraseña inicial con "Aplicar al correo"' ])
+
+        login_as(admin, scope: :user)
+        post "/api/admin/outgoing_emails/#{welcome.id}/send"
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(welcome.reload.status).to eq('DRAFT')
+      end
+
+      it 'completes the greeting and then lets it be scheduled' do
+        post "/api/admin/outgoing_emails/#{welcome.id}/welcome", params: { greeting: 'bienvenida' }
+
+        expect(response).to have_http_status(:ok)
+        expect(welcome.reload.subject).to eq('Oe, bienvenida a Winbit')
+        expect(JSON.parse(response.body)['data']['welcome']['missing']).to eq([])
+        expect(ActivityLog.where(action: 'complete_welcome_email').count).to eq(1)
+
+        login_as(admin, scope: :user)
+        post "/api/admin/outgoing_emails/#{welcome.id}/schedule"
+        expect(welcome.reload.status).to eq('SCHEDULED')
+      end
+
+      it 'generates the initial password, assigns it to the investor and puts it in the mail' do
+        post "/api/admin/outgoing_emails/#{welcome.id}/welcome", params: { greeting: 'bienvenido' }
+
+        expect(response).to have_http_status(:ok)
+        password = welcome.reload.body_html[%r{contraseña inicial es <strong>([^<]+)</strong>}, 1]
+        expect(password).to match(/\A[a-zA-Z2-9]{10}\z/)
+        expect(investor.reload.authenticate(password)).to be_truthy
+        expect(welcome.body_html).not_to include(WelcomeEmail::PASSWORD_MARK)
+      end
+
+      it 'does not touch the password of a Gmail investor' do
+        investor.update!(email: 'oe-inv@gmail.com')
+
+        post "/api/admin/outgoing_emails/#{welcome.id}/welcome", params: { greeting: 'bienvenido' }
+
+        expect(investor.reload.password_digest).to be_nil
+        expect(welcome.reload.body_html).to include('Acceder con Google')
+      end
+
+      it 'keeps the chosen greeting when the format is updated' do
+        allow(RequestReceiptPdfs::Generate).to receive(:call)
+        post "/api/admin/outgoing_emails/#{welcome.id}/welcome", params: { greeting: 'bienvenida' }
+        login_as(admin, scope: :user)
+        post "/api/admin/outgoing_emails/#{welcome.id}/regenerate"
+
+        expect(welcome.reload.subject).to eq('Oe, bienvenida a Winbit')
+      end
+
+      it 'downloads the welcome guide' do
+        allow(WelcomeGuidePdfs::Generate).to receive(:call).and_return('%PDF-guide')
+
+        get "/api/admin/outgoing_emails/#{welcome.id}/welcome_guide"
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to eq('%PDF-guide')
+        expect(response.headers['Content-Disposition']).to include('Winbit_Guia_de_bienvenida.pdf')
+      end
+
+      it 'rejects other emails' do
+        post "/api/admin/outgoing_emails/#{draft.id}/welcome", params: { greeting: 'bienvenida' }
+        expect(response).to have_http_status(:unprocessable_entity)
+      end
     end
 
     it 'does not update emails without a receipt' do

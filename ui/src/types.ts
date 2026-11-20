@@ -79,6 +79,13 @@ export interface ApiOutgoingEmail {
   scheduledFor?: string | null;
   investor: { id: string; name: string };
   bodyHtml?: string;
+  // Solo en el mail de alta (aporte inicial).
+  welcome?: {
+    greeting: "bienvenido" | "bienvenida" | null;
+    usesPassword: boolean;
+    missing: string[];
+    guideFilename: string;
+  };
 }
 
 export interface ApiRequest {

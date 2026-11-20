@@ -16,6 +16,10 @@ module OutgoingEmails
         begin
           SendEmail.call(outgoing_email: email, sent_by: email.scheduled_by)
           true
+        rescue WelcomeEmail::NotReady => e
+          # Por ejemplo, un mail de alta programado al que después se le actualizó el formato.
+          email.update!(status: 'FAILED', error: e.message)
+          false
         rescue SendEmail::DeliveryFailed => e
           Rails.logger.error("[OutgoingEmails::SendDue] email=#{email.id}: #{e.message}")
           false

@@ -63,6 +63,13 @@ export const OutgoingEmailsPage = () => {
   const [reloadKey, setReloadKey] = useState(0);
   const [editingTime, setEditingTime] = useState(false);
   const [timeValue, setTimeValue] = useState("");
+  const [welcomeGreeting, setWelcomeGreeting] = useState<
+    "bienvenido" | "bienvenida" | ""
+  >("");
+
+  useEffect(() => {
+    setWelcomeGreeting(detail?.welcome?.greeting ?? "");
+  }, [detail?.id, detail?.welcome?.greeting]);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -161,9 +168,28 @@ export const OutgoingEmailsPage = () => {
     }
   };
 
+  const downloadGuide = async (id: string) => {
+    try {
+      await api.downloadWelcomeGuide(id);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Error");
+    }
+  };
+
+  const applyWelcome = () => {
+    if (!detail || !welcomeGreeting) return;
+    run(
+      () => api.completeWelcomeEmail(detail.id, { greeting: welcomeGreeting }),
+      "Listo: el mail de alta quedó completo. Revisalo abajo antes de enviarlo.",
+    );
+  };
+
   const detailIsPending = detail
     ? PENDING_STATUSES.includes(detail.status)
     : false;
+  // Mail de alta con datos sin completar: no se puede enviar ni programar.
+  const welcomeMissing = detail?.welcome?.missing ?? [];
+  const welcomeBlocked = welcomeMissing.length > 0;
 
   return (
     <div>
@@ -280,7 +306,69 @@ export const OutgoingEmailsPage = () => {
                     </dd>
                   </>
                 ) : null}
+                {detail.welcome ? (
+                  <>
+                    <dt className="text-t-muted">Adjunto</dt>
+                    <dd>
+                      <button
+                        type="button"
+                        className="text-primary underline"
+                        onClick={() => downloadGuide(detail.id)}
+                      >
+                        {detail.welcome.guideFilename}
+                      </button>
+                    </dd>
+                  </>
+                ) : null}
               </dl>
+
+              {detail.welcome && detailIsPending ? (
+                <div className="mt-4 rounded-lg border border-b-default px-4 py-3 text-sm text-t-primary">
+                  <p className="font-semibold">
+                    Mail de alta: completalo antes de enviar
+                  </p>
+                  <fieldset className="mt-2 flex gap-4">
+                    <legend className="sr-only">Saludo</legend>
+                    {(["bienvenido", "bienvenida"] as const).map((g) => (
+                      <label key={g} className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name="welcome-greeting"
+                          value={g}
+                          checked={welcomeGreeting === g}
+                          onChange={() => setWelcomeGreeting(g)}
+                        />
+                        {g === "bienvenido" ? "Bienvenido" : "Bienvenida"}
+                      </label>
+                    ))}
+                  </fieldset>
+                  {detail.welcome.usesPassword ? (
+                    <p className="mt-2 text-t-muted">
+                      No entra con Google: al aplicar se genera sola una
+                      contraseña inicial nueva, se le asigna al inversor
+                      (reemplaza la que tuviera) y va en el mail.
+                    </p>
+                  ) : (
+                    <p className="mt-2 text-t-muted">
+                      Entra con Google: no hace falta contraseña.
+                    </p>
+                  )}
+                  <div className="mt-3">
+                    <Button
+                      disabled={busy || !welcomeGreeting}
+                      onClick={applyWelcome}
+                    >
+                      Aplicar al correo
+                    </Button>
+                  </div>
+                  {welcomeBlocked ? (
+                    <p className="mt-3 text-warning">
+                      Falta: {welcomeMissing.join(" y ")}. Hasta entonces no se
+                      puede enviar ni programar.
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
 
               {detail.status === "SCHEDULED" && detail.scheduledFor ? (
                 <div className="mt-4 rounded-lg border border-b-accent bg-primary-dim px-4 py-3 text-sm text-t-primary">
@@ -341,7 +429,7 @@ export const OutgoingEmailsPage = () => {
                     </Button>
                   ) : (
                     <Button
-                      disabled={busy}
+                      disabled={busy || welcomeBlocked}
                       onClick={() => setConfirm("schedule")}
                     >
                       Programar envío
@@ -359,7 +447,7 @@ export const OutgoingEmailsPage = () => {
                   </Button>
                   <Button
                     variant="outline"
-                    disabled={busy}
+                    disabled={busy || welcomeBlocked}
                     onClick={() => setConfirm("send")}
                   >
                     Enviar ahora
@@ -416,10 +504,18 @@ export const OutgoingEmailsPage = () => {
                   ? ` el ${formatDateAR(detail.scheduledFor)}`
                   : ""
               }${
-                detail?.hasReceipt ? " con el comprobante adjunto" : ""
+                detail?.hasReceipt
+                  ? detail.welcome
+                    ? " con el comprobante y la Guía de bienvenida adjuntos"
+                    : " con el comprobante adjunto"
+                  : ""
               }. ¿Confirmás?`
             : `Se enviará ahora mismo a ${detail?.to ?? ""}${
-                detail?.hasReceipt ? " con el comprobante adjunto" : ""
+                detail?.hasReceipt
+                  ? detail.welcome
+                    ? " con el comprobante y la Guía de bienvenida adjuntos"
+                    : " con el comprobante adjunto"
+                  : ""
               }. ¿Confirmás?`
         }
         confirmText={confirm === "schedule" ? "Programar" : "Enviar ahora"}
