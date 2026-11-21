@@ -2,7 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import { api } from "../lib/api";
 import { Button } from "../components/ui/Button";
 import { DatePicker } from "../components/ui/DatePicker";
-import { formatCurrencyAR, formatNumberAR } from "../lib/formatters";
+import {
+  formatCurrencyAR,
+  formatDateAR,
+  formatNumberAR,
+} from "../lib/formatters";
 import {
   OperatingDualChart,
   type OperatingChartPoint,
@@ -36,6 +40,15 @@ type MonthlySummaryRow = {
 };
 
 const MONTH_WINDOW_OPTIONS = [1, 2, 3, 6, 12];
+
+// Detalle diario: mismo criterio que la app (positivo en verde con "+",
+// negativo en rojo, cero en gris) para leer el resultado de un vistazo.
+const resultTone = (value: number) =>
+  value > 0 ? "text-success" : value < 0 ? "text-error" : "text-t-dim";
+const signedUsd = (value: number) =>
+  `${value > 0 ? "+" : ""}${formatCurrencyAR(value)}`;
+const signedPercent = (value: number) =>
+  `${value > 0 ? "+" : ""}${formatNumberAR(value)}%`;
 const HIDE_USD_STORAGE_KEY = "operatingHistory.hideUsdAmounts";
 const USD_MASK = "••••";
 
@@ -706,7 +719,7 @@ export const OperatingHistoryPage = () => {
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-xl border border-b-default">
+        <div className="overflow-x-auto rounded-xl border border-b-default">
           <table className="min-w-full divide-y divide-b-default">
             <thead className="bg-dark-section">
               <tr>
@@ -714,10 +727,7 @@ export const OperatingHistoryPage = () => {
                   Fecha
                 </th>
                 <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-t-muted">
-                  Resultado (%)
-                </th>
-                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-t-muted">
-                  Resultado (USD)
+                  Resultado
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-t-muted">
                   Notas
@@ -732,7 +742,7 @@ export const OperatingHistoryPage = () => {
                 <tr>
                   <td
                     className="px-4 py-6 text-center text-sm text-t-dim"
-                    colSpan={5}
+                    colSpan={4}
                   >
                     {loadingHistory
                       ? "Cargando…"
@@ -742,14 +752,26 @@ export const OperatingHistoryPage = () => {
               ) : (
                 history.map((h) => (
                   <tr key={h.id} className="hover:bg-dark-section">
-                    <td className="px-4 py-3 text-sm text-t-primary">
-                      {h.date}
+                    <td className="whitespace-nowrap px-4 py-3 text-sm text-t-primary">
+                      {formatDateAR(h.date, { time: false })}
                     </td>
-                    <td className="px-4 py-3 text-right text-sm text-t-primary">
-                      {formatNumberAR(h.percent)}%
-                    </td>
-                    <td className="px-4 py-3 text-right text-sm text-t-primary">
-                      {formatCurrencyAR(h.amount_usd ?? 0)}
+                    <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums">
+                      <div
+                        className={`text-sm font-semibold ${
+                          hideUsdAmounts
+                            ? "text-t-muted"
+                            : resultTone(Number(h.amount_usd ?? 0))
+                        }`}
+                      >
+                        {hideUsdAmounts
+                          ? USD_MASK
+                          : signedUsd(Number(h.amount_usd ?? 0))}
+                      </div>
+                      <div
+                        className={`mt-0.5 text-xs ${resultTone(Number(h.percent))}`}
+                      >
+                        {signedPercent(Number(h.percent))}
+                      </div>
                     </td>
                     <td className="px-4 py-3 text-sm text-t-muted">
                       {h.notes || "—"}
