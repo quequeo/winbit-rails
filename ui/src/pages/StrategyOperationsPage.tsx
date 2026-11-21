@@ -12,6 +12,7 @@ import {
   type StrategyOperationExportRow,
 } from "../lib/exportStrategyOperationsToExcel";
 import { formatStrategyOperationTime } from "../lib/formatStrategyOperationTime";
+import { OperatingAsset } from "../components/OperatingAsset";
 import { formatCurrencyAR, formatDateAR, formatNumberAR } from "../lib/formatters";
 import {
   strategyOperationTone,
@@ -237,7 +238,6 @@ export const StrategyOperationsPage = () => {
                   "Resultado",
                   "USD",
                   "Ratio",
-                  "L/S",
                   "Notas",
                 ].map((label) => (
                   <th
@@ -255,11 +255,11 @@ export const StrategyOperationsPage = () => {
                 const toneClass = strategyOperationToneClass(tone);
                 return (
                   <tr key={row.id} className="hover:bg-dark-section">
-                    <td className="px-4 py-3 text-sm text-t-muted">
+                    <td className="whitespace-nowrap px-4 py-3 text-sm text-t-muted">
                       {formatDateAR(row.operationDate, { time: false })}
                     </td>
-                    <td className="px-4 py-3 text-sm font-semibold text-t-primary">
-                      {row.asset}
+                    <td className="px-4 py-3">
+                      <OperatingAsset asset={row.asset} direction={row.direction} />
                     </td>
                     <td className="px-4 py-3 text-sm text-t-muted">
                       {row.timeframe || "—"}
@@ -274,13 +274,12 @@ export const StrategyOperationsPage = () => {
                       {row.resultLabel || "—"}
                     </td>
                     <td className={`px-4 py-3 text-right text-sm font-semibold ${toneClass}`}>
-                      {row.resultUsd != null ? formatCurrencyAR(row.resultUsd) : "—"}
+                      {row.resultUsd != null
+                        ? `${row.resultUsd > 0 ? "+" : ""}${formatCurrencyAR(row.resultUsd)}`
+                        : "—"}
                     </td>
                     <td className="px-4 py-3 text-right text-sm text-t-muted">
                       {row.ratio != null ? formatNumberAR(row.ratio) : "—"}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-t-muted">
-                      {row.direction || "—"}
                     </td>
                     <td className="max-w-md px-4 py-3 text-sm text-t-dim">
                       {row.notes || "—"}
