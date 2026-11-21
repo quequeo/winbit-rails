@@ -41,7 +41,7 @@ describe("StrategyOperationsPage", () => {
     expect(screen.getByText("Operaciones de estrategia")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Descargar Excel" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Copiar para GPT" })).toBeInTheDocument();
-    await waitFor(() => expect(screen.getByText("NQ")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getAllByText("MNQ — Nasdaq")[0]).toBeInTheDocument());
   });
 
   it("copies filtered operations for GPT analysis", async () => {
@@ -51,7 +51,7 @@ describe("StrategyOperationsPage", () => {
       .mockResolvedValue();
 
     render(<StrategyOperationsPage />);
-    await waitFor(() => expect(screen.getByText("NQ")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getAllByText("MNQ — Nasdaq")[0]).toBeInTheDocument());
 
     await user.click(screen.getByRole("button", { name: "Copiar para GPT" }));
 
@@ -71,7 +71,7 @@ describe("StrategyOperationsPage", () => {
     );
 
     render(<StrategyOperationsPage />);
-    await waitFor(() => expect(screen.getByText("NQ")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getAllByText("MNQ — Nasdaq")[0]).toBeInTheDocument());
 
     await user.click(screen.getByRole("button", { name: "Copiar para GPT" }));
 

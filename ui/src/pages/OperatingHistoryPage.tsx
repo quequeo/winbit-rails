@@ -2,12 +2,17 @@ import { useEffect, useMemo, useState } from "react";
 import { api } from "../lib/api";
 import { Button } from "../components/ui/Button";
 import { DatePicker } from "../components/ui/DatePicker";
-import { formatCurrencyAR, formatNumberAR } from "../lib/formatters";
+import {
+  formatCurrencyAR,
+  formatDateAR,
+  formatNumberAR,
+} from "../lib/formatters";
 import {
   OperatingDualChart,
   type OperatingChartPoint,
 } from "../components/OperatingDualChart";
 import { exportOperatingToExcel } from "../lib/exportOperatingToExcel";
+import { OperatingAsset } from "../components/OperatingAsset";
 import {
   countStrategyResults,
   type StrategyResultCounts,
@@ -26,6 +31,13 @@ type HistoryRow = {
   created_at: string;
 };
 
+type DayOperation = {
+  id: string;
+  operationDate: string;
+  asset: string;
+  direction?: string | null;
+};
+
 type MonthlySummaryRow = {
   month: string;
   days: number;
@@ -36,6 +48,15 @@ type MonthlySummaryRow = {
 };
 
 const MONTH_WINDOW_OPTIONS = [1, 2, 3, 6, 12];
+
+// Detalle diario: mismo criterio que la app (positivo en verde con "+",
+// negativo en rojo, cero en gris) para leer el resultado de un vistazo.
+const resultTone = (value: number) =>
+  value > 0 ? "text-success" : value < 0 ? "text-error" : "text-t-dim";
+const signedUsd = (value: number) =>
+  `${value > 0 ? "+" : ""}${formatCurrencyAR(value)}`;
+const signedPercent = (value: number) =>
+  `${value > 0 ? "+" : ""}${formatNumberAR(value)}%`;
 const HIDE_USD_STORAGE_KEY = "operatingHistory.hideUsdAmounts";
 const USD_MASK = "••••";
 
@@ -125,13 +146,7 @@ const CameraIcon = ({ className }: { className?: string }) => (
       strokeWidth="1.8"
       strokeLinejoin="round"
     />
-    <circle
-      cx="12"
-      cy="14"
-      r="3.2"
-      stroke="currentColor"
-      strokeWidth="1.8"
-    />
+    <circle cx="12" cy="14" r="3.2" stroke="currentColor" strokeWidth="1.8" />
   </svg>
 );
 
@@ -184,6 +199,9 @@ export const OperatingHistoryPage = () => {
   const [loadingMonthly, setLoadingMonthly] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hideUsdAmounts, setHideUsdAmounts] = useState(readHideUsdPreference);
+  const [operationsByDate, setOperationsByDate] = useState<
+    Record<string, DayOperation[]>
+  >({});
   const [captureCounts, setCaptureCounts] = useState<Record<string, number>>(
     {},
   );
@@ -271,14 +289,40 @@ export const OperatingHistoryPage = () => {
           total_pages: number;
         };
       } | null;
-      setHistory(res?.data ?? []);
+      const rows = res?.data ?? [];
+      setHistory(rows);
       setHistoryMeta(res?.meta ?? null);
+      void loadDayOperations(rows);
       setHistoryPage(page);
       void loadCaptureCounts();
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Error al cargar historial");
     } finally {
       setLoadingHistory(false);
+    }
+  };
+
+  // Operación de cada día de la página (activo y dirección), para el resumen
+  // del Detalle diario. El detalle completo está en "Operaciones (detalle)".
+  const loadDayOperations = async (rows: HistoryRow[]) => {
+    if (rows.length === 0) {
+      setOperationsByDate({});
+      return;
+    }
+    const dates = rows.map((row) => row.date).sort();
+    try {
+      const res = (await api.getStrategyOperations({
+        from: dates[0],
+        to: dates[dates.length - 1],
+        per_page: 200,
+      })) as { data?: DayOperation[] } | null;
+      const byDate: Record<string, DayOperation[]> = {};
+      for (const op of res?.data ?? []) {
+        (byDate[op.operationDate] ||= []).push(op);
+      }
+      setOperationsByDate(byDate);
+    } catch {
+      setOperationsByDate({});
     }
   };
 
@@ -424,7 +468,10 @@ export const OperatingHistoryPage = () => {
         <div className="flex flex-col items-stretch gap-2 sm:items-end">
           <div className="flex flex-wrap items-end gap-2">
             <div>
-              <label className="mb-1 block text-xs text-t-dim" htmlFor="export-from">
+              <label
+                className="mb-1 block text-xs text-t-dim"
+                htmlFor="export-from"
+              >
                 Desde
               </label>
               <DatePicker
@@ -434,7 +481,10 @@ export const OperatingHistoryPage = () => {
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs text-t-dim" htmlFor="export-to">
+              <label
+                className="mb-1 block text-xs text-t-dim"
+                htmlFor="export-to"
+              >
                 Hasta
               </label>
               <DatePicker
@@ -555,9 +605,7 @@ export const OperatingHistoryPage = () => {
             return (
               <div key={m.month} className={`rounded-lg border p-4 ${tone}`}>
                 <div>
-                  <div className="text-xs uppercase">
-                    {monthLabel(m.month)}
-                  </div>
+                  <div className="text-xs uppercase">{monthLabel(m.month)}</div>
                   <div className="mt-1 text-lg font-semibold">
                     {sign}
                     {formatNumberAR(v)}%
@@ -639,11 +687,7 @@ export const OperatingHistoryPage = () => {
               >
                 Hasta
               </label>
-              <DatePicker
-                id="chart-to"
-                value={chartTo}
-                onChange={setChartTo}
-              />
+              <DatePicker id="chart-to" value={chartTo} onChange={setChartTo} />
             </div>
             <Button
               type="button"
@@ -706,23 +750,20 @@ export const OperatingHistoryPage = () => {
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-xl border border-b-default">
+        <div className="overflow-x-auto rounded-xl border border-b-default">
           <table className="min-w-full divide-y divide-b-default">
             <thead className="bg-dark-section">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-t-muted">
+                <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider text-t-muted sm:px-4">
                   Fecha
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-t-muted">
-                  Resultado (%)
+                <th className="hidden px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-t-muted sm:table-cell">
+                  Operación
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-t-muted">
-                  Resultado (USD)
+                <th className="px-3 py-3 text-right text-xs font-medium uppercase tracking-wider text-t-muted sm:px-4">
+                  Resultado
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-t-muted">
-                  Notas
-                </th>
-                <th className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-t-muted">
+                <th className="hidden px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-t-muted sm:table-cell">
                   Foto
                 </th>
               </tr>
@@ -732,7 +773,7 @@ export const OperatingHistoryPage = () => {
                 <tr>
                   <td
                     className="px-4 py-6 text-center text-sm text-t-dim"
-                    colSpan={5}
+                    colSpan={4}
                   >
                     {loadingHistory
                       ? "Cargando…"
@@ -740,38 +781,75 @@ export const OperatingHistoryPage = () => {
                   </td>
                 </tr>
               ) : (
-                history.map((h) => (
-                  <tr key={h.id} className="hover:bg-dark-section">
-                    <td className="px-4 py-3 text-sm text-t-primary">
-                      {h.date}
-                    </td>
-                    <td className="px-4 py-3 text-right text-sm text-t-primary">
-                      {formatNumberAR(h.percent)}%
-                    </td>
-                    <td className="px-4 py-3 text-right text-sm text-t-primary">
-                      {formatCurrencyAR(h.amount_usd ?? 0)}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-t-muted">
-                      {h.notes || "—"}
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      {(captureCounts[h.date] || 0) > 0 ? (
-                        <button
-                          type="button"
-                          className="inline-flex items-center justify-center rounded-md border border-b-accent bg-primary-dim p-1.5 text-primary hover:bg-primary/20 disabled:opacity-50"
-                          onClick={() => void openDayCaptures(h.date)}
-                          disabled={loadingCaptures}
-                          title={`Ver ${captureCounts[h.date]} captura(s)`}
-                          aria-label={`Ver capturas del ${h.date}`}
+                history.map((h) => {
+                  const dayOperations = operationsByDate[h.date] ?? [];
+                  const operation =
+                    dayOperations.length > 0 ? (
+                      <div className="space-y-1.5">
+                        {dayOperations.map((op) => (
+                          <OperatingAsset
+                            key={op.id}
+                            asset={op.asset}
+                            direction={op.direction}
+                            compact
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-sm text-t-dim">—</span>
+                    );
+                  const photo =
+                    (captureCounts[h.date] || 0) > 0 ? (
+                      <button
+                        type="button"
+                        className="inline-flex items-center justify-center rounded-md border border-b-accent bg-primary-dim p-1.5 text-primary hover:bg-primary/20 disabled:opacity-50"
+                        onClick={() => void openDayCaptures(h.date)}
+                        disabled={loadingCaptures}
+                        title={`Ver ${captureCounts[h.date]} captura(s)`}
+                        aria-label={`Ver capturas del ${h.date}`}
+                      >
+                        <CameraIcon className="h-4 w-4" />
+                      </button>
+                    ) : null;
+
+                  return (
+                    <tr key={h.id} className="hover:bg-dark-section">
+                      <td className="px-3 py-3 text-sm text-t-primary sm:px-4">
+                        <div className="flex items-center gap-2 whitespace-nowrap">
+                          {formatDateAR(h.date, { time: false })}
+                          {/* En el celular, la foto va al lado de la fecha. */}
+                          <span className="sm:hidden">{photo}</span>
+                        </div>
+                        {/* En el celular, la operación va debajo de la fecha. */}
+                        <div className="mt-1.5 sm:hidden">{operation}</div>
+                      </td>
+                      <td className="hidden px-4 py-3 sm:table-cell">
+                        {operation}
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-3 text-right tabular-nums sm:px-4">
+                        <div
+                          className={`text-sm font-semibold ${
+                            hideUsdAmounts
+                              ? "text-t-muted"
+                              : resultTone(Number(h.amount_usd ?? 0))
+                          }`}
                         >
-                          <CameraIcon className="h-4 w-4" />
-                        </button>
-                      ) : (
-                        <span className="text-xs text-t-dim">—</span>
-                      )}
-                    </td>
-                  </tr>
-                ))
+                          {hideUsdAmounts
+                            ? USD_MASK
+                            : signedUsd(Number(h.amount_usd ?? 0))}
+                        </div>
+                        <div
+                          className={`mt-0.5 text-xs ${resultTone(Number(h.percent))}`}
+                        >
+                          {signedPercent(Number(h.percent))}
+                        </div>
+                      </td>
+                      <td className="hidden px-4 py-3 text-center sm:table-cell">
+                        {photo ?? <span className="text-xs text-t-dim">—</span>}
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>

@@ -41,7 +41,16 @@ describe("OperatingHistoryPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     window.localStorage.clear();
-    vi.mocked(api.getStrategyOperations).mockResolvedValue({ data: [] });
+    vi.mocked(api.getStrategyOperations).mockResolvedValue({
+      data: [
+        {
+          id: "op-1",
+          operationDate: "2025-12-31",
+          asset: "MBT",
+          direction: "SHORT",
+        },
+      ],
+    });
     vi.mocked(api.getOperationDayCaptureCounts).mockResolvedValue({ data: [] });
     vi.mocked(api.getOperationDayCapturesForDate).mockResolvedValue({
       data: [],
@@ -84,8 +93,14 @@ describe("OperatingHistoryPage", () => {
     expect(screen.getByText("Rendimiento por mes")).toBeInTheDocument();
     expect(screen.getAllByText(/Dic 2025/i).length).toBeGreaterThan(0);
     expect(screen.getByText("Detalle diario")).toBeInTheDocument();
-    expect(screen.getByText("2025-12-31")).toBeInTheDocument();
-    expect(screen.getByText("Cierre de año")).toBeInTheDocument();
+    expect(screen.getByText("31 Dec 2025")).toBeInTheDocument();
+    // Resultado en una sola columna, con signo y color como en la app.
+    expect(screen.getByText("+0.10%")).toHaveClass("text-success");
+    // Resumen de la operación del día (logo, contrato y dirección); las notas
+    // quedan en "Operaciones (detalle)".
+    await waitFor(() => expect(screen.getAllByText("MBT")[0]).toBeInTheDocument());
+    expect(screen.getAllByText("SHORT")[0]).toBeInTheDocument();
+    expect(screen.queryByText("Cierre de año")).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Ver detalle")).not.toBeInTheDocument();
   });
 
