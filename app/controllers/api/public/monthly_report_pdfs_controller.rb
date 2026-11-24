@@ -13,7 +13,7 @@ module Api
         month = parse_month_param
         return if performed?
 
-        report = InvestorMonthlyReportPdf.find_by(investor_id: investor.id, month: month)
+        report = InvestorMonthlyReportPdf.published.find_by(investor_id: investor.id, month: month)
         unless report
           render json: { error: 'Reporte no encontrado' }, status: :not_found
           return

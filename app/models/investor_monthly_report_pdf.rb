@@ -17,11 +17,20 @@ class InvestorMonthlyReportPdf < ApplicationRecord
   validate :pdf_data_looks_like_pdf
 
   scope :for_month, ->(month) { where(month: month) }
+  # Visibles en la app del inversor: se publican al enviar el mail del reporte.
+  scope :published, -> { where.not(published_at: nil) }
   scope :ordered, -> { order(:month, :original_filename) }
   scope :without_pdf_data, -> { select(column_names - [ 'pdf_data' ]) }
 
   def self.last_closed_month(today = Date.current)
     today.prev_month.strftime('%Y-%m')
+  end
+
+  # Deja visibles en la app los reportes del mes. Los que ya lo estaban no cambian.
+  def self.publish!(month:, investor_ids: nil)
+    scope = for_month(month).where(published_at: nil)
+    scope = scope.where(investor_id: investor_ids) if investor_ids
+    scope.update_all(published_at: Time.current)
   end
 
   def download_filename

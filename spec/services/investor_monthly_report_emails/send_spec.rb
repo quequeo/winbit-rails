@@ -74,6 +74,32 @@ RSpec.describe InvestorMonthlyReportEmails::Send do
     expect(OutgoingEmail.count).to eq(0)
   end
 
+  def published?(investor)
+    InvestorMonthlyReportPdf.find_by!(investor: investor, month: '2026-07').published_at.present?
+  end
+
+  it 'publishes the whole month in the app on the general send' do
+    described_class.call(month: '2026-07', subject: 'Hola', body: 'Adjunto')
+
+    expect(published?(tulio)).to be(true)
+    expect(published?(jaime)).to be(true)
+  end
+
+  it 'publishes only that report on an individual send' do
+    described_class.call(month: '2026-07', subject: 'Hola', body: 'Adjunto', investor_ids: [ tulio.id ])
+
+    expect(published?(tulio)).to be(true)
+    expect(published?(jaime)).to be(false)
+  end
+
+  it 'does not publish on a test send' do
+    described_class.call(
+      month: '2026-07', subject: 'Hola', body: 'Prueba', investor_ids: [ tulio.id ], to_email: 'prueba@test.com'
+    )
+
+    expect(published?(tulio)).to be(false)
+  end
+
   it 'keeps the delivery as successful when logging fails' do
     allow(OutgoingEmail).to receive(:create!).and_raise(ActiveRecord::RecordInvalid.new(OutgoingEmail.new))
 
