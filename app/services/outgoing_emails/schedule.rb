@@ -23,6 +23,7 @@ module OutgoingEmails
         raise StandardError, @at.present? ? 'Este correo ya fue enviado o descartado' : 'Este correo ya está programado'
       end
 
+      WelcomeEmail.ensure_ready!(@email)
       @email.update!(status: 'SCHEDULED', scheduled_for: send_time, scheduled_by: @scheduled_by, error: nil)
       @email
     end

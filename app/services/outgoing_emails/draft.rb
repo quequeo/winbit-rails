@@ -47,7 +47,9 @@ module OutgoingEmails
     def build_message
       case @kind
       when 'DEPOSIT_APPROVED'
-        InvestorMailer.deposit_approved(@investor, @request, force: true).message
+        InvestorMailer.deposit_approved(
+          @investor, @request, force: true, greeting: @options[:greeting], password: @options[:password]
+        ).message
       when 'WITHDRAWAL_APPROVED'
         InvestorMailer.withdrawal_approved(@investor, @request, @options[:withdrawal_fee], force: true).message
       when 'DEPOSIT_REJECTED'

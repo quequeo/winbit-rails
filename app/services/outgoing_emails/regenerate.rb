@@ -22,7 +22,9 @@ module OutgoingEmails
       request = @email.investor_request
       raise NotRegenerable, 'La solicitud ya no está aprobada' unless request.status == 'APPROVED'
 
-      rendered = Draft.new(kind: @email.kind, investor: @email.investor, request: request, options: {}).rendered
+      # El saludo elegido se conserva; la contraseña inicial hay que volver a cargarla.
+      options = WelcomeEmail.welcome?(@email) ? { greeting: WelcomeEmail.greeting_of(@email) } : {}
+      rendered = Draft.new(kind: @email.kind, investor: @email.investor, request: request, options: options).rendered
       RequestReceiptPdfs::Generate.call(request: request)
       @email.update!(rendered)
       @email

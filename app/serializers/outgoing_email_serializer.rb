@@ -20,6 +20,14 @@ class OutgoingEmailSerializer
       scheduledFor: email.scheduled_for,
       investor: { id: email.investor_id, name: email.investor.name },
     }
+    if WelcomeEmail.welcome?(email)
+      json[:welcome] = {
+        greeting: WelcomeEmail.greeting_of(email),
+        usesPassword: WelcomeEmail.uses_password?(email),
+        missing: WelcomeEmail.missing(email),
+        guideFilename: WelcomeGuidePdfs::Generate::FILENAME,
+      }
+    end
     if @include_body
       json[:bodyHtml] = MailPersonalization.apply(
         email.body_html,

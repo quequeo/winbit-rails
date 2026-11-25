@@ -84,14 +84,33 @@ RSpec.describe InvestorMailer, type: :mailer do
   describe '#deposit_approved' do
     before { portfolio }
 
-    it 'sends the welcome mail for the initial contribution' do
+    it 'drafts the short welcome mail with marks for what the admin has to complete' do
+      investor.update!(email: 'john@gmail.com')
       approve(deposit_request, balance_after: 1000, operation_number: 'A-2026-0001')
       mail = described_class.deposit_approved(investor, deposit_request)
 
-      expect(mail.subject).to eq('Winbit | Bienvenida y aporte de capital | 1.000,00 USDT')
-      expect(html(mail)).to include('Te damos la bienvenida a Winbit', 'recibido el 15/10/2026', 'Tipo de cuenta: <strong>Inversor</strong>',
-                                    'la comisión es de USD 30,00', 'Ver mi cuenta en la app')
-      expect(text(mail)).to include('Capital inicial: USD 1.000,00')
+      expect(mail.subject).to eq('John, bienvenido/a a Winbit')
+      expect(html(mail)).to include('¡Hola, John!', 'Bienvenido/a</span> a Winbit', 'aporte inicial de 1.000,00 USDT',
+                                    'Guía de bienvenida', 'Adobe Sign', '/instalar/', 'Acceder con Google',
+                                    'Ver mi cuenta en la app', 'Cualquier duda, escribinos por')
+      expect(html(mail)).not_to include('contraseña inicial')
+      expect(text(mail)).to include('Bienvenido/a a Winbit', 'Es muy importante que la leas.')
+    end
+
+    it 'uses the chosen greeting and the initial password when the investor has no Google login' do
+      approve(deposit_request, balance_after: 1000, operation_number: 'A-2026-0001')
+      mail = described_class.deposit_approved(investor, deposit_request, greeting: 'bienvenida', password: 'Clave-Inicial-9')
+
+      expect(mail.subject).to eq('John, bienvenida a Winbit')
+      expect(html(mail)).to include('¡Hola, John! Bienvenida a Winbit', 'tu contraseña inicial es <strong>Clave-Inicial-9</strong>')
+      expect(html(mail)).not_to include('Acceder con Google', WelcomeEmail::PASSWORD_MARK)
+    end
+
+    it 'marks the missing password when the investor has no Google login' do
+      approve(deposit_request, balance_after: 1000, operation_number: 'A-2026-0001')
+      mail = described_class.deposit_approved(investor, deposit_request, greeting: 'bienvenido')
+
+      expect(html(mail)).to include(WelcomeEmail::PASSWORD_MARK)
     end
 
     it 'confirms a later deposit in its real currency with the capital in USD' do
