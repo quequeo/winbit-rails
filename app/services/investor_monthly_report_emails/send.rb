@@ -27,7 +27,7 @@ module InvestorMonthlyReportEmails
       ids_with_pdf = attachments.keys
       return empty_result if ids_with_pdf.empty?
 
-      EmailCampaigns::Send.call(
+      result = EmailCampaigns::Send.call(
         month: @month,
         subject: @subject,
         body: @body,
@@ -37,9 +37,20 @@ module InvestorMonthlyReportEmails
         to_email: @to_email,
         record_as: @to_email ? nil : 'MONTHLY_REPORT'
       )
+      publish_in_app
+      result
     end
 
     private
+
+    # Al enviar, el reporte pasa a verse en la app. El envío general publica el
+    # mes completo (también a quien no le llega el mail); el individual, solo
+    # el de ese inversor. Una prueba no publica nada.
+    def publish_in_app
+      return if @to_email
+
+      InvestorMonthlyReportPdf.publish!(month: @month, investor_ids: @investor_ids)
+    end
 
     def attachments_for(investor_ids)
       InvestorMonthlyReportPdf.for_month(@month)

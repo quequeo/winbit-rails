@@ -7,14 +7,15 @@ RSpec.describe 'Public monthly report PDFs', type: :request do
   let!(:other) { Investor.create!(email: 'otro@test.com', name: 'Otro Inversor', status: 'ACTIVE') }
   let!(:inactive) { Investor.create!(email: 'old@test.com', name: 'Inactivo', status: 'INACTIVE') }
 
-  def create_pdf!(investor, month, body)
+  def create_pdf!(investor, month, body, published_at: Time.current)
     InvestorMonthlyReportPdf.create!(
       investor: investor,
       month: month,
       original_filename: "Reporte #{month} - #{investor.name}.pdf",
       content_type: 'application/pdf',
       byte_size: body.bytesize,
-      pdf_data: body
+      pdf_data: body,
+      published_at: published_at
     )
   end
 
@@ -48,6 +49,14 @@ RSpec.describe 'Public monthly report PDFs', type: :request do
     expect(response).to have_http_status(:not_found)
     json = JSON.parse(response.body)
     expect(json['error']).to eq('Reporte no encontrado')
+  end
+
+  it 'returns 404 while the report has not been sent yet' do
+    create_pdf!(tulio, '2026-07', '%PDF-1.4 borrador', published_at: nil)
+
+    get "/api/public/v1/investor/#{CGI.escape(tulio.email)}/monthly_report", params: { month: '2026-07' }
+
+    expect(response).to have_http_status(:not_found)
   end
 
   it 'returns 403 for inactive investors' do
